@@ -1179,7 +1179,7 @@ foreach ($sectionName in $Section) {
             # Capture warnings (3>&1) so they go to log instead of console
             $rawOutput = & $scriptPath @collectorParams 3>&1
             $capturedWarnings = @($rawOutput | Where-Object { $_ -is [System.Management.Automation.WarningRecord] })
-            $results = @($rawOutput | Where-Object { $_ -isnot [System.Management.Automation.WarningRecord] })
+            $results = @($rawOutput | Where-Object { $null -ne $_ -and $_ -isnot [System.Management.Automation.WarningRecord] })
 
             # Log captured warnings; track permission-related ones as issues
             $hasPermissionWarning = $false

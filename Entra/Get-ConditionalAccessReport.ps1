@@ -60,6 +60,11 @@ catch {
 $allPolicies = @($policies)
 Write-Verbose "Processing $($allPolicies.Count) Conditional Access policies..."
 
+if ($allPolicies.Count -eq 0) {
+    Write-Verbose "No Conditional Access policies found"
+    return
+}
+
 $report = foreach ($policy in $allPolicies) {
     # Flatten included users
     $includeUsers = if ($policy.Conditions.Users.IncludeUsers) {

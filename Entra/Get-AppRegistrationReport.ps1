@@ -61,6 +61,11 @@ catch {
 $allApps = @($applications)
 Write-Verbose "Processing $($allApps.Count) app registrations..."
 
+if ($allApps.Count -eq 0) {
+    Write-Verbose "No app registrations found"
+    return
+}
+
 $now = Get-Date
 
 $report = foreach ($app in $allApps) {

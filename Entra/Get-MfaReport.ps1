@@ -62,6 +62,11 @@ catch {
 $allDetails = @($registrationDetails)
 Write-Verbose "Processing MFA details for $($allDetails.Count) users..."
 
+if ($allDetails.Count -eq 0) {
+    Write-Verbose "No MFA registration details found"
+    return
+}
+
 $report = foreach ($detail in $allDetails) {
     $methodsRegistered = if ($detail.MethodsRegistered) {
         ($detail.MethodsRegistered | Sort-Object) -join '; '
