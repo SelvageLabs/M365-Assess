@@ -98,6 +98,10 @@ param(
     [string[]]$ScubaProductNames = @('aad', 'defender', 'exo', 'powerplatform', 'powerbi', 'sharepoint', 'teams'),
 
     [Parameter()]
+    [ValidateSet('CIS','NIST-CSF','NIST-800-53','ISO-27001','STIG','PCI-DSS','CMMC','HIPAA','CISA-SCuBA')]
+    [string[]]$Frameworks = @('CIS'),
+
+    [Parameter()]
     [ValidateSet('commercial', 'gcc', 'gcchigh', 'dod')]
     [string]$M365Environment = 'commercial'
 )
@@ -185,7 +189,7 @@ function Show-InteractiveWizard {
     $step1Done = $false
     while (-not $step1Done) {
         Show-Header
-        Show-StepHeader -Step 1 -Total 4 -Title 'Select Assessment Sections'
+        Show-StepHeader -Step 1 -Total 5 -Title 'Select Assessment Sections'
         Write-Host '  Toggle sections by number, separated by spaces (e.g. 3 or 1 5 10).' -ForegroundColor $cNormal
         Write-Host '  Press ENTER when done.' -ForegroundColor $cMuted
         Write-Host ''
@@ -256,10 +260,81 @@ function Show-InteractiveWizard {
     $selectedSections = @($sections.Values | Where-Object { $_.Selected } | ForEach-Object { $_.Name })
 
     # ================================================================
-    # STEP 2: Tenant Identity
+    # STEP 2: Compliance Frameworks
+    # ================================================================
+    $frameworkDefs = [ordered]@{
+        1 = @{ Name = 'CIS';        Label = 'CIS M365 v6.0.1';    Selected = $true;  Locked = $true }
+        2 = @{ Name = 'NIST-800-53'; Label = 'NIST 800-53 Rev 5';  Selected = $false; Locked = $false }
+        3 = @{ Name = 'NIST-CSF';   Label = 'NIST CSF 2.0';       Selected = $false; Locked = $false }
+        4 = @{ Name = 'ISO-27001';  Label = 'ISO 27001:2022';     Selected = $false; Locked = $false }
+        5 = @{ Name = 'STIG';       Label = 'DISA STIG';          Selected = $false; Locked = $false }
+        6 = @{ Name = 'PCI-DSS';    Label = 'PCI DSS v4.0.1';     Selected = $false; Locked = $false }
+        7 = @{ Name = 'CMMC';       Label = 'CMMC 2.0';           Selected = $false; Locked = $false }
+        8 = @{ Name = 'HIPAA';      Label = 'HIPAA Security Rule'; Selected = $false; Locked = $false }
+        9 = @{ Name = 'CISA-SCuBA'; Label = 'CISA SCuBA';         Selected = $false; Locked = $false }
+    }
+
+    $step2Done = $false
+    while (-not $step2Done) {
+        Show-Header
+        Show-StepHeader -Step 2 -Total 5 -Title 'Compliance Frameworks'
+        Write-Host '  CIS is always included. Toggle additional frameworks for cross-referencing.' -ForegroundColor $cNormal
+        Write-Host '  Toggle by number, separated by spaces (e.g. 2 6 8). Press ENTER when done.' -ForegroundColor $cMuted
+        Write-Host ''
+
+        foreach ($key in $frameworkDefs.Keys) {
+            $fw = $frameworkDefs[$key]
+            $marker = if ($fw.Selected) { '●' } else { '○' }
+            $color = if ($fw.Selected) { $cNormal } else { $cMuted }
+            $suffix = if ($fw.Locked) { ' (always on)' } else { '' }
+            Write-Host "  [$key] $marker $($fw.Label)$suffix" -ForegroundColor $color
+        }
+
+        Write-Host ''
+        Write-Host '  [A] Select all    [N] CIS only' -ForegroundColor $cPrompt
+        Write-Host ''
+        Write-Host '  > ' -ForegroundColor $cPrompt -NoNewline
+        $fwChoice = Read-Host
+
+        switch ($fwChoice.Trim().ToUpper()) {
+            'A' {
+                $rebuilt = [ordered]@{}
+                foreach ($k in @($frameworkDefs.Keys)) {
+                    $rebuilt[$k] = @{ Name = $frameworkDefs[$k].Name; Label = $frameworkDefs[$k].Label; Selected = $true; Locked = $frameworkDefs[$k].Locked }
+                }
+                $frameworkDefs = $rebuilt
+            }
+            'N' {
+                $rebuilt = [ordered]@{}
+                foreach ($k in @($frameworkDefs.Keys)) {
+                    $rebuilt[$k] = @{ Name = $frameworkDefs[$k].Name; Label = $frameworkDefs[$k].Label; Selected = $frameworkDefs[$k].Locked; Locked = $frameworkDefs[$k].Locked }
+                }
+                $frameworkDefs = $rebuilt
+            }
+            '' {
+                $step2Done = $true
+            }
+            default {
+                $tokens = $fwChoice.Trim() -split '[,\s]+'
+                foreach ($token in $tokens) {
+                    $num = 0
+                    if ($token -ne '' -and [int]::TryParse($token, [ref]$num) -and $frameworkDefs.Contains($num)) {
+                        if (-not $frameworkDefs[$num].Locked) {
+                            $frameworkDefs[$num].Selected = -not $frameworkDefs[$num].Selected
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    $selectedFrameworks = @($frameworkDefs.Values | Where-Object { $_.Selected } | ForEach-Object { $_.Name })
+
+    # ================================================================
+    # STEP 3: Tenant Identity
     # ================================================================
     Show-Header
-    Show-StepHeader -Step 2 -Total 4 -Title 'Tenant Identity'
+    Show-StepHeader -Step 3 -Total 5 -Title 'Tenant Identity'
     Write-Host '  Enter your tenant ID or domain' -ForegroundColor $cNormal
     Write-Host '  (e.g., contoso.onmicrosoft.com):' -ForegroundColor $cMuted
     Write-Host ''
@@ -267,17 +342,17 @@ function Show-InteractiveWizard {
     $tenantInput = Read-Host
 
     # ================================================================
-    # STEP 3: Authentication Method
+    # STEP 4: Authentication Method
     # ================================================================
-    $step3Done = $false
+    $step4Done = $false
     $authMethod = 'Interactive'
     $wizClientId = ''
     $wizCertThumb = ''
     $wizUpn = ''
 
-    while (-not $step3Done) {
+    while (-not $step4Done) {
         Show-Header
-        Show-StepHeader -Step 3 -Total 4 -Title 'Authentication Method'
+        Show-StepHeader -Step 4 -Total 5 -Title 'Authentication Method'
 
         Write-Host '  [1] Interactive login (browser popup)' -ForegroundColor $cNormal
         Write-Host '  [2] Certificate-based (app-only)' -ForegroundColor $cNormal
@@ -293,7 +368,7 @@ function Show-InteractiveWizard {
                 Write-Host '  Enter admin UPN for EXO/Purview (optional, press ENTER to skip):' -ForegroundColor $cNormal
                 Write-Host '  > ' -ForegroundColor $cPrompt -NoNewline
                 $wizUpn = Read-Host
-                $step3Done = $true
+                $step4Done = $true
             }
             '2' {
                 $authMethod = 'Certificate'
@@ -304,11 +379,11 @@ function Show-InteractiveWizard {
                 Write-Host '  Enter Certificate Thumbprint:' -ForegroundColor $cNormal
                 Write-Host '  > ' -ForegroundColor $cPrompt -NoNewline
                 $wizCertThumb = Read-Host
-                $step3Done = $true
+                $step4Done = $true
             }
             '3' {
                 $authMethod = 'Skip'
-                $step3Done = $true
+                $step4Done = $true
             }
             default {
                 Write-Host '  ✗ Please enter 1, 2, or 3.' -ForegroundColor $cError
@@ -318,11 +393,11 @@ function Show-InteractiveWizard {
     }
 
     # ================================================================
-    # STEP 4: Output Folder
+    # STEP 5: Output Folder
     # ================================================================
     $defaultOutput = '.\M365-Assessment'
     Show-Header
-    Show-StepHeader -Step 4 -Total 4 -Title 'Output Folder'
+    Show-StepHeader -Step 5 -Total 5 -Title 'Output Folder'
     Write-Host '  Assessment results will be saved to:' -ForegroundColor $cNormal
     Write-Host "    $defaultOutput\" -ForegroundColor $cSuccess
     Write-Host ''
@@ -337,6 +412,7 @@ function Show-InteractiveWizard {
     Show-Header
 
     $sectionDisplay = $selectedSections -join ', '
+    $frameworkDisplay = $selectedFrameworks -join ', '
     $tenantDisplay = if ($tenantInput.Trim()) { $tenantInput.Trim() } else { '(not specified)' }
     $authDisplay = switch ($authMethod) {
         'Interactive'  {
@@ -351,13 +427,14 @@ function Show-InteractiveWizard {
     Write-Host ''
     Write-Host '  Ready to start assessment:' -ForegroundColor $cPrompt
     Write-Host ''
-    Write-Host "    Sections:  $sectionDisplay" -ForegroundColor $cNormal
-    Write-Host "    Tenant:    $tenantDisplay" -ForegroundColor $cNormal
-    Write-Host "    Auth:      $authDisplay" -ForegroundColor $cNormal
+    Write-Host "    Sections:    $sectionDisplay" -ForegroundColor $cNormal
+    Write-Host "    Frameworks:  $frameworkDisplay" -ForegroundColor $cNormal
+    Write-Host "    Tenant:      $tenantDisplay" -ForegroundColor $cNormal
+    Write-Host "    Auth:        $authDisplay" -ForegroundColor $cNormal
     if ($M365Environment -ne 'commercial') {
-        Write-Host "    Cloud:     $M365Environment" -ForegroundColor $cNormal
+        Write-Host "    Cloud:       $M365Environment" -ForegroundColor $cNormal
     }
-    Write-Host "    Output:    $wizOutputFolder\" -ForegroundColor $cNormal
+    Write-Host "    Output:      $wizOutputFolder\" -ForegroundColor $cNormal
     Write-Host ''
     Write-Host '  Press ENTER to begin, or Q to quit.' -ForegroundColor $cPrompt
     Write-Host '  > ' -ForegroundColor $cPrompt -NoNewline
@@ -372,6 +449,7 @@ function Show-InteractiveWizard {
     # Build result hashtable
     $wizardResult = @{
         Section      = $selectedSections
+        Frameworks   = $selectedFrameworks
         OutputFolder = $wizOutputFolder
     }
 
@@ -413,6 +491,7 @@ if ($isInteractive -and [Environment]::UserInteractive) {
 
     # Override script parameters with wizard selections
     $Section = $wizardParams['Section']
+    $Frameworks = $wizardParams['Frameworks']
     $OutputFolder = $wizardParams['OutputFolder']
 
     if ($wizardParams.ContainsKey('TenantId')) {
@@ -1577,6 +1656,7 @@ if (Test-Path -Path $reportScriptPath) {
     try {
         $reportParams = @{
             AssessmentFolder = $assessmentFolder
+            Frameworks       = $Frameworks
         }
         if ($TenantId) { $reportParams['TenantName'] = $TenantId }
 

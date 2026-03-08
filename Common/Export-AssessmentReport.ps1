@@ -50,11 +50,31 @@ param(
     [string]$TenantName,
 
     [Parameter()]
+    [ValidateSet('CIS','NIST-CSF','NIST-800-53','ISO-27001','STIG','PCI-DSS','CMMC','HIPAA','CISA-SCuBA')]
+    [string[]]$Frameworks = @('CIS'),
+
+    [Parameter()]
     [switch]$SkipPdf
 )
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
+
+# ------------------------------------------------------------------
+# Framework lookup table
+# ------------------------------------------------------------------
+$frameworkLookup = @{
+    'CIS'        = @{ Col = 'CisControl'; Label = 'CIS M365 v6.0.1';   Css = 'fw-cis' }
+    'NIST-800-53'= @{ Col = 'Nist80053';  Label = 'NIST 800-53 Rev 5'; Css = 'fw-nist' }
+    'NIST-CSF'   = @{ Col = 'NistCsf';    Label = 'NIST CSF 2.0';      Css = 'fw-csf' }
+    'ISO-27001'  = @{ Col = 'Iso27001';   Label = 'ISO 27001:2022';    Css = 'fw-iso' }
+    'STIG'       = @{ Col = 'Stig';       Label = 'DISA STIG';         Css = 'fw-stig' }
+    'PCI-DSS'    = @{ Col = 'PciDss';     Label = 'PCI DSS v4.0.1';    Css = 'fw-pci' }
+    'CMMC'       = @{ Col = 'Cmmc';       Label = 'CMMC 2.0';          Css = 'fw-cmmc' }
+    'HIPAA'      = @{ Col = 'Hipaa';      Label = 'HIPAA';             Css = 'fw-hipaa' }
+    'CISA-SCuBA' = @{ Col = 'CisaScuba';  Label = 'CISA SCuBA';        Css = 'fw-scuba' }
+}
+$selectedNonCis = @($Frameworks | Where-Object { $_ -ne 'CIS' })
 
 # ------------------------------------------------------------------
 # Validate input
@@ -843,6 +863,11 @@ foreach ($c in $summary) {
             NistCsf      = if ($mapping) { $mapping.NistCsf } else { '' }
             Nist80053    = if ($mapping) { $mapping.Nist80053 } else { '' }
             Iso27001     = if ($mapping) { $mapping.Iso27001 } else { '' }
+            Stig         = if ($mapping) { $mapping.Stig } else { '' }
+            PciDss       = if ($mapping) { $mapping.PciDss } else { '' }
+            Cmmc         = if ($mapping) { $mapping.Cmmc } else { '' }
+            Hipaa        = if ($mapping) { $mapping.Hipaa } else { '' }
+            CisaScuba    = if ($mapping) { $mapping.CisaScuba } else { '' }
         })
     }
 }
@@ -875,11 +900,6 @@ if ($allCisFindings.Count -gt 0) {
     $null = $cisHtml.AppendLine("<p>This CIS benchmark assessment is provided for <strong>informational purposes only</strong> and does not constitute a comprehensive security assessment, audit, or certification. Results reflect a subset of the 140 CIS controls checked via automated methods at a point in time and should not be considered conclusive. For a thorough security evaluation, consider engaging a qualified security professional for penetration testing and full compliance review.</p>")
     $null = $cisHtml.AppendLine("</div>")
 
-    # Framework cross-reference note (only if mappings loaded)
-    if ($frameworkMappings.Count -gt 0) {
-        $null = $cisHtml.AppendLine("<p style='margin:8px 0 0;font-size:0.9em;color:var(--m365a-medium-gray);'>Cross-referenced to: <strong>NIST 800-53 Rev 5</strong>, <strong>NIST CSF 2.0</strong>, <strong>ISO 27001:2022</strong></p>")
-    }
-
     # Score overview cards
     $cisBenchmarkTotal = 140 # CIS v6.0.1 total — update when benchmark version changes
     $scoreColor = if ($cisScored -eq 0) { 'var(--m365a-medium-gray)' } elseif ($cisScore -ge 80) { '#2ecc71' } elseif ($cisScore -ge 60) { '#f39c12' } else { '#e74c3c' }
@@ -907,9 +927,7 @@ if ($allCisFindings.Count -gt 0) {
         $null = $cisHtml.AppendLine("<summary><h3>Areas of Improvement <span class='row-count'>($($nonPassing.Count) findings)</span></h3></summary>")
         $null = $cisHtml.AppendLine("<div class='table-wrapper'>")
         $null = $cisHtml.AppendLine("<table class='data-table cis-table'>")
-        $hasFrameworkMappings = $frameworkMappings.Count -gt 0
-        $fwHeader = if ($hasFrameworkMappings) { '<th>Frameworks</th>' } else { '' }
-        $null = $cisHtml.AppendLine("<thead><tr><th>CIS Control</th><th>Status</th><th>Setting</th><th>Current Value</th><th>Recommended</th>$fwHeader<th>Remediation</th></tr></thead>")
+        $null = $cisHtml.AppendLine("<thead><tr><th>CIS Control</th><th>Status</th><th>Setting</th><th>Current Value</th><th>Recommended</th><th>Remediation</th></tr></thead>")
         $null = $cisHtml.AppendLine("<tbody>")
 
         foreach ($finding in $nonPassing) {
@@ -927,29 +945,12 @@ if ($allCisFindings.Count -gt 0) {
             $recommended = ConvertTo-HtmlSafe -Text $finding.Recommended
             $remediation = ConvertTo-HtmlSafe -Text $finding.Remediation
 
-            # Build framework reference tags (if mappings loaded)
-            $fwCell = ''
-            if ($hasFrameworkMappings) {
-                $fwTags = [System.Text.StringBuilder]::new()
-                if ($finding.Nist80053) {
-                    $null = $fwTags.Append("<span class='fw-tag fw-nist' title='NIST 800-53 Rev 5'>$(ConvertTo-HtmlSafe -Text $finding.Nist80053)</span>")
-                }
-                if ($finding.NistCsf) {
-                    $null = $fwTags.Append("<span class='fw-tag fw-csf' title='NIST CSF 2.0'>$(ConvertTo-HtmlSafe -Text $finding.NistCsf)</span>")
-                }
-                if ($finding.Iso27001) {
-                    $null = $fwTags.Append("<span class='fw-tag fw-iso' title='ISO 27001:2022'>$(ConvertTo-HtmlSafe -Text $finding.Iso27001)</span>")
-                }
-                $fwCell = "<td class='framework-refs'>$($fwTags.ToString())</td>"
-            }
-
             $null = $cisHtml.AppendLine("<tr class='cis-row-$($finding.Status.ToLower())'>")
             $null = $cisHtml.AppendLine("<td class='cis-id'>$cisRef</td>")
             $null = $cisHtml.AppendLine("<td>$statusBadge</td>")
             $null = $cisHtml.AppendLine("<td>$settingText</td>")
             $null = $cisHtml.AppendLine("<td>$currentVal</td>")
             $null = $cisHtml.AppendLine("<td>$recommended</td>")
-            if ($fwCell) { $null = $cisHtml.AppendLine($fwCell) }
             $null = $cisHtml.AppendLine("<td class='remediation-cell'>$remediation</td>")
             $null = $cisHtml.AppendLine("</tr>")
         }
@@ -967,6 +968,129 @@ if ($allCisFindings.Count -gt 0) {
 
     $null = $cisHtml.AppendLine("<p class='truncated'>Reference: <a href='https://www.cisecurity.org/benchmark/microsoft_365'>CIS Microsoft 365 Foundations Benchmark v6.0.1</a></p>")
     $null = $cisHtml.AppendLine("</details>")
+}
+
+# ------------------------------------------------------------------
+# Build Security Framework Matrix (only when non-CIS frameworks selected)
+# ------------------------------------------------------------------
+$matrixHtml = [System.Text.StringBuilder]::new()
+if ($selectedNonCis.Count -gt 0 -and $allCisFindings.Count -gt 0 -and $frameworkMappings.Count -gt 0) {
+
+    # Load framework catalog CSVs to get total control counts
+    $catalogCounts = @{}
+    $frameworksDir = Join-Path -Path $projectRoot -ChildPath 'assets/frameworks'
+    $catalogFiles = @{
+        'NIST-800-53' = 'nist-800-53-r5.csv'
+        'NIST-CSF'    = 'nist-csf-2.0.csv'
+        'ISO-27001'   = 'iso-27001-2022.csv'
+        'STIG'        = 'disa-stig-m365.csv'
+        'PCI-DSS'     = 'pci-dss-v4.csv'
+        'CMMC'        = 'cmmc-nist-800-171-r2.csv'
+        'HIPAA'       = 'hipaa-security-rule.csv'
+        'CISA-SCuBA'  = 'cisa-scuba-baselines.csv'
+    }
+    foreach ($fwKey in $selectedNonCis) {
+        if ($catalogFiles.ContainsKey($fwKey)) {
+            $catPath = Join-Path -Path $frameworksDir -ChildPath $catalogFiles[$fwKey]
+            if (Test-Path -Path $catPath) {
+                $catData = Import-Csv -Path $catPath
+                $catalogCounts[$fwKey] = @($catData).Count
+            }
+        }
+    }
+
+    $null = $matrixHtml.AppendLine("<details class='section' open>")
+    $null = $matrixHtml.AppendLine("<summary><h2>Security Framework Matrix</h2></summary>")
+    $null = $matrixHtml.AppendLine("<p>Cross-reference matrix showing how assessed CIS controls map to selected compliance frameworks.</p>")
+
+    # Framework coverage cards
+    $null = $matrixHtml.AppendLine("<div class='exec-summary'>")
+    foreach ($fwKey in $selectedNonCis) {
+        $fwInfo = $frameworkLookup[$fwKey]
+        $col = $fwInfo.Col
+        $mappedControls = @($allCisFindings | Where-Object { $_.$col -and $_.$col -ne '' } | ForEach-Object { $_.$col -split ';' } | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' } | Sort-Object -Unique)
+        $mappedCount = $mappedControls.Count
+        $totalCount = if ($catalogCounts.ContainsKey($fwKey)) { $catalogCounts[$fwKey] } else { 0 }
+        $coveragePct = if ($totalCount -gt 0) { [math]::Round(($mappedCount / $totalCount) * 100, 0) } else { 0 }
+        $coverageColor = if ($totalCount -eq 0) { 'var(--m365a-medium-gray)' } elseif ($coveragePct -ge 70) { '#2ecc71' } elseif ($coveragePct -ge 50) { '#f39c12' } else { '#e74c3c' }
+        $coverageLabel = if ($totalCount -gt 0) { "$mappedCount of $totalCount mapped" } else { "$mappedCount controls mapped" }
+        $null = $matrixHtml.AppendLine("<div class='stat-card' style='border-top-color: $coverageColor;'><div class='stat-value' style='color: $coverageColor;'>$coveragePct%</div><div class='stat-label'>$($fwInfo.Label)<br><small>$coverageLabel</small></div></div>")
+    }
+    $null = $matrixHtml.AppendLine("</div>")
+
+    # Framework filter tabs
+    $null = $matrixHtml.AppendLine("<div class='fw-tabs' id='fwTabs'>")
+    $null = $matrixHtml.AppendLine("<button class='fw-tab active' data-fw='all'>All</button>")
+    foreach ($fwKey in $selectedNonCis) {
+        $fwInfo = $frameworkLookup[$fwKey]
+        $null = $matrixHtml.AppendLine("<button class='fw-tab' data-fw='$($fwInfo.Col)'>$($fwInfo.Label)</button>")
+    }
+    $null = $matrixHtml.AppendLine("</div>")
+
+    # Matrix table
+    $null = $matrixHtml.AppendLine("<div class='table-wrapper'>")
+    $null = $matrixHtml.AppendLine("<table class='data-table matrix-table' id='matrixTable'>")
+
+    # Header row
+    $headerCols = "<th>CIS Control</th><th>Description</th><th>Status</th>"
+    foreach ($fwKey in $selectedNonCis) {
+        $fwInfo = $frameworkLookup[$fwKey]
+        $headerCols += "<th>$($fwInfo.Label)</th>"
+    }
+    $null = $matrixHtml.AppendLine("<thead><tr>$headerCols</tr></thead>")
+    $null = $matrixHtml.AppendLine("<tbody>")
+
+    # Sort findings by CIS control ID for matrix view
+    $matrixFindings = @($allCisFindings | Sort-Object -Property CisControl)
+    foreach ($finding in $matrixFindings) {
+        $statusClass = switch ($finding.Status) {
+            'Pass'    { 'badge-success' }
+            'Fail'    { 'badge-failed' }
+            'Warning' { 'badge-warning' }
+            'Review'  { 'badge-info' }
+            default   { 'badge-skipped' }
+        }
+        $statusBadge = "<span class='badge $statusClass'>$($finding.Status)</span>"
+
+        # Build data-fw attributes for row filtering
+        $rowFwAttrs = @()
+        foreach ($fwKey in $selectedNonCis) {
+            $fwInfo = $frameworkLookup[$fwKey]
+            $col = $fwInfo.Col
+            if ($finding.$col -and $finding.$col -ne '') {
+                $rowFwAttrs += $col
+            }
+        }
+        $dataFwAttr = $rowFwAttrs -join ' '
+
+        $cisRef = ConvertTo-HtmlSafe -Text $finding.CisControl
+        $settingText = ConvertTo-HtmlSafe -Text $finding.Setting
+
+        $null = $matrixHtml.AppendLine("<tr data-frameworks='$dataFwAttr'>")
+        $null = $matrixHtml.AppendLine("<td class='cis-id'>$cisRef</td>")
+        $null = $matrixHtml.AppendLine("<td>$settingText</td>")
+        $null = $matrixHtml.AppendLine("<td>$statusBadge</td>")
+
+        foreach ($fwKey in $selectedNonCis) {
+            $fwInfo = $frameworkLookup[$fwKey]
+            $col = $fwInfo.Col
+            $val = $finding.$col
+            if ($val -and $val -ne '') {
+                $tags = ($val -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' } | ForEach-Object {
+                    "<span class='fw-tag $($fwInfo.Css)'>$(ConvertTo-HtmlSafe -Text $_)</span>"
+                }) -join ''
+                $null = $matrixHtml.AppendLine("<td class='framework-refs'>$tags</td>")
+            }
+            else {
+                $null = $matrixHtml.AppendLine("<td class='framework-refs'><span class='fw-unmapped'>&mdash;</span></td>")
+            }
+        }
+        $null = $matrixHtml.AppendLine("</tr>")
+    }
+
+    $null = $matrixHtml.AppendLine("</tbody></table>")
+    $null = $matrixHtml.AppendLine("</div>")
+    $null = $matrixHtml.AppendLine("</details>")
 }
 
 # ------------------------------------------------------------------
@@ -998,6 +1122,9 @@ if ($issues.Count -gt 0) {
 # Append conditional entries to TOC now that CIS/Issues counts are known
 if ($allCisFindings.Count -gt 0) {
     $null = $tocHtml.AppendLine("<li><a href='#cis-compliance'>CIS Compliance Summary</a></li>")
+}
+if ($selectedNonCis.Count -gt 0 -and $allCisFindings.Count -gt 0) {
+    $null = $tocHtml.AppendLine("<li><a href='#framework-matrix'>Security Framework Matrix</a></li>")
 }
 if ($issues.Count -gt 0) {
     $null = $tocHtml.AppendLine("<li><a href='#issues'>Technical Issues</a></li>")
@@ -1644,11 +1771,28 @@ $html = @"
         .cis-row-unknown { border-left: 3px solid var(--m365a-medium-gray); background-color: #f9fafb !important; }
 
         /* Framework cross-reference tags */
-        .framework-refs { white-space: normal; max-width: 220px; }
+        .framework-refs { white-space: normal; max-width: 260px; }
         .fw-tag { display: inline-block; padding: 1px 5px; margin: 1px; border-radius: 3px; font-size: 0.72em; font-family: 'Consolas', 'Courier New', monospace; }
-        .fw-nist { background: #e8f0fe; color: #1a56db; }
-        .fw-csf { background: #fef3c7; color: #92400e; }
-        .fw-iso { background: #ecfdf5; color: #065f46; }
+        .fw-cis   { background: #e8f0fe; color: #1a56db; }
+        .fw-nist  { background: #e8f0fe; color: #1a56db; }
+        .fw-csf   { background: #fef3c7; color: #92400e; }
+        .fw-iso   { background: #ecfdf5; color: #065f46; }
+        .fw-stig  { background: #f3e8ff; color: #6b21a8; }
+        .fw-pci   { background: #fef2f2; color: #991b1b; }
+        .fw-cmmc  { background: #f0fdfa; color: #134e4a; }
+        .fw-hipaa { background: #fdf2f8; color: #9d174d; }
+        .fw-scuba { background: #fff7ed; color: #9a3412; }
+        .fw-unmapped { color: var(--m365a-border); font-size: 0.85em; }
+
+        /* Framework filter tabs */
+        .fw-tabs { display: flex; gap: 4px; margin: 16px 0 8px; flex-wrap: wrap; }
+        .fw-tab { padding: 6px 14px; border: 1px solid var(--m365a-border); border-radius: 4px; background: #fff; cursor: pointer; font-size: 0.85em; transition: all 0.15s; }
+        .fw-tab:hover { background: #f0f4ff; }
+        .fw-tab.active { background: var(--m365a-dark); color: #fff; border-color: var(--m365a-dark); }
+
+        /* Matrix table */
+        .matrix-table td { vertical-align: top; }
+        .matrix-table .framework-refs { max-width: 180px; }
 
         /* ----------------------------------------------------------
            Footer
@@ -1708,6 +1852,8 @@ $html = @"
             .data-table th::after { display: none; }
             .data-table { page-break-inside: auto; }
             tr { page-break-inside: avoid; }
+            .fw-tabs { display: none; }
+            .matrix-table tr { display: table-row !important; }
 
             @page {
                 size: letter;
@@ -1805,6 +1951,15 @@ if ($allCisFindings.Count -gt 0) {
 "@
 }
 
+if ($matrixHtml.Length -gt 0) {
+    $html += @"
+
+        <a id="framework-matrix"></a>
+        <h1>Security Framework Matrix</h1>
+        $($matrixHtml.ToString())
+"@
+}
+
 if ($issues.Count -gt 0) {
     $html += @"
 
@@ -1833,6 +1988,31 @@ $html += @"
                 });
             });
         });
+
+        // Framework matrix tab filtering
+        var tabContainer = document.getElementById('fwTabs');
+        if (tabContainer) {
+            var tabs = tabContainer.querySelectorAll('.fw-tab');
+            var matrixTable = document.getElementById('matrixTable');
+            if (matrixTable) {
+                var matrixRows = matrixTable.querySelectorAll('tbody tr');
+                tabs.forEach(function(tab) {
+                    tab.addEventListener('click', function() {
+                        tabs.forEach(function(t) { t.classList.remove('active'); });
+                        tab.classList.add('active');
+                        var fw = tab.getAttribute('data-fw');
+                        matrixRows.forEach(function(row) {
+                            if (fw === 'all') {
+                                row.style.display = '';
+                            } else {
+                                var rowFw = row.getAttribute('data-frameworks') || '';
+                                row.style.display = rowFw.indexOf(fw) !== -1 ? '' : 'none';
+                            }
+                        });
+                    });
+                });
+            }
+        }
     });
 
     function sortTable(table, colIndex, th) {

@@ -124,6 +124,25 @@ The orchestrator (`Invoke-M365Assessment.ps1`) connects to the required services
 .\Invoke-M365Assessment.ps1 -Section Tenant,Identity,Licensing,Email,Intune,Security,Collaboration,Hybrid,ScubaGear -TenantId 'contoso.onmicrosoft.com'
 ```
 
+### Multi-Framework Compliance
+
+By default, findings map to the CIS M365 Benchmark only. Use `-Frameworks` to add cross-reference columns for additional compliance frameworks in the HTML report:
+
+```powershell
+# CIS + PCI DSS + HIPAA (healthcare with payment processing)
+.\Invoke-M365Assessment.ps1 -TenantId 'contoso.onmicrosoft.com' -Frameworks CIS,PCI-DSS,HIPAA
+
+# CIS + NIST 800-53 + CMMC (defense contractor)
+.\Invoke-M365Assessment.ps1 -TenantId 'contoso.onmicrosoft.com' -Frameworks CIS,NIST-800-53,CMMC
+
+# All supported frameworks
+.\Invoke-M365Assessment.ps1 -TenantId 'contoso.onmicrosoft.com' -Frameworks CIS,NIST-CSF,NIST-800-53,ISO-27001,STIG,PCI-DSS,CMMC,HIPAA,CISA-SCuBA
+```
+
+Supported frameworks: **CIS M365 v6.0.1** (always included), **NIST 800-53 Rev 5**, **NIST CSF 2.0**, **ISO 27001:2022**, **DISA STIG**, **PCI DSS v4.0.1**, **CMMC 2.0**, **HIPAA Security Rule**, **CISA SCuBA**.
+
+When non-CIS frameworks are selected, the HTML report includes a **Security Framework Matrix** section with per-framework coverage cards, a cross-reference table, and filter tabs. Edit `Common/framework-mappings.csv` to customize mappings.
+
 ### Output Structure
 
 ```
@@ -222,6 +241,7 @@ The assessment automatically generates a self-contained HTML report (`_Assessmen
 - **Collapsible sub-sections** — detail tables fold under expandable headings with row counts, keeping the report scannable
 - **Sortable column headers** — click any column header to sort ascending/descending
 - **CIS Compliance Summary** — findings mapped to the CIS Microsoft 365 Foundations Benchmark v6.0.1 with compliance score, pass/fail/warning stat cards, and color-coded findings table
+- **Multi-Framework Compliance Matrix** — cross-reference CIS findings against NIST 800-53, NIST CSF 2.0, ISO 27001, DISA STIG, PCI DSS, CMMC, HIPAA, and CISA SCuBA with per-framework coverage cards and filterable tabs (use `-Frameworks` to select)
 - **Security config highlighting** — Entra, EXO, Defender, SharePoint, and Teams security config tables show color-coded status badges (Pass/Fail/Warning/Review) with row-level tinting
 - **Microsoft Secure Score** — visual stat cards and progress bar showing current score, points earned, and comparison to the M365 global average
 - **Issues & recommendations** with severity badges and remediation guidance
