@@ -135,18 +135,19 @@ function Show-InteractiveWizard {
     $cError   = 'Magenta'
 
     # Section definitions with default selection state
+    # Use string keys to avoid OrderedDictionary int-key vs ordinal-index ambiguity (GitHub #3)
     $sections = [ordered]@{
-        1  = @{ Name = 'Tenant';        Label = 'Tenant Information';           Selected = $true }
-        2  = @{ Name = 'Identity';      Label = 'Identity & Access';            Selected = $true }
-        3  = @{ Name = 'Licensing';     Label = 'Licensing';                    Selected = $true }
-        4  = @{ Name = 'Email';         Label = 'Email & Exchange';             Selected = $true }
-        5  = @{ Name = 'Intune';        Label = 'Intune Devices';               Selected = $true }
-        6  = @{ Name = 'Security';      Label = 'Security';                     Selected = $true }
-        7  = @{ Name = 'Collaboration'; Label = 'Collaboration';                Selected = $true }
-        8  = @{ Name = 'Hybrid';             Label = 'Hybrid Sync';                  Selected = $true }
-        9  = @{ Name = 'Inventory';       Label = 'M&A Inventory (opt-in)';       Selected = $false }
-        10 = @{ Name = 'ActiveDirectory'; Label = 'Active Directory (RSAT)';      Selected = $false }
-        11 = @{ Name = 'ScubaGear';       Label = 'ScubaGear Baseline (PS 5.1)';  Selected = $false }
+        '1'  = @{ Name = 'Tenant';          Label = 'Tenant Information';           Selected = $true }
+        '2'  = @{ Name = 'Identity';        Label = 'Identity & Access';            Selected = $true }
+        '3'  = @{ Name = 'Licensing';       Label = 'Licensing';                    Selected = $true }
+        '4'  = @{ Name = 'Email';           Label = 'Email & Exchange';             Selected = $true }
+        '5'  = @{ Name = 'Intune';          Label = 'Intune Devices';               Selected = $true }
+        '6'  = @{ Name = 'Security';        Label = 'Security';                     Selected = $true }
+        '7'  = @{ Name = 'Collaboration';   Label = 'Collaboration';                Selected = $true }
+        '8'  = @{ Name = 'Hybrid';          Label = 'Hybrid Sync';                  Selected = $true }
+        '9'  = @{ Name = 'Inventory';       Label = 'M&A Inventory (opt-in)';       Selected = $false }
+        '10' = @{ Name = 'ActiveDirectory'; Label = 'Active Directory (RSAT)';      Selected = $false }
+        '11' = @{ Name = 'ScubaGear';       Label = 'ScubaGear Baseline (PS 5.1)';  Selected = $false }
     }
 
     # --- Header ---
@@ -210,7 +211,7 @@ function Show-InteractiveWizard {
                 $optInSections = @('Inventory', 'ActiveDirectory', 'ScubaGear')
                 $rebuilt = [ordered]@{}
                 foreach ($k in @($sections.Keys)) {
-                    $rebuilt[$k] = @{ Name = $sections[$k].Name; Label = $sections[$k].Label; Selected = ($sections[$k].Name -notin $optInSections) }
+                    $rebuilt["$k"] = @{ Name = $sections[$k].Name; Label = $sections[$k].Label; Selected = ($sections[$k].Name -notin $optInSections) }
                 }
                 $sections = $rebuilt
             }
@@ -218,14 +219,14 @@ function Show-InteractiveWizard {
                 # All sections including opt-in
                 $rebuilt = [ordered]@{}
                 foreach ($k in @($sections.Keys)) {
-                    $rebuilt[$k] = @{ Name = $sections[$k].Name; Label = $sections[$k].Label; Selected = $true }
+                    $rebuilt["$k"] = @{ Name = $sections[$k].Name; Label = $sections[$k].Label; Selected = $true }
                 }
                 $sections = $rebuilt
             }
             'N' {
                 $rebuilt = [ordered]@{}
                 foreach ($k in @($sections.Keys)) {
-                    $rebuilt[$k] = @{ Name = $sections[$k].Name; Label = $sections[$k].Label; Selected = $false }
+                    $rebuilt["$k"] = @{ Name = $sections[$k].Name; Label = $sections[$k].Label; Selected = $false }
                 }
                 $sections = $rebuilt
             }
@@ -245,8 +246,8 @@ function Show-InteractiveWizard {
                 $tokens = $userChoice.Trim() -split '[,\s]+'
                 foreach ($token in $tokens) {
                     $num = 0
-                    if ($token -ne '' -and [int]::TryParse($token, [ref]$num) -and $sections.Contains($num)) {
-                        $sections[$num].Selected = -not $sections[$num].Selected
+                    if ($token -ne '' -and [int]::TryParse($token, [ref]$num) -and $sections.Contains("$num")) {
+                        $sections["$num"].Selected = -not $sections["$num"].Selected
                     }
                 }
             }
@@ -405,7 +406,18 @@ $isInteractive = -not $PSBoundParameters.ContainsKey('Section') -and
                  -not $PSBoundParameters.ContainsKey('OutputFolder')
 
 if ($isInteractive -and [Environment]::UserInteractive) {
-    $wizardParams = Show-InteractiveWizard
+    try {
+        $wizardParams = Show-InteractiveWizard
+    }
+    catch {
+        Write-Warning "Interactive wizard failed: $($_.Exception.Message)"
+        Write-Host ''
+        Write-Host '  Run with parameters instead:' -ForegroundColor Yellow
+        Write-Host '    ./Invoke-M365Assessment.ps1 -TenantId "contoso.onmicrosoft.com"' -ForegroundColor Cyan
+        Write-Host ''
+        Write-Host '  For full usage: Get-Help ./Invoke-M365Assessment.ps1 -Full' -ForegroundColor Gray
+        return
+    }
 
     if ($null -eq $wizardParams) {
         return
