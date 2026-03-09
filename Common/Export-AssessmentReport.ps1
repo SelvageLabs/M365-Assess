@@ -518,7 +518,7 @@ foreach ($sectionName in $sections) {
 
     # Summary table for this section
     $null = $sectionHtml.AppendLine("<table class='summary-table'>")
-    $null = $sectionHtml.AppendLine("<thead><tr><th>Collector</th><th>Status</th><th>Items</th><th>Duration</th><th>Notes</th></tr></thead>")
+    $null = $sectionHtml.AppendLine("<thead><tr><th scope='col'>Collector</th><th scope='col'>Status</th><th scope='col'>Items</th><th scope='col'>Duration</th><th scope='col'>Notes</th></tr></thead>")
     $null = $sectionHtml.AppendLine("<tbody>")
 
     foreach ($c in $sectionCollectors) {
@@ -571,20 +571,20 @@ foreach ($sectionName in $sections) {
                 $avgCompare = [math]::Round([double]$score.AverageComparativeScore, 1)
             }
 
-            $scoreColor = if ($pctRaw -ge 80) { '#2ecc71' } elseif ($pctRaw -ge 60) { '#f39c12' } else { '#e74c3c' }
+            $scoreClass = if ($pctRaw -ge 80) { 'success' } elseif ($pctRaw -ge 60) { 'warning' } else { 'danger' }
 
             $null = $sectionHtml.AppendLine("<div class='exec-summary'>")
-            $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: $scoreColor;'><div class='stat-value' style='color: $scoreColor;'>$pctRaw%</div><div class='stat-label'>Secure Score</div></div>")
+            $null = $sectionHtml.AppendLine("<div class='stat-card $scoreClass'><div class='stat-value'>$pctRaw%</div><div class='stat-label'>Secure Score</div></div>")
             $null = $sectionHtml.AppendLine("<div class='stat-card info'><div class='stat-value'>$currentPts</div><div class='stat-label'>Points Earned</div></div>")
             $null = $sectionHtml.AppendLine("<div class='stat-card'><div class='stat-value'>$maxPts</div><div class='stat-label'>Points Possible</div></div>")
             if ($null -ne $avgCompare) {
-                $compColor = if ($pctRaw -ge $avgCompare) { '#2ecc71' } else { '#f39c12' }
-                $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: $compColor;'><div class='stat-value' style='color: $compColor;'>$avgCompare%</div><div class='stat-label'>M365 Average</div></div>")
+                $compClass = if ($pctRaw -ge $avgCompare) { 'success' } else { 'warning' }
+                $null = $sectionHtml.AppendLine("<div class='stat-card $compClass'><div class='stat-value'>$avgCompare%</div><div class='stat-label'>M365 Average</div></div>")
             }
             $null = $sectionHtml.AppendLine("</div>")
 
             # Progress bar
-            $null = $sectionHtml.AppendLine("<div class='score-bar-track'><div class='score-bar-fill' style='width: $pctRaw%; background: $scoreColor;'></div></div>")
+            $null = $sectionHtml.AppendLine("<div class='score-bar-track'><div class='score-bar-fill $scoreClass' style='width: $pctRaw%;'></div></div>")
         }
 
         # ----------------------------------------------------------
@@ -614,28 +614,28 @@ foreach ($sectionName in $sections) {
             }
 
             $mfaPct = if ($mfaCapable -gt 0) { [math]::Round(($mfaRegistered / $mfaCapable) * 100, 1) } else { 0 }
-            $mfaColor = if ($mfaPct -ge 90) { '#2ecc71' } elseif ($mfaPct -ge 70) { '#f39c12' } else { '#e74c3c' }
+            $mfaClass = if ($mfaPct -ge 90) { 'success' } elseif ($mfaPct -ge 70) { 'warning' } else { 'danger' }
 
             $ssprPct = if ($ssprCapable -gt 0) { [math]::Round(($ssprRegistered / $ssprCapable) * 100, 1) } else { 0 }
-            $ssprColor = if ($ssprPct -ge 90) { '#2ecc71' } elseif ($ssprPct -ge 70) { '#f39c12' } else { '#e74c3c' }
+            $ssprClass = if ($ssprPct -ge 90) { 'success' } elseif ($ssprPct -ge 70) { 'warning' } else { 'danger' }
 
             # Color coding for disabled users — red if any exist
-            $disabledColor = if ($disabledUsers -gt 0) { '#e74c3c' } else { '#2ecc71' }
+            $disabledClass = if ($disabledUsers -gt 0) { 'danger' } else { 'success' }
 
             # Color coding for MFA sign-in count relative to total users
             $mfaSignInPct = if ($totalUsers -gt 0) { [math]::Round(($withMfa / $totalUsers) * 100, 1) } else { 0 }
-            $mfaSignInColor = if ($mfaSignInPct -ge 90) { '#2ecc71' } elseif ($mfaSignInPct -ge 70) { '#f39c12' } else { '#e74c3c' }
+            $mfaSignInClass = if ($mfaSignInPct -ge 90) { 'success' } elseif ($mfaSignInPct -ge 70) { 'warning' } else { 'danger' }
 
             $null = $sectionHtml.AppendLine("<div class='exec-summary'>")
             $null = $sectionHtml.AppendLine("<div class='stat-card info'><div class='stat-value'>$totalUsers</div><div class='stat-label'>Total Users</div></div>")
             $null = $sectionHtml.AppendLine("<div class='stat-card info'><div class='stat-value'>$licensedUsers</div><div class='stat-label'>Licensed</div></div>")
-            $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: $mfaColor;'><div class='stat-value' style='color: $mfaColor;'>$mfaPct%</div><div class='stat-label'>MFA Adoption</div><div class='stat-detail'>$mfaRegistered / $mfaCapable capable</div></div>")
-            $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: $ssprColor;'><div class='stat-value' style='color: $ssprColor;'>$ssprPct%</div><div class='stat-label'>SSPR Enrolled</div><div class='stat-detail'>$ssprRegistered / $ssprCapable capable</div></div>")
+            $null = $sectionHtml.AppendLine("<div class='stat-card $mfaClass'><div class='stat-value'>$mfaPct%</div><div class='stat-label'>MFA Adoption</div><div class='stat-detail'>$mfaRegistered / $mfaCapable capable</div></div>")
+            $null = $sectionHtml.AppendLine("<div class='stat-card $ssprClass'><div class='stat-value'>$ssprPct%</div><div class='stat-label'>SSPR Enrolled</div><div class='stat-detail'>$ssprRegistered / $ssprCapable capable</div></div>")
             $null = $sectionHtml.AppendLine("<div class='stat-card info'><div class='stat-value'>$guestUsers</div><div class='stat-label'>Guest Users</div></div>")
-            $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: $disabledColor;'><div class='stat-value' style='color: $disabledColor;'>$disabledUsers</div><div class='stat-label'>Disabled Users</div></div>")
+            $null = $sectionHtml.AppendLine("<div class='stat-card $disabledClass'><div class='stat-value'>$disabledUsers</div><div class='stat-label'>Disabled Users</div></div>")
             $null = $sectionHtml.AppendLine("<div class='stat-card info'><div class='stat-value'>$syncedUsers</div><div class='stat-label'>Synced From On-Prem</div></div>")
             $null = $sectionHtml.AppendLine("<div class='stat-card info'><div class='stat-value'>$cloudOnly</div><div class='stat-label'>Cloud Only</div></div>")
-            $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: $mfaSignInColor;'><div class='stat-value' style='color: $mfaSignInColor;'>$withMfa</div><div class='stat-label'>With MFA</div><div class='stat-detail'>$mfaSignInPct% of all users</div></div>")
+            $null = $sectionHtml.AppendLine("<div class='stat-card $mfaSignInClass'><div class='stat-value'>$withMfa</div><div class='stat-label'>With MFA</div><div class='stat-detail'>$mfaSignInPct% of all users</div></div>")
             $null = $sectionHtml.AppendLine("</div>")
 
             # Cards replace the table — skip standard table rendering
@@ -676,7 +676,7 @@ foreach ($sectionName in $sections) {
                 $null = $sectionHtml.AppendLine("<div class='stat-card warning'><div class='stat-value'>$exoWarn</div><div class='stat-label'>Warning</div></div>")
             }
             if ($exoReview -gt 0) {
-                $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: var(--m365a-accent);'><div class='stat-value'>$exoReview</div><div class='stat-label'>Review</div></div>")
+                $null = $sectionHtml.AppendLine("<div class='stat-card info'><div class='stat-value'>$exoReview</div><div class='stat-label'>Review</div></div>")
             }
             $null = $sectionHtml.AppendLine("</div>")
             # Don't continue — let the CIS table render below
@@ -689,11 +689,11 @@ foreach ($sectionName in $sections) {
             $null = $sectionHtml.AppendLine("<div class='exec-summary'>")
             foreach ($policy in $data) {
                 $policyEnabled = ($policy.Enabled -eq 'True')
-                $policyColor = if ($policyEnabled) { '#2ecc71' } else { '#e74c3c' }
+                $policyClass = if ($policyEnabled) { 'success' } else { 'danger' }
                 $policyIcon = if ($policyEnabled) { 'Enabled' } else { 'Disabled' }
                 $policyLabel = ConvertTo-HtmlSafe -Text $policy.PolicyType
                 $policyDetail = ConvertTo-HtmlSafe -Text $policy.Name
-                $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: $policyColor;'><div class='stat-value' style='color: $policyColor; font-size: 18pt;'>$policyIcon</div><div class='stat-label'>$policyLabel</div><div class='stat-detail'>$policyDetail</div></div>")
+                $null = $sectionHtml.AppendLine("<div class='stat-card $policyClass'><div class='stat-value stat-value-sm'>$policyIcon</div><div class='stat-label'>$policyLabel</div><div class='stat-detail'>$policyDetail</div></div>")
             }
             $null = $sectionHtml.AppendLine("</div>")
             # Don't continue — let detail table render below
@@ -720,7 +720,7 @@ foreach ($sectionName in $sections) {
             $dnsColumns = @($dnsData[0].PSObject.Properties.Name)
 
             $spfConfigured = @($dnsData | Where-Object { $_.SPF -and $_.SPF -ne 'Not configured' -and $_.SPF -ne 'DNS lookup failed' }).Count
-            $spfColor = if ($spfConfigured -eq $totalDomains) { '#2ecc71' } else { '#e74c3c' }
+            $spfClass = if ($spfConfigured -eq $totalDomains) { 'success' } else { 'danger' }
 
             $dmarcConfigured = @($dnsData | Where-Object { $_.DMARC -and $_.DMARC -ne 'Not configured' }).Count
             $dmarcEnforced = 0
@@ -729,38 +729,38 @@ foreach ($sectionName in $sections) {
                 $dmarcEnforced = @($dnsData | Where-Object { $_.DMARCPolicy -match '^(reject|quarantine)' }).Count
                 $dmarcMonitoring = @($dnsData | Where-Object { $_.DMARCPolicy -match '^none' }).Count
             }
-            $dmarcColor = if ($dmarcEnforced -eq $totalDomains) { '#2ecc71' } elseif ($dmarcConfigured -gt 0) { '#f39c12' } else { '#e74c3c' }
+            $dmarcClass = if ($dmarcEnforced -eq $totalDomains) { 'success' } elseif ($dmarcConfigured -gt 0) { 'warning' } else { 'danger' }
 
             $dkimKey = if ($dnsColumns -contains 'DKIMSelector1') { 'DKIMSelector1' } else { 'DKIMSelector' }
             $dkimConfigured = @($dnsData | Where-Object { $_.$dkimKey -and $_.$dkimKey -ne 'Not configured' }).Count
-            $dkimColor = if ($dkimConfigured -eq $totalDomains) { '#2ecc71' } elseif ($dkimConfigured -gt 0) { '#f39c12' } else { '#e74c3c' }
+            $dkimClass = if ($dkimConfigured -eq $totalDomains) { 'success' } elseif ($dkimConfigured -gt 0) { 'warning' } else { 'danger' }
 
             $mtaStsConfigured = 0
             if ($dnsColumns -contains 'MTASTS') {
                 $mtaStsConfigured = @($dnsData | Where-Object { $_.MTASTS -and $_.MTASTS -ne 'Not configured' }).Count
             }
-            $mtaStsColor = if ($mtaStsConfigured -eq $totalDomains) { '#2ecc71' } elseif ($mtaStsConfigured -gt 0) { '#f39c12' } else { '#e74c3c' }
+            $mtaStsClass = if ($mtaStsConfigured -eq $totalDomains) { 'success' } elseif ($mtaStsConfigured -gt 0) { 'warning' } else { 'danger' }
 
             $tlsRptConfigured = 0
             if ($dnsColumns -contains 'TLSRPT') {
                 $tlsRptConfigured = @($dnsData | Where-Object { $_.TLSRPT -and $_.TLSRPT -ne 'Not configured' }).Count
             }
-            $tlsRptColor = if ($tlsRptConfigured -eq $totalDomains) { '#2ecc71' } elseif ($tlsRptConfigured -gt 0) { '#f39c12' } else { '#e74c3c' }
+            $tlsRptClass = if ($tlsRptConfigured -eq $totalDomains) { 'success' } elseif ($tlsRptConfigured -gt 0) { 'warning' } else { 'danger' }
 
             $publicConfirmed = 0
             if ($dnsColumns -contains 'PublicDNSConfirm') {
                 $publicConfirmed = @($dnsData | Where-Object { $_.PublicDNSConfirm -match '^Confirmed' }).Count
             }
-            $publicColor = if ($publicConfirmed -eq $totalDomains) { '#2ecc71' } elseif ($publicConfirmed -gt 0) { '#f39c12' } else { '#e74c3c' }
+            $publicClass = if ($publicConfirmed -eq $totalDomains) { 'success' } elseif ($publicConfirmed -gt 0) { 'warning' } else { 'danger' }
 
             $null = $sectionHtml.AppendLine("<div class='exec-summary'>")
-            $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: $spfColor;'><div class='stat-value' style='color: $spfColor;'>$spfConfigured / $totalDomains</div><div class='stat-label'>SPF Configured</div></div>")
-            $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: $dmarcColor;'><div class='stat-value' style='color: $dmarcColor;'>$dmarcEnforced / $totalDomains</div><div class='stat-label'>DMARC Enforced</div><div class='stat-detail'>$dmarcMonitoring monitoring only</div></div>")
-            $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: $dkimColor;'><div class='stat-value' style='color: $dkimColor;'>$dkimConfigured / $totalDomains</div><div class='stat-label'>DKIM Configured</div></div>")
-            $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: $mtaStsColor;'><div class='stat-value' style='color: $mtaStsColor;'>$mtaStsConfigured / $totalDomains</div><div class='stat-label'>MTA-STS</div><div class='stat-detail'>Transport encryption</div></div>")
-            $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: $tlsRptColor;'><div class='stat-value' style='color: $tlsRptColor;'>$tlsRptConfigured / $totalDomains</div><div class='stat-label'>TLS-RPT</div><div class='stat-detail'>TLS failure reporting</div></div>")
+            $null = $sectionHtml.AppendLine("<div class='stat-card $spfClass'><div class='stat-value'>$spfConfigured / $totalDomains</div><div class='stat-label'>SPF Configured</div></div>")
+            $null = $sectionHtml.AppendLine("<div class='stat-card $dmarcClass'><div class='stat-value'>$dmarcEnforced / $totalDomains</div><div class='stat-label'>DMARC Enforced</div><div class='stat-detail'>$dmarcMonitoring monitoring only</div></div>")
+            $null = $sectionHtml.AppendLine("<div class='stat-card $dkimClass'><div class='stat-value'>$dkimConfigured / $totalDomains</div><div class='stat-label'>DKIM Configured</div></div>")
+            $null = $sectionHtml.AppendLine("<div class='stat-card $mtaStsClass'><div class='stat-value'>$mtaStsConfigured / $totalDomains</div><div class='stat-label'>MTA-STS</div><div class='stat-detail'>Transport encryption</div></div>")
+            $null = $sectionHtml.AppendLine("<div class='stat-card $tlsRptClass'><div class='stat-value'>$tlsRptConfigured / $totalDomains</div><div class='stat-label'>TLS-RPT</div><div class='stat-detail'>TLS failure reporting</div></div>")
             if ($dnsColumns -contains 'PublicDNSConfirm') {
-                $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: $publicColor;'><div class='stat-value' style='color: $publicColor;'>$publicConfirmed / $totalDomains</div><div class='stat-label'>Public DNS</div><div class='stat-detail'>Confirmed live</div></div>")
+                $null = $sectionHtml.AppendLine("<div class='stat-card $publicClass'><div class='stat-value'>$publicConfirmed / $totalDomains</div><div class='stat-label'>Public DNS</div><div class='stat-detail'>Confirmed live</div></div>")
             }
             $null = $sectionHtml.AppendLine("</div>")
             # Don't continue — let the DNS per-domain table render below
@@ -783,9 +783,9 @@ foreach ($sectionName in $sections) {
             $shallFail = @($scubaData | Where-Object { $_.Result -eq 'Fail' -and $_.Criticality -match 'Shall' }).Count
             $shouldFail = @($scubaData | Where-Object { $_.Result -eq 'Fail' -and $_.Criticality -match 'Should' }).Count
 
-            $passColor = if ($passCount -eq $totalControls) { '#2ecc71' } elseif ($passCount -gt 0) { '#2ecc71' } else { '#95a5a6' }
-            $failColor = if ($failCount -eq 0) { '#2ecc71' } else { '#e74c3c' }
-            $naColor = '#95a5a6'
+            $passClass = if ($passCount -gt 0) { 'success' } else { '' }
+            $failClass = if ($failCount -eq 0) { 'success' } else { 'danger' }
+            $naClass = ''
 
             $null = $sectionHtml.AppendLine("<div class='section-advisory'>")
             $null = $sectionHtml.AppendLine("<strong>CISA SCuBA Baseline Compliance</strong>")
@@ -801,11 +801,11 @@ foreach ($sectionName in $sections) {
             $null = $sectionHtml.AppendLine("</div>")
 
             $null = $sectionHtml.AppendLine("<div class='exec-summary'>")
-            $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: $passColor;'><div class='stat-value' style='color: $passColor;'>$passCount</div><div class='stat-label'>Pass</div><div class='stat-detail'>of $totalControls controls</div></div>")
-            $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: $failColor;'><div class='stat-value' style='color: $failColor;'>$failCount</div><div class='stat-label'>Fail</div><div class='stat-detail'>$shallFail Shall / $shouldFail Should</div></div>")
-            $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: $naColor;'><div class='stat-value' style='color: $naColor;'>$naCount</div><div class='stat-label'>N/A</div><div class='stat-detail'>Not applicable or not implemented</div></div>")
+            $null = $sectionHtml.AppendLine("<div class='stat-card $passClass'><div class='stat-value'>$passCount</div><div class='stat-label'>Pass</div><div class='stat-detail'>of $totalControls controls</div></div>")
+            $null = $sectionHtml.AppendLine("<div class='stat-card $failClass'><div class='stat-value'>$failCount</div><div class='stat-label'>Fail</div><div class='stat-detail'>$shallFail Shall / $shouldFail Should</div></div>")
+            $null = $sectionHtml.AppendLine("<div class='stat-card $naClass'><div class='stat-value'>$naCount</div><div class='stat-label'>N/A</div><div class='stat-detail'>Not applicable or not implemented</div></div>")
             if ($warnCount -gt 0) {
-                $null = $sectionHtml.AppendLine("<div class='stat-card' style='border-top-color: #f39c12;'><div class='stat-value' style='color: #f39c12;'>$warnCount</div><div class='stat-label'>Warning</div></div>")
+                $null = $sectionHtml.AppendLine("<div class='stat-card warning'><div class='stat-value'>$warnCount</div><div class='stat-label'>Warning</div></div>")
             }
             $null = $sectionHtml.AppendLine("</div>")
 
@@ -827,7 +827,7 @@ foreach ($sectionName in $sections) {
         $null = $sectionHtml.AppendLine("<thead><tr>")
         foreach ($col in $columns) {
             $displayCol = Format-ColumnHeader -Name $col
-            $null = $sectionHtml.AppendLine("<th>$(ConvertTo-HtmlSafe -Text $displayCol)</th>")
+            $null = $sectionHtml.AppendLine("<th scope='col'>$(ConvertTo-HtmlSafe -Text $displayCol)</th>")
         }
         $null = $sectionHtml.AppendLine("</tr></thead>")
         $null = $sectionHtml.AppendLine("<tbody>")
@@ -1053,10 +1053,10 @@ if ($allCisFindings.Count -gt 0 -and $frameworkMappings.Count -gt 0) {
             $profileScored = $profileFindings.Count
             $profileScore = if ($profileScored -gt 0) { [math]::Round(($profilePass / $profileScored) * 100, 1) } else { 0 }
             $scoreDisplay = if ($profileScored -gt 0) { "$profileScore%" } else { 'N/A' }
-            $scoreColor = if ($profileScored -eq 0) { 'var(--m365a-medium-gray)' } elseif ($profileScore -ge 80) { '#2ecc71' } elseif ($profileScore -ge 60) { '#f39c12' } else { '#e74c3c' }
+            $scoreClass = if ($profileScored -eq 0) { '' } elseif ($profileScore -ge 80) { 'success' } elseif ($profileScore -ge 60) { 'warning' } else { 'danger' }
             $catalogTotal = if ($catalogCounts.ContainsKey($fwKey)) { $catalogCounts[$fwKey] } else { 0 }
             $coverageLabel = if ($catalogTotal -gt 0) { "$($profileFindings.Count) of $catalogTotal assessed" } else { "$($profileFindings.Count) assessed" }
-            $null = $complianceHtml.AppendLine("<div class='stat-card fw-card' data-fw='$col' style='border-top-color: $scoreColor;'><div class='stat-value' style='color: $scoreColor;'>$scoreDisplay</div><div class='stat-label'>$($fwInfo.Label)<br><small>$coverageLabel</small></div></div>")
+            $null = $complianceHtml.AppendLine("<div class='stat-card fw-card $scoreClass' data-fw='$col'><div class='stat-value'>$scoreDisplay</div><div class='stat-label'>$($fwInfo.Label)<br><small>$coverageLabel</small></div></div>")
         }
         else {
             # Non-CIS card — show mapping coverage
@@ -1064,9 +1064,9 @@ if ($allCisFindings.Count -gt 0 -and $frameworkMappings.Count -gt 0) {
             $mappedCount = $mappedControls.Count
             $totalCount = if ($catalogCounts.ContainsKey($fwKey)) { $catalogCounts[$fwKey] } else { 0 }
             $coveragePct = if ($totalCount -gt 0) { [math]::Round(($mappedCount / $totalCount) * 100, 0) } else { 0 }
-            $coverageColor = if ($totalCount -eq 0) { 'var(--m365a-medium-gray)' } elseif ($coveragePct -ge 70) { '#2ecc71' } elseif ($coveragePct -ge 50) { '#f39c12' } else { '#e74c3c' }
+            $coverageClass = if ($totalCount -eq 0) { '' } elseif ($coveragePct -ge 70) { 'success' } elseif ($coveragePct -ge 50) { 'warning' } else { 'danger' }
             $coverageLabel = if ($totalCount -gt 0) { "$mappedCount of $totalCount mapped" } else { "$mappedCount controls mapped" }
-            $null = $complianceHtml.AppendLine("<div class='stat-card fw-card' data-fw='$col' style='border-top-color: $coverageColor;'><div class='stat-value' style='color: $coverageColor;'>$coveragePct%</div><div class='stat-label'>$($fwInfo.Label)<br><small>$coverageLabel</small></div></div>")
+            $null = $complianceHtml.AppendLine("<div class='stat-card fw-card $coverageClass' data-fw='$col'><div class='stat-value'>$coveragePct%</div><div class='stat-label'>$($fwInfo.Label)<br><small>$coverageLabel</small></div></div>")
         }
     }
     $null = $complianceHtml.AppendLine("</div>")
@@ -1093,10 +1093,10 @@ if ($allCisFindings.Count -gt 0 -and $frameworkMappings.Count -gt 0) {
     $null = $complianceHtml.AppendLine("<table class='data-table matrix-table' id='complianceTable'>")
 
     # Header row — fixed columns + one column per framework
-    $headerCols = "<th>Control</th><th>Description</th><th>Status</th>"
+    $headerCols = "<th scope='col'>Control</th><th scope='col'>Description</th><th scope='col'>Status</th>"
     foreach ($fwKey in $allFrameworkKeys) {
         $fwInfo = $frameworkLookup[$fwKey]
-        $headerCols += "<th class='fw-col' data-fw='$($fwInfo.Col)'>$($fwInfo.Label)</th>"
+        $headerCols += "<th scope='col' class='fw-col' data-fw='$($fwInfo.Col)'>$($fwInfo.Label)</th>"
     }
     $null = $complianceHtml.AppendLine("<thead><tr>$headerCols</tr></thead>")
     $null = $complianceHtml.AppendLine("<tbody>")
@@ -1151,7 +1151,7 @@ if ($issues.Count -gt 0) {
     $null = $issuesHtml.AppendLine("<details class='section' open>")
     $null = $issuesHtml.AppendLine("<summary><h2>Technical Issues</h2></summary>")
     $null = $issuesHtml.AppendLine("<table class='data-table'>")
-    $null = $issuesHtml.AppendLine("<thead><tr><th>Severity</th><th>Section</th><th>Collector</th><th>Description</th><th>Recommended Action</th></tr></thead>")
+    $null = $issuesHtml.AppendLine("<thead><tr><th scope='col'>Severity</th><th scope='col'>Section</th><th scope='col'>Collector</th><th scope='col'>Description</th><th scope='col'>Recommended Action</th></tr></thead>")
     $null = $issuesHtml.AppendLine("<tbody>")
 
     foreach ($issue in $issues) {
@@ -1215,6 +1215,42 @@ $html = @"
             --m365a-light-gray: #F1F5F9;
             --m365a-border: #CBD5E1;
             --m365a-white: #ffffff;
+            --m365a-success: #2ecc71;
+            --m365a-warning: #f39c12;
+            --m365a-danger: #e74c3c;
+            --m365a-info: #3498db;
+            --m365a-success-bg: #d4edda;
+            --m365a-warning-bg: #fff3cd;
+            --m365a-danger-bg: #f8d7da;
+            --m365a-info-bg: #d1ecf1;
+            --m365a-body-bg: #ffffff;
+            --m365a-text: #1E293B;
+            --m365a-card-bg: #ffffff;
+            --m365a-hover-bg: #e8f4f8;
+        }
+
+        body.dark-theme {
+            --m365a-primary: #60A5FA;
+            --m365a-dark-primary: #93C5FD;
+            --m365a-accent: #3B82F6;
+            --m365a-dark: #F1F5F9;
+            --m365a-dark-gray: #E2E8F0;
+            --m365a-medium-gray: #94A3B8;
+            --m365a-light-gray: #1E293B;
+            --m365a-border: #334155;
+            --m365a-white: #0F172A;
+            --m365a-body-bg: #0F172A;
+            --m365a-text: #E2E8F0;
+            --m365a-card-bg: #1E293B;
+            --m365a-hover-bg: #1E3A5F;
+            --m365a-success: #34D399;
+            --m365a-warning: #FBBF24;
+            --m365a-danger: #F87171;
+            --m365a-info: #60A5FA;
+            --m365a-success-bg: #064E3B;
+            --m365a-warning-bg: #78350F;
+            --m365a-danger-bg: #7F1D1D;
+            --m365a-info-bg: #1E3A5F;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1223,8 +1259,8 @@ $html = @"
             font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
             font-size: 11pt;
             line-height: 1.5;
-            color: var(--m365a-dark-gray);
-            background: var(--m365a-white);
+            color: var(--m365a-text);
+            background: var(--m365a-body-bg);
         }
 
         /* ----------------------------------------------------------
@@ -1525,7 +1561,7 @@ $html = @"
            Score Progress Bar
            ---------------------------------------------------------- */
         .score-bar-track {
-            background: #e9ecef;
+            background: var(--m365a-border);
             border-radius: 8px;
             height: 12px;
             margin: 0 0 20px 0;
@@ -1536,6 +1572,9 @@ $html = @"
             height: 100%;
             border-radius: 8px;
         }
+        .score-bar-fill.success { background: var(--m365a-success); }
+        .score-bar-fill.warning { background: var(--m365a-warning); }
+        .score-bar-fill.danger { background: var(--m365a-danger); }
 
         /* ----------------------------------------------------------
            Executive Summary
@@ -1575,13 +1614,19 @@ $html = @"
             margin-top: 3px;
         }
 
-        .stat-card.success { border-top-color: #2ecc71; }
-        .stat-card.warning { border-top-color: #f39c12; }
+        .stat-card .stat-value-sm { font-size: 18pt; }
+
+        .stat-card.success { border-top-color: var(--m365a-success); }
+        .stat-card.success .stat-value { color: var(--m365a-success); }
+        .stat-card.warning { border-top-color: var(--m365a-warning); }
+        .stat-card.warning .stat-value { color: var(--m365a-warning); }
+        .stat-card.danger { border-top-color: var(--m365a-danger); }
+        .stat-card.danger .stat-value { color: var(--m365a-danger); }
         .stat-card.error { border-top-color: var(--m365a-primary); }
         .stat-card.info { border-top-color: var(--m365a-accent); }
 
         .cis-disclaimer {
-            background: #f0f7ff;
+            background: var(--m365a-info-bg);
             border-left: 3px solid var(--m365a-accent);
             padding: 15px;
             margin: 15px 0;
@@ -1596,19 +1641,19 @@ $html = @"
            Section Advisory Blocks
            ---------------------------------------------------------- */
         .section-advisory {
-            background: #f8f9fa;
+            background: var(--m365a-light-gray);
             border-left: 3px solid var(--m365a-accent);
             padding: 15px 18px;
             margin: 12px 0 8px 0;
             border-radius: 0 6px 6px 0;
             font-size: 9.5pt;
-            color: #4a5568;
+            color: var(--m365a-medium-gray);
             line-height: 1.5;
         }
         .section-advisory strong { color: var(--m365a-dark); }
         .section-advisory p { margin: 6px 0; }
         .section-advisory code {
-            background: #e2e8f0;
+            background: var(--m365a-border);
             padding: 1px 5px;
             border-radius: 3px;
             font-size: 9pt;
@@ -1616,7 +1661,7 @@ $html = @"
         .section-advisory .advisory-links {
             margin-top: 10px;
             padding-top: 8px;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid var(--m365a-border);
             font-size: 8.5pt;
         }
         .section-advisory .advisory-links a {
@@ -1661,7 +1706,7 @@ $html = @"
         }
 
         tr:nth-child(even) { background: var(--m365a-light-gray); }
-        tr:hover { background: #e8f4f8; }
+        tr:hover { background: var(--m365a-hover-bg); }
 
         .num { text-align: right; font-variant-numeric: tabular-nums; }
         .notes { color: var(--m365a-medium-gray); font-size: 9pt; }
@@ -1680,11 +1725,12 @@ $html = @"
             letter-spacing: 0.5px;
         }
 
-        .badge-complete { background: #d4edda; color: #155724; }
+        .badge-complete { background: var(--m365a-success-bg); color: #155724; }
+        .badge-success { background: var(--m365a-success-bg); color: #155724; }
         .badge-skipped { background: #e2e3e5; color: #383d41; }
-        .badge-failed { background: #f8d7da; color: #721c24; }
-        .badge-warning { background: #fff3cd; color: #856404; }
-        .badge-info { background: #d1ecf1; color: #0c5460; }
+        .badge-failed { background: var(--m365a-danger-bg); color: #721c24; }
+        .badge-warning { background: var(--m365a-warning-bg); color: #856404; }
+        .badge-info { background: var(--m365a-info-bg); color: #0c5460; }
 
         /* ----------------------------------------------------------
            Section
@@ -1745,7 +1791,7 @@ $html = @"
             user-select: none;
         }
 
-        .data-table th:hover { background: #2a2a4e; }
+        .data-table th:hover { background: var(--m365a-dark-gray); }
 
         .data-table th::after {
             content: ' \2195';
@@ -1841,10 +1887,10 @@ $html = @"
             max-width: 350px;
         }
 
-        .cis-row-fail { border-left: 3px solid var(--m365a-primary); background-color: #fef2f2 !important; }
-        .cis-row-warning { border-left: 3px solid #f39c12; background-color: #fffbeb !important; }
-        .cis-row-review { border-left: 3px solid var(--m365a-accent); background-color: #f0f9ff !important; }
-        .cis-row-unknown { border-left: 3px solid var(--m365a-medium-gray); background-color: #f9fafb !important; }
+        .cis-row-fail { border-left: 3px solid var(--m365a-danger); background-color: var(--m365a-danger-bg); }
+        .cis-row-warning { border-left: 3px solid var(--m365a-warning); background-color: var(--m365a-warning-bg); }
+        .cis-row-review { border-left: 3px solid var(--m365a-accent); background-color: var(--m365a-info-bg); }
+        .cis-row-unknown { border-left: 3px solid var(--m365a-medium-gray); background-color: var(--m365a-light-gray); }
 
         /* Framework cross-reference tags */
         .framework-refs { white-space: normal; max-width: 260px; }
@@ -1862,21 +1908,21 @@ $html = @"
         .fw-unmapped { color: var(--m365a-border); font-size: 0.85em; }
 
         /* Framework multi-selector */
-        .fw-selector { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 10px 14px; margin: 12px 0; background: #f8fafc; border: 1px solid var(--m365a-border); border-radius: 6px; }
+        .fw-selector { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 10px 14px; margin: 12px 0; background: var(--m365a-light-gray); border: 1px solid var(--m365a-border); border-radius: 6px; }
         .fw-selector-label { font-weight: 600; font-size: 0.85em; color: var(--m365a-dark); margin-right: 4px; }
-        .fw-checkbox { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border: 1px solid var(--m365a-border); border-radius: 4px; font-size: 0.82em; cursor: pointer; transition: all 0.15s; background: #fff; user-select: none; }
-        .fw-checkbox:hover { background: #f0f4ff; border-color: #93c5fd; }
+        .fw-checkbox { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border: 1px solid var(--m365a-border); border-radius: 4px; font-size: 0.82em; cursor: pointer; transition: all 0.15s; background: var(--m365a-card-bg); user-select: none; }
+        .fw-checkbox:hover { background: var(--m365a-hover-bg); border-color: var(--m365a-accent); }
         .fw-checkbox.active { background: var(--m365a-dark); color: #fff; border-color: var(--m365a-dark); }
         .fw-checkbox input[type="checkbox"] { display: none; }
         .fw-selector-actions { margin-left: auto; display: flex; gap: 4px; }
-        .fw-action-btn { padding: 3px 10px; border: 1px solid var(--m365a-border); border-radius: 3px; background: #fff; cursor: pointer; font-size: 0.78em; color: var(--m365a-medium-gray); }
-        .fw-action-btn:hover { background: #f0f4ff; }
+        .fw-action-btn { padding: 3px 10px; border: 1px solid var(--m365a-border); border-radius: 3px; background: var(--m365a-card-bg); cursor: pointer; font-size: 0.78em; color: var(--m365a-medium-gray); }
+        .fw-action-btn:hover { background: var(--m365a-hover-bg); }
 
         /* Status filter */
-        .status-filter { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px 14px; margin: 0 0 12px; background: #f8fafc; border: 1px solid var(--m365a-border); border-radius: 6px; }
+        .status-filter { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px 14px; margin: 0 0 12px; background: var(--m365a-light-gray); border: 1px solid var(--m365a-border); border-radius: 6px; }
         .status-filter-label { font-weight: 600; font-size: 0.85em; color: var(--m365a-dark); margin-right: 4px; }
-        .status-checkbox { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border: 1px solid var(--m365a-border); border-radius: 4px; font-size: 0.82em; cursor: pointer; transition: all 0.15s; background: #fff; user-select: none; }
-        .status-checkbox:hover { border-color: #93c5fd; }
+        .status-checkbox { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border: 1px solid var(--m365a-border); border-radius: 4px; font-size: 0.82em; cursor: pointer; transition: all 0.15s; background: var(--m365a-card-bg); user-select: none; }
+        .status-checkbox:hover { border-color: var(--m365a-accent); }
         .status-checkbox input[type="checkbox"] { display: none; }
         .status-fail.active { background: #fef2f2; color: #991b1b; border-color: #fca5a5; font-weight: 600; }
         .status-warning.active { background: #fffbeb; color: #92400e; border-color: #fcd34d; font-weight: 600; }
@@ -1887,6 +1933,21 @@ $html = @"
         /* Matrix table */
         .matrix-table td { vertical-align: top; }
         .matrix-table .framework-refs { max-width: 180px; }
+
+        /* ----------------------------------------------------------
+           Theme Toggle
+           ---------------------------------------------------------- */
+        .theme-toggle {
+            position: fixed; top: 16px; right: 16px; z-index: 1000;
+            background: var(--m365a-card-bg); border: 1px solid var(--m365a-border);
+            border-radius: 50%; width: 40px; height: 40px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: all 0.3s ease;
+            font-size: 16px; line-height: 1; padding: 0;
+        }
+        .theme-toggle:hover { transform: scale(1.1); }
+        body:not(.dark-theme) .theme-icon-dark { display: none; }
+        body.dark-theme .theme-icon-light { display: none; }
 
         /* ----------------------------------------------------------
            Footer
@@ -1906,10 +1967,20 @@ $html = @"
         }
 
         /* ----------------------------------------------------------
+           Focus Styles
+           ---------------------------------------------------------- */
+        a:focus-visible, .theme-toggle:focus-visible, .data-table th:focus-visible {
+            outline: 2px solid var(--m365a-accent);
+            outline-offset: 2px;
+        }
+
+        /* ----------------------------------------------------------
            Print Styles
            ---------------------------------------------------------- */
         @media print {
             body { font-size: 9pt; }
+            thead { display: table-header-group; }
+            .theme-toggle { display: none; }
 
             .cover-page {
                 min-height: auto;
@@ -1963,8 +2034,14 @@ $html = @"
     </style>
 </head>
 <body>
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle light/dark mode">
+        <span class="theme-icon-light">&#9788;</span>
+        <span class="theme-icon-dark">&#9790;</span>
+    </button>
+
     <!-- Cover Page -->
-    <div class="cover-page">
+    <header class="cover-page">
         $logoImgTag
         <div class="cover-title">M365 Environment</div>
         <div class="cover-title" style="margin-top: 0;">Assessment Report</div>
@@ -1972,10 +2049,10 @@ $html = @"
         <div class="cover-tenant">$(ConvertTo-HtmlSafe -Text $TenantName)</div>
         <div class="cover-subtitle">$assessmentDate</div>
         <div class="cover-date">v$assessmentVersion</div>
-    </div>
+    </header>
 
     <!-- Content -->
-    <div class="content">
+    <main class="content">
         <!-- Executive Summary -->
         <h1>Executive Summary</h1>
         <p>This report summarizes the findings of the Microsoft 365 environment assessment
@@ -2059,13 +2136,28 @@ if ($issues.Count -gt 0) {
 $html += @"
 
         <!-- Footer -->
-        <div class="report-footer">
+        <footer class="report-footer">
             <p>Generated by <span class="m365a-name">M365 Assess</span>
             M365 Assessment Tool v$assessmentVersion</p>
             <p>$(Get-Date -Format 'MMMM d, yyyy h:mm tt')</p>
-        </div>
-    </div>
+        </footer>
+    </main>
     <script>
+    // Theme toggle
+    (function() {
+        var toggle = document.getElementById('themeToggle');
+        var stored = localStorage.getItem('m365a-theme');
+        if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.body.classList.add('dark-theme');
+        }
+        if (toggle) {
+            toggle.addEventListener('click', function() {
+                document.body.classList.toggle('dark-theme');
+                localStorage.setItem('m365a-theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+            });
+        }
+    })();
+
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.data-table').forEach(function(table) {
             var headers = table.querySelectorAll('thead th');
