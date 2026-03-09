@@ -144,10 +144,21 @@ if (-not $TenantName) {
 }
 
 # Derive domain prefix from tenant CSV for report filename
+# Check DefaultDomain first, then scan VerifiedDomains (DefaultDomain may be a vanity domain)
 if ($reportDomainPrefix -eq '' -and $tenantData) {
-    $defaultDomainVal = if ($tenantData[0].PSObject.Properties.Name -contains 'DefaultDomain') { $tenantData[0].DefaultDomain } else { '' }
+    $t0 = $tenantData[0]
+    $t0Props = @($t0.PSObject.Properties.Name)
+    $defaultDomainVal = if ($t0Props -contains 'DefaultDomain') { $t0.DefaultDomain } else { '' }
     if ($defaultDomainVal -match '^([^.]+)\.onmicrosoft\.(com|us)$') {
         $reportDomainPrefix = $Matches[1]
+    }
+    elseif ($t0Props -contains 'VerifiedDomains') {
+        $onmsDomain = ($t0.VerifiedDomains -split ';\s*') | Where-Object { $_ -match '\.onmicrosoft\.(com|us)$' } | Select-Object -First 1
+        if ($onmsDomain -match '^([^.]+)\.onmicrosoft\.(com|us)$') {
+            $reportDomainPrefix = $Matches[1]
+        }
+    }
+    if ($reportDomainPrefix) {
         $OutputPath = Join-Path -Path $AssessmentFolder -ChildPath "_Assessment-Report_${reportDomainPrefix}.html"
     }
 }

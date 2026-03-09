@@ -695,12 +695,6 @@ function Show-AssessmentHeader {
         Write-Host "        ░▒▓█  v$Version  █▓▒░" -ForegroundColor DarkGray
     }
     Write-Host ''
-    Write-Host "    Output: $OutputPath" -ForegroundColor White
-    if ($LogPath) {
-        $logBaseName = Split-Path -Leaf $LogPath
-        Write-Host "    Log:    $logBaseName" -ForegroundColor DarkGray
-    }
-    Write-Host ''
 }
 
 function Show-SectionHeader {
