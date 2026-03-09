@@ -1080,6 +1080,24 @@ function Connect-RequiredService {
 
             $connectedServices.Add($svc) | Out-Null
             Write-AssessmentLog -Level INFO -Message "Connected to $svc successfully." -Section $SectionName
+
+            # After first Graph connection, capture connected tenant domain for
+            # later use (e.g. ScubaGear PS5 invocation needs explicit Organization).
+            if ($svc -eq 'Graph' -and -not $script:resolvedTenantDomain) {
+                try {
+                    $orgInfo = Get-MgOrganization -ErrorAction Stop | Select-Object -First 1
+                    $initialDomain = $orgInfo.VerifiedDomains | Where-Object { $_.IsInitial -eq $true } | Select-Object -First 1
+                    if ($initialDomain) {
+                        $script:resolvedTenantDomain = $initialDomain.Name
+                        $script:resolvedTenantId = $orgInfo.Id
+                        $script:resolvedTenantDisplayName = $orgInfo.DisplayName
+                        Write-AssessmentLog -Level INFO -Message "Connected tenant: $($script:resolvedTenantDisplayName) ($($script:resolvedTenantDomain)) [ID: $($script:resolvedTenantId)]" -Section $SectionName
+                    }
+                }
+                catch {
+                    Write-AssessmentLog -Level WARN -Message "Could not resolve tenant info from Graph: $($_.Exception.Message)" -Section $SectionName
+                }
+            }
         }
         catch {
             $failedServices.Add($svc) | Out-Null
@@ -1244,7 +1262,64 @@ foreach ($sectionName in $Section) {
                 $collectorParams['M365Environment'] = $M365Environment
                 $collectorParams['ScubaOutputPath'] = Join-Path -Path $assessmentFolder -ChildPath 'ScubaGear-Report'
                 $collectorParams['SkipModuleCheck'] = $false
-                if ($TenantId) { $collectorParams['Organization'] = $TenantId }
+
+                # Organization is REQUIRED for ScubaGear — without it, PS5 reuses
+                # cached tokens which may belong to a different tenant.
+                # IMPORTANT: ScubaGear passes Organization to Connect-MgGraph -TenantId.
+                # MSAL requires the *.onmicrosoft.com initial domain or tenant GUID —
+                # vanity domains (e.g. dz9m.com) are not reliably resolved as tenant hints.
+                # Always prefer the resolved initial domain over user-supplied TenantId.
+                $scubaOrg = $null
+                if ($script:resolvedTenantDomain) {
+                    $scubaOrg = $script:resolvedTenantDomain
+                }
+                if (-not $scubaOrg -and $TenantId) {
+                    # ScubaGear is running without a prior Graph connection (standalone mode).
+                    # We must resolve the onmicrosoft.com domain via a quick Graph connection,
+                    # because vanity domains are not reliable MSAL tenant hints.
+                    Write-Host "    Resolving tenant domain via Graph (standalone ScubaGear mode)..." -ForegroundColor Gray
+                    try {
+                        $scubaConnectParams = @{ Service = 'Graph'; Scopes = @('Organization.Read.All') }
+                        $scubaConnectParams['TenantId'] = $TenantId
+                        if ($M365Environment -ne 'commercial') {
+                            $scubaConnectParams['M365Environment'] = $M365Environment
+                        }
+                        $prevConsoleOut = [Console]::Out
+                        $prevConsoleError = [Console]::Error
+                        [Console]::SetOut([System.IO.TextWriter]::Null)
+                        [Console]::SetError([System.IO.TextWriter]::Null)
+                        try { & $connectServicePath @scubaConnectParams 2>$null 6>$null }
+                        finally {
+                            [Console]::SetOut($prevConsoleOut)
+                            [Console]::SetError($prevConsoleError)
+                        }
+                        $orgInfo = Get-MgOrganization -ErrorAction Stop | Select-Object -First 1
+                        $initialDomain = $orgInfo.VerifiedDomains | Where-Object { $_.IsInitial -eq $true } | Select-Object -First 1
+                        if ($initialDomain) {
+                            $scubaOrg = $initialDomain.Name
+                            Write-AssessmentLog -Level INFO -Message "Resolved tenant domain for ScubaGear: $scubaOrg (from $TenantId)" -Section $SectionName
+                        }
+                        Disconnect-MgGraph -ErrorAction SilentlyContinue | Out-Null
+                    }
+                    catch {
+                        Write-AssessmentLog -Level WARN -Message "Could not resolve tenant domain from Graph: $($_.Exception.Message)" -Section $SectionName
+                    }
+                    # Final fallback to user-supplied TenantId if resolution failed
+                    if (-not $scubaOrg) {
+                        $scubaOrg = $TenantId
+                    }
+                }
+                if ($scubaOrg) {
+                    $collectorParams['Organization'] = $scubaOrg
+                    Write-Host "    ScubaGear target tenant: $scubaOrg" -ForegroundColor Cyan
+                    Write-AssessmentLog -Level INFO -Message "ScubaGear Organization set to: $scubaOrg" -Section $SectionName
+                }
+                else {
+                    Write-Host "    WARNING: No tenant domain resolved — ScubaGear may authenticate to a cached/wrong tenant!" -ForegroundColor Red
+                    Write-Host "    Re-run with -TenantId to ensure the correct tenant is scanned." -ForegroundColor Red
+                    Write-AssessmentLog -Level WARN -Message "ScubaGear Organization parameter is empty. Pass -TenantId to ensure correct tenant." -Section $SectionName
+                }
+
                 if ($ClientId) { $collectorParams['AppId'] = $ClientId }
                 if ($CertificateThumbprint) { $collectorParams['CertificateThumbprint'] = $CertificateThumbprint }
             }
