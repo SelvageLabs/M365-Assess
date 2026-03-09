@@ -168,7 +168,7 @@ Write-Host 'ScubaGear dependencies ready.'
 exit 0
 '@
 
-    Invoke-PS5Command -ScriptContent $checkScript -Description 'module setup'
+    $null = Invoke-PS5Command -ScriptContent $checkScript -Description 'module setup'
     Write-Host '  ScubaGear module and dependencies verified.' -ForegroundColor Green
 }
 
@@ -186,6 +186,25 @@ $productList = "'" + ($ProductNames -join "','") + "'"
 
 $scubaScript = @"
 `$ErrorActionPreference = 'Stop'
+
+# Clear any cached Graph connections AND MSAL token cache from PS5 to prevent
+# ScubaGear from reusing stale tokens that may belong to a different tenant.
+if (Get-Module Microsoft.Graph.Authentication -ListAvailable -ErrorAction SilentlyContinue) {
+    try {
+        Import-Module Microsoft.Graph.Authentication -ErrorAction SilentlyContinue
+        Disconnect-MgGraph -ErrorAction SilentlyContinue 2>`$null
+    } catch { }
+}
+# Clear on-disk MSAL token cache — Disconnect-MgGraph alone does not remove
+# persisted tokens, and MSAL silently reuses them for the previously-used tenant.
+`$graphCachePath = Join-Path `$env:USERPROFILE '.graph'
+if (Test-Path `$graphCachePath) {
+    Remove-Item `$graphCachePath -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Host '  Cleared cached Graph tokens to ensure correct tenant auth.' -ForegroundColor Gray
+}
+# Also clear cached EXO sessions
+try { Disconnect-ExchangeOnline -Confirm:`$false -ErrorAction SilentlyContinue 2>`$null } catch { }
+
 Import-Module ScubaGear -ErrorAction Stop
 
 `$params = @{
@@ -228,7 +247,7 @@ catch {
 # Step 3: Execute ScubaGear in PS5
 # ------------------------------------------------------------------
 Write-Host '  Running CISA ScubaGear scan (this may take several minutes)...' -ForegroundColor Yellow
-Invoke-PS5Command -ScriptContent $scubaScript -Description 'ScubaGear scan'
+$null = Invoke-PS5Command -ScriptContent $scubaScript -Description 'ScubaGear scan'
 Write-Host '  ScubaGear scan complete.' -ForegroundColor Green
 
 # ------------------------------------------------------------------
