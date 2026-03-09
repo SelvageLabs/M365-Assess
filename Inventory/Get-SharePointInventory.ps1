@@ -2,26 +2,31 @@
 .SYNOPSIS
     Generates a per-site SharePoint inventory with storage usage and activity.
 .DESCRIPTION
-    Retrieves SharePoint site usage data via the Microsoft Graph Reports API. Reports
-    site URL, owner, storage used, storage allocated, file counts, page views, and
-    last activity date per site. Designed for M&A due diligence and migration planning.
+    Retrieves SharePoint site data using the direct Graph Sites API (preferred) for
+    real site names and owner information, falling back to the Reports API if the
+    required permissions are not available.
 
-    Note: The Reports API anonymizes user-identifiable information by default. To see
-    real owner names and site URLs, a tenant admin must disable the privacy setting at:
-    Microsoft 365 Admin Center > Settings > Org Settings > Reports >
+    Primary path (Sites.Read.All): Uses /v1.0/sites/getAllSites with per-site drive
+    calls for storage quota. Returns real owner names and site URLs regardless of
+    tenant privacy settings.
+
+    Fallback path (Reports.Read.All): Uses the Reports API usage report. Note that
+    the Reports API anonymizes user-identifiable information by default. To see real
+    owner names and site URLs with this path, a tenant admin must disable the privacy
+    setting at: Microsoft 365 Admin Center > Settings > Org Settings > Reports >
     "Display concealed user, group, and site names in all reports".
 
-    Requires Microsoft.Graph.Authentication module and an active Graph connection
-    with Reports.Read.All permission.
+    Requires Microsoft.Graph.Authentication module and an active Graph connection.
+    Preferred permission: Sites.Read.All. Fallback permission: Reports.Read.All.
 .PARAMETER OutputPath
     Optional path to export results as CSV. If not specified, results are returned
     to the pipeline.
 .EXAMPLE
     PS> . .\Common\Connect-Service.ps1
-    PS> Connect-Service -Service Graph -Scopes 'Reports.Read.All'
+    PS> Connect-Service -Service Graph -Scopes 'Sites.Read.All'
     PS> .\Inventory\Get-SharePointInventory.ps1
 
-    Returns per-site SharePoint inventory for all sites in the tenant.
+    Returns per-site SharePoint inventory using the direct Sites API.
 .EXAMPLE
     PS> .\Inventory\Get-SharePointInventory.ps1 -OutputPath '.\sharepoint-inventory.csv'
 
@@ -53,67 +58,176 @@ catch {
 }
 
 # ------------------------------------------------------------------
-# Fetch SharePoint site usage report via Reports API
-# The API returns CSV content; download to a temp file and parse.
+# Phase 1: Try direct Graph Sites API (returns real data)
 # ------------------------------------------------------------------
-$reportUri = "/v1.0/reports/getSharePointSiteUsageDetail(period='D7')"
-Write-Verbose "Downloading SharePoint site usage report from Graph Reports API..."
+$usedDirectApi = $false
+$results = $null
 
-$tempFile = [System.IO.Path]::GetTempFileName()
 try {
-    Invoke-MgGraphRequest -Method GET -Uri $reportUri -OutputFilePath $tempFile
-    $reportData = @(Import-Csv -Path $tempFile)
+    Write-Verbose "Attempting direct Sites API (getAllSites)..."
+
+    $allSites = [System.Collections.Generic.List[object]]::new()
+    $uri = "/v1.0/sites/getAllSites?`$select=id,displayName,webUrl,createdDateTime,lastModifiedDateTime,isPersonalSite&`$top=999"
+
+    do {
+        $response = Invoke-MgGraphRequest -Method GET -Uri $uri
+        if ($response.value) {
+            foreach ($site in $response.value) {
+                if (-not $site.isPersonalSite) {
+                    $allSites.Add($site)
+                }
+            }
+        }
+        $uri = $response.'@odata.nextLink'
+    } while ($uri)
+
+    if ($allSites.Count -eq 0) {
+        Write-Verbose "No SharePoint sites found via direct API"
+        return
+    }
+
+    Write-Verbose "Found $($allSites.Count) SharePoint sites. Retrieving storage details..."
+
+    $resultList = [System.Collections.Generic.List[PSCustomObject]]::new()
+    $counter = 0
+
+    foreach ($site in $allSites) {
+        $counter++
+        if ($counter % 10 -eq 0 -or $counter -eq 1) {
+            Write-Verbose "[$counter/$($allSites.Count)] Getting storage for $($site.webUrl)"
+        }
+
+        $storageUsedMB = $null
+        $storageAllocatedMB = $null
+        $ownerDisplayName = $null
+        $ownerPrincipalName = $null
+
+        try {
+            $driveInfo = Invoke-MgGraphRequest -Method GET -Uri "/v1.0/sites/$($site.id)/drive?`$select=quota,owner"
+            if ($driveInfo.quota) {
+                if ($null -ne $driveInfo.quota.used) {
+                    $storageUsedMB = [math]::Round([long]$driveInfo.quota.used / 1MB, 2)
+                }
+                if ($null -ne $driveInfo.quota.total) {
+                    $storageAllocatedMB = [math]::Round([long]$driveInfo.quota.total / 1MB, 2)
+                }
+            }
+            if ($driveInfo.owner.user) {
+                $ownerDisplayName = $driveInfo.owner.user.displayName
+                $ownerPrincipalName = $driveInfo.owner.user.email
+            }
+        }
+        catch {
+            Write-Verbose "Could not retrieve drive info for $($site.webUrl): $($_.Exception.Message)"
+        }
+
+        $resultList.Add([PSCustomObject]@{
+            SiteUrl            = $site.webUrl
+            SiteId             = $site.id
+            OwnerDisplayName   = $ownerDisplayName
+            OwnerPrincipalName = $ownerPrincipalName
+            IsDeleted          = $false
+            StorageUsedMB      = $storageUsedMB
+            StorageAllocatedMB = $storageAllocatedMB
+            FileCount          = $null
+            ActiveFileCount    = $null
+            PageViewCount      = $null
+            LastActivityDate   = $site.lastModifiedDateTime
+            SiteType           = $null
+        })
+    }
+
+    $results = @($resultList) | Sort-Object -Property SiteUrl
+    $usedDirectApi = $true
+    Write-Verbose "Direct API inventory complete: $($results.Count) SharePoint sites"
 }
 catch {
-    Write-Error "Failed to retrieve SharePoint site usage report: $_"
-    return
-}
-finally {
-    Remove-Item -Path $tempFile -Force -ErrorAction SilentlyContinue
-}
+    $directApiError = $_
 
-if ($reportData.Count -eq 0) {
-    Write-Verbose "No SharePoint sites found in the usage report"
-    return
+    if ($directApiError.Exception.Message -match '401|403|Unauthorized|Forbidden|insufficient') {
+        Write-Warning ("Direct Sites API unavailable (missing Sites.Read.All permission). " +
+            "Falling back to Reports API. Data may be obfuscated if tenant privacy settings are enabled.")
+    }
+    else {
+        Write-Warning "Direct Sites API failed: $($directApiError.Exception.Message). Falling back to Reports API."
+    }
 }
-
-Write-Verbose "Processing $($reportData.Count) SharePoint sites..."
 
 # ------------------------------------------------------------------
-# Map Reports API columns to clean output
+# Phase 2: Fallback to Reports API if direct API was not used
 # ------------------------------------------------------------------
-$results = foreach ($row in $reportData) {
-    # Convert bytes to MB
-    $storageUsedMB = $null
-    if ($row.'Storage Used (Byte)') {
-        $storageUsedMB = [math]::Round([long]$row.'Storage Used (Byte)' / 1MB, 2)
+if (-not $usedDirectApi) {
+    $reportUri = "/v1.0/reports/getSharePointSiteUsageDetail(period='D7')"
+    Write-Verbose "Downloading SharePoint site usage report from Graph Reports API..."
+
+    $tempFile = [System.IO.Path]::GetTempFileName()
+    try {
+        Invoke-MgGraphRequest -Method GET -Uri $reportUri -OutputFilePath $tempFile
+        $reportData = @(Import-Csv -Path $tempFile)
+    }
+    catch {
+        Write-Error "Failed to retrieve SharePoint site usage report: $_"
+        return
+    }
+    finally {
+        Remove-Item -Path $tempFile -Force -ErrorAction SilentlyContinue
     }
 
-    $storageAllocatedMB = $null
-    if ($row.'Storage Allocated (Byte)') {
-        $storageAllocatedMB = [math]::Round([long]$row.'Storage Allocated (Byte)' / 1MB, 2)
+    if ($reportData.Count -eq 0) {
+        Write-Verbose "No SharePoint sites found in the usage report"
+        return
     }
 
-    [PSCustomObject]@{
-        SiteUrl            = $row.'Site URL'
-        SiteId             = $row.'Site Id'
-        OwnerDisplayName   = $row.'Owner Display Name'
-        OwnerPrincipalName = $row.'Owner Principal Name'
-        IsDeleted          = $row.'Is Deleted'
-        StorageUsedMB      = $storageUsedMB
-        StorageAllocatedMB = $storageAllocatedMB
-        FileCount          = $row.'File Count'
-        ActiveFileCount    = $row.'Active File Count'
-        PageViewCount      = $row.'Page View Count'
-        LastActivityDate   = $row.'Last Activity Date'
-        SiteType           = $row.'Root Web Template'
+    # Phase 3: Detect obfuscated data
+    $sampleOwner = $reportData[0].'Owner Display Name'
+    $sampleUrl = $reportData[0].'Site URL'
+    $hexPattern = '^[0-9A-Fa-f]{16,}$'
+
+    if (([string]::IsNullOrWhiteSpace($sampleUrl)) -or ($sampleOwner -match $hexPattern)) {
+        Write-Warning ("Reports API data appears obfuscated (tenant privacy settings are enabled). " +
+            "Site URLs, owner names, and site IDs are anonymized. To see real data, " +
+            "a tenant admin must disable the privacy setting at: " +
+            "Microsoft 365 Admin Center > Settings > Org Settings > Reports > " +
+            "'Display concealed user, group, and site names in all reports'. " +
+            "Alternatively, grant Sites.Read.All permission for the direct API path.")
     }
+
+    Write-Verbose "Processing $($reportData.Count) SharePoint sites from Reports API..."
+
+    $results = foreach ($row in $reportData) {
+        $storageUsedMB = $null
+        if ($row.'Storage Used (Byte)') {
+            $storageUsedMB = [math]::Round([long]$row.'Storage Used (Byte)' / 1MB, 2)
+        }
+
+        $storageAllocatedMB = $null
+        if ($row.'Storage Allocated (Byte)') {
+            $storageAllocatedMB = [math]::Round([long]$row.'Storage Allocated (Byte)' / 1MB, 2)
+        }
+
+        [PSCustomObject]@{
+            SiteUrl            = $row.'Site URL'
+            SiteId             = $row.'Site Id'
+            OwnerDisplayName   = $row.'Owner Display Name'
+            OwnerPrincipalName = $row.'Owner Principal Name'
+            IsDeleted          = $row.'Is Deleted'
+            StorageUsedMB      = $storageUsedMB
+            StorageAllocatedMB = $storageAllocatedMB
+            FileCount          = $row.'File Count'
+            ActiveFileCount    = $row.'Active File Count'
+            PageViewCount      = $row.'Page View Count'
+            LastActivityDate   = $row.'Last Activity Date'
+            SiteType           = $row.'Root Web Template'
+        }
+    }
+
+    $results = @($results) | Sort-Object -Property SiteUrl
+    Write-Verbose "Reports API inventory complete: $($results.Count) SharePoint sites"
 }
 
-$results = @($results) | Sort-Object -Property SiteUrl
-
-Write-Verbose "Inventory complete: $($results.Count) SharePoint sites"
-
+# ------------------------------------------------------------------
+# Output
+# ------------------------------------------------------------------
 if ($OutputPath) {
     $results | Export-Csv -Path $OutputPath -NoTypeInformation -Encoding UTF8
     Write-Output "Exported SharePoint inventory ($($results.Count) sites) to $OutputPath"

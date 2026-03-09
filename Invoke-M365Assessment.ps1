@@ -792,7 +792,7 @@ $sectionScopeMap = @{
     'Security'      = @('SecurityEvents.Read.All')
     'Collaboration' = @('SharePointTenantSettings.Read.All', 'TeamSettings.Read.All', 'TeamworkAppSettings.Read.All')
     'Hybrid'           = @('Organization.Read.All', 'Domain.Read.All')
-    'Inventory'        = @('Group.Read.All', 'Team.ReadBasic.All', 'TeamMember.Read.All', 'Channel.ReadBasic.All', 'Reports.Read.All')
+    'Inventory'        = @('Group.Read.All', 'Team.ReadBasic.All', 'TeamMember.Read.All', 'Channel.ReadBasic.All', 'Reports.Read.All', 'Sites.Read.All', 'User.Read.All')
     'ActiveDirectory'  = @()
     'ScubaGear'        = @()
 }
@@ -1022,6 +1022,15 @@ function Connect-RequiredService {
         if ($connectedServices.Contains($svc)) { continue }
         if ($failedServices.Contains($svc)) { continue }
 
+        # Friendly display names for host output
+        $serviceDisplayName = switch ($svc) {
+            'Graph'          { 'Microsoft Graph' }
+            'ExchangeOnline' { 'Exchange Online' }
+            'Purview'        { 'Purview (Security & Compliance)' }
+            default          { $svc }
+        }
+        Write-Host "    Connecting to $serviceDisplayName..." -ForegroundColor Yellow
+
         Write-AssessmentLog -Level INFO -Message "Connecting to $svc..." -Section $SectionName
         try {
             # EXO and Purview share the EXO module and conflict if connected simultaneously.
@@ -1220,6 +1229,17 @@ foreach ($sectionName in $Section) {
 
             # Special handling for ScubaGear (PS5 invocation with passthrough params)
             if ($collector.ContainsKey('IsScubaGear') -and $collector.IsScubaGear) {
+                $scubaServices = @{
+                    'aad'           = 'Entra ID (Azure AD)'
+                    'defender'      = 'Microsoft Defender'
+                    'exo'           = 'Exchange Online'
+                    'powerplatform' = 'Power Platform'
+                    'sharepoint'    = 'SharePoint Online'
+                    'teams'         = 'Microsoft Teams'
+                }
+                $productLabels = ($ScubaProductNames | ForEach-Object { if ($scubaServices.ContainsKey($_)) { $scubaServices[$_] } else { $_ } }) -join ', '
+                Write-Host "    ScubaGear runs in PS 5.1 and will authenticate separately for: $productLabels" -ForegroundColor Yellow
+
                 $collectorParams['ProductNames'] = $ScubaProductNames
                 $collectorParams['M365Environment'] = $M365Environment
                 $collectorParams['ScubaOutputPath'] = Join-Path -Path $assessmentFolder -ChildPath 'ScubaGear-Report'
