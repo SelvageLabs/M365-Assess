@@ -1518,6 +1518,9 @@ $html = @"
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>M365 Assessment Report - $(ConvertTo-HtmlSafe -Text $TenantName)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         /* ----------------------------------------------------------
            M365 Assess Theme
@@ -1573,9 +1576,9 @@ $html = @"
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
-            font-size: 12pt;
-            line-height: 1.6;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            font-size: 13pt;
+            line-height: 1.65;
             color: var(--m365a-text);
             background: var(--m365a-body-bg);
         }
