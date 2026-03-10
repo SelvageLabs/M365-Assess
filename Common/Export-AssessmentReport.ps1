@@ -994,7 +994,8 @@ foreach ($sectionName in $sections) {
             $null = $sectionHtml.AppendLine("</div>") # end email-dash-col
 
             # Middle column: Sync health donut + timing
-            $healthPct = switch ($syncHealthClass) { 'success' { 100 }; 'warning' { 60 }; 'danger' { 25 }; default { 50 } }
+            $healthPct = switch ($syncHealthClass) { 'success' { 100 }; 'warning' { 60 }; 'danger' { 25 }; default { 0 } }
+            if ($syncHealthLabel -eq 'Cloud Only') { $syncHealthLabel = 'OFF' }
             $healthDonut = Get-SvgDonut -Percentage $healthPct -CssClass $syncHealthClass -Size 130 -StrokeWidth 12
 
             $null = $sectionHtml.AppendLine("<div class='email-dash-col'>")
