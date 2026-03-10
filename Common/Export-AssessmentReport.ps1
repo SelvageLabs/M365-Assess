@@ -2668,6 +2668,21 @@ $html = @"
             margin-top: 1px;
         }
 
+        /* Dashboard card hover — subtle highlight for presentations */
+        .email-metric-card,
+        .id-donut-item,
+        .policy-card,
+        .dns-stat {
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+        .email-metric-card:hover,
+        .id-donut-item:hover,
+        .policy-card:hover,
+        .dns-stat:hover {
+            background: var(--m365a-hover-bg);
+            border-color: var(--m365a-accent);
+        }
+
         /* EXO donut panel within dashboard */
         .email-dash-col .dash-panel {
             border: none;
