@@ -1,22 +1,78 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" width="400" height="120">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 150" width="480" height="150">
   <defs>
-    <linearGradient id="cloudGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#2563EB;stop-opacity:1" />
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#2563EB;stop-opacity:1" />
       <stop offset="100%" style="stop-color:#1D4ED8;stop-opacity:1" />
     </linearGradient>
-    <linearGradient id="checkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#60A5FA;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#38BDF8;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#93C5FD;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:0" />
+    </linearGradient>
+    <linearGradient id="flowGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:0" />
+      <stop offset="40%" style="stop-color:#60A5FA;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#93C5FD;stop-opacity:0" />
+    </linearGradient>
+    <linearGradient id="flowGrad2" x1="100%" y1="0%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#2563EB;stop-opacity:0" />
+      <stop offset="50%" style="stop-color:#3B82F6;stop-opacity:0.2" />
+      <stop offset="100%" style="stop-color:#60A5FA;stop-opacity:0" />
     </linearGradient>
   </defs>
-  <!-- Cloud shape -->
-  <path d="M28,75 C20,75 14,69 14,61 C14,54 19,48 25,47 C25,37 33,29 43,29 C50,29 56,33 59,38 C61,37 64,36 67,36 C76,36 83,43 83,52 C83,52 83,52 83,52 C89,53 94,58 94,65 C94,72 89,77 82,77 L28,75 Z" fill="url(#cloudGrad)" opacity="0.95"/>
-  <!-- Checkmark circle -->
-  <circle cx="75" cy="62" r="18" fill="url(#checkGrad)" opacity="0.9"/>
-  <!-- Checkmark -->
-  <polyline points="65,62 72,69 85,55" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Structured movement — horizontal data-flow lines -->
+  <line x1="0" y1="30" x2="480" y2="30" stroke="url(#flowGrad1)" stroke-width="1" opacity="0.4"/>
+  <line x1="0" y1="55" x2="480" y2="55" stroke="url(#flowGrad2)" stroke-width="0.8" opacity="0.25"/>
+  <line x1="0" y1="95" x2="480" y2="95" stroke="url(#flowGrad1)" stroke-width="0.8" opacity="0.25"/>
+  <line x1="0" y1="120" x2="480" y2="120" stroke="url(#flowGrad2)" stroke-width="1" opacity="0.4"/>
+
+  <!-- Structured movement — diagonal sweep lines -->
+  <line x1="90" y1="0" x2="140" y2="150" stroke="#93C5FD" stroke-width="0.6" opacity="0.15"/>
+  <line x1="130" y1="0" x2="180" y2="150" stroke="#60A5FA" stroke-width="0.5" opacity="0.12"/>
+  <line x1="350" y1="0" x2="400" y2="150" stroke="#93C5FD" stroke-width="0.6" opacity="0.15"/>
+  <line x1="390" y1="0" x2="440" y2="150" stroke="#60A5FA" stroke-width="0.5" opacity="0.12"/>
+
+  <!-- Circuit nodes — small dots along flow lines -->
+  <circle cx="40" cy="30" r="2" fill="#60A5FA" opacity="0.35"/>
+  <circle cx="180" cy="30" r="1.5" fill="#93C5FD" opacity="0.3"/>
+  <circle cx="320" cy="30" r="2" fill="#60A5FA" opacity="0.25"/>
+  <circle cx="440" cy="30" r="1.5" fill="#93C5FD" opacity="0.3"/>
+  <circle cx="60" cy="120" r="1.5" fill="#93C5FD" opacity="0.3"/>
+  <circle cx="200" cy="120" r="2" fill="#60A5FA" opacity="0.25"/>
+  <circle cx="360" cy="120" r="1.5" fill="#93C5FD" opacity="0.3"/>
+  <circle cx="460" cy="120" r="2" fill="#60A5FA" opacity="0.35"/>
+
+  <!-- Hex grid fragments — background texture -->
+  <path d="M400,15 L410,20 L410,30 L400,35 L390,30 L390,20 Z" fill="none" stroke="#93C5FD" stroke-width="0.5" opacity="0.12"/>
+  <path d="M430,35 L440,40 L440,50 L430,55 L420,50 L420,40 Z" fill="none" stroke="#60A5FA" stroke-width="0.5" opacity="0.1"/>
+  <path d="M20,100 L30,105 L30,115 L20,120 L10,115 L10,105 Z" fill="none" stroke="#93C5FD" stroke-width="0.5" opacity="0.12"/>
+  <path d="M450,90 L460,95 L460,105 L450,110 L440,105 L440,95 Z" fill="none" stroke="#60A5FA" stroke-width="0.5" opacity="0.1"/>
+
+  <!-- Outer glow ring -->
+  <circle cx="68" cy="75" r="58" fill="none" stroke="url(#glowGrad)" stroke-width="1.5" opacity="0.5"/>
+
+  <!-- Shield body -->
+  <path d="M68,18 L108,34 C108,34 110,70 98,92 C89,108 68,122 68,122 C68,122 47,108 38,92 C26,70 28,34 28,34 Z" fill="url(#shieldGrad)"/>
+  <!-- Shield inner highlight -->
+  <path d="M68,26 L100,38 C100,38 102,68 93,86 C85,100 68,112 68,112 C68,112 51,100 43,86 C34,68 36,38 36,38 Z" fill="none" stroke="url(#accentGrad)" stroke-width="1.2" opacity="0.5"/>
+
+  <!-- Geometric keyhole / lock accent -->
+  <circle cx="68" cy="62" r="12" fill="none" stroke="white" stroke-width="2.8" opacity="0.9"/>
+  <rect x="62" y="70" width="12" height="19" rx="2.5" fill="white" opacity="0.9"/>
+
+  <!-- Signal arcs — connectivity / scanning -->
+  <path d="M53,48 C58,43 63,40 68,40" fill="none" stroke="#93C5FD" stroke-width="1.8" stroke-linecap="round" opacity="0.7"/>
+  <path d="M45,40 C52,32 60,27 68,27" fill="none" stroke="#93C5FD" stroke-width="1.4" stroke-linecap="round" opacity="0.5"/>
+  <path d="M83,48 C78,43 73,40 68,40" fill="none" stroke="#93C5FD" stroke-width="1.8" stroke-linecap="round" opacity="0.7"/>
+  <path d="M91,40 C84,32 76,27 68,27" fill="none" stroke="#93C5FD" stroke-width="1.4" stroke-linecap="round" opacity="0.5"/>
+
   <!-- Text: M365 -->
-  <text x="110" y="55" font-family="Segoe UI, Calibri, Arial, sans-serif" font-weight="700" font-size="36" fill="#0F172A">M365</text>
+  <text x="148" y="68" font-family="Inter, Segoe UI, Arial, sans-serif" font-weight="700" font-size="46" fill="#0F172A" letter-spacing="1.5">M365</text>
   <!-- Text: Assess -->
-  <text x="110" y="90" font-family="Segoe UI, Calibri, Arial, sans-serif" font-weight="300" font-size="32" fill="#2563EB">Assess</text>
+  <text x="148" y="108" font-family="Inter, Segoe UI, Arial, sans-serif" font-weight="300" font-size="38" fill="#2563EB" letter-spacing="4">Assess</text>
 </svg>

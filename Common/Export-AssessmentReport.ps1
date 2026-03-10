@@ -1602,9 +1602,9 @@ $html = @"
         }
 
         .cover-logo {
-            max-width: 350px;
+            max-width: 500px;
             height: auto;
-            margin-bottom: 50px;
+            margin-bottom: 40px;
         }
 
         .cover-logo-text {

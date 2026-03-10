@@ -5,7 +5,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="Common/assets/m365-assess-logo-white.png" />
   <source media="(prefers-color-scheme: light)" srcset="Common/assets/m365-assess-logo.png" />
-  <img src="Common/assets/m365-assess-logo.png" alt="M365 Assess" width="400" />
+  <img src="Common/assets/m365-assess-logo.png" alt="M365 Assess" width="500" />
 </picture>
 
 ### Comprehensive M365 Security Assessment Tool
