@@ -23,7 +23,7 @@
 
     Exports the security configuration to CSV.
 .NOTES
-    Version: 0.4.0
+    Version: 0.5.0
     Author:  Daren9m
     Settings checked are aligned with CIS Microsoft 365 Foundations Benchmark v6.0.1 recommendations.
 #>
@@ -62,7 +62,7 @@ function Add-Setting {
         [string]$CurrentValue,
         [string]$RecommendedValue,
         [string]$Status,
-        [string]$CisControl = '',
+        [string]$CheckId = '',
         [string]$Remediation = ''
     )
     $settings.Add([PSCustomObject]@{
@@ -71,7 +71,7 @@ function Add-Setting {
         CurrentValue     = $CurrentValue
         RecommendedValue = $RecommendedValue
         Status           = $Status
-        CisControl       = $CisControl
+        CheckId          = $CheckId
         Remediation      = $Remediation
     })
 }
@@ -113,7 +113,7 @@ try {
 
     Add-Setting -Category 'Admin Accounts' -Setting 'Global Administrator Count' `
         -CurrentValue "$gaCount" -RecommendedValue '2-4' -Status $gaStatus `
-        -CisControl '1.1.3' `
+        -CheckId 'ENTRA-ADMIN-001' `
         -Remediation 'Entra admin center > Roles > Global Administrator. Maintain 2-4 global admins. Use dedicated admin accounts without mailboxes.'
 }
 catch {
@@ -155,7 +155,7 @@ if ($authPolicy) {
 
         Add-Setting -Category 'Application Consent' -Setting 'User Consent for Applications' `
             -CurrentValue $consentValue -RecommendedValue 'Do not allow user consent' -Status $consentStatus `
-            -CisControl '5.1.5.1' `
+            -CheckId 'ENTRA-CONSENT-001' `
             -Remediation 'Entra admin center > Enterprise applications > Consent and permissions > User consent settings > Do not allow user consent.'
     }
     catch {
@@ -181,7 +181,7 @@ if ($authPolicy) {
         Add-Setting -Category 'Directory Settings' -Setting 'Users Can Create Security Groups' `
             -CurrentValue "$canCreateGroups" -RecommendedValue 'False' `
             -Status $(if (-not $canCreateGroups) { 'Pass' } else { 'Review' }) `
-            -CisControl '5.1.3.2' `
+            -CheckId 'ENTRA-GROUP-001' `
             -Remediation 'Entra admin center > Groups > General > Users can create security groups in Azure portals, API or PowerShell > No.'
     }
     catch {
@@ -194,7 +194,7 @@ if ($authPolicy) {
         Add-Setting -Category 'Directory Settings' -Setting 'Non-Admin Tenant Creation Restricted' `
             -CurrentValue "$canCreateTenants" -RecommendedValue 'False' `
             -Status $(if (-not $canCreateTenants) { 'Pass' } else { 'Warning' }) `
-            -CisControl '5.1.2.3' `
+            -CheckId 'ENTRA-TENANT-001' `
             -Remediation 'Entra admin center > Users > User settings > Restrict non-admin users from creating tenants > Yes.'
     }
     catch {
@@ -214,7 +214,7 @@ try {
     Add-Setting -Category 'Application Consent' -Setting 'Admin Consent Workflow Enabled' `
         -CurrentValue "$isAdminConsentEnabled" -RecommendedValue 'True' `
         -Status $(if ($isAdminConsentEnabled) { 'Pass' } else { 'Warning' }) `
-        -CisControl '5.1.5.2' `
+        -CheckId 'ENTRA-CONSENT-002' `
         -Remediation 'Entra admin center > Enterprise applications > Admin consent requests > Users can request admin consent > Yes.'
 }
 catch {
@@ -233,7 +233,7 @@ try {
     Add-Setting -Category 'Password Management' -Setting 'Auth Method Registration Campaign' `
         -CurrentValue "$ssprRegistration" -RecommendedValue 'enabled' `
         -Status $(if ($ssprRegistration -eq 'enabled') { 'Pass' } else { 'Review' }) `
-        -CisControl '5.2.3.4' `
+        -CheckId 'ENTRA-MFA-001' `
         -Remediation 'Entra admin center > Protection > Authentication methods > Registration campaign > State > Enabled.'
 }
 catch {
@@ -259,14 +259,14 @@ try {
         Add-Setting -Category 'Password Management' -Setting 'Custom Banned Password List Enforced' `
             -CurrentValue "$enforceCustom" -RecommendedValue 'True' `
             -Status $(if ($enforceCustom -eq 'True') { 'Pass' } else { 'Warning' }) `
-            -CisControl '5.2.3.2' `
+            -CheckId 'ENTRA-PASSWORD-002' `
             -Remediation 'Entra admin center > Protection > Authentication methods > Password protection > Enforce custom list > Yes.'
 
         $bannedCount = if ($bannedList) { ($bannedList -split ',').Count } else { 0 }
         Add-Setting -Category 'Password Management' -Setting 'Custom Banned Password Count' `
             -CurrentValue "$bannedCount" -RecommendedValue '1+' `
             -Status $(if ($bannedCount -gt 0) { 'Pass' } else { 'Review' }) `
-            -CisControl '5.2.3.2' `
+            -CheckId 'ENTRA-PASSWORD-002' `
             -Remediation 'Entra admin center > Protection > Authentication methods > Password protection > Custom banned passwords list > Add org-specific terms.'
 
         Add-Setting -Category 'Password Management' -Setting 'Smart Lockout Threshold' `
@@ -294,7 +294,7 @@ try {
             -CurrentValue $(if ($neverExpires) { 'Never expires' } else { "$validityDays days" }) `
             -RecommendedValue 'Never expires (with MFA)' `
             -Status $(if ($neverExpires) { 'Pass' } else { 'Review' }) `
-            -CisControl '1.3.1' `
+            -CheckId 'ENTRA-PASSWORD-001' `
             -Remediation 'M365 admin center > Settings > Org settings > Security & privacy > Password expiration policy > Set passwords to never expire (ensure MFA is enforced).'
     }
 }
@@ -329,7 +329,7 @@ if ($authPolicy) {
         Add-Setting -Category 'External Collaboration' -Setting 'Guest Invitation Policy' `
             -CurrentValue $inviteDisplay -RecommendedValue 'Admins and guest inviters only' `
             -Status $inviteStatus `
-            -CisControl '5.1.6.3' `
+            -CheckId 'ENTRA-GUEST-002' `
             -Remediation 'Entra admin center > External Identities > External collaboration settings > Guest invite settings > Only admins and users in guest inviter role.'
 
         # Guest user role
@@ -343,7 +343,7 @@ if ($authPolicy) {
         Add-Setting -Category 'External Collaboration' -Setting 'Guest User Access Restriction' `
             -CurrentValue $roleDisplay -RecommendedValue 'Restricted access' `
             -Status $(if ($guestAccessRestriction -eq '2af84b1e-32c8-42b7-82bc-daa82404023b') { 'Pass' } else { 'Review' }) `
-            -CisControl '5.1.6.2' `
+            -CheckId 'ENTRA-GUEST-001' `
             -Remediation 'Entra admin center > External Identities > External collaboration settings > Guest user access > Most restrictive.'
     }
     catch {
@@ -385,7 +385,7 @@ try {
         -CurrentValue $(if ($legacyBlockCount -gt 0) { "Yes ($legacyBlockCount policy)" } else { 'No' }) `
         -RecommendedValue 'Yes' `
         -Status $(if ($legacyBlockCount -gt 0) { 'Pass' } else { 'Fail' }) `
-        -CisControl '5.2.2.3' `
+        -CheckId 'ENTRA-CA-001' `
         -Remediation 'Entra admin center > Protection > Conditional Access > New policy > Conditions > Client apps > Exchange ActiveSync + Other > Grant > Block access.'
 }
 catch {

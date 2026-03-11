@@ -21,7 +21,7 @@
 
     Exports the security configuration to CSV.
 .NOTES
-    Version: 0.4.0
+    Version: 0.5.0
     Author:  Daren9m
     Settings checked are aligned with CIS Microsoft 365 Foundations Benchmark v6.0.1 recommendations.
 #>
@@ -56,7 +56,7 @@ function Add-Setting {
         [string]$CurrentValue,
         [string]$RecommendedValue,
         [string]$Status,
-        [string]$CisControl = '',
+        [string]$CheckId = '',
         [string]$Remediation = ''
     )
     $settings.Add([PSCustomObject]@{
@@ -65,7 +65,7 @@ function Add-Setting {
         CurrentValue     = $CurrentValue
         RecommendedValue = $RecommendedValue
         Status           = $Status
-        CisControl       = $CisControl
+        CheckId          = $CheckId
         Remediation      = $Remediation
     })
 }
@@ -118,7 +118,7 @@ try {
         -CurrentValue $sharingDisplay `
         -RecommendedValue 'Existing external users only (or more restrictive)' `
         -Status $sharingStatus `
-        -CisControl '7.2.3' `
+        -CheckId 'SPO-SHARING-001' `
         -Remediation 'SharePoint admin center > Policies > Sharing. Set to "Existing guests" or more restrictive. Run: Set-SPOTenant -SharingCapability ExistingExternalUserSharingOnly'
 }
 catch {
@@ -133,7 +133,7 @@ try {
     Add-Setting -Category 'External Sharing' -Setting 'Resharing by External Users' `
         -CurrentValue "$resharing" -RecommendedValue 'False' `
         -Status $(if (-not $resharing) { 'Pass' } else { 'Warning' }) `
-        -CisControl '7.2.5' `
+        -CheckId 'SPO-SHARING-002' `
         -Remediation 'SharePoint admin center > Policies > Sharing > More external sharing settings > Uncheck "Allow guests to share items they don''t own".'
 }
 catch {
@@ -164,7 +164,7 @@ try {
         -CurrentValue $restrictDisplay `
         -RecommendedValue 'Allow or Block list configured' `
         -Status $restrictStatus `
-        -CisControl '7.2.6' `
+        -CheckId 'SPO-SHARING-003' `
         -Remediation 'SharePoint admin center > Policies > Sharing > Limit sharing by domain. Run: Set-SPOTenant -SharingDomainRestrictionMode AllowList -SharingAllowedDomainList "partner.com"'
 }
 catch {
@@ -179,7 +179,7 @@ try {
     Add-Setting -Category 'Sync & Access' -Setting 'Block Sync from Unmanaged Devices' `
         -CurrentValue "$unmanagedSync" -RecommendedValue 'True' `
         -Status $(if ($unmanagedSync) { 'Pass' } else { 'Warning' }) `
-        -CisControl '7.3.2' `
+        -CheckId 'SPO-SYNC-001' `
         -Remediation 'SharePoint admin center > Settings > Sync > Allow syncing only on computers joined to specific domains. Run: Set-SPOTenantSyncClientRestriction -Enable'
 }
 catch {
@@ -245,13 +245,13 @@ try {
     if ($idlePolicy -and $idlePolicy['value'] -and @($idlePolicy['value']).Count -gt 0) {
         Add-Setting -Category 'Sync & Access' -Setting 'Idle Session Timeout Policy' `
             -CurrentValue 'Configured' -RecommendedValue 'Configured' -Status 'Pass' `
-            -CisControl '1.3.2' `
+            -CheckId 'SPO-SESSION-001' `
             -Remediation 'Entra admin center > Protection > Conditional Access > Session controls > Sign-in frequency.'
     }
     else {
         Add-Setting -Category 'Sync & Access' -Setting 'Idle Session Timeout Policy' `
             -CurrentValue 'Not configured' -RecommendedValue 'Configured' -Status 'Review' `
-            -CisControl '1.3.2' `
+            -CheckId 'SPO-SESSION-001' `
             -Remediation 'M365 admin center > Settings > Org settings > Security & privacy > Idle session timeout > Turn on. Set a timeout period (e.g., 1 hour).'
     }
 }
@@ -283,7 +283,7 @@ try {
         -CurrentValue $linkTypeDisplay `
         -RecommendedValue 'Specific people (direct)' `
         -Status $linkTypeStatus `
-        -CisControl '7.2.7' `
+        -CheckId 'SPO-SHARING-004' `
         -Remediation 'SharePoint admin center > Policies > Sharing > File and folder links > Default link type > Specific people. Run: Set-SPOTenant -DefaultSharingLinkType Direct'
 }
 catch {
@@ -301,7 +301,7 @@ try {
         Add-Setting -Category 'External Sharing' -Setting 'Guest Access Expiration' `
             -CurrentValue 'Not available via API' -RecommendedValue 'Enabled (30 days or less)' `
             -Status 'Review' `
-            -CisControl '7.2.9' `
+            -CheckId 'SPO-SHARING-005' `
             -Remediation 'SharePoint admin center > Policies > Sharing > More external sharing settings > Guest access to a site or OneDrive will expire automatically after this many days. Run: Set-SPOTenant -ExternalUserExpirationRequired $true -ExternalUserExpireInDays 30'
     }
     else {
@@ -313,7 +313,7 @@ try {
         Add-Setting -Category 'External Sharing' -Setting 'Guest Access Expiration' `
             -CurrentValue $expDisplay -RecommendedValue 'Enabled (30 days or less)' `
             -Status $expStatus `
-            -CisControl '7.2.9' `
+            -CheckId 'SPO-SHARING-005' `
             -Remediation 'SharePoint admin center > Policies > Sharing > More external sharing settings > Guest access to a site or OneDrive will expire automatically after this many days. Run: Set-SPOTenant -ExternalUserExpirationRequired $true -ExternalUserExpireInDays 30'
     }
 }
@@ -332,7 +332,7 @@ try {
         Add-Setting -Category 'External Sharing' -Setting 'Reauthentication with Verification Code' `
             -CurrentValue 'Not available via API' -RecommendedValue 'Enabled (30 days or less)' `
             -Status 'Review' `
-            -CisControl '7.2.10' `
+            -CheckId 'SPO-SHARING-006' `
             -Remediation 'SharePoint admin center > Policies > Sharing > More external sharing settings > People who use a verification code must reauthenticate after this many days. Run: Set-SPOTenant -EmailAttestationRequired $true -EmailAttestationReAuthDays 30'
     }
     else {
@@ -344,7 +344,7 @@ try {
         Add-Setting -Category 'External Sharing' -Setting 'Reauthentication with Verification Code' `
             -CurrentValue $attestDisplay -RecommendedValue 'Enabled (30 days or less)' `
             -Status $attestStatus `
-            -CisControl '7.2.10' `
+            -CheckId 'SPO-SHARING-006' `
             -Remediation 'SharePoint admin center > Policies > Sharing > More external sharing settings > People who use a verification code must reauthenticate after this many days. Run: Set-SPOTenant -EmailAttestationRequired $true -EmailAttestationReAuthDays 30'
     }
 }
@@ -374,7 +374,7 @@ try {
         -CurrentValue $permDisplay `
         -RecommendedValue 'View (read-only)' `
         -Status $permStatus `
-        -CisControl '7.2.11' `
+        -CheckId 'SPO-SHARING-007' `
         -Remediation 'SharePoint admin center > Policies > Sharing > File and folder links > Default permission > View. Run: Set-SPOTenant -DefaultLinkPermission View'
 }
 catch {

@@ -18,7 +18,7 @@
 
     Displays Teams security configuration settings.
 .NOTES
-    Version: 0.4.0
+    Version: 0.5.0
     Author:  Daren9m
     Settings checked are aligned with CIS Microsoft 365 Foundations Benchmark v6.0.1 recommendations.
 #>
@@ -53,7 +53,7 @@ function Add-Setting {
         [string]$CurrentValue,
         [string]$RecommendedValue,
         [string]$Status,
-        [string]$CisControl = '',
+        [string]$CheckId = '',
         [string]$Remediation = ''
     )
     $settings.Add([PSCustomObject]@{
@@ -62,7 +62,7 @@ function Add-Setting {
         CurrentValue     = $CurrentValue
         RecommendedValue = $RecommendedValue
         Status           = $Status
-        CisControl       = $CisControl
+        CheckId          = $CheckId
         Remediation      = $Remediation
     })
 }
@@ -100,13 +100,13 @@ try {
         Add-Setting -Category 'External Access' -Setting 'Communication with Unmanaged Teams Users' `
             -CurrentValue "$allowConsumer" -RecommendedValue 'False' `
             -Status $(if (-not $allowConsumer) { 'Pass' } else { 'Fail' }) `
-            -CisControl '8.2.2' `
+            -CheckId 'TEAMS-EXTACCESS-001' `
             -Remediation 'Teams admin center > Users > External access > Teams accounts not managed by an organization > Off. Run: Set-CsTenantFederationConfiguration -AllowTeamsConsumer $false'
 
         Add-Setting -Category 'External Access' -Setting 'External Unmanaged Users Can Initiate Conversations' `
             -CurrentValue "$allowConsumerInbound" -RecommendedValue 'False' `
             -Status $(if (-not $allowConsumerInbound) { 'Pass' } else { 'Fail' }) `
-            -CisControl '8.2.3' `
+            -CheckId 'TEAMS-EXTACCESS-002' `
             -Remediation 'Teams admin center > Users > External access > External users can initiate conversations > Off. Run: Set-CsTenantFederationConfiguration -AllowTeamsConsumerInbound $false'
     }
 }
@@ -127,7 +127,7 @@ try {
         Add-Setting -Category 'Meeting Policy' -Setting 'Anonymous Users Can Join Meeting' `
             -CurrentValue "$anonymousJoin" -RecommendedValue 'False' `
             -Status $(if (-not $anonymousJoin) { 'Pass' } else { 'Warning' }) `
-            -CisControl '8.5.1' `
+            -CheckId 'TEAMS-MEETING-001' `
             -Remediation 'Teams admin center > Meetings > Meeting policies > Global > Anonymous users can join a meeting > Off. Run: Set-CsTeamsMeetingPolicy -Identity Global -AllowAnonymousUsersToJoinMeeting $false'
 
         # Anonymous/dial-in can't start meeting (CIS 8.5.2)
@@ -135,7 +135,7 @@ try {
         Add-Setting -Category 'Meeting Policy' -Setting 'Anonymous Users Can Start Meeting' `
             -CurrentValue "$anonStart" -RecommendedValue 'False' `
             -Status $(if (-not $anonStart) { 'Pass' } else { 'Fail' }) `
-            -CisControl '8.5.2' `
+            -CheckId 'TEAMS-MEETING-002' `
             -Remediation 'Teams admin center > Meetings > Meeting policies > Global > Anonymous users can start a meeting > Off. Run: Set-CsTeamsMeetingPolicy -Identity Global -AllowAnonymousUsersToStartMeeting $false'
 
         # Auto-admitted users / lobby bypass (CIS 8.5.3)
@@ -144,7 +144,7 @@ try {
         Add-Setting -Category 'Meeting Policy' -Setting 'Auto-Admitted Users (Lobby Bypass)' `
             -CurrentValue "$autoAdmit" -RecommendedValue 'EveryoneInCompanyExcludingGuests or stricter' `
             -Status $(if ($autoAdmitPass) { 'Pass' } else { 'Fail' }) `
-            -CisControl '8.5.3' `
+            -CheckId 'TEAMS-MEETING-003' `
             -Remediation 'Teams admin center > Meetings > Meeting policies > Global > Who can bypass the lobby > People in my org. Run: Set-CsTeamsMeetingPolicy -Identity Global -AutoAdmittedUsers EveryoneInCompanyExcludingGuests'
 
         # Dial-in users can't bypass lobby (CIS 8.5.4)
@@ -152,7 +152,7 @@ try {
         Add-Setting -Category 'Meeting Policy' -Setting 'Dial-in Users Bypass Lobby' `
             -CurrentValue "$pstnBypass" -RecommendedValue 'False' `
             -Status $(if (-not $pstnBypass) { 'Pass' } else { 'Fail' }) `
-            -CisControl '8.5.4' `
+            -CheckId 'TEAMS-MEETING-004' `
             -Remediation 'Teams admin center > Meetings > Meeting policies > Global > Dial-in users can bypass the lobby > Off. Run: Set-CsTeamsMeetingPolicy -Identity Global -AllowPSTNUsersToBypassLobby $false'
 
         # External participants can't give/request control (CIS 8.5.7)
@@ -160,7 +160,7 @@ try {
         Add-Setting -Category 'Meeting Policy' -Setting 'External Participants Can Give/Request Control' `
             -CurrentValue "$extControl" -RecommendedValue 'False' `
             -Status $(if (-not $extControl) { 'Pass' } else { 'Warning' }) `
-            -CisControl '8.5.7' `
+            -CheckId 'TEAMS-MEETING-005' `
             -Remediation 'Teams admin center > Meetings > Meeting policies > Global > External participants can give or request control > Off. Run: Set-CsTeamsMeetingPolicy -Identity Global -AllowExternalParticipantGiveRequestControl $false'
     }
 }

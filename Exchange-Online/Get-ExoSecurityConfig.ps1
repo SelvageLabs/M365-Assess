@@ -17,7 +17,7 @@
 
     Displays Exchange Online security configuration settings.
 .NOTES
-    Version: 0.4.0
+    Version: 0.5.0
     Author:  Daren9m
     Settings checked are aligned with CIS Microsoft 365 Foundations Benchmark v6.0.1 recommendations.
 #>
@@ -39,7 +39,7 @@ function Add-Setting {
         [string]$CurrentValue,
         [string]$RecommendedValue,
         [string]$Status,
-        [string]$CisControl = '',
+        [string]$CheckId = '',
         [string]$Remediation = ''
     )
     $settings.Add([PSCustomObject]@{
@@ -48,7 +48,7 @@ function Add-Setting {
         CurrentValue     = $CurrentValue
         RecommendedValue = $RecommendedValue
         Status           = $Status
-        CisControl       = $CisControl
+        CheckId          = $CheckId
         Remediation      = $Remediation
     })
 }
@@ -65,7 +65,7 @@ try {
     Add-Setting -Category 'Authentication' -Setting 'Modern Authentication Enabled' `
         -CurrentValue "$modernAuth" -RecommendedValue 'True' `
         -Status $(if ($modernAuth) { 'Pass' } else { 'Fail' }) `
-        -CisControl '6.5.1' `
+        -CheckId 'EXO-AUTH-001' `
         -Remediation 'Exchange admin center > Settings > Modern authentication > Enable. Run: Set-OrganizationConfig -OAuth2ClientProfileEnabled $true'
 
     # Audit Enabled
@@ -74,7 +74,7 @@ try {
         -CurrentValue "$(if ($auditEnabled) { 'Disabled' } else { 'Enabled' })" `
         -RecommendedValue 'Enabled' `
         -Status $(if (-not $auditEnabled) { 'Pass' } else { 'Fail' }) `
-        -CisControl '6.1.1' `
+        -CheckId 'EXO-AUDIT-001' `
         -Remediation 'Run: Set-OrganizationConfig -AuditDisabled $false. Ensure unified audit log is enabled in Microsoft Purview.'
 
     # Customer Lockbox
@@ -82,7 +82,7 @@ try {
     Add-Setting -Category 'Security' -Setting 'Customer Lockbox Enabled' `
         -CurrentValue "$lockbox" -RecommendedValue 'True (E5 license)' `
         -Status $(if ($lockbox) { 'Pass' } else { 'Review' }) `
-        -CisControl '1.3.6' `
+        -CheckId 'EXO-LOCKBOX-001' `
         -Remediation 'M365 admin center > Settings > Org settings > Security & privacy > Customer Lockbox > Require approval. Requires E5 or equivalent.'
 
     # Mail Tips
@@ -90,28 +90,28 @@ try {
     Add-Setting -Category 'Mail Tips' -Setting 'All MailTips Enabled' `
         -CurrentValue "$mailTipsEnabled" -RecommendedValue 'True' `
         -Status $(if ($mailTipsEnabled) { 'Pass' } else { 'Warning' }) `
-        -CisControl '6.5.2' `
+        -CheckId 'EXO-MAILTIPS-001' `
         -Remediation 'Run: Set-OrganizationConfig -MailTipsAllTipsEnabled $true'
 
     $externalTips = $orgConfig.MailTipsExternalRecipientsTipsEnabled
     Add-Setting -Category 'Mail Tips' -Setting 'External Recipients Tips Enabled' `
         -CurrentValue "$externalTips" -RecommendedValue 'True' `
         -Status $(if ($externalTips) { 'Pass' } else { 'Warning' }) `
-        -CisControl '6.5.2' `
+        -CheckId 'EXO-MAILTIPS-001' `
         -Remediation 'Run: Set-OrganizationConfig -MailTipsExternalRecipientsTipsEnabled $true'
 
     $groupMetrics = $orgConfig.MailTipsGroupMetricsEnabled
     Add-Setting -Category 'Mail Tips' -Setting 'Group Metrics Enabled' `
         -CurrentValue "$groupMetrics" -RecommendedValue 'True' `
         -Status $(if ($groupMetrics) { 'Pass' } else { 'Review' }) `
-        -CisControl '6.5.2' `
+        -CheckId 'EXO-MAILTIPS-001' `
         -Remediation 'Run: Set-OrganizationConfig -MailTipsGroupMetricsEnabled $true'
 
     $largeAudience = $orgConfig.MailTipsLargeAudienceThreshold
     Add-Setting -Category 'Mail Tips' -Setting 'Large Audience Threshold' `
         -CurrentValue "$largeAudience" -RecommendedValue '25 or less' `
         -Status $(if ($largeAudience -le 25) { 'Pass' } else { 'Review' }) `
-        -CisControl '6.5.2' `
+        -CheckId 'EXO-MAILTIPS-001' `
         -Remediation 'Run: Set-OrganizationConfig -MailTipsLargeAudienceThreshold 25'
 }
 catch {
@@ -129,7 +129,7 @@ try {
     Add-Setting -Category 'Email Security' -Setting 'External Sender Tagging' `
         -CurrentValue "$externalTagEnabled" -RecommendedValue 'True' `
         -Status $(if ($externalTagEnabled) { 'Pass' } else { 'Warning' }) `
-        -CisControl '6.2.3' `
+        -CheckId 'EXO-EXTTAG-001' `
         -Remediation 'Run: Set-ExternalInOutlook -Enabled $true. Tags external emails with a visual indicator in Outlook.'
 }
 catch {
@@ -147,7 +147,7 @@ try {
     Add-Setting -Category 'Email Security' -Setting 'Auto-Forward to External (Default Domain)' `
         -CurrentValue "$autoForward" -RecommendedValue 'False' `
         -Status $(if (-not $autoForward) { 'Pass' } else { 'Fail' }) `
-        -CisControl '6.2.1' `
+        -CheckId 'EXO-FORWARD-001' `
         -Remediation 'Run: Set-RemoteDomain -Identity Default -AutoForwardEnabled $false. Also consider transport rules to block client-side forwarding.'
 }
 catch {
@@ -165,7 +165,7 @@ try {
         Add-Setting -Category 'OWA Policy' -Setting "OWA Additional Storage ($($policy.Name))" `
             -CurrentValue "$additionalStorage" -RecommendedValue 'False' `
             -Status $(if (-not $additionalStorage) { 'Pass' } else { 'Warning' }) `
-            -CisControl '6.5.3' `
+            -CheckId 'EXO-OWA-001' `
             -Remediation 'Run: Set-OwaMailboxPolicy -Identity OwaMailboxPolicy-Default -AdditionalStorageProvidersAvailable $false'
     }
 }
@@ -190,7 +190,7 @@ try {
             -CurrentValue $(if ($hasExternalSharing) { "Enabled ($domains)" } else { 'Restricted' }) `
             -RecommendedValue 'Restricted' `
             -Status $(if (-not $hasExternalSharing) { 'Pass' } else { 'Review' }) `
-            -CisControl '1.3.3' `
+            -CheckId 'EXO-SHARING-001' `
             -Remediation 'Exchange admin center > Organization > Sharing > Default sharing policy. Remove wildcard (*) domains or restrict to CalendarSharingFreeBusySimple.'
     }
 }
@@ -210,7 +210,7 @@ try {
     Add-Setting -Category 'Auditing' -Setting 'Mailboxes with Audit Bypass' `
         -CurrentValue "$bypassCount" -RecommendedValue '0' `
         -Status $(if ($bypassCount -eq 0) { 'Pass' } else { 'Fail' }) `
-        -CisControl '6.1.3' `
+        -CheckId 'EXO-AUDIT-002' `
         -Remediation 'Run: Set-MailboxAuditBypassAssociation -Identity <user> -AuditBypassEnabled $false for each bypassed mailbox.'
 }
 catch {
@@ -228,7 +228,7 @@ try {
     Add-Setting -Category 'Authentication' -Setting 'SMTP AUTH Disabled (Org-Wide)' `
         -CurrentValue "$smtpAuthDisabled" -RecommendedValue 'True' `
         -Status $(if ($smtpAuthDisabled) { 'Pass' } else { 'Fail' }) `
-        -CisControl '6.5.4' `
+        -CheckId 'EXO-AUTH-002' `
         -Remediation 'Run: Set-TransportConfig -SmtpClientAuthenticationDisabled $true. Disable SMTP AUTH org-wide and enable per-mailbox only where required.'
 }
 catch {
@@ -251,7 +251,7 @@ try {
             -CurrentValue $(if ($hasMyApps) { 'User add-ins allowed' } else { 'Restricted' }) `
             -RecommendedValue 'Restricted' `
             -Status $(if (-not $hasMyApps) { 'Pass' } else { 'Review' }) `
-            -CisControl '6.3.1' `
+            -CheckId 'EXO-ADDINS-001' `
             -Remediation 'Exchange admin center > Roles > User roles > Default Role Assignment Policy. Remove MyMarketplaceApps, MyCustomApps, MyReadWriteMailboxApps roles.'
     }
 }
