@@ -1,0 +1,72 @@
+{
+  "frameworkId": "soc2-tsc",
+  "label": "SOC 2 Trust Services Criteria",
+  "version": "2022",
+  "css": "fw-soc2",
+  "scoring": {
+    "method": "criteria-coverage",
+    "criteria": {
+      "CC5": {
+        "label": "Control Activities",
+        "description": "Security policies and procedures are in place and operating effectively"
+      },
+      "CC6.1": {
+        "label": "Logical & Physical Access — Authentication",
+        "description": "Access to systems and data is restricted through authentication mechanisms"
+      },
+      "CC6.2": {
+        "label": "Logical & Physical Access — Provisioning",
+        "description": "Access is granted, modified, and removed in a timely manner"
+      },
+      "CC6.3": {
+        "label": "Logical & Physical Access — Authorization",
+        "description": "Role-based access with least privilege enforcement"
+      },
+      "CC6.5": {
+        "label": "Logical & Physical Access — Revocation",
+        "description": "Access is revoked when no longer appropriate"
+      },
+      "CC6.6": {
+        "label": "System Boundaries — External Threats",
+        "description": "Systems are protected against external threats"
+      },
+      "CC6.7": {
+        "label": "System Boundaries — Data Protection",
+        "description": "Data transmission and storage is restricted and protected"
+      },
+      "CC6.8": {
+        "label": "System Boundaries — Malware Prevention",
+        "description": "Unauthorized and malicious software is prevented or detected"
+      },
+      "CC7.1": {
+        "label": "System Operations — Monitoring",
+        "description": "Security events are monitored and anomalies are detected"
+      },
+      "CC7.2": {
+        "label": "System Operations — Anomaly Detection",
+        "description": "Anomalies are evaluated to determine if they represent security events"
+      },
+      "CC8.1": {
+        "label": "Change Management",
+        "description": "Changes to infrastructure and software are authorized and managed"
+      }
+    }
+  },
+  "licensingProfiles": {
+    "E3": {
+      "label": "Microsoft 365 E3",
+      "excludeChecks": ["ENTRA-PIM-001", "ENTRA-IDRISK-001", "ENTRA-USERRISK-001"]
+    },
+    "E5": {
+      "label": "Microsoft 365 E5",
+      "excludeChecks": []
+    }
+  },
+  "nonAutomatableCriteria": {
+    "CC1": { "label": "Control Environment", "note": "Requires organizational governance documentation" },
+    "CC2": { "label": "Communication & Information", "note": "Requires policy documentation review" },
+    "CC3": { "label": "Risk Assessment", "note": "Partially automatable via Secure Score (Phase 2)" },
+    "CC4": { "label": "Monitoring Activities", "note": "Partially automatable via Compliance Manager" },
+    "CC9": { "label": "Risk Mitigation", "note": "Requires vendor management and business continuity review" }
+  }
+}
