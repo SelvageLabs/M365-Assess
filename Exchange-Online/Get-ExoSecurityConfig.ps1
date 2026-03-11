@@ -17,7 +17,7 @@
 
     Displays Exchange Online security configuration settings.
 .NOTES
-    Version: 0.5.0
+    Version: 0.6.0
     Author:  Daren9m
     Settings checked are aligned with CIS Microsoft 365 Foundations Benchmark v6.0.1 recommendations.
 #>
@@ -51,6 +51,9 @@ function Add-Setting {
         CheckId          = $CheckId
         Remediation      = $Remediation
     })
+    if ($CheckId -and (Get-Command -Name Update-CheckProgress -ErrorAction SilentlyContinue)) {
+        Update-CheckProgress -CheckId $CheckId -Setting $Setting -Status $Status
+    }
 }
 
 # ------------------------------------------------------------------

@@ -144,6 +144,43 @@
       }
     },
     {
+      "checkId": "ENTRA-SECDEFAULT-001",
+      "name": "Security Defaults Enabled",
+      "category": "SECDEFAULT",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "PR.AC-1"
+        },
+        "nist-800-53": {
+          "controlId": "AC-2;IA-2"
+        },
+        "iso-27001": {
+          "controlId": "A.9.2.1"
+        },
+        "pci-dss": {
+          "controlId": "8.2.x;2.2.x"
+        },
+        "cmmc": {
+          "controlId": "3.1.1;3.5.3"
+        },
+        "hipaa": {
+          "controlId": "§164.312(d);§164.312(a)(1)"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.AAD.1.1v1"
+        },
+        "soc2": {
+          "controlId": "CC6.1;CC6.2",
+          "evidenceType": "config-export"
+        }
+      }
+    },
+    {
       "checkId": "MANUAL-CIS-1-1-4",
       "name": "Ensure administrative accounts use licenses with a reduced application footprint",
       "category": "",
@@ -2399,6 +2436,43 @@
       }
     },
     {
+      "checkId": "ENTRA-APPREG-001",
+      "name": "Users Can Register Applications",
+      "category": "APPREG",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "PR.IP-1"
+        },
+        "nist-800-53": {
+          "controlId": "CM-7"
+        },
+        "iso-27001": {
+          "controlId": "A.12.6.2"
+        },
+        "pci-dss": {
+          "controlId": "2.2.x"
+        },
+        "cmmc": {
+          "controlId": "3.4.6"
+        },
+        "hipaa": {
+          "controlId": "§164.312(a)(1)"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.AAD.5.3v1"
+        },
+        "soc2": {
+          "controlId": "CC5;CC6.1;CC8.1",
+          "evidenceType": "config-export"
+        }
+      }
+    },
+    {
       "checkId": "MANUAL-CIS-5-1-6-1",
       "name": "Ensure that collaboration invitations are sent to allowed domains only",
       "category": "",
@@ -2529,6 +2603,31 @@
         },
         "cisa-scuba": {
           "controlId": "MS.AAD.8.3v1"
+        },
+        "soc2": {
+          "controlId": "CC6.1;CC6.3",
+          "evidenceType": "config-export"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-GUEST-003",
+      "name": "Guest User Count",
+      "category": "GUEST",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "PR.AC-1"
+        },
+        "nist-800-53": {
+          "controlId": "AC-2"
+        },
+        "iso-27001": {
+          "controlId": "A.9.2.5"
         },
         "soc2": {
           "controlId": "CC6.1;CC6.3",
@@ -2718,6 +2817,65 @@
         },
         "soc2": {
           "controlId": "CC5;CC8.1",
+          "evidenceType": "config-export"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-CA-002",
+      "name": "Conditional Access Policy Count",
+      "category": "CA",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "PR.AC-4"
+        },
+        "nist-800-53": {
+          "controlId": "AC-3"
+        },
+        "iso-27001": {
+          "controlId": "A.9.1.1"
+        },
+        "soc2": {
+          "controlId": "CC5;CC6.1",
+          "evidenceType": "config-export"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-CA-003",
+      "name": "Enabled Conditional Access Policies",
+      "category": "CA",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "PR.AC-4"
+        },
+        "nist-800-53": {
+          "controlId": "AC-3"
+        },
+        "iso-27001": {
+          "controlId": "A.9.1.1"
+        },
+        "pci-dss": {
+          "controlId": "2.2.x;7.2.x"
+        },
+        "cmmc": {
+          "controlId": "3.1.1;3.1.2"
+        },
+        "hipaa": {
+          "controlId": "§164.312(a)(1)"
+        },
+        "soc2": {
+          "controlId": "CC5;CC6.1",
           "evidenceType": "config-export"
         }
       }
@@ -3180,7 +3338,7 @@
     },
     {
       "checkId": "ENTRA-PASSWORD-002",
-      "name": "Ensure custom banned passwords lists are used",
+      "name": "Custom Banned Password List Enforced",
       "category": "PASSWORD",
       "collector": "Entra",
       "hasAutomatedCheck": true,
@@ -3190,7 +3348,7 @@
       "frameworks": {
         "cis-m365-v6": {
           "controlId": "5.2.3.2",
-          "title": "Ensure custom banned passwords lists are used",
+          "title": "Custom Banned Password List Enforced",
           "profiles": [
             "E3-L1",
             "E5-L1"
@@ -3204,6 +3362,74 @@
         },
         "iso-27001": {
           "controlId": "A.5.17"
+        },
+        "pci-dss": {
+          "controlId": "8.3.x"
+        },
+        "cmmc": {
+          "controlId": "3.5.7"
+        },
+        "hipaa": {
+          "controlId": "§164.308(a)(5)(ii)(D)"
+        },
+        "soc2": {
+          "controlId": "CC6.1",
+          "evidenceType": "config-export"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-PASSWORD-003",
+      "name": "Smart Lockout Threshold",
+      "category": "PASSWORD",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "PR.AC-7"
+        },
+        "nist-800-53": {
+          "controlId": "AC-7"
+        },
+        "iso-27001": {
+          "controlId": "A.9.4.2"
+        },
+        "pci-dss": {
+          "controlId": "8.3.x"
+        },
+        "cmmc": {
+          "controlId": "3.1.8"
+        },
+        "hipaa": {
+          "controlId": "§164.312(a)(2)(i)"
+        },
+        "soc2": {
+          "controlId": "CC6.1",
+          "evidenceType": "config-export"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-PASSWORD-004",
+      "name": "Custom Banned Password Count",
+      "category": "PASSWORD",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "PR.AC-1"
+        },
+        "nist-800-53": {
+          "controlId": "IA-5"
+        },
+        "iso-27001": {
+          "controlId": "A.9.4.3"
         },
         "pci-dss": {
           "controlId": "8.3.x"
@@ -4714,6 +4940,72 @@
       }
     },
     {
+      "checkId": "SPO-SYNC-002",
+      "name": "Mac Sync App Enabled",
+      "category": "SYNC",
+      "collector": "SharePoint",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "CM-8"
+        },
+        "iso-27001": {
+          "controlId": "A.8.9"
+        },
+        "soc2": {
+          "controlId": "CC6.1",
+          "evidenceType": "config-export"
+        }
+      }
+    },
+    {
+      "checkId": "SPO-LOOP-001",
+      "name": "Loop Components Enabled",
+      "category": "LOOP",
+      "collector": "SharePoint",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "CM-8"
+        },
+        "iso-27001": {
+          "controlId": "A.8.9"
+        },
+        "soc2": {
+          "controlId": "CC6.1",
+          "evidenceType": "config-export"
+        }
+      }
+    },
+    {
+      "checkId": "SPO-LOOP-002",
+      "name": "OneDrive Loop Sharing",
+      "category": "LOOP",
+      "collector": "SharePoint",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "CM-8"
+        },
+        "iso-27001": {
+          "controlId": "A.8.9"
+        },
+        "soc2": {
+          "controlId": "CC6.1",
+          "evidenceType": "config-export"
+        }
+      }
+    },
+    {
       "checkId": "MANUAL-CIS-7-3-3",
       "name": "Ensure custom script execution is restricted on personal sites",
       "category": "",
@@ -5372,6 +5664,62 @@
         },
         "hipaa": {
           "controlId": "§164.312(a)(1)"
+        },
+        "soc2": {
+          "controlId": "CC6.1",
+          "evidenceType": "config-export"
+        }
+      }
+    },
+    {
+      "checkId": "TEAMS-APPS-001",
+      "name": "Chat Resource-Specific Consent Enabled",
+      "category": "APPS",
+      "collector": "Teams",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "PR.IP-1"
+        },
+        "nist-800-53": {
+          "controlId": "CM-7"
+        },
+        "iso-27001": {
+          "controlId": "A.12.6.2"
+        },
+        "pci-dss": {
+          "controlId": "2.2.x"
+        },
+        "cmmc": {
+          "controlId": "3.4.6"
+        },
+        "hipaa": {
+          "controlId": "§164.312(a)(1)"
+        },
+        "soc2": {
+          "controlId": "CC5;CC8.1",
+          "evidenceType": "config-export"
+        }
+      }
+    },
+    {
+      "checkId": "TEAMS-INFO-001",
+      "name": "Teams Workload Active",
+      "category": "INFO",
+      "collector": "Teams",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "CM-8"
+        },
+        "iso-27001": {
+          "controlId": "A.8.9"
         },
         "soc2": {
           "controlId": "CC6.1",

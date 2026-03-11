@@ -23,7 +23,7 @@
 
     Exports the security configuration to CSV.
 .NOTES
-    Version: 0.5.0
+    Version: 0.6.0
     Author:  Daren9m
     Settings checked are aligned with CIS Microsoft 365 Foundations Benchmark v6.0.1 recommendations.
 #>
@@ -74,6 +74,9 @@ function Add-Setting {
         CheckId          = $CheckId
         Remediation      = $Remediation
     })
+    if ($CheckId -and (Get-Command -Name Update-CheckProgress -ErrorAction SilentlyContinue)) {
+        Update-CheckProgress -CheckId $CheckId -Setting $Setting -Status $Status
+    }
 }
 
 # ------------------------------------------------------------------
@@ -85,13 +88,16 @@ try {
     $isEnabled = $secDefaults['isEnabled']
     Add-Setting -Category 'Security Defaults' -Setting 'Security Defaults Enabled' `
         -CurrentValue "$isEnabled" -RecommendedValue 'True (if no Conditional Access)' `
-        -Status $(if ($isEnabled) { 'Pass' } else { 'Review' }) `
-        -Remediation 'Entra admin center > Properties > Manage security defaults > Enable. If using Conditional Access, ensure equivalent protections exist.'
+        -Status $(if ($isEnabled) { 'Pass' } else { 'Fail' }) `
+        -CheckId 'ENTRA-SECDEFAULT-001' `
+        -Remediation 'Run: Update-MgPolicyIdentitySecurityDefaultsEnforcementPolicy -IsEnabled $true. Entra admin center > Properties > Manage security defaults.'
 }
 catch {
     Write-Warning "Could not retrieve security defaults: $_"
     Add-Setting -Category 'Security Defaults' -Setting 'Security Defaults Enabled' `
-        -CurrentValue 'Unable to retrieve' -RecommendedValue 'True (if no CA)' -Status 'Unknown'
+        -CurrentValue 'Unable to retrieve' -RecommendedValue 'True (if no CA)' -Status 'Unknown' `
+        -CheckId 'ENTRA-SECDEFAULT-001' `
+        -Remediation 'Run: Update-MgPolicyIdentitySecurityDefaultsEnforcementPolicy -IsEnabled $true. Entra admin center > Properties > Manage security defaults.'
 }
 
 # ------------------------------------------------------------------
@@ -114,7 +120,7 @@ try {
     Add-Setting -Category 'Admin Accounts' -Setting 'Global Administrator Count' `
         -CurrentValue "$gaCount" -RecommendedValue '2-4' -Status $gaStatus `
         -CheckId 'ENTRA-ADMIN-001' `
-        -Remediation 'Entra admin center > Roles > Global Administrator. Maintain 2-4 global admins. Use dedicated admin accounts without mailboxes.'
+        -Remediation 'Run: Get-MgDirectoryRole -Filter "displayName eq ''Global Administrator''" | Get-MgDirectoryRoleMember. Maintain 2-4 global admins using dedicated accounts.'
 }
 catch {
     Write-Warning "Could not check global admin count: $_"
@@ -151,12 +157,12 @@ if ($authPolicy) {
             ($consentPolicy -join '; ')
         }
 
-        $consentStatus = if ($consentPolicy.Count -eq 0 -or $null -eq $consentPolicy) { 'Pass' } else { 'Warning' }
+        $consentStatus = if ($consentPolicy.Count -eq 0 -or $null -eq $consentPolicy) { 'Pass' } else { 'Fail' }
 
         Add-Setting -Category 'Application Consent' -Setting 'User Consent for Applications' `
             -CurrentValue $consentValue -RecommendedValue 'Do not allow user consent' -Status $consentStatus `
             -CheckId 'ENTRA-CONSENT-001' `
-            -Remediation 'Entra admin center > Enterprise applications > Consent and permissions > User consent settings > Do not allow user consent.'
+            -Remediation 'Run: Update-MgPolicyAuthorizationPolicy -DefaultUserRolePermissions @{PermissionGrantPoliciesAssigned = @()}. Entra admin center > Enterprise applications > Consent and permissions.'
     }
     catch {
         Write-Warning "Could not check user consent policy: $_"
@@ -168,8 +174,9 @@ if ($authPolicy) {
 
         Add-Setting -Category 'Application Consent' -Setting 'Users Can Register Applications' `
             -CurrentValue "$canRegister" -RecommendedValue 'False' `
-            -Status $(if (-not $canRegister) { 'Pass' } else { 'Warning' }) `
-            -Remediation 'Entra admin center > Users > User settings > Users can register applications > No.'
+            -Status $(if (-not $canRegister) { 'Pass' } else { 'Fail' }) `
+            -CheckId 'ENTRA-APPREG-001' `
+            -Remediation 'Run: Update-MgPolicyAuthorizationPolicy -DefaultUserRolePermissions @{AllowedToCreateApps = $false}. Entra admin center > Users > User settings.'
     }
     catch {
         Write-Warning "Could not check app registration policy: $_"
@@ -180,9 +187,9 @@ if ($authPolicy) {
         $canCreateGroups = $authPolicy['defaultUserRolePermissions']['allowedToCreateSecurityGroups']
         Add-Setting -Category 'Directory Settings' -Setting 'Users Can Create Security Groups' `
             -CurrentValue "$canCreateGroups" -RecommendedValue 'False' `
-            -Status $(if (-not $canCreateGroups) { 'Pass' } else { 'Review' }) `
+            -Status $(if (-not $canCreateGroups) { 'Pass' } else { 'Warning' }) `
             -CheckId 'ENTRA-GROUP-001' `
-            -Remediation 'Entra admin center > Groups > General > Users can create security groups in Azure portals, API or PowerShell > No.'
+            -Remediation 'Run: Update-MgPolicyAuthorizationPolicy -DefaultUserRolePermissions @{AllowedToCreateSecurityGroups = $false}. Entra admin center > Groups > General.'
     }
     catch {
         Write-Warning "Could not check group creation policy: $_"
@@ -195,7 +202,7 @@ if ($authPolicy) {
             -CurrentValue "$canCreateTenants" -RecommendedValue 'False' `
             -Status $(if (-not $canCreateTenants) { 'Pass' } else { 'Warning' }) `
             -CheckId 'ENTRA-TENANT-001' `
-            -Remediation 'Entra admin center > Users > User settings > Restrict non-admin users from creating tenants > Yes.'
+            -Remediation 'Run: Update-MgPolicyAuthorizationPolicy -DefaultUserRolePermissions @{AllowedToCreateTenants = $false}. Entra admin center > Users > User settings.'
     }
     catch {
         Write-Warning "Could not check tenant creation policy: $_"
@@ -215,7 +222,7 @@ try {
         -CurrentValue "$isAdminConsentEnabled" -RecommendedValue 'True' `
         -Status $(if ($isAdminConsentEnabled) { 'Pass' } else { 'Warning' }) `
         -CheckId 'ENTRA-CONSENT-002' `
-        -Remediation 'Entra admin center > Enterprise applications > Admin consent requests > Users can request admin consent > Yes.'
+        -Remediation 'Run: Update-MgPolicyAdminConsentRequestPolicy -IsEnabled $true. Entra admin center > Enterprise applications > Admin consent requests.'
 }
 catch {
     Write-Warning "Could not check admin consent workflow: $_"
@@ -232,9 +239,9 @@ try {
 
     Add-Setting -Category 'Password Management' -Setting 'Auth Method Registration Campaign' `
         -CurrentValue "$ssprRegistration" -RecommendedValue 'enabled' `
-        -Status $(if ($ssprRegistration -eq 'enabled') { 'Pass' } else { 'Review' }) `
+        -Status $(if ($ssprRegistration -eq 'enabled') { 'Pass' } else { 'Warning' }) `
         -CheckId 'ENTRA-MFA-001' `
-        -Remediation 'Entra admin center > Protection > Authentication methods > Registration campaign > State > Enabled.'
+        -Remediation 'Run: Update-MgBetaPolicyAuthenticationMethodPolicy with RegistrationEnforcement settings. Entra admin center > Protection > Authentication methods > Registration campaign.'
 }
 catch {
     Write-Warning "Could not check SSPR: $_"
@@ -260,19 +267,20 @@ try {
             -CurrentValue "$enforceCustom" -RecommendedValue 'True' `
             -Status $(if ($enforceCustom -eq 'True') { 'Pass' } else { 'Warning' }) `
             -CheckId 'ENTRA-PASSWORD-002' `
-            -Remediation 'Entra admin center > Protection > Authentication methods > Password protection > Enforce custom list > Yes.'
+            -Remediation 'Run: Update-MgBetaDirectorySetting for Password Rule Settings with CustomBannedPasswordsEnforced = true. Entra admin center > Protection > Password protection.'
 
         $bannedCount = if ($bannedList) { ($bannedList -split ',').Count } else { 0 }
         Add-Setting -Category 'Password Management' -Setting 'Custom Banned Password Count' `
             -CurrentValue "$bannedCount" -RecommendedValue '1+' `
-            -Status $(if ($bannedCount -gt 0) { 'Pass' } else { 'Review' }) `
-            -CheckId 'ENTRA-PASSWORD-002' `
-            -Remediation 'Entra admin center > Protection > Authentication methods > Password protection > Custom banned passwords list > Add org-specific terms.'
+            -Status $(if ($bannedCount -gt 0) { 'Pass' } else { 'Warning' }) `
+            -CheckId 'ENTRA-PASSWORD-004' `
+            -Remediation 'Run: Update-MgBetaDirectorySetting for Password Rule Settings to add organization-specific terms. Entra admin center > Protection > Password protection.'
 
         Add-Setting -Category 'Password Management' -Setting 'Smart Lockout Threshold' `
             -CurrentValue "$lockoutThreshold" -RecommendedValue '10' `
             -Status $(if ([int]$lockoutThreshold -le 10) { 'Pass' } else { 'Review' }) `
-            -Remediation 'Entra admin center > Protection > Authentication methods > Password protection > Lockout threshold.'
+            -CheckId 'ENTRA-PASSWORD-003' `
+            -Remediation 'Run: Update-MgBetaDirectorySetting for Password Rule Settings with LockoutThreshold. Entra admin center > Protection > Password protection.'
     }
 }
 catch {
@@ -293,9 +301,9 @@ try {
         Add-Setting -Category 'Password Management' -Setting "Password Expiration: $($domain['id'])" `
             -CurrentValue $(if ($neverExpires) { 'Never expires' } else { "$validityDays days" }) `
             -RecommendedValue 'Never expires (with MFA)' `
-            -Status $(if ($neverExpires) { 'Pass' } else { 'Review' }) `
+            -Status $(if ($neverExpires) { 'Pass' } else { 'Fail' }) `
             -CheckId 'ENTRA-PASSWORD-001' `
-            -Remediation 'M365 admin center > Settings > Org settings > Security & privacy > Password expiration policy > Set passwords to never expire (ensure MFA is enforced).'
+            -Remediation 'Run: Update-MgDomain -DomainId {domain} -PasswordValidityPeriodInDays 2147483647. M365 admin center > Settings > Password expiration policy.'
     }
 }
 catch {
@@ -330,7 +338,7 @@ if ($authPolicy) {
             -CurrentValue $inviteDisplay -RecommendedValue 'Admins and guest inviters only' `
             -Status $inviteStatus `
             -CheckId 'ENTRA-GUEST-002' `
-            -Remediation 'Entra admin center > External Identities > External collaboration settings > Guest invite settings > Only admins and users in guest inviter role.'
+            -Remediation 'Run: Update-MgPolicyAuthorizationPolicy -AllowInvitesFrom ''adminsAndGuestInviters''. Entra admin center > External Identities > External collaboration settings.'
 
         # Guest user role
         $roleDisplay = switch ($guestAccessRestriction) {
@@ -342,9 +350,9 @@ if ($authPolicy) {
 
         Add-Setting -Category 'External Collaboration' -Setting 'Guest User Access Restriction' `
             -CurrentValue $roleDisplay -RecommendedValue 'Restricted access' `
-            -Status $(if ($guestAccessRestriction -eq '2af84b1e-32c8-42b7-82bc-daa82404023b') { 'Pass' } else { 'Review' }) `
+            -Status $(if ($guestAccessRestriction -eq '2af84b1e-32c8-42b7-82bc-daa82404023b') { 'Pass' } else { 'Warning' }) `
             -CheckId 'ENTRA-GUEST-001' `
-            -Remediation 'Entra admin center > External Identities > External collaboration settings > Guest user access > Most restrictive.'
+            -Remediation 'Run: Update-MgPolicyAuthorizationPolicy -GuestUserRoleId ''2af84b1e-32c8-42b7-82bc-daa82404023b''. Entra admin center > External Identities > External collaboration settings.'
     }
     catch {
         Write-Warning "Could not check external collaboration: $_"
@@ -363,13 +371,15 @@ try {
 
     Add-Setting -Category 'Conditional Access' -Setting 'Total CA Policies' `
         -CurrentValue "$caCount" -RecommendedValue '1+' `
-        -Status $(if ($caCount -gt 0) { 'Pass' } else { 'Warning' }) `
-        -Remediation 'Entra admin center > Protection > Conditional Access > Create policies to enforce MFA, block legacy auth, and require compliant devices.'
+        -Status 'Info' `
+        -CheckId 'ENTRA-CA-002' `
+        -Remediation 'Informational — review Conditional Access policy coverage for your organization.'
 
     Add-Setting -Category 'Conditional Access' -Setting 'Enabled CA Policies' `
         -CurrentValue "$enabledCount" -RecommendedValue '1+' `
         -Status $(if ($enabledCount -gt 0) { 'Pass' } else { 'Warning' }) `
-        -Remediation 'Entra admin center > Protection > Conditional Access > Ensure policies are set to On (not Report-only).'
+        -CheckId 'ENTRA-CA-003' `
+        -Remediation 'Run: Get-MgIdentityConditionalAccessPolicy | Where-Object {$_.State -eq ''enabled''}. Ensure policies are set to On, not Report-only.'
 
     # 11b. CA Policy Blocks Legacy Authentication (CIS 5.2.2.3)
     $legacyBlockPolicies = @($caPolicies['value'] | Where-Object {
@@ -386,7 +396,7 @@ try {
         -RecommendedValue 'Yes' `
         -Status $(if ($legacyBlockCount -gt 0) { 'Pass' } else { 'Fail' }) `
         -CheckId 'ENTRA-CA-001' `
-        -Remediation 'Entra admin center > Protection > Conditional Access > New policy > Conditions > Client apps > Exchange ActiveSync + Other > Grant > Block access.'
+        -Remediation 'Run: New-MgIdentityConditionalAccessPolicy targeting legacy client apps with Block grant control. Entra admin center > Protection > Conditional Access.'
 }
 catch {
     Write-Warning "Could not check CA policies: $_"
@@ -401,8 +411,9 @@ try {
         -Uri "/v1.0/users/`$count?`$filter=userType eq 'Guest'" `
         -Headers @{ 'ConsistencyLevel' = 'eventual' } -ErrorAction Stop
     Add-Setting -Category 'External Collaboration' -Setting 'Guest User Count' `
-        -CurrentValue "$guestCount" -RecommendedValue 'Review periodically' -Status 'Review' `
-        -Remediation 'Entra admin center > Users > Guest users. Review and remove stale guest accounts. Consider enabling guest access expiration.'
+        -CurrentValue "$guestCount" -RecommendedValue 'Review periodically' -Status 'Info' `
+        -CheckId 'ENTRA-GUEST-003' `
+        -Remediation 'Informational — review and remove stale guest accounts periodically. Entra admin center > Users > Guest users.'
 }
 catch {
     Write-Warning "Could not count guest users: $_"

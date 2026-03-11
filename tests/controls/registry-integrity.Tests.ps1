@@ -20,8 +20,15 @@ Describe 'Control Registry Integrity' {
             $check.checkId | Should -Not -BeNullOrEmpty
             $check.name | Should -Not -BeNullOrEmpty
             $check.frameworks | Should -Not -BeNullOrEmpty
-            $check.frameworks.'cis-m365-v6' | Should -Not -BeNullOrEmpty `
-                -Because "$($check.checkId) must have CIS mapping"
+        }
+    }
+
+    It 'CIS-mapped entries have valid CIS framework data' {
+        $cisMapped = $checks | Where-Object { $_.frameworks.'cis-m365-v6' }
+        $cisMapped.Count | Should -BeGreaterOrEqual 139 -Because "at least 139 CIS benchmark controls exist"
+        foreach ($check in $cisMapped) {
+            $check.frameworks.'cis-m365-v6'.controlId | Should -Not -BeNullOrEmpty `
+                -Because "$($check.checkId) has CIS mapping and needs a controlId"
         }
     }
 
