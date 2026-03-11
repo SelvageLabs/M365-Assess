@@ -25,7 +25,7 @@
 
     Exports the security configuration to CSV.
 .NOTES
-    Version: 0.4.0
+    Version: 0.5.0
     Author:  Daren9m
     Settings checked are aligned with CIS Microsoft 365 Foundations Benchmark v6.0.1 recommendations.
     Some checks require Defender for Office 365 Plan 1 or Plan 2 licensing.
@@ -48,7 +48,7 @@ function Add-Setting {
         [string]$CurrentValue,
         [string]$RecommendedValue,
         [string]$Status,
-        [string]$CisControl = '',
+        [string]$CheckId = '',
         [string]$Remediation = ''
     )
     $settings.Add([PSCustomObject]@{
@@ -57,7 +57,7 @@ function Add-Setting {
         CurrentValue     = $CurrentValue
         RecommendedValue = $RecommendedValue
         Status           = $Status
-        CisControl       = $CisControl
+        CheckId          = $CheckId
         Remediation      = $Remediation
     })
 }
@@ -78,7 +78,7 @@ try {
             -Setting "Phishing Threshold ($policyLabel)" `
             -CurrentValue "$threshold" -RecommendedValue '2+ (Aggressive)' `
             -Status $(if ([int]$threshold -ge 2) { 'Pass' } else { 'Warning' }) `
-            -CisControl '2.1.7' `
+            -CheckId 'DEFENDER-ANTIPHISH-001' `
             -Remediation 'Security admin center > Email & collaboration > Policies > Anti-phishing > Edit default policy > Set threshold to 2 (Aggressive) or higher.'
 
         # Impersonation protection (Defender P1+ only)
@@ -88,7 +88,7 @@ try {
                 -Setting "Mailbox Intelligence Protection ($policyLabel)" `
                 -CurrentValue "$mailboxIntel" -RecommendedValue 'True' `
                 -Status $(if ($mailboxIntel) { 'Pass' } else { 'Warning' }) `
-                -CisControl '2.1.7' `
+                -CheckId 'DEFENDER-ANTIPHISH-001' `
                 -Remediation 'Security admin center > Anti-phishing policy > Impersonation > Enable Mailbox intelligence protection.'
         }
 
@@ -98,7 +98,7 @@ try {
                 -Setting "Targeted User Protection ($policyLabel)" `
                 -CurrentValue "$targetedUser" -RecommendedValue 'True' `
                 -Status $(if ($targetedUser) { 'Pass' } else { 'Review' }) `
-                -CisControl '2.1.7' `
+                -CheckId 'DEFENDER-ANTIPHISH-001' `
                 -Remediation 'Security admin center > Anti-phishing policy > Impersonation > Add users to protect (executives, high-value targets).'
         }
 
@@ -108,7 +108,7 @@ try {
                 -Setting "Targeted Domain Protection ($policyLabel)" `
                 -CurrentValue "$targetedDomain" -RecommendedValue 'True' `
                 -Status $(if ($targetedDomain) { 'Pass' } else { 'Review' }) `
-                -CisControl '2.1.7' `
+                -CheckId 'DEFENDER-ANTIPHISH-001' `
                 -Remediation 'Security admin center > Anti-phishing policy > Impersonation > Add domains to protect (include all org domains).'
         }
 
@@ -119,7 +119,7 @@ try {
                 -Setting "Honor DMARC Policy ($policyLabel)" `
                 -CurrentValue "$honorDmarc" -RecommendedValue 'True' `
                 -Status $(if ($honorDmarc) { 'Pass' } else { 'Warning' }) `
-                -CisControl '2.1.7' `
+                -CheckId 'DEFENDER-ANTIPHISH-001' `
                 -Remediation 'Security admin center > Anti-phishing policy > Enable "Honor DMARC record policy when the message is detected as spoof".'
         }
 
@@ -129,7 +129,7 @@ try {
             -Setting "Spoof Intelligence ($policyLabel)" `
             -CurrentValue "$spoofIntel" -RecommendedValue 'True' `
             -Status $(if ($spoofIntel) { 'Pass' } else { 'Fail' }) `
-            -CisControl '2.1.7' `
+            -CheckId 'DEFENDER-ANTIPHISH-001' `
             -Remediation 'Security admin center > Anti-phishing policy > Spoof > Enable spoof intelligence.'
 
         # Safety tips
@@ -139,7 +139,7 @@ try {
                 -Setting "First Contact Safety Tips ($policyLabel)" `
                 -CurrentValue "$firstContact" -RecommendedValue 'True' `
                 -Status $(if ($firstContact) { 'Pass' } else { 'Review' }) `
-                -CisControl '2.1.7' `
+                -CheckId 'DEFENDER-ANTIPHISH-001' `
                 -Remediation 'Security admin center > Anti-phishing policy > Safety tips > Enable first contact safety tips.'
         }
 
@@ -167,7 +167,7 @@ try {
             -Setting "Bulk Complaint Level Threshold ($policyLabel)" `
             -CurrentValue "$bcl" -RecommendedValue '6 or lower' `
             -Status $(if ([int]$bcl -le 6) { 'Pass' } else { 'Warning' }) `
-            -CisControl '2.1.6' `
+            -CheckId 'DEFENDER-ANTISPAM-001' `
             -Remediation 'Security admin center > Anti-spam > Inbound policy > Bulk email threshold > Set to 6 or lower.'
 
         # Spam action
@@ -176,7 +176,7 @@ try {
             -Setting "Spam Action ($policyLabel)" `
             -CurrentValue "$spamAction" -RecommendedValue 'MoveToJmf or Quarantine' `
             -Status $(if ($spamAction -eq 'MoveToJmf' -or $spamAction -eq 'Quarantine') { 'Pass' } else { 'Review' }) `
-            -CisControl '2.1.6' `
+            -CheckId 'DEFENDER-ANTISPAM-001' `
             -Remediation 'Security admin center > Anti-spam > Inbound policy > Spam action > Move to Junk Email folder or Quarantine.'
 
         # High confidence spam action
@@ -185,7 +185,7 @@ try {
             -Setting "High Confidence Spam Action ($policyLabel)" `
             -CurrentValue "$hcSpamAction" -RecommendedValue 'Quarantine' `
             -Status $(if ($hcSpamAction -eq 'Quarantine') { 'Pass' } else { 'Warning' }) `
-            -CisControl '2.1.6' `
+            -CheckId 'DEFENDER-ANTISPAM-001' `
             -Remediation 'Security admin center > Anti-spam > Inbound policy > High confidence spam action > Quarantine message.'
 
         # High confidence phishing action
@@ -194,7 +194,7 @@ try {
             -Setting "High Confidence Phish Action ($policyLabel)" `
             -CurrentValue "$hcPhishAction" -RecommendedValue 'Quarantine' `
             -Status $(if ($hcPhishAction -eq 'Quarantine') { 'Pass' } else { 'Fail' }) `
-            -CisControl '2.1.6' `
+            -CheckId 'DEFENDER-ANTISPAM-001' `
             -Remediation 'Security admin center > Anti-spam > Inbound policy > High confidence phishing action > Quarantine message.'
 
         # Phishing action
@@ -203,7 +203,7 @@ try {
             -Setting "Phishing Action ($policyLabel)" `
             -CurrentValue "$phishAction" -RecommendedValue 'Quarantine' `
             -Status $(if ($phishAction -eq 'Quarantine') { 'Pass' } else { 'Warning' }) `
-            -CisControl '2.1.6' `
+            -CheckId 'DEFENDER-ANTISPAM-001' `
             -Remediation 'Security admin center > Anti-spam > Inbound policy > Phishing action > Quarantine message.'
 
         # Zero-hour Auto Purge (ZAP)
@@ -213,7 +213,7 @@ try {
                 -Setting "Zero-Hour Auto Purge ($policyLabel)" `
                 -CurrentValue "$zapEnabled" -RecommendedValue 'True' `
                 -Status $(if ($zapEnabled) { 'Pass' } else { 'Fail' }) `
-                -CisControl '2.1.6' `
+                -CheckId 'DEFENDER-ANTISPAM-001' `
                 -Remediation 'Security admin center > Anti-spam > Inbound policy > Zero-hour auto purge > Enabled.'
         }
 
@@ -224,7 +224,7 @@ try {
                 -Setting "Spam ZAP ($policyLabel)" `
                 -CurrentValue "$spamZap" -RecommendedValue 'True' `
                 -Status $(if ($spamZap) { 'Pass' } else { 'Warning' }) `
-                -CisControl '2.1.6' `
+                -CheckId 'DEFENDER-ANTISPAM-001' `
                 -Remediation 'Security admin center > Anti-spam > Inbound policy > Zero-hour auto purge for spam > Enabled.'
         }
 
@@ -235,7 +235,7 @@ try {
                 -Setting "Phishing ZAP ($policyLabel)" `
                 -CurrentValue "$phishZap" -RecommendedValue 'True' `
                 -Status $(if ($phishZap) { 'Pass' } else { 'Fail' }) `
-                -CisControl '2.1.6' `
+                -CheckId 'DEFENDER-ANTISPAM-001' `
                 -Remediation 'Security admin center > Anti-spam > Inbound policy > Zero-hour auto purge for phishing > Enabled.'
         }
 
@@ -263,7 +263,7 @@ try {
             -Setting "Common Attachment Filter ($policyLabel)" `
             -CurrentValue "$commonFilter" -RecommendedValue 'True' `
             -Status $(if ($commonFilter) { 'Pass' } else { 'Warning' }) `
-            -CisControl '2.1.2' `
+            -CheckId 'DEFENDER-ANTIMALWARE-001' `
             -Remediation 'Security admin center > Anti-malware > Default policy > Common attachments filter > Enable.'
 
         # ZAP for malware
@@ -273,7 +273,7 @@ try {
                 -Setting "Malware ZAP ($policyLabel)" `
                 -CurrentValue "$malwareZap" -RecommendedValue 'True' `
                 -Status $(if ($malwareZap) { 'Pass' } else { 'Fail' }) `
-                -CisControl '2.1.2' `
+                -CheckId 'DEFENDER-ANTIMALWARE-001' `
                 -Remediation 'Security admin center > Anti-malware > Default policy > Zero-hour auto purge for malware > Enabled.'
         }
 
@@ -283,7 +283,7 @@ try {
             -Setting "Internal Sender Admin Notifications ($policyLabel)" `
             -CurrentValue "$adminNotify" -RecommendedValue 'True' `
             -Status $(if ($adminNotify) { 'Pass' } else { 'Review' }) `
-            -CisControl '2.1.3' `
+            -CheckId 'DEFENDER-ANTIMALWARE-002' `
             -Remediation 'Security admin center > Anti-malware > Default policy > Admin notifications > Notify an admin about undelivered messages from internal senders.'
 
         # Only assess default policy in detail
@@ -307,7 +307,7 @@ try {
             Add-Setting -Category 'Safe Links' -Setting 'Safe Links Policies' `
                 -CurrentValue 'None configured' -RecommendedValue 'At least 1 policy' `
                 -Status 'Warning' `
-                -CisControl '2.1.1' `
+                -CheckId 'DEFENDER-SAFELINKS-001' `
                 -Remediation 'Security admin center > Email & collaboration > Policies > Safe Links > Create a Safe Links policy covering all users.'
         }
         else {
@@ -320,7 +320,7 @@ try {
                     -Setting "Real-time URL Scanning ($policyLabel)" `
                     -CurrentValue "$scanUrls" -RecommendedValue 'True' `
                     -Status $(if ($scanUrls) { 'Pass' } else { 'Warning' }) `
-                    -CisControl '2.1.1' `
+                    -CheckId 'DEFENDER-SAFELINKS-001' `
                     -Remediation 'Security admin center > Safe Links policy > URL & click protection settings > Enable real-time URL scanning.'
 
                 # Click tracking
@@ -329,7 +329,7 @@ try {
                     -Setting "Track User Clicks ($policyLabel)" `
                     -CurrentValue "$trackClicks" -RecommendedValue 'True' `
                     -Status $(if ($trackClicks) { 'Pass' } else { 'Review' }) `
-                    -CisControl '2.1.1' `
+                    -CheckId 'DEFENDER-SAFELINKS-001' `
                     -Remediation 'Security admin center > Safe Links policy > Ensure "Do not track when users click protected links" is disabled.'
 
                 # Internal senders
@@ -339,7 +339,7 @@ try {
                         -Setting "Enable for Internal Senders ($policyLabel)" `
                         -CurrentValue "$internalSenders" -RecommendedValue 'True' `
                         -Status $(if ($internalSenders) { 'Pass' } else { 'Review' }) `
-                        -CisControl '2.1.1' `
+                        -CheckId 'DEFENDER-SAFELINKS-001' `
                         -Remediation 'Security admin center > Safe Links policy > Enable for messages sent within the organization.'
                 }
 
@@ -350,7 +350,7 @@ try {
                         -Setting "Wait for URL Scan ($policyLabel)" `
                         -CurrentValue "$waitScan" -RecommendedValue 'True' `
                         -Status $(if ($waitScan) { 'Pass' } else { 'Review' }) `
-                        -CisControl '2.1.1' `
+                        -CheckId 'DEFENDER-SAFELINKS-001' `
                         -Remediation 'Security admin center > Safe Links policy > Wait for URL scanning to complete before delivering the message.'
                 }
             }
@@ -360,7 +360,7 @@ try {
         Add-Setting -Category 'Safe Links' -Setting 'Safe Links Availability' `
             -CurrentValue 'Not licensed' -RecommendedValue 'Defender for Office 365 P1+' `
             -Status 'Review' `
-            -CisControl '2.1.1' `
+            -CheckId 'DEFENDER-SAFELINKS-001' `
             -Remediation 'Safe Links requires Defender for Office 365 Plan 1 or higher. Consider upgrading licensing.'
     }
 }
@@ -381,7 +381,7 @@ try {
             Add-Setting -Category 'Safe Attachments' -Setting 'Safe Attachments Policies' `
                 -CurrentValue 'None configured' -RecommendedValue 'At least 1 policy' `
                 -Status 'Warning' `
-                -CisControl '2.1.4' `
+                -CheckId 'DEFENDER-SAFEATTACH-001' `
                 -Remediation 'Security admin center > Email & collaboration > Policies > Safe Attachments > Create a policy covering all users.'
         }
         else {
@@ -394,7 +394,7 @@ try {
                     -Setting "Policy Enabled ($policyLabel)" `
                     -CurrentValue "$enabled" -RecommendedValue 'True' `
                     -Status $(if ($enabled) { 'Pass' } else { 'Warning' }) `
-                    -CisControl '2.1.4' `
+                    -CheckId 'DEFENDER-SAFEATTACH-001' `
                     -Remediation 'Security admin center > Safe Attachments policy > Enable the policy.'
 
                 # Action type
@@ -420,7 +420,7 @@ try {
                     -CurrentValue $actionDisplay `
                     -RecommendedValue 'Block or Dynamic Delivery' `
                     -Status $actionStatus `
-                    -CisControl '2.1.4' `
+                    -CheckId 'DEFENDER-SAFEATTACH-001' `
                     -Remediation 'Security admin center > Safe Attachments policy > Action > Block or Dynamic Delivery (recommended for user experience).'
 
                 # Redirect
@@ -429,7 +429,7 @@ try {
                     -Setting "Redirect to Admin ($policyLabel)" `
                     -CurrentValue "$redirect" -RecommendedValue 'True' `
                     -Status $(if ($redirect) { 'Pass' } else { 'Review' }) `
-                    -CisControl '2.1.4' `
+                    -CheckId 'DEFENDER-SAFEATTACH-001' `
                     -Remediation 'Security admin center > Safe Attachments policy > Enable redirect and specify an admin email for quarantined attachments.'
             }
         }
@@ -438,7 +438,7 @@ try {
         Add-Setting -Category 'Safe Attachments' -Setting 'Safe Attachments Availability' `
             -CurrentValue 'Not licensed' -RecommendedValue 'Defender for Office 365 P1+' `
             -Status 'Review' `
-            -CisControl '2.1.4' `
+            -CheckId 'DEFENDER-SAFEATTACH-001' `
             -Remediation 'Safe Attachments requires Defender for Office 365 Plan 1 or higher. Consider upgrading licensing.'
     }
 }
@@ -462,7 +462,7 @@ try {
             -Setting "Auto-Forwarding Mode ($policyLabel)" `
             -CurrentValue "$autoForward" -RecommendedValue 'Off' `
             -Status $(if ($autoForward -eq 'Off') { 'Pass' } else { 'Warning' }) `
-            -CisControl '6.2.1' `
+            -CheckId 'EXO-FORWARD-001' `
             -Remediation 'Security admin center > Anti-spam > Outbound policy > Auto-forwarding rules > Off. Prevents automatic forwarding to external addresses.'
 
         # Notification
@@ -472,7 +472,7 @@ try {
                 -Setting "BCC on Suspicious Outbound ($policyLabel)" `
                 -CurrentValue "$bccNotify" -RecommendedValue 'True' `
                 -Status $(if ($bccNotify) { 'Pass' } else { 'Review' }) `
-                -CisControl '2.1.15' `
+                -CheckId 'DEFENDER-OUTBOUND-001' `
                 -Remediation 'Security admin center > Anti-spam > Outbound policy > Notifications > BCC suspicious outbound messages to an admin address.'
         }
 
@@ -482,7 +482,7 @@ try {
                 -Setting "Notify Admins of Outbound Spam ($policyLabel)" `
                 -CurrentValue "$notifySpam" -RecommendedValue 'True' `
                 -Status $(if ($notifySpam) { 'Pass' } else { 'Review' }) `
-                -CisControl '2.1.15' `
+                -CheckId 'DEFENDER-OUTBOUND-001' `
                 -Remediation 'Security admin center > Anti-spam > Outbound policy > Notifications > Notify admin when a user is restricted for sending outbound spam.'
         }
 

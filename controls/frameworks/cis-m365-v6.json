@@ -1,0 +1,26 @@
+{
+  "frameworkId": "cis-m365-v6",
+  "label": "CIS Microsoft 365 v6.0.1",
+  "version": "6.0.1",
+  "css": "fw-cis",
+  "totalControls": 139,
+  "scoring": {
+    "method": "profile-compliance",
+    "profiles": {
+      "E3-L1": { "label": "CIS E3 Level 1", "css": "fw-cis", "profileKey": "E3-L1" },
+      "E3-L2": { "label": "CIS E3 Level 2", "css": "fw-cis-l2", "profileKey": "E3-L2" },
+      "E5-L1": { "label": "CIS E5 Level 1", "css": "fw-cis", "profileKey": "E5-L1" },
+      "E5-L2": { "label": "CIS E5 Level 2", "css": "fw-cis-l2", "profileKey": "E5-L2" }
+    }
+  },
+  "groupBy": "section-prefix",
+  "sections": {
+    "1": "Identity",
+    "2": "Defender",
+    "3": "Purview",
+    "5": "Entra ID",
+    "6": "Exchange Online",
+    "7": "SharePoint & OneDrive",
+    "8": "Teams"
+  }
+}

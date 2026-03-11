@@ -34,7 +34,7 @@
 
     Generates a report with the specified tenant name on the cover page.
 .NOTES
-    Version: 0.4.0
+    Version: 0.5.0
     Author:  Daren9m
 #>
 [CmdletBinding()]
@@ -57,6 +57,13 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
 
 # ------------------------------------------------------------------
+# Load control registry
+# ------------------------------------------------------------------
+. (Join-Path -Path $PSScriptRoot -ChildPath 'Import-ControlRegistry.ps1')
+$controlsPath = Join-Path -Path $projectRoot -ChildPath 'controls'
+$controlRegistry = Import-ControlRegistry -ControlsPath $controlsPath
+
+# ------------------------------------------------------------------
 # Framework lookup table
 # ------------------------------------------------------------------
 $frameworkLookup = @{
@@ -72,9 +79,10 @@ $frameworkLookup = @{
     'CMMC'       = @{ Col = 'Cmmc';       Label = 'CMMC 2.0';           Css = 'fw-cmmc' }
     'HIPAA'      = @{ Col = 'Hipaa';      Label = 'HIPAA';              Css = 'fw-hipaa' }
     'CISA-SCuBA' = @{ Col = 'CisaScuba';  Label = 'CISA SCuBA';         Css = 'fw-scuba' }
+    'SOC-2'      = @{ Col = 'Soc2';       Label = 'SOC 2 TSC';          Css = 'fw-soc2' }
 }
 # Ordered list for consistent rendering (all frameworks always included)
-$allFrameworkKeys = @('CIS-E3-L1','CIS-E3-L2','CIS-E5-L1','CIS-E5-L2','NIST-800-53','NIST-CSF','ISO-27001','STIG','PCI-DSS','CMMC','HIPAA','CISA-SCuBA')
+$allFrameworkKeys = @('CIS-E3-L1','CIS-E3-L2','CIS-E5-L1','CIS-E5-L2','NIST-800-53','NIST-CSF','ISO-27001','STIG','PCI-DSS','CMMC','HIPAA','CISA-SCuBA','SOC-2')
 $cisProfileKeys = @('CIS-E3-L1','CIS-E3-L2','CIS-E5-L1','CIS-E5-L2')
 
 # ------------------------------------------------------------------
@@ -120,17 +128,8 @@ if (Test-Path -Path $userSummaryCsv) {
     $userSummaryData = Import-Csv -Path $userSummaryCsv
 }
 
-# Load framework mappings for cross-referencing CIS findings (if available)
-$mappingsPath = Join-Path -Path $PSScriptRoot -ChildPath 'framework-mappings.csv'
-$frameworkMappings = @{}
-if (Test-Path -Path $mappingsPath) {
-    $mappingData = Import-Csv -Path $mappingsPath
-    foreach ($row in $mappingData) {
-        if ($row.CisControl) {
-            $frameworkMappings[$row.CisControl] = $row
-        }
-    }
-}
+# Framework mappings are now sourced from the control registry (loaded above).
+# The $controlRegistry hashtable is keyed by CheckId and contains framework data.
 
 if (-not $TenantName) {
     if ($tenantData -and $tenantData[0].PSObject.Properties.Name -contains 'OrgDisplayName') {
@@ -148,7 +147,7 @@ if (-not $TenantName) {
 # (avoids fragile CSV-scanning; the main script already resolved it from TenantId or Graph)
 
 # Read assessment version and cloud environment from log if available
-$assessmentVersion = '0.4.0'
+$assessmentVersion = '0.5.0'
 $cloudEnvironment = 'commercial'
 # Find the log file (may have domain suffix, e.g., _Assessment-Log_contoso.txt)
 $logFile = Get-ChildItem -Path $AssessmentFolder -Filter '_Assessment-Log*.txt' -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -368,7 +367,7 @@ function Get-SmartSortedData {
     $columns = @($Data[0].PSObject.Properties.Name)
 
     # Security Config collectors: sort non-passing items first
-    if ($columns -contains 'Status' -and $columns -contains 'CisControl') {
+    if ($columns -contains 'Status' -and $columns -contains 'CheckId') {
         $statusPriority = @{ 'Fail' = 0; 'Warning' = 1; 'Review' = 2; 'Unknown' = 3; 'Pass' = 4 }
         return @($Data | Sort-Object -Property @{
             Expression = { if ($null -ne $statusPriority[$_.Status]) { $statusPriority[$_.Status] } else { 5 } }
@@ -1223,7 +1222,7 @@ foreach ($sectionName in $sections) {
         if (-not $data -or @($data).Count -eq 0) { continue }
 
         $columns = @($data[0].PSObject.Properties.Name)
-        $isSecurityConfig = ($columns -contains 'CisControl') -and ($columns -contains 'Status')
+        $isSecurityConfig = ($columns -contains 'CheckId') -and ($columns -contains 'Status')
 
         # ----------------------------------------------------------
         # Secure Score — stat cards + progress bar before table
@@ -1570,7 +1569,7 @@ foreach ($tocSection in $sections) {
 $complianceHtml = [System.Text.StringBuilder]::new()
 $allCisFindings = [System.Collections.Generic.List[PSCustomObject]]::new()
 
-# Scan all completed collector CSVs for CIS-mapped findings
+# Scan all completed collector CSVs for CheckId-mapped findings
 foreach ($c in $summary) {
     if ($c.Status -ne 'Complete' -or [int]$c.Items -eq 0) { continue }
     $csvFile = Join-Path -Path $AssessmentFolder -ChildPath $c.FileName
@@ -1580,13 +1579,17 @@ foreach ($c in $summary) {
     if (-not $data -or @($data).Count -eq 0) { continue }
 
     $columns = @($data[0].PSObject.Properties.Name)
-    if ($columns -notcontains 'CisControl') { continue }
+    if ($columns -notcontains 'CheckId') { continue }
 
     foreach ($row in $data) {
-        if (-not $row.CisControl -or $row.CisControl -eq '') { continue }
-        $mapping = if ($frameworkMappings.ContainsKey($row.CisControl)) { $frameworkMappings[$row.CisControl] } else { $null }
+        if (-not $row.CheckId -or $row.CheckId -eq '') { continue }
+        $entry = if ($controlRegistry.ContainsKey($row.CheckId)) { $controlRegistry[$row.CheckId] } else { $null }
+        $fw = if ($entry) { $entry.frameworks } else { @{} }
+        $cisProfiles = if ($fw.'cis-m365-v6' -and $fw.'cis-m365-v6'.profiles) { $fw.'cis-m365-v6'.profiles } else { @() }
+        $cisId = if ($fw.'cis-m365-v6' -and $fw.'cis-m365-v6'.controlId) { $fw.'cis-m365-v6'.controlId } else { '' }
         $allCisFindings.Add([PSCustomObject]@{
-            CisControl   = $row.CisControl
+            CheckId      = $row.CheckId
+            CisControl   = $cisId
             Category     = $row.Category
             Setting      = $row.Setting
             CurrentValue = $row.CurrentValue
@@ -1594,23 +1597,24 @@ foreach ($c in $summary) {
             Status       = $row.Status
             Remediation  = $row.Remediation
             Source       = $c.Collector
-            CisE3L1      = if ($mapping) { $mapping.CisE3L1 } else { '' }
-            CisE3L2      = if ($mapping) { $mapping.CisE3L2 } else { '' }
-            CisE5L1      = if ($mapping) { $mapping.CisE5L1 } else { '' }
-            CisE5L2      = if ($mapping) { $mapping.CisE5L2 } else { '' }
-            NistCsf      = if ($mapping) { $mapping.NistCsf } else { '' }
-            Nist80053    = if ($mapping) { $mapping.Nist80053 } else { '' }
-            Iso27001     = if ($mapping) { $mapping.Iso27001 } else { '' }
-            Stig         = if ($mapping) { $mapping.Stig } else { '' }
-            PciDss       = if ($mapping) { $mapping.PciDss } else { '' }
-            Cmmc         = if ($mapping) { $mapping.Cmmc } else { '' }
-            Hipaa        = if ($mapping) { $mapping.Hipaa } else { '' }
-            CisaScuba    = if ($mapping) { $mapping.CisaScuba } else { '' }
+            CisE3L1      = if ($cisProfiles -contains 'E3-L1') { $cisId } else { '' }
+            CisE3L2      = if ($cisProfiles -contains 'E3-L2') { $cisId } else { '' }
+            CisE5L1      = if ($cisProfiles -contains 'E5-L1') { $cisId } else { '' }
+            CisE5L2      = if ($cisProfiles -contains 'E5-L2') { $cisId } else { '' }
+            NistCsf      = if ($fw.'nist-csf')    { $fw.'nist-csf'.controlId }    else { '' }
+            Nist80053    = if ($fw.'nist-800-53')  { $fw.'nist-800-53'.controlId } else { '' }
+            Iso27001     = if ($fw.'iso-27001')    { $fw.'iso-27001'.controlId }   else { '' }
+            Stig         = if ($fw.stig)           { $fw.stig.controlId }          else { '' }
+            PciDss       = if ($fw.'pci-dss')      { $fw.'pci-dss'.controlId }     else { '' }
+            Cmmc         = if ($fw.cmmc)           { $fw.cmmc.controlId }          else { '' }
+            Hipaa        = if ($fw.hipaa)          { $fw.hipaa.controlId }         else { '' }
+            CisaScuba    = if ($fw.'cisa-scuba')   { $fw.'cisa-scuba'.controlId }  else { '' }
+            Soc2         = if ($fw.soc2)           { $fw.soc2.controlId }          else { '' }
         })
     }
 }
 
-if ($allCisFindings.Count -gt 0 -and $frameworkMappings.Count -gt 0) {
+if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
 
     # Load framework catalog CSVs to get total control counts
     $catalogCounts = @{}
@@ -1752,8 +1756,8 @@ if ($allCisFindings.Count -gt 0 -and $frameworkMappings.Count -gt 0) {
     $null = $complianceHtml.AppendLine("<thead><tr>$headerCols</tr></thead>")
     $null = $complianceHtml.AppendLine("<tbody>")
 
-    # Sort findings by control ID
-    $matrixFindings = @($allCisFindings | Sort-Object -Property CisControl)
+    # Sort findings by CheckId (groups by collector area)
+    $matrixFindings = @($allCisFindings | Sort-Object -Property CheckId)
     foreach ($finding in $matrixFindings) {
         $statusClass = switch ($finding.Status) {
             'Pass'    { 'badge-success' }
@@ -1763,11 +1767,11 @@ if ($allCisFindings.Count -gt 0 -and $frameworkMappings.Count -gt 0) {
             default   { 'badge-skipped' }
         }
         $statusBadge = "<span class='badge $statusClass'>$($finding.Status)</span>"
-        $cisRef = ConvertTo-HtmlSafe -Text $finding.CisControl
+        $checkRef = ConvertTo-HtmlSafe -Text $finding.CheckId
         $settingText = ConvertTo-HtmlSafe -Text $finding.Setting
 
         $null = $complianceHtml.AppendLine("<tr class='cis-row-$($finding.Status.ToLower())'>")
-        $null = $complianceHtml.AppendLine("<td class='cis-id'>$cisRef</td>")
+        $null = $complianceHtml.AppendLine("<td class='cis-id'>$checkRef</td>")
         $null = $complianceHtml.AppendLine("<td>$settingText</td>")
         $null = $complianceHtml.AppendLine("<td>$statusBadge</td>")
 
@@ -1821,7 +1825,7 @@ if ($issues.Count -gt 0) {
 }
 
 # Append conditional entries to TOC now that compliance/issues counts are known
-if ($allCisFindings.Count -gt 0 -and $frameworkMappings.Count -gt 0) {
+if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
     $null = $tocHtml.AppendLine("<li><a href='#compliance-overview'>Compliance Overview</a></li>")
 }
 if ($issues.Count -gt 0) {
@@ -3126,6 +3130,7 @@ $html = @"
         .fw-cmmc  { background: #f0fdfa; color: #134e4a; }
         .fw-hipaa { background: #fdf2f8; color: #9d174d; }
         .fw-scuba { background: #fff7ed; color: #9a3412; }
+        .fw-soc2  { background: #eff6ff; color: #1e3a5f; }
         .fw-unmapped { color: var(--m365a-border); font-size: 0.85em; }
 
         /* Framework multi-selector */
@@ -3205,6 +3210,7 @@ $html = @"
         body.dark-theme .fw-cmmc   { background: #134E4A; color: #5EEAD4; }
         body.dark-theme .fw-hipaa  { background: #831843; color: #F9A8D4; }
         body.dark-theme .fw-scuba  { background: #7C2D12; color: #FDBA74; }
+        body.dark-theme .fw-soc2   { background: #1E3A5F; color: #60A5FA; }
 
         body.dark-theme .cloud-commercial { background: #1E3A5F; color: #93C5FD; border-color: #334155; }
         body.dark-theme .cloud-gcc { background: #064E3B; color: #6EE7B7; border-color: #334155; }
@@ -3469,7 +3475,7 @@ $html = @"
                             "<li><a href='#section-$tocId'>$tocLabel</a></li>`n"
                         }
                     })
-                    $( if ($allCisFindings.Count -gt 0 -and $frameworkMappings.Count -gt 0) { "<li><a href='#compliance-overview'>Compliance Overview</a></li>`n" })
+                    $( if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) { "<li><a href='#compliance-overview'>Compliance Overview</a></li>`n" })
                     $( if ($issues.Count -gt 0) { "<li><a href='#issues'>Technical Issues</a></li>`n" })
                 </ol>
             </div>
