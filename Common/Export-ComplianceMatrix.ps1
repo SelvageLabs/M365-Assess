@@ -178,7 +178,7 @@ $summaryData = [System.Collections.Generic.List[PSCustomObject]]::new()
 
 foreach ($fwLabel in $frameworkColumns.Keys) {
     $colProp = $frameworkColumns[$fwLabel]
-    $mapped = @($sortedFindings | Where-Object { $_.$colProp -and $_.$colProp -ne '' })
+    $mapped = @($sortedFindings | Where-Object { $_.$colProp -and $_.$colProp -ne '' -and $_.Status -ne 'Info' })
     $totalMapped = $mapped.Count
     if ($totalMapped -eq 0) {
         $summaryData.Add([PSCustomObject][ordered]@{
@@ -260,6 +260,7 @@ for ($r = 2; $r -le $lastRow; $r++) {
         'Fail'    { $matrixSheet.Cells[$r, $statusCol].Style.Font.Color.SetColor([System.Drawing.Color]::FromArgb(185, 28, 28));  $matrixSheet.Cells[$r, $statusCol].Style.Fill.PatternType = 'Solid'; $matrixSheet.Cells[$r, $statusCol].Style.Fill.BackgroundColor.SetColor([System.Drawing.Color]::FromArgb(254, 226, 226)) }
         'Warning' { $matrixSheet.Cells[$r, $statusCol].Style.Font.Color.SetColor([System.Drawing.Color]::FromArgb(146, 64, 14));  $matrixSheet.Cells[$r, $statusCol].Style.Fill.PatternType = 'Solid'; $matrixSheet.Cells[$r, $statusCol].Style.Fill.BackgroundColor.SetColor([System.Drawing.Color]::FromArgb(254, 243, 199)) }
         'Review'  { $matrixSheet.Cells[$r, $statusCol].Style.Font.Color.SetColor([System.Drawing.Color]::FromArgb(30, 64, 175));  $matrixSheet.Cells[$r, $statusCol].Style.Fill.PatternType = 'Solid'; $matrixSheet.Cells[$r, $statusCol].Style.Fill.BackgroundColor.SetColor([System.Drawing.Color]::FromArgb(219, 234, 254)) }
+        'Info'    { $matrixSheet.Cells[$r, $statusCol].Style.Font.Color.SetColor([System.Drawing.Color]::FromArgb(107, 114, 128)); $matrixSheet.Cells[$r, $statusCol].Style.Fill.PatternType = 'Solid'; $matrixSheet.Cells[$r, $statusCol].Style.Fill.BackgroundColor.SetColor([System.Drawing.Color]::FromArgb(243, 244, 246)) }
     }
 }
 

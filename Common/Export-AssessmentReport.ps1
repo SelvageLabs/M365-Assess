@@ -699,11 +699,12 @@ foreach ($sectionName in $sections) {
 
             # Right column: Entra Security Config donut
             if ($entraData.Count -gt 0) {
-                $entraTotal  = $entraData.Count
                 $entraPass   = @($entraData | Where-Object { $_.Status -eq 'Pass' }).Count
                 $entraFail   = @($entraData | Where-Object { $_.Status -eq 'Fail' }).Count
                 $entraWarn   = @($entraData | Where-Object { $_.Status -eq 'Warning' }).Count
                 $entraReview = @($entraData | Where-Object { $_.Status -eq 'Review' }).Count
+                $entraInfo   = @($entraData | Where-Object { $_.Status -eq 'Info' }).Count
+                $entraTotal  = $entraData.Count - $entraInfo
 
                 $entraSegments = @(
                     @{ Css = 'success'; Pct = [math]::Round(($entraPass   / $entraTotal) * 100, 1); Label = 'Pass' }
@@ -730,6 +731,9 @@ foreach ($sectionName in $sections) {
                 }
                 if ($entraReview -gt 0) {
                     $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-info'></span> Review</span><span class='score-detail-value' style='color: var(--m365a-accent);'>$entraReview</span></div>")
+                }
+                if ($entraInfo -gt 0) {
+                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-neutral'></span> Info</span><span class='score-detail-value' style='color: var(--m365a-neutral);'>$entraInfo</span></div>")
                 }
                 $null = $sectionHtml.AppendLine("<div class='score-detail-row score-delta'><span class='score-detail-label'>Total Controls</span><span class='score-detail-value'>$entraTotal</span></div>")
                 $null = $sectionHtml.AppendLine("</div>")
@@ -796,11 +800,12 @@ foreach ($sectionName in $sections) {
 
             # --- Middle column: EXO Security Config donut ---
             if ($hasExo) {
-                $exoTotal  = $exoData.Count
                 $exoPass   = @($exoData | Where-Object { $_.Status -eq 'Pass' }).Count
                 $exoFail   = @($exoData | Where-Object { $_.Status -eq 'Fail' }).Count
                 $exoWarn   = @($exoData | Where-Object { $_.Status -eq 'Warning' }).Count
                 $exoReview = @($exoData | Where-Object { $_.Status -eq 'Review' }).Count
+                $exoInfo   = @($exoData | Where-Object { $_.Status -eq 'Info' }).Count
+                $exoTotal  = $exoData.Count - $exoInfo
 
                 if ($exoTotal -gt 0) {
                     $exoSegments = @(
@@ -828,6 +833,9 @@ foreach ($sectionName in $sections) {
                     }
                     if ($exoReview -gt 0) {
                         $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-info'></span> Review</span><span class='score-detail-value' style='color: var(--m365a-accent);'>$exoReview</span></div>")
+                    }
+                    if ($exoInfo -gt 0) {
+                        $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-neutral'></span> Info</span><span class='score-detail-value' style='color: var(--m365a-neutral);'>$exoInfo</span></div>")
                     }
                     $null = $sectionHtml.AppendLine("<div class='score-detail-row score-delta'><span class='score-detail-label'>Total Controls</span><span class='score-detail-value'>$exoTotal</span></div>")
                     $null = $sectionHtml.AppendLine("</div>")
@@ -1128,11 +1136,12 @@ foreach ($sectionName in $sections) {
 
             # --- Middle column: SharePoint Security Config donut ---
             if ($spoSecData.Count -gt 0) {
-                $spoSecTotal  = $spoSecData.Count
                 $spoSecPass   = @($spoSecData | Where-Object { $_.Status -eq 'Pass' }).Count
                 $spoSecFail   = @($spoSecData | Where-Object { $_.Status -eq 'Fail' }).Count
                 $spoSecWarn   = @($spoSecData | Where-Object { $_.Status -eq 'Warning' }).Count
                 $spoSecReview = @($spoSecData | Where-Object { $_.Status -eq 'Review' }).Count
+                $spoSecInfo   = @($spoSecData | Where-Object { $_.Status -eq 'Info' }).Count
+                $spoSecTotal  = $spoSecData.Count - $spoSecInfo
 
                 $spoSegments = @(
                     @{ Css = 'success'; Pct = [math]::Round(($spoSecPass   / $spoSecTotal) * 100, 1); Label = 'Pass' }
@@ -1160,6 +1169,9 @@ foreach ($sectionName in $sections) {
                 if ($spoSecReview -gt 0) {
                     $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-info'></span> Review</span><span class='score-detail-value' style='color: var(--m365a-accent);'>$spoSecReview</span></div>")
                 }
+                if ($spoSecInfo -gt 0) {
+                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-neutral'></span> Info</span><span class='score-detail-value' style='color: var(--m365a-neutral);'>$spoSecInfo</span></div>")
+                }
                 $null = $sectionHtml.AppendLine("<div class='score-detail-row score-delta'><span class='score-detail-label'>Total Controls</span><span class='score-detail-value'>$spoSecTotal</span></div>")
                 $null = $sectionHtml.AppendLine("</div>")
                 $null = $sectionHtml.AppendLine("</div>")
@@ -1168,11 +1180,12 @@ foreach ($sectionName in $sections) {
 
             # --- Right column: Teams Security Config donut ---
             if ($teamSecData.Count -gt 0) {
-                $teamSecTotal  = $teamSecData.Count
                 $teamSecPass   = @($teamSecData | Where-Object { $_.Status -eq 'Pass' }).Count
                 $teamSecFail   = @($teamSecData | Where-Object { $_.Status -eq 'Fail' }).Count
                 $teamSecWarn   = @($teamSecData | Where-Object { $_.Status -eq 'Warning' }).Count
                 $teamSecReview = @($teamSecData | Where-Object { $_.Status -eq 'Review' }).Count
+                $teamSecInfo   = @($teamSecData | Where-Object { $_.Status -eq 'Info' }).Count
+                $teamSecTotal  = $teamSecData.Count - $teamSecInfo
 
                 $teamSegments = @(
                     @{ Css = 'success'; Pct = [math]::Round(($teamSecPass   / $teamSecTotal) * 100, 1); Label = 'Pass' }
@@ -1199,6 +1212,9 @@ foreach ($sectionName in $sections) {
                 }
                 if ($teamSecReview -gt 0) {
                     $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-info'></span> Review</span><span class='score-detail-value' style='color: var(--m365a-accent);'>$teamSecReview</span></div>")
+                }
+                if ($teamSecInfo -gt 0) {
+                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-neutral'></span> Info</span><span class='score-detail-value' style='color: var(--m365a-neutral);'>$teamSecInfo</span></div>")
                 }
                 $null = $sectionHtml.AppendLine("<div class='score-detail-row score-delta'><span class='score-detail-label'>Total Controls</span><span class='score-detail-value'>$teamSecTotal</span></div>")
                 $null = $sectionHtml.AppendLine("</div>")
@@ -1254,14 +1270,15 @@ foreach ($sectionName in $sections) {
 
             # Load Defender Security Config for status breakdown
             $defCsvPath = Join-Path -Path $AssessmentFolder -ChildPath '18b-Defender-Security-Config.csv'
-            $defPass = 0; $defFail = 0; $defWarn = 0; $defReview = 0; $defTotal = 0
+            $defPass = 0; $defFail = 0; $defWarn = 0; $defReview = 0; $defInfo = 0; $defTotal = 0
             if (Test-Path -Path $defCsvPath) {
                 $defData = @(Import-Csv -Path $defCsvPath)
-                $defTotal = $defData.Count
                 $defPass = @($defData | Where-Object { $_.Status -eq 'Pass' }).Count
                 $defFail = @($defData | Where-Object { $_.Status -eq 'Fail' }).Count
                 $defWarn = @($defData | Where-Object { $_.Status -eq 'Warning' }).Count
                 $defReview = @($defData | Where-Object { $_.Status -eq 'Review' }).Count
+                $defInfo = @($defData | Where-Object { $_.Status -eq 'Info' }).Count
+                $defTotal = $defData.Count - $defInfo
             }
 
             # Load Defender Policies and DLP Policies for metric cards
@@ -1361,6 +1378,9 @@ foreach ($sectionName in $sections) {
                 }
                 if ($defReview -gt 0) {
                     $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-info'></span> Review</span><span class='score-detail-value' style='color: var(--m365a-accent);'>$defReview</span></div>")
+                }
+                if ($defInfo -gt 0) {
+                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-neutral'></span> Info</span><span class='score-detail-value' style='color: var(--m365a-neutral);'>$defInfo</span></div>")
                 }
                 $null = $sectionHtml.AppendLine("<div class='score-detail-row score-delta'><span class='score-detail-label'>Total Controls</span><span class='score-detail-value'>$defTotal</span></div>")
                 $null = $sectionHtml.AppendLine("</div>")
@@ -1475,6 +1495,7 @@ foreach ($sectionName in $sections) {
                     'Fail'    { " class='cis-row-fail'" }
                     'Warning' { " class='cis-row-warning'" }
                     'Review'  { " class='cis-row-review'" }
+                    'Info'    { " class='cis-row-info'" }
                     'Unknown' { " class='cis-row-unknown'" }
                     default   { '' }
                 }
@@ -1505,6 +1526,7 @@ foreach ($sectionName in $sections) {
                         'Fail'    { 'badge-failed' }
                         'Warning' { 'badge-warning' }
                         'Review'  { 'badge-info' }
+                        'Info'    { 'badge-neutral' }
                         'Unknown' { 'badge-skipped' }
                         default   { '' }
                     }
@@ -1647,7 +1669,8 @@ if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
     $cisFail = @($allCisFindings | Where-Object { $_.Status -eq 'Fail' }).Count
     $cisWarn = @($allCisFindings | Where-Object { $_.Status -eq 'Warning' }).Count
     $cisReview = @($allCisFindings | Where-Object { $_.Status -eq 'Review' }).Count
-    $knownStatuses = @('Pass', 'Fail', 'Warning', 'Review')
+    $cisInfo = @($allCisFindings | Where-Object { $_.Status -eq 'Info' }).Count
+    $knownStatuses = @('Pass', 'Fail', 'Warning', 'Review', 'Info')
     $cisUnknown = @($allCisFindings | Where-Object { $_.Status -notin $knownStatuses }).Count
 
     $null = $complianceHtml.AppendLine("<details class='section' open>")
@@ -1679,6 +1702,9 @@ if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
             @{ Css = 'warning'; Pct = [math]::Round(($cisWarn / $cisTotal) * 100, 1); Count = $cisWarn; Label = 'Warning' }
             @{ Css = 'review'; Pct = [math]::Round(($cisReview / $cisTotal) * 100, 1); Count = $cisReview; Label = 'Review' }
         )
+        if ($cisInfo -gt 0) {
+            $segments += @{ Css = 'info'; Pct = [math]::Round(($cisInfo / $cisTotal) * 100, 1); Count = $cisInfo; Label = 'Info' }
+        }
         if ($cisUnknown -gt 0) {
             $segments += @{ Css = 'unknown'; Pct = [math]::Round(($cisUnknown / $cisTotal) * 100, 1); Count = $cisUnknown; Label = 'Unknown' }
         }
@@ -1689,7 +1715,7 @@ if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
         $null = $complianceHtml.AppendLine("<div class='hbar-legend'>")
         foreach ($seg in $segments) {
             if ($seg.Count -gt 0) {
-                $null = $complianceHtml.AppendLine("<span class='hbar-legend-item'><span class='chart-legend-dot dot-$(switch ($seg.Css) { 'pass' { 'success' } 'fail' { 'danger' } 'warning' { 'warning' } 'review' { 'info' } default { 'muted' } })'></span>$($seg.Label) ($($seg.Count))</span>")
+                $null = $complianceHtml.AppendLine("<span class='hbar-legend-item'><span class='chart-legend-dot dot-$(switch ($seg.Css) { 'pass' { 'success' } 'fail' { 'danger' } 'warning' { 'warning' } 'review' { 'info' } 'info' { 'neutral' } default { 'muted' } })'></span>$($seg.Label) ($($seg.Count))</span>")
             }
         }
         $null = $complianceHtml.AppendLine("</div>")
@@ -1737,6 +1763,9 @@ if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
         $null = $complianceHtml.AppendLine("<label class='status-checkbox status-review'><input type='checkbox' value='review' checked> Review ($cisReview)</label>")
     }
     $null = $complianceHtml.AppendLine("<label class='status-checkbox status-pass'><input type='checkbox' value='pass' checked> Pass ($cisPass)</label>")
+    if ($cisInfo -gt 0) {
+        $null = $complianceHtml.AppendLine("<label class='status-checkbox status-info'><input type='checkbox' value='info' checked> Info ($cisInfo)</label>")
+    }
     if ($cisUnknown -gt 0) {
         $null = $complianceHtml.AppendLine("<label class='status-checkbox status-unknown'><input type='checkbox' value='unknown' checked> Unknown ($cisUnknown)</label>")
     }
@@ -1764,6 +1793,7 @@ if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
             'Fail'    { 'badge-failed' }
             'Warning' { 'badge-warning' }
             'Review'  { 'badge-info' }
+            'Info'    { 'badge-neutral' }
             default   { 'badge-skipped' }
         }
         $statusBadge = "<span class='badge $statusClass'>$($finding.Status)</span>"
@@ -1893,6 +1923,8 @@ $html = @"
             --m365a-warning-bg: #fff3cd;
             --m365a-danger-bg: #f8d7da;
             --m365a-info-bg: #d1ecf1;
+            --m365a-neutral: #6b7280;
+            --m365a-neutral-bg: #f3f4f6;
             --m365a-body-bg: #ffffff;
             --m365a-text: #1E293B;
             --m365a-card-bg: #ffffff;
@@ -1921,6 +1953,8 @@ $html = @"
             --m365a-warning-bg: #78350F;
             --m365a-danger-bg: #7F1D1D;
             --m365a-info-bg: #1E3A5F;
+            --m365a-neutral: #9ca3af;
+            --m365a-neutral-bg: #374151;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2363,6 +2397,7 @@ $html = @"
         .chart-legend-dot.dot-warning { background: var(--m365a-warning); }
         .chart-legend-dot.dot-danger { background: var(--m365a-danger); }
         .chart-legend-dot.dot-info { background: var(--m365a-accent); }
+        .chart-legend-dot.dot-neutral { background-color: var(--m365a-neutral); }
         .chart-legend-dot.dot-muted { background: var(--m365a-medium-gray); }
 
         /* Dash panel — donut + details side-by-side */
@@ -2968,6 +3003,7 @@ $html = @"
         .badge-failed { background: var(--m365a-danger-bg); color: #721c24; }
         .badge-warning { background: var(--m365a-warning-bg); color: #856404; }
         .badge-info { background: var(--m365a-info-bg); color: #0c5460; }
+        .badge-neutral { background-color: var(--m365a-neutral-bg); color: var(--m365a-neutral); }
 
         /* ----------------------------------------------------------
            Section
@@ -3127,6 +3163,7 @@ $html = @"
         .cis-row-fail { border-left: 3px solid var(--m365a-danger); background-color: var(--m365a-danger-bg); }
         .cis-row-warning { border-left: 3px solid var(--m365a-warning); background-color: var(--m365a-warning-bg); }
         .cis-row-review { border-left: 3px solid var(--m365a-accent); background-color: var(--m365a-info-bg); }
+        .cis-row-info { border-left: 3px solid var(--m365a-neutral); background-color: var(--m365a-neutral-bg); }
         .cis-row-unknown { border-left: 3px solid var(--m365a-medium-gray); background-color: var(--m365a-light-gray); }
 
         /* Framework cross-reference tags */
@@ -3166,6 +3203,7 @@ $html = @"
         .status-warning.active { background: #fffbeb; color: #92400e; border-color: #fcd34d; font-weight: 600; }
         .status-review.active { background: #f0f9ff; color: #1e40af; border-color: #93c5fd; font-weight: 600; }
         .status-pass.active { background: #ecfdf5; color: #065f46; border-color: #6ee7b7; font-weight: 600; }
+        .status-info.active { background: var(--m365a-neutral-bg); color: var(--m365a-neutral); border-color: var(--m365a-neutral); font-weight: 600; }
         .status-unknown.active { background: #f9fafb; color: #6b7280; border-color: #d1d5db; font-weight: 600; }
 
         /* Matrix table */
@@ -3210,6 +3248,7 @@ $html = @"
         body.dark-theme .badge-failed { background: #7F1D1D; color: #FCA5A5; }
         body.dark-theme .badge-warning { background: #78350F; color: #FCD34D; }
         body.dark-theme .badge-info { background: #1E3A5F; color: #93C5FD; }
+        body.dark-theme .badge-neutral { background-color: var(--m365a-neutral-bg); color: var(--m365a-neutral); }
         body.dark-theme .badge-skipped { background: #334155; color: #94A3B8; }
 
         body.dark-theme .fw-cis    { background: #1E3A5F; color: #93C5FD; }
