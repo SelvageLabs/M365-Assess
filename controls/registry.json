@@ -3871,6 +3871,10 @@
         },
         "cisa-scuba": {
           "controlId": "MS.EXO.1.1v1"
+        },
+        "soc2": {
+          "controlId": "CC6.7",
+          "evidenceType": "config-export"
         }
       }
     },
@@ -5368,6 +5372,10 @@
         },
         "hipaa": {
           "controlId": "§164.312(a)(1)"
+        },
+        "soc2": {
+          "controlId": "CC6.1",
+          "evidenceType": "config-export"
         }
       }
     },
