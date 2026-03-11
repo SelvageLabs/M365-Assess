@@ -79,7 +79,8 @@ try {
     Add-Setting -Category 'Teams Apps' -Setting 'Chat Resource-Specific Consent' `
         -CurrentValue "$isSideloadingAllowed" -RecommendedValue 'False' `
         -Status $(if (-not $isSideloadingAllowed) { 'Pass' } else { 'Review' }) `
-        -Remediation 'Teams admin center > Teams apps > Permission policies > Review resource-specific consent settings.'
+        -CheckId 'TEAMS-APPS-001' `
+        -Remediation 'Run: Set-CsTeamsAppPermissionPolicy -DefaultCatalogAppsType AllowedAppList. Teams admin center > Teams apps > Permission policies.'
 }
 catch {
     Write-Warning "Could not retrieve Teams app settings: $_"
@@ -101,13 +102,13 @@ try {
             -CurrentValue "$allowConsumer" -RecommendedValue 'False' `
             -Status $(if (-not $allowConsumer) { 'Pass' } else { 'Fail' }) `
             -CheckId 'TEAMS-EXTACCESS-001' `
-            -Remediation 'Teams admin center > Users > External access > Teams accounts not managed by an organization > Off. Run: Set-CsTenantFederationConfiguration -AllowTeamsConsumer $false'
+            -Remediation 'Run: Set-CsTenantFederationConfiguration -AllowTeamsConsumer $false. Teams admin center > Users > External access > Teams accounts not managed by an organization > Off.'
 
         Add-Setting -Category 'External Access' -Setting 'External Unmanaged Users Can Initiate Conversations' `
             -CurrentValue "$allowConsumerInbound" -RecommendedValue 'False' `
             -Status $(if (-not $allowConsumerInbound) { 'Pass' } else { 'Fail' }) `
             -CheckId 'TEAMS-EXTACCESS-002' `
-            -Remediation 'Teams admin center > Users > External access > External users can initiate conversations > Off. Run: Set-CsTenantFederationConfiguration -AllowTeamsConsumerInbound $false'
+            -Remediation 'Run: Set-CsTenantFederationConfiguration -AllowTeamsConsumerInbound $false. Teams admin center > Users > External access > External users can initiate conversations > Off.'
     }
 }
 catch {
@@ -126,9 +127,9 @@ try {
         $anonymousJoin = $meetingPolicy['allowAnonymousUsersToJoinMeeting']
         Add-Setting -Category 'Meeting Policy' -Setting 'Anonymous Users Can Join Meeting' `
             -CurrentValue "$anonymousJoin" -RecommendedValue 'False' `
-            -Status $(if (-not $anonymousJoin) { 'Pass' } else { 'Warning' }) `
+            -Status $(if (-not $anonymousJoin) { 'Pass' } else { 'Fail' }) `
             -CheckId 'TEAMS-MEETING-001' `
-            -Remediation 'Teams admin center > Meetings > Meeting policies > Global > Anonymous users can join a meeting > Off. Run: Set-CsTeamsMeetingPolicy -Identity Global -AllowAnonymousUsersToJoinMeeting $false'
+            -Remediation 'Run: Set-CsTeamsMeetingPolicy -Identity Global -AllowAnonymousUsersToJoinMeeting $false. Teams admin center > Meetings > Meeting policies > Global > Anonymous users can join a meeting > Off.'
 
         # Anonymous/dial-in can't start meeting (CIS 8.5.2)
         $anonStart = $meetingPolicy['allowAnonymousUsersToStartMeeting']
@@ -136,7 +137,7 @@ try {
             -CurrentValue "$anonStart" -RecommendedValue 'False' `
             -Status $(if (-not $anonStart) { 'Pass' } else { 'Fail' }) `
             -CheckId 'TEAMS-MEETING-002' `
-            -Remediation 'Teams admin center > Meetings > Meeting policies > Global > Anonymous users can start a meeting > Off. Run: Set-CsTeamsMeetingPolicy -Identity Global -AllowAnonymousUsersToStartMeeting $false'
+            -Remediation 'Run: Set-CsTeamsMeetingPolicy -Identity Global -AllowAnonymousUsersToStartMeeting $false. Teams admin center > Meetings > Meeting policies > Global > Anonymous users can start a meeting > Off.'
 
         # Auto-admitted users / lobby bypass (CIS 8.5.3)
         $autoAdmit = $meetingPolicy['autoAdmittedUsers']
@@ -145,7 +146,7 @@ try {
             -CurrentValue "$autoAdmit" -RecommendedValue 'EveryoneInCompanyExcludingGuests or stricter' `
             -Status $(if ($autoAdmitPass) { 'Pass' } else { 'Fail' }) `
             -CheckId 'TEAMS-MEETING-003' `
-            -Remediation 'Teams admin center > Meetings > Meeting policies > Global > Who can bypass the lobby > People in my org. Run: Set-CsTeamsMeetingPolicy -Identity Global -AutoAdmittedUsers EveryoneInCompanyExcludingGuests'
+            -Remediation 'Run: Set-CsTeamsMeetingPolicy -Identity Global -AutoAdmittedUsers EveryoneInCompanyExcludingGuests. Teams admin center > Meetings > Meeting policies > Global > Who can bypass the lobby > People in my org.'
 
         # Dial-in users can't bypass lobby (CIS 8.5.4)
         $pstnBypass = $meetingPolicy['allowPSTNUsersToBypassLobby']
@@ -153,7 +154,7 @@ try {
             -CurrentValue "$pstnBypass" -RecommendedValue 'False' `
             -Status $(if (-not $pstnBypass) { 'Pass' } else { 'Fail' }) `
             -CheckId 'TEAMS-MEETING-004' `
-            -Remediation 'Teams admin center > Meetings > Meeting policies > Global > Dial-in users can bypass the lobby > Off. Run: Set-CsTeamsMeetingPolicy -Identity Global -AllowPSTNUsersToBypassLobby $false'
+            -Remediation 'Run: Set-CsTeamsMeetingPolicy -Identity Global -AllowPSTNUsersToBypassLobby $false. Teams admin center > Meetings > Meeting policies > Global > Dial-in users can bypass the lobby > Off.'
 
         # External participants can't give/request control (CIS 8.5.7)
         $extControl = $meetingPolicy['allowExternalParticipantGiveRequestControl']
@@ -161,7 +162,7 @@ try {
             -CurrentValue "$extControl" -RecommendedValue 'False' `
             -Status $(if (-not $extControl) { 'Pass' } else { 'Warning' }) `
             -CheckId 'TEAMS-MEETING-005' `
-            -Remediation 'Teams admin center > Meetings > Meeting policies > Global > External participants can give or request control > Off. Run: Set-CsTeamsMeetingPolicy -Identity Global -AllowExternalParticipantGiveRequestControl $false'
+            -Remediation 'Run: Set-CsTeamsMeetingPolicy -Identity Global -AllowExternalParticipantGiveRequestControl $false. Teams admin center > Meetings > Meeting policies > Global > External participants can give or request control > Off.'
     }
 }
 catch {
@@ -178,7 +179,9 @@ try {
 
     if ($teamSettings) {
         Add-Setting -Category 'Teams Settings' -Setting 'Teams Workload Active' `
-            -CurrentValue 'Active' -RecommendedValue 'Active' -Status 'Pass'
+            -CurrentValue 'Active' -RecommendedValue 'Active' -Status 'Info' `
+            -CheckId 'TEAMS-INFO-001' `
+            -Remediation 'Informational — confirms Teams service connectivity.'
     }
 }
 catch {
