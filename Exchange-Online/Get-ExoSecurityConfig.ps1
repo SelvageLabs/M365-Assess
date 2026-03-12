@@ -31,6 +31,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $settings = [System.Collections.Generic.List[PSCustomObject]]::new()
+$checkIdCounter = @{}
 
 function Add-Setting {
     param(
@@ -42,13 +43,20 @@ function Add-Setting {
         [string]$CheckId = '',
         [string]$Remediation = ''
     )
+    # Auto-generate sub-numbered CheckId for individual setting traceability
+    $subCheckId = $CheckId
+    if ($CheckId) {
+        if (-not $checkIdCounter.ContainsKey($CheckId)) { $checkIdCounter[$CheckId] = 0 }
+        $checkIdCounter[$CheckId]++
+        $subCheckId = "$CheckId.$($checkIdCounter[$CheckId])"
+    }
     $settings.Add([PSCustomObject]@{
         Category         = $Category
         Setting          = $Setting
         CurrentValue     = $CurrentValue
         RecommendedValue = $RecommendedValue
         Status           = $Status
-        CheckId          = $CheckId
+        CheckId          = $subCheckId
         Remediation      = $Remediation
     })
     if ($CheckId -and (Get-Command -Name Update-CheckProgress -ErrorAction SilentlyContinue)) {

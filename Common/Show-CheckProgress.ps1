@@ -104,6 +104,16 @@ function Initialize-CheckProgress {
 
     if ($totalChecks -eq 0) { return }
 
+    # Print status legend so users know what the symbols mean
+    Write-Host ''
+    Write-Host '  Status Legend:' -ForegroundColor White
+    Write-Host '    ' -NoNewline
+    Write-Host "$([char]0x2713) Pass  " -ForegroundColor Green -NoNewline
+    Write-Host "$([char]0x2717) Fail  " -ForegroundColor Red -NoNewline
+    Write-Host '! Warning  ' -ForegroundColor Yellow -NoNewline
+    Write-Host '? Review  ' -ForegroundColor Cyan -NoNewline
+    Write-Host 'i Info' -ForegroundColor DarkGray
+
     # Print a compact summary of what's queued
     Write-Host ''
     Write-Host "  Security Checks: $totalChecks queued across $($checksByCollector.Count) collectors" -ForegroundColor Cyan

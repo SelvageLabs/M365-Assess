@@ -716,10 +716,10 @@ foreach ($sectionName in $sections) {
                     @{ Css = 'success'; Pct = [math]::Round(($entraPass   / $entraTotal) * 100, 1); Label = 'Pass' }
                     @{ Css = 'danger';  Pct = [math]::Round(($entraFail   / $entraTotal) * 100, 1); Label = 'Fail' }
                     @{ Css = 'warning'; Pct = [math]::Round(($entraWarn   / $entraTotal) * 100, 1); Label = 'Warning' }
-                    @{ Css = 'info';    Pct = [math]::Round(($entraReview / $entraTotal) * 100, 1); Label = 'Review' }
+                    @{ Css = 'review';  Pct = [math]::Round(($entraReview / $entraTotal) * 100, 1); Label = 'Review' }
                 )
                 if ($entraInfo -gt 0) {
-                    $entraSegments += @{ Css = 'neutral'; Pct = [math]::Round(($entraInfo / $entraTotal) * 100, 1); Label = 'Info' }
+                    $entraSegments += @{ Css = 'info'; Pct = [math]::Round(($entraInfo / $entraTotal) * 100, 1); Label = 'Info' }
                 }
                 $entraDonut = Get-SvgMultiDonut -Segments $entraSegments -CenterLabel "$entraTotal" -Size 130 -StrokeWidth 12
 
@@ -739,10 +739,10 @@ foreach ($sectionName in $sections) {
                     $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-warning'></span> Warning</span><span class='score-detail-value warning-text'>$entraWarn</span></div>")
                 }
                 if ($entraReview -gt 0) {
-                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-info'></span> Review</span><span class='score-detail-value' style='color: var(--m365a-accent);'>$entraReview</span></div>")
+                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-review'></span> Review</span><span class='score-detail-value' style='color: var(--m365a-review);'>$entraReview</span></div>")
                 }
                 if ($entraInfo -gt 0) {
-                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-neutral'></span> Info</span><span class='score-detail-value' style='color: var(--m365a-neutral);'>$entraInfo</span></div>")
+                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-info'></span> Info</span><span class='score-detail-value' style='color: var(--m365a-accent);'>$entraInfo</span></div>")
                 }
                 $null = $sectionHtml.AppendLine("<div class='score-detail-row score-delta'><span class='score-detail-label'>Total Controls</span><span class='score-detail-value'>$entraTotal</span></div>")
                 $null = $sectionHtml.AppendLine("</div>")
@@ -821,10 +821,10 @@ foreach ($sectionName in $sections) {
                         @{ Css = 'success'; Pct = [math]::Round(($exoPass   / $exoTotal) * 100, 1); Label = 'Pass' }
                         @{ Css = 'danger';  Pct = [math]::Round(($exoFail   / $exoTotal) * 100, 1); Label = 'Fail' }
                         @{ Css = 'warning'; Pct = [math]::Round(($exoWarn   / $exoTotal) * 100, 1); Label = 'Warning' }
-                        @{ Css = 'info';    Pct = [math]::Round(($exoReview / $exoTotal) * 100, 1); Label = 'Review' }
+                        @{ Css = 'review';  Pct = [math]::Round(($exoReview / $exoTotal) * 100, 1); Label = 'Review' }
                     )
                     if ($exoInfo -gt 0) {
-                        $exoSegments += @{ Css = 'neutral'; Pct = [math]::Round(($exoInfo / $exoTotal) * 100, 1); Label = 'Info' }
+                        $exoSegments += @{ Css = 'info'; Pct = [math]::Round(($exoInfo / $exoTotal) * 100, 1); Label = 'Info' }
                     }
                     $exoDonut = Get-SvgMultiDonut -Segments $exoSegments -CenterLabel "$exoTotal" -Size 130 -StrokeWidth 12
 
@@ -844,10 +844,10 @@ foreach ($sectionName in $sections) {
                         $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-warning'></span> Warning</span><span class='score-detail-value warning-text'>$exoWarn</span></div>")
                     }
                     if ($exoReview -gt 0) {
-                        $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-info'></span> Review</span><span class='score-detail-value' style='color: var(--m365a-accent);'>$exoReview</span></div>")
+                        $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-review'></span> Review</span><span class='score-detail-value' style='color: var(--m365a-review);'>$exoReview</span></div>")
                     }
                     if ($exoInfo -gt 0) {
-                        $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-neutral'></span> Info</span><span class='score-detail-value' style='color: var(--m365a-neutral);'>$exoInfo</span></div>")
+                        $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-info'></span> Info</span><span class='score-detail-value' style='color: var(--m365a-accent);'>$exoInfo</span></div>")
                     }
                     $null = $sectionHtml.AppendLine("<div class='score-detail-row score-delta'><span class='score-detail-label'>Total Controls</span><span class='score-detail-value'>$exoTotal</span></div>")
                     $null = $sectionHtml.AppendLine("</div>")
@@ -1159,10 +1159,10 @@ foreach ($sectionName in $sections) {
                     @{ Css = 'success'; Pct = [math]::Round(($spoSecPass   / $spoSecTotal) * 100, 1); Label = 'Pass' }
                     @{ Css = 'danger';  Pct = [math]::Round(($spoSecFail   / $spoSecTotal) * 100, 1); Label = 'Fail' }
                     @{ Css = 'warning'; Pct = [math]::Round(($spoSecWarn   / $spoSecTotal) * 100, 1); Label = 'Warning' }
-                    @{ Css = 'info';    Pct = [math]::Round(($spoSecReview / $spoSecTotal) * 100, 1); Label = 'Review' }
+                    @{ Css = 'review';  Pct = [math]::Round(($spoSecReview / $spoSecTotal) * 100, 1); Label = 'Review' }
                 )
                 if ($spoSecInfo -gt 0) {
-                    $spoSegments += @{ Css = 'neutral'; Pct = [math]::Round(($spoSecInfo / $spoSecTotal) * 100, 1); Label = 'Info' }
+                    $spoSegments += @{ Css = 'info'; Pct = [math]::Round(($spoSecInfo / $spoSecTotal) * 100, 1); Label = 'Info' }
                 }
                 $spoDonut = Get-SvgMultiDonut -Segments $spoSegments -CenterLabel "$spoSecTotal" -Size 130 -StrokeWidth 12
 
@@ -1182,10 +1182,10 @@ foreach ($sectionName in $sections) {
                     $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-warning'></span> Warning</span><span class='score-detail-value warning-text'>$spoSecWarn</span></div>")
                 }
                 if ($spoSecReview -gt 0) {
-                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-info'></span> Review</span><span class='score-detail-value' style='color: var(--m365a-accent);'>$spoSecReview</span></div>")
+                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-review'></span> Review</span><span class='score-detail-value' style='color: var(--m365a-review);'>$spoSecReview</span></div>")
                 }
                 if ($spoSecInfo -gt 0) {
-                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-neutral'></span> Info</span><span class='score-detail-value' style='color: var(--m365a-neutral);'>$spoSecInfo</span></div>")
+                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-info'></span> Info</span><span class='score-detail-value' style='color: var(--m365a-accent);'>$spoSecInfo</span></div>")
                 }
                 $null = $sectionHtml.AppendLine("<div class='score-detail-row score-delta'><span class='score-detail-label'>Total Controls</span><span class='score-detail-value'>$spoSecTotal</span></div>")
                 $null = $sectionHtml.AppendLine("</div>")
@@ -1206,10 +1206,10 @@ foreach ($sectionName in $sections) {
                     @{ Css = 'success'; Pct = [math]::Round(($teamSecPass   / $teamSecTotal) * 100, 1); Label = 'Pass' }
                     @{ Css = 'danger';  Pct = [math]::Round(($teamSecFail   / $teamSecTotal) * 100, 1); Label = 'Fail' }
                     @{ Css = 'warning'; Pct = [math]::Round(($teamSecWarn   / $teamSecTotal) * 100, 1); Label = 'Warning' }
-                    @{ Css = 'info';    Pct = [math]::Round(($teamSecReview / $teamSecTotal) * 100, 1); Label = 'Review' }
+                    @{ Css = 'review';  Pct = [math]::Round(($teamSecReview / $teamSecTotal) * 100, 1); Label = 'Review' }
                 )
                 if ($teamSecInfo -gt 0) {
-                    $teamSegments += @{ Css = 'neutral'; Pct = [math]::Round(($teamSecInfo / $teamSecTotal) * 100, 1); Label = 'Info' }
+                    $teamSegments += @{ Css = 'info'; Pct = [math]::Round(($teamSecInfo / $teamSecTotal) * 100, 1); Label = 'Info' }
                 }
                 $teamDonut = Get-SvgMultiDonut -Segments $teamSegments -CenterLabel "$teamSecTotal" -Size 130 -StrokeWidth 12
 
@@ -1229,10 +1229,10 @@ foreach ($sectionName in $sections) {
                     $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-warning'></span> Warning</span><span class='score-detail-value warning-text'>$teamSecWarn</span></div>")
                 }
                 if ($teamSecReview -gt 0) {
-                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-info'></span> Review</span><span class='score-detail-value' style='color: var(--m365a-accent);'>$teamSecReview</span></div>")
+                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-review'></span> Review</span><span class='score-detail-value' style='color: var(--m365a-review);'>$teamSecReview</span></div>")
                 }
                 if ($teamSecInfo -gt 0) {
-                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-neutral'></span> Info</span><span class='score-detail-value' style='color: var(--m365a-neutral);'>$teamSecInfo</span></div>")
+                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-info'></span> Info</span><span class='score-detail-value' style='color: var(--m365a-accent);'>$teamSecInfo</span></div>")
                 }
                 $null = $sectionHtml.AppendLine("<div class='score-detail-row score-delta'><span class='score-detail-label'>Total Controls</span><span class='score-detail-value'>$teamSecTotal</span></div>")
                 $null = $sectionHtml.AppendLine("</div>")
@@ -1375,11 +1375,11 @@ foreach ($sectionName in $sections) {
                     @{ Css = 'success'; Pct = $defPassPct; Label = 'Pass' }
                     @{ Css = 'danger'; Pct = $defFailPct; Label = 'Fail' }
                     @{ Css = 'warning'; Pct = $defWarnPct; Label = 'Warning' }
-                    @{ Css = 'info'; Pct = $defReviewPct; Label = 'Review' }
+                    @{ Css = 'review'; Pct = $defReviewPct; Label = 'Review' }
                 )
                 if ($defInfo -gt 0) {
                     $defInfoPct = [math]::Round(($defInfo / $defTotal) * 100, 1)
-                    $defSegments += @{ Css = 'neutral'; Pct = $defInfoPct; Label = 'Info' }
+                    $defSegments += @{ Css = 'info'; Pct = $defInfoPct; Label = 'Info' }
                 }
                 $defMultiDonut = Get-SvgMultiDonut -Segments $defSegments -CenterLabel "$defTotal" -Size 130 -StrokeWidth 12
 
@@ -1399,10 +1399,10 @@ foreach ($sectionName in $sections) {
                     $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-warning'></span> Warning</span><span class='score-detail-value warning-text'>$defWarn</span></div>")
                 }
                 if ($defReview -gt 0) {
-                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-info'></span> Review</span><span class='score-detail-value' style='color: var(--m365a-accent);'>$defReview</span></div>")
+                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-review'></span> Review</span><span class='score-detail-value' style='color: var(--m365a-review);'>$defReview</span></div>")
                 }
                 if ($defInfo -gt 0) {
-                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-neutral'></span> Info</span><span class='score-detail-value' style='color: var(--m365a-neutral);'>$defInfo</span></div>")
+                    $null = $sectionHtml.AppendLine("<div class='score-detail-row'><span class='score-detail-label'><span class='chart-legend-dot dot-info'></span> Info</span><span class='score-detail-value' style='color: var(--m365a-accent);'>$defInfo</span></div>")
                 }
                 $null = $sectionHtml.AppendLine("<div class='score-detail-row score-delta'><span class='score-detail-label'>Total Controls</span><span class='score-detail-value'>$defTotal</span></div>")
                 $null = $sectionHtml.AppendLine("</div>")
@@ -1656,7 +1656,9 @@ foreach ($c in $summary) {
 
     foreach ($row in $data) {
         if (-not $row.CheckId -or $row.CheckId -eq '') { continue }
-        $entry = if ($controlRegistry.ContainsKey($row.CheckId)) { $controlRegistry[$row.CheckId] } else { $null }
+        # Strip sub-number suffix (e.g., DEFENDER-ANTIPHISH-001.3 -> DEFENDER-ANTIPHISH-001) for registry lookup
+        $baseCheckId = $row.CheckId -replace '\.\d+$', ''
+        $entry = if ($controlRegistry.ContainsKey($baseCheckId)) { $controlRegistry[$baseCheckId] } else { $null }
         $fw = if ($entry) { $entry.frameworks } else { @{} }
         $cisProfiles = if ($fw.'cis-m365-v6' -and $fw.'cis-m365-v6'.profiles) { $fw.'cis-m365-v6'.profiles } else { @() }
         $cisId = if ($fw.'cis-m365-v6' -and $fw.'cis-m365-v6'.controlId) { $fw.'cis-m365-v6'.controlId } else { '' }
@@ -1979,6 +1981,7 @@ $html = @"
             --m365a-warning-bg: #fff3cd;
             --m365a-danger-bg: #f8d7da;
             --m365a-info-bg: #d1ecf1;
+            --m365a-review: #EAB308;
             --m365a-neutral: #6b7280;
             --m365a-neutral-bg: #f3f4f6;
             --m365a-body-bg: #ffffff;
@@ -2009,6 +2012,7 @@ $html = @"
             --m365a-warning-bg: #78350F;
             --m365a-danger-bg: #7F1D1D;
             --m365a-info-bg: #1E3A5F;
+            --m365a-review: #FBBF24;
             --m365a-neutral: #9ca3af;
             --m365a-neutral-bg: #374151;
         }
@@ -2438,6 +2442,7 @@ $html = @"
         .donut-success { stroke: var(--m365a-success); }
         .donut-warning { stroke: var(--m365a-warning); }
         .donut-danger { stroke: var(--m365a-danger); }
+        .donut-review { stroke: var(--m365a-review); }
         .donut-info { stroke: var(--m365a-accent); }
         .donut-neutral { stroke: var(--m365a-neutral); }
         .donut-text { font-size: 22px; font-weight: 700; fill: var(--m365a-text); font-family: inherit; }
@@ -2482,6 +2487,7 @@ $html = @"
         .chart-legend-dot.dot-success { background: var(--m365a-success); }
         .chart-legend-dot.dot-warning { background: var(--m365a-warning); }
         .chart-legend-dot.dot-danger { background: var(--m365a-danger); }
+        .chart-legend-dot.dot-review { background: var(--m365a-review); }
         .chart-legend-dot.dot-info { background: var(--m365a-accent); }
         .chart-legend-dot.dot-neutral { background-color: var(--m365a-neutral); }
         .chart-legend-dot.dot-muted { background: var(--m365a-medium-gray); }

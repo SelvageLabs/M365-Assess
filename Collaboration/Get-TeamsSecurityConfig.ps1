@@ -53,7 +53,40 @@ if ($isAppOnly) {
     return
 }
 
+# Detect whether the tenant has any Teams-capable licenses.
+# If no Teams service plans are assigned, the /teamwork/* Graph endpoints return
+# 400/404 errors, producing misleading warnings in the assessment log.
+try {
+    $subscribedSkus = Get-MgSubscribedSku -ErrorAction Stop
+    $teamsServicePlanIds = @(
+        '57ff2da0-773e-42df-b2af-ffb7a2317929'  # TEAMS1 (standard Teams service plan)
+        '4a51bca5-1eff-43f5-878c-177680f191af'  # TEAMS1 (Gov)
+    )
+    $hasTeams = $false
+    foreach ($sku in $subscribedSkus) {
+        if ($sku.ConsumedUnits -gt 0) {
+            foreach ($sp in $sku.ServicePlans) {
+                if ($sp.ServicePlanId -in $teamsServicePlanIds -and $sp.ProvisioningStatus -ne 'Disabled') {
+                    $hasTeams = $true
+                    break
+                }
+            }
+        }
+        if ($hasTeams) { break }
+    }
+    if (-not $hasTeams) {
+        Write-Warning "No Teams licenses detected in this tenant. Skipping Teams security checks to avoid false errors."
+        Write-Output @()
+        return
+    }
+}
+catch {
+    # If we can't check licenses, proceed with Teams checks and let them fail naturally
+    Write-Warning "Could not verify Teams licensing: $($_.Exception.Message). Proceeding with Teams checks."
+}
+
 $settings = [System.Collections.Generic.List[PSCustomObject]]::new()
+$checkIdCounter = @{}
 
 function Add-Setting {
     param(
@@ -65,13 +98,20 @@ function Add-Setting {
         [string]$CheckId = '',
         [string]$Remediation = ''
     )
+    # Auto-generate sub-numbered CheckId for individual setting traceability
+    $subCheckId = $CheckId
+    if ($CheckId) {
+        if (-not $checkIdCounter.ContainsKey($CheckId)) { $checkIdCounter[$CheckId] = 0 }
+        $checkIdCounter[$CheckId]++
+        $subCheckId = "$CheckId.$($checkIdCounter[$CheckId])"
+    }
     $settings.Add([PSCustomObject]@{
         Category         = $Category
         Setting          = $Setting
         CurrentValue     = $CurrentValue
         RecommendedValue = $RecommendedValue
         Status           = $Status
-        CheckId          = $CheckId
+        CheckId          = $subCheckId
         Remediation      = $Remediation
     })
     if ($CheckId -and (Get-Command -Name Update-CheckProgress -ErrorAction SilentlyContinue)) {

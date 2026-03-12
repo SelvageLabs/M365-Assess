@@ -133,7 +133,9 @@ foreach ($c in $summary) {
 
     foreach ($row in $data) {
         if (-not $row.CheckId -or $row.CheckId -eq '') { continue }
-        $entry = if ($controlRegistry.ContainsKey($row.CheckId)) { $controlRegistry[$row.CheckId] } else { $null }
+        # Strip sub-number suffix (e.g., DEFENDER-ANTIPHISH-001.3 -> DEFENDER-ANTIPHISH-001) for registry lookup
+        $baseCheckId = $row.CheckId -replace '\.\d+$', ''
+        $entry = if ($controlRegistry.ContainsKey($baseCheckId)) { $controlRegistry[$baseCheckId] } else { $null }
         $fw = if ($entry) { $entry.frameworks } else { @{} }
         $cisProfiles = if ($fw.'cis-m365-v6' -and $fw.'cis-m365-v6'.profiles) { $fw.'cis-m365-v6'.profiles } else { @() }
         $cisId = if ($fw.'cis-m365-v6' -and $fw.'cis-m365-v6'.controlId) { $fw.'cis-m365-v6'.controlId } else { '' }
