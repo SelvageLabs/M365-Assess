@@ -39,6 +39,12 @@ Install-Module Microsoft.Graph, ExchangeOnlineManagement -Scope CurrentUser
 # Results land in a timestamped folder with CSV data + HTML report + XLSX compliance matrix
 ```
 
+> **Downloaded the ZIP instead of cloning?** Windows marks ZIP-extracted files as "from the internet," which blocks execution under the default `RemoteSigned` policy. Unblock all scripts after extracting:
+> ```powershell
+> Get-ChildItem -Path .\M365-Assess -Recurse -Filter *.ps1 | Unblock-File
+> ```
+> This is not needed when using `git clone`.
+
 ## Prerequisites
 
 | Requirement | Details |
