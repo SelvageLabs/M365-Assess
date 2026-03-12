@@ -124,9 +124,19 @@ function Invoke-PS5Command {
                 " Try running 'powershell.exe -Command Install-Module ScubaGear -Scope CurrentUser -Force' manually to diagnose."
             }
             elseif ($errorText -match 'unknown escape character|unable to parse input.*yaml') {
+                $oneDriveHint = ''
+                $scubaModPath = & powershell.exe -NoProfile -Command "(Get-Module ScubaGear -ListAvailable | Select-Object -First 1).ModuleBase" 2>$null
+                if ($scubaModPath -match 'OneDrive') {
+                    $oneDriveHint = " ScubaGear appears to be installed under a OneDrive-synced" +
+                        " path ($scubaModPath) — spaces and special characters in OneDrive paths" +
+                        " are a known cause of OPA YAML parse failures. Reinstall ScubaGear to a" +
+                        " non-synced path: powershell.exe -Command 'Install-Module ScubaGear -Scope AllUsers -Force'."
+                }
                 " This is a known ScubaGear/OPA issue where backslash characters in tenant" +
-                " data cause YAML parsing failures. Try updating ScubaGear to the latest" +
-                " version: powershell.exe -Command 'Update-Module ScubaGear -Force'." +
+                " data or special characters in file paths cause YAML parsing failures." +
+                " Try updating ScubaGear to the latest version:" +
+                " powershell.exe -Command 'Update-Module ScubaGear -Force'." +
+                $oneDriveHint +
                 " If the issue persists, report it at https://github.com/cisagov/ScubaGear/issues"
             }
             elseif ($errorText -match 'Invalid JSON primitive') {

@@ -44,6 +44,15 @@ catch {
     return
 }
 
+# Detect app-only auth — Teams Graph APIs (/v1.0/teamwork/*) do not support
+# application-only context and return HTTP 412 "not supported in application-only context".
+$isAppOnly = $context.AuthType -eq 'AppOnly' -or (-not $context.Account -and $context.AppName)
+if ($isAppOnly) {
+    Write-Warning "Teams Graph APIs do not support app-only (certificate) authentication. Teams security checks require delegated (interactive) auth. Skipping Teams collector."
+    Write-Output @()
+    return
+}
+
 $settings = [System.Collections.Generic.List[PSCustomObject]]::new()
 
 function Add-Setting {
