@@ -113,7 +113,10 @@ param(
 
     [Parameter()]
     [ValidateSet('commercial', 'gcc', 'gcchigh', 'dod')]
-    [string]$M365Environment = 'commercial'
+    [string]$M365Environment = 'commercial',
+
+    [Parameter()]
+    [switch]$NoBranding
 )
 
 $ErrorActionPreference = 'Stop'
@@ -1175,6 +1178,9 @@ function Connect-RequiredService {
             default          { $svc }
         }
         Write-Host "    Connecting to $serviceDisplayName..." -ForegroundColor Yellow
+        if (Get-Command -Name Update-ProgressStatus -ErrorAction SilentlyContinue) {
+            Update-ProgressStatus -Message "Connecting to $serviceDisplayName..."
+        }
 
         Write-AssessmentLog -Level INFO -Message "Connecting to $svc..." -Section $SectionName
         try {
@@ -1321,6 +1327,21 @@ $summaryResults = [System.Collections.Generic.List[PSCustomObject]]::new()
 $issues = [System.Collections.Generic.List[PSCustomObject]]::new()
 $overallStart = Get-Date
 
+# Initialize real-time security check progress display
+$progressHelper = Join-Path -Path $projectRoot -ChildPath 'Common\Show-CheckProgress.ps1'
+if (Test-Path -Path $progressHelper) {
+    . $progressHelper
+    $registryHelper = Join-Path -Path $projectRoot -ChildPath 'Common\Import-ControlRegistry.ps1'
+    if (Test-Path -Path $registryHelper) {
+        . $registryHelper
+        $controlsDir = Join-Path -Path $projectRoot -ChildPath 'controls'
+        $progressRegistry = Import-ControlRegistry -ControlsPath $controlsDir
+        if ($progressRegistry.Count -gt 1) {
+            Initialize-CheckProgress -ControlRegistry $progressRegistry -ActiveSections $Section
+        }
+    }
+}
+
 foreach ($sectionName in $Section) {
     if (-not $collectorMap.Contains($sectionName)) {
         Write-AssessmentLog -Level WARN -Message "Unknown section '$sectionName' — skipping."
@@ -1415,6 +1436,9 @@ foreach ($sectionName in $Section) {
         $errorMessage = ''
 
         Write-AssessmentLog -Level INFO -Message "Running: $($collector.Label)" -Section $sectionName -Collector $collector.Label
+        if (Get-Command -Name Update-ProgressStatus -ErrorAction SilentlyContinue) {
+            Update-ProgressStatus -Message "Running $($collector.Label)..."
+        }
 
         try {
             if (-not (Test-Path -Path $scriptPath)) {
@@ -1844,6 +1868,11 @@ foreach ($sectionName in $Section) {
     }
 }
 
+# Clean up check progress display
+if (Get-Command -Name Complete-CheckProgress -ErrorAction SilentlyContinue) {
+    Complete-CheckProgress
+}
+
 # ------------------------------------------------------------------
 # Export assessment summary
 # ------------------------------------------------------------------
@@ -1877,6 +1906,7 @@ if (Test-Path -Path $reportScriptPath) {
             AssessmentFolder = $assessmentFolder
         }
         if ($TenantId) { $reportParams['TenantName'] = $TenantId }
+        if ($NoBranding) { $reportParams['NoBranding'] = $true }
 
         $reportOutput = & $reportScriptPath @reportParams
         foreach ($line in $reportOutput) {

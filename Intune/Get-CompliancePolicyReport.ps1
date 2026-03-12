@@ -84,7 +84,7 @@ if (-not $policies -or $policies.Count -eq 0) {
 Write-Verbose "Processing $($policies.Count) compliance policies..."
 
 $results = foreach ($policy in $policies) {
-    $odataType = $policy.AdditionalProperties.'@odata.type'
+    $odataType = if ($policy.AdditionalProperties) { $policy.AdditionalProperties['@odata.type'] } else { $null }
     $platform = if ($odataType) { $platformMap[$odataType] } else { $null }
     if (-not $platform) {
         $platform = if ($odataType) { $odataType } else { 'Unknown' }
