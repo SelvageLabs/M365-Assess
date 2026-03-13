@@ -51,6 +51,7 @@
         'Security\Get-DefenderPolicyReport.ps1'
         'Security\Get-DefenderSecurityConfig.ps1'
         'Security\Get-DlpPolicyReport.ps1'
+        'Security\Get-ComplianceSecurityConfig.ps1'
         'Security\Get-LocalAdmins.ps1'
         'Security\Invoke-ScubaGearScan.ps1'
         'Collaboration\Get-SharePointOneDriveReport.ps1'

@@ -1626,11 +1626,11 @@
       }
     },
     {
-      "checkId": "MANUAL-CIS-3-1-1",
+      "checkId": "COMPLIANCE-AUDIT-001",
       "name": "Ensure Microsoft 365 audit log search is Enabled",
-      "category": "",
-      "collector": "",
-      "hasAutomatedCheck": false,
+      "category": "AUDIT",
+      "collector": "Compliance",
+      "hasAutomatedCheck": true,
       "licensing": {
         "minimum": "E3"
       },
@@ -1671,11 +1671,57 @@
       }
     },
     {
-      "checkId": "MANUAL-CIS-3-2-1",
-      "name": "Ensure DLP policies are enabled",
+      "checkId": "MANUAL-CIS-3-1-1",
+      "name": "Ensure Microsoft 365 audit log search is Enabled",
       "category": "",
       "collector": "",
       "hasAutomatedCheck": false,
+      "supersededBy": "COMPLIANCE-AUDIT-001",
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "cis-m365-v6": {
+          "controlId": "3.1.1",
+          "title": "Ensure Microsoft 365 audit log search is Enabled",
+          "profiles": [
+            "E3-L1",
+            "E5-L1"
+          ]
+        },
+        "nist-csf": {
+          "controlId": "DE.AE-03"
+        },
+        "nist-800-53": {
+          "controlId": "AU-12"
+        },
+        "iso-27001": {
+          "controlId": "A.8.15"
+        },
+        "pci-dss": {
+          "controlId": "10.2.x;10.3.x"
+        },
+        "cmmc": {
+          "controlId": "3.3.1;3.3.2"
+        },
+        "hipaa": {
+          "controlId": "§164.312(b)"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.EXO.16.1v1"
+        },
+        "soc2": {
+          "controlId": "CC7.1;CC7.2",
+          "evidenceType": "config-export"
+        }
+      }
+    },
+    {
+      "checkId": "COMPLIANCE-DLP-001",
+      "name": "Ensure DLP policies are enabled",
+      "category": "DLP",
+      "collector": "Compliance",
+      "hasAutomatedCheck": true,
       "licensing": {
         "minimum": "E3"
       },
@@ -1716,11 +1762,57 @@
       }
     },
     {
-      "checkId": "MANUAL-CIS-3-2-2",
-      "name": "Ensure DLP policies are enabled for Microsoft Teams",
+      "checkId": "MANUAL-CIS-3-2-1",
+      "name": "Ensure DLP policies are enabled",
       "category": "",
       "collector": "",
       "hasAutomatedCheck": false,
+      "supersededBy": "COMPLIANCE-DLP-001",
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "cis-m365-v6": {
+          "controlId": "3.2.1",
+          "title": "Ensure DLP policies are enabled",
+          "profiles": [
+            "E3-L1",
+            "E5-L1"
+          ]
+        },
+        "nist-csf": {
+          "controlId": "PR.DS-01;PR.DS-02"
+        },
+        "nist-800-53": {
+          "controlId": "SC-7(10)"
+        },
+        "iso-27001": {
+          "controlId": "A.5.12;A.8.12"
+        },
+        "pci-dss": {
+          "controlId": "3.4.x;3.5.x"
+        },
+        "cmmc": {
+          "controlId": "3.1.22;3.13.1"
+        },
+        "hipaa": {
+          "controlId": "§164.312(c)(1);§164.312(e)(1)"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.EXO.8.1v1"
+        },
+        "soc2": {
+          "controlId": "CC6.1;CC6.7",
+          "evidenceType": "config-export"
+        }
+      }
+    },
+    {
+      "checkId": "COMPLIANCE-DLP-002",
+      "name": "Ensure DLP policies are enabled for Microsoft Teams",
+      "category": "DLP",
+      "collector": "Compliance",
+      "hasAutomatedCheck": true,
       "licensing": {
         "minimum": "E5"
       },
@@ -1757,11 +1849,96 @@
       }
     },
     {
+      "checkId": "MANUAL-CIS-3-2-2",
+      "name": "Ensure DLP policies are enabled for Microsoft Teams",
+      "category": "",
+      "collector": "",
+      "hasAutomatedCheck": false,
+      "supersededBy": "COMPLIANCE-DLP-002",
+      "licensing": {
+        "minimum": "E5"
+      },
+      "frameworks": {
+        "cis-m365-v6": {
+          "controlId": "3.2.2",
+          "title": "Ensure DLP policies are enabled for Microsoft Teams",
+          "profiles": [
+            "E5-L1"
+          ]
+        },
+        "nist-csf": {
+          "controlId": "PR.DS-01;PR.DS-02"
+        },
+        "nist-800-53": {
+          "controlId": "SC-7(10)"
+        },
+        "iso-27001": {
+          "controlId": "A.5.12;A.8.12"
+        },
+        "pci-dss": {
+          "controlId": "3.4.x;3.5.x"
+        },
+        "cmmc": {
+          "controlId": "3.1.22;3.13.1"
+        },
+        "hipaa": {
+          "controlId": "§164.312(c)(1);§164.312(e)(1)"
+        },
+        "soc2": {
+          "controlId": "CC6.1;CC6.7",
+          "evidenceType": "config-export"
+        }
+      }
+    },
+    {
+      "checkId": "COMPLIANCE-LABELS-001",
+      "name": "Ensure Information Protection sensitivity label policies are published",
+      "category": "Sensitivity Labels",
+      "collector": "Compliance",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "cis-m365-v6": {
+          "controlId": "3.3.1",
+          "title": "Ensure Information Protection sensitivity label policies are published",
+          "profiles": [
+            "E3-L1",
+            "E5-L1"
+          ]
+        },
+        "nist-csf": {
+          "controlId": "PR.DS-01"
+        },
+        "nist-800-53": {
+          "controlId": "AC-3;SC-7(10)"
+        },
+        "iso-27001": {
+          "controlId": "A.5.12;A.5.13;A.8.12"
+        },
+        "pci-dss": {
+          "controlId": "3.4.x;3.5.x"
+        },
+        "cmmc": {
+          "controlId": "3.1.22;3.13.1"
+        },
+        "hipaa": {
+          "controlId": "§164.312(c)(1)"
+        },
+        "soc2": {
+          "controlId": "CC6.1;CC6.2;CC6.3;CC6.7",
+          "evidenceType": "config-export"
+        }
+      }
+    },
+    {
       "checkId": "MANUAL-CIS-3-3-1",
       "name": "Ensure Information Protection sensitivity label policies are published",
       "category": "",
       "collector": "",
       "hasAutomatedCheck": false,
+      "supersededBy": "COMPLIANCE-LABELS-001",
       "licensing": {
         "minimum": "E3"
       },
