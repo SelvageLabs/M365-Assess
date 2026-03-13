@@ -2099,7 +2099,8 @@
           "controlId": "CC5;CC6.1;CC8.1",
           "evidenceType": "config-export"
         }
-      }
+      },
+      "supersededBy": "ENTRA-PERUSER-001"
     },
     {
       "checkId": "MANUAL-CIS-5-1-2-2",
@@ -2144,7 +2145,8 @@
           "controlId": "CC5;CC6.1;CC6.3;CC8.1",
           "evidenceType": "config-export"
         }
-      }
+      },
+      "supersededBy": "ENTRA-APPS-001"
     },
     {
       "checkId": "ENTRA-TENANT-001",
@@ -2397,7 +2399,8 @@
           "controlId": "CC6.1;CC6.2;CC6.3",
           "evidenceType": "config-export"
         }
-      }
+      },
+      "supersededBy": "ENTRA-GROUP-002"
     },
     {
       "checkId": "ENTRA-GROUP-001",
@@ -2736,7 +2739,8 @@
           "controlId": "CC5;CC6.1;CC6.3;CC8.1",
           "evidenceType": "config-export"
         }
-      }
+      },
+      "supersededBy": "ENTRA-DEVICE-004"
     },
     {
       "checkId": "MANUAL-CIS-5-1-4-5",
@@ -2778,7 +2782,8 @@
           "controlId": "CC5;CC6.1;CC8.1",
           "evidenceType": "config-export"
         }
-      }
+      },
+      "supersededBy": "ENTRA-DEVICE-005"
     },
     {
       "checkId": "MANUAL-CIS-5-1-4-6",
@@ -2820,7 +2825,8 @@
           "controlId": "CC6.1;CC6.2;CC6.3",
           "evidenceType": "config-export"
         }
-      }
+      },
+      "supersededBy": "ENTRA-DEVICE-006"
     },
     {
       "checkId": "ENTRA-CONSENT-001",
@@ -2992,7 +2998,8 @@
           "controlId": "CC6.1;CC6.2;CC6.3",
           "evidenceType": "config-export"
         }
-      }
+      },
+      "supersededBy": "ENTRA-GUEST-004"
     },
     {
       "checkId": "ENTRA-GUEST-001",
@@ -4378,7 +4385,8 @@
           "controlId": "CC6.1",
           "evidenceType": "config-export"
         }
-      }
+      },
+      "supersededBy": "ENTRA-AUTHMETHOD-003"
     },
     {
       "checkId": "ENTRA-PASSWORD-002",
@@ -4705,7 +4713,8 @@
           "controlId": "CC6.1",
           "evidenceType": "config-export"
         }
-      }
+      },
+      "supersededBy": "ENTRA-AUTHMETHOD-004"
     },
     {
       "checkId": "ENTRA-AUTHMETHOD-002",
@@ -4922,7 +4931,8 @@
           "controlId": "CC6.1;CC6.2;CC6.3",
           "evidenceType": "config-export"
         }
-      }
+      },
+      "supersededBy": "ENTRA-PIM-001"
     },
     {
       "checkId": "MANUAL-CIS-5-3-2",
@@ -4966,7 +4976,8 @@
           "controlId": "CC6.1;CC6.2;CC6.3",
           "evidenceType": "config-export"
         }
-      }
+      },
+      "supersededBy": "ENTRA-PIM-002"
     },
     {
       "checkId": "MANUAL-CIS-5-3-3",
@@ -5010,7 +5021,8 @@
           "controlId": "CC6.1;CC6.2;CC6.3",
           "evidenceType": "config-export"
         }
-      }
+      },
+      "supersededBy": "ENTRA-PIM-003"
     },
     {
       "checkId": "MANUAL-CIS-5-3-4",
@@ -5054,7 +5066,8 @@
           "controlId": "CC6.1;CC6.3",
           "evidenceType": "config-export"
         }
-      }
+      },
+      "supersededBy": "ENTRA-PIM-004"
     },
     {
       "checkId": "MANUAL-CIS-5-3-5",
@@ -5097,6 +5110,617 @@
         "soc2": {
           "controlId": "CC6.1;CC6.3",
           "evidenceType": "config-export"
+        }
+      },
+      "supersededBy": "ENTRA-PIM-005"
+    },
+    {
+      "checkId": "ENTRA-PERUSER-001",
+      "name": "Ensure 'Per-user MFA' is disabled",
+      "category": "Authentication Methods",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "soc2": {
+          "evidenceType": "config-export",
+          "controlId": "CC5;CC6.1;CC8.1"
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-03"
+        },
+        "pci-dss": {
+          "controlId": "8.4.x;2.2.x"
+        },
+        "cmmc": {
+          "controlId": "3.5.3;3.4.2"
+        },
+        "hipaa": {
+          "controlId": "§164.312(d)"
+        },
+        "cis-m365-v6": {
+          "profiles": [
+            "E3-L1",
+            "E5-L1"
+          ],
+          "controlId": "5.1.2.1",
+          "title": "Ensure 'Per-user MFA' is disabled"
+        },
+        "nist-800-53": {
+          "controlId": "IA-2(1);IA-2(2);CM-6"
+        },
+        "iso-27001": {
+          "controlId": "A.8.5"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-APPS-001",
+      "name": "Ensure third party integrated applications are not allowed",
+      "category": "Application Consent",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "pci-dss": {
+          "controlId": "2.2.x"
+        },
+        "hipaa": {
+          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)"
+        },
+        "cmmc": {
+          "controlId": "3.1.1;3.4.5"
+        },
+        "soc2": {
+          "evidenceType": "config-export",
+          "controlId": "CC5;CC6.1;CC6.3;CC8.1"
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05"
+        },
+        "nist-800-53": {
+          "controlId": "AC-6(10);CM-5"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.AAD.5.4v1"
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.8.26"
+        },
+        "cis-m365-v6": {
+          "profiles": [
+            "E3-L2",
+            "E5-L2"
+          ],
+          "controlId": "5.1.2.2",
+          "title": "Ensure third party integrated applications are not allowed"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-GUEST-004",
+      "name": "Ensure that collaboration invitations are sent to allowed domains only",
+      "category": "External Collaboration",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "pci-dss": {
+          "controlId": "7.2.x"
+        },
+        "hipaa": {
+          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)"
+        },
+        "cmmc": {
+          "controlId": "3.1.2;3.1.20"
+        },
+        "soc2": {
+          "evidenceType": "config-export",
+          "controlId": "CC6.1;CC6.2;CC6.3"
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05"
+        },
+        "nist-800-53": {
+          "controlId": "AC-3"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.AAD.8.2v1"
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.5.19"
+        },
+        "cis-m365-v6": {
+          "profiles": [
+            "E3-L2",
+            "E5-L2"
+          ],
+          "controlId": "5.1.6.1",
+          "title": "Ensure that collaboration invitations are sent to allowed domains only"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-GROUP-002",
+      "name": "Ensure a dynamic group for guest users is created",
+      "category": "External Collaboration",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "soc2": {
+          "evidenceType": "config-export",
+          "controlId": "CC6.1;CC6.2;CC6.3"
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-01;PR.AA-05"
+        },
+        "pci-dss": {
+          "controlId": "7.2.x;8.2.x"
+        },
+        "cmmc": {
+          "controlId": "3.1.1;3.1.5"
+        },
+        "hipaa": {
+          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)"
+        },
+        "cis-m365-v6": {
+          "profiles": [
+            "E3-L1",
+            "E5-L1"
+          ],
+          "controlId": "5.1.3.1",
+          "title": "Ensure a dynamic group for guest users is created"
+        },
+        "nist-800-53": {
+          "controlId": "AC-2;AC-6"
+        },
+        "iso-27001": {
+          "controlId": "A.5.16;A.5.18"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-DEVICE-004",
+      "name": "Ensure local administrator assignment is limited during Entra join",
+      "category": "Device Management",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "soc2": {
+          "evidenceType": "config-export",
+          "controlId": "CC5;CC6.1;CC6.3;CC8.1"
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05"
+        },
+        "pci-dss": {
+          "controlId": "8.2.x;2.2.x"
+        },
+        "cmmc": {
+          "controlId": "3.1.5;3.1.6;3.4.2"
+        },
+        "hipaa": {
+          "controlId": "§164.312(a)(1)"
+        },
+        "cis-m365-v6": {
+          "profiles": [
+            "E3-L1",
+            "E5-L1"
+          ],
+          "controlId": "5.1.4.4",
+          "title": "Ensure local administrator assignment is limited during Entra join"
+        },
+        "nist-800-53": {
+          "controlId": "AC-6(5);CM-6"
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.8.2"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-DEVICE-005",
+      "name": "Ensure Local Administrator Password Solution is enabled",
+      "category": "Device Management",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "soc2": {
+          "evidenceType": "config-export",
+          "controlId": "CC5;CC6.1;CC8.1"
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-01"
+        },
+        "pci-dss": {
+          "controlId": "8.3.x"
+        },
+        "cmmc": {
+          "controlId": "3.5.7;3.5.10;3.4.2"
+        },
+        "hipaa": {
+          "controlId": "§164.308(a)(5)(ii)(D)"
+        },
+        "cis-m365-v6": {
+          "profiles": [
+            "E3-L1",
+            "E5-L1"
+          ],
+          "controlId": "5.1.4.5",
+          "title": "Ensure Local Administrator Password Solution is enabled"
+        },
+        "nist-800-53": {
+          "controlId": "IA-5;CM-6"
+        },
+        "iso-27001": {
+          "controlId": "A.5.17;A.8.5"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-DEVICE-006",
+      "name": "Ensure users are restricted from recovering BitLocker keys",
+      "category": "Device Management",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "soc2": {
+          "evidenceType": "config-export",
+          "controlId": "CC6.1;CC6.2;CC6.3"
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05"
+        },
+        "pci-dss": {
+          "controlId": "7.2.x"
+        },
+        "cmmc": {
+          "controlId": "3.1.5;3.1.2"
+        },
+        "hipaa": {
+          "controlId": "§164.312(a)(1);§164.312(a)(2)(iv)"
+        },
+        "cis-m365-v6": {
+          "profiles": [
+            "E3-L2",
+            "E5-L2"
+          ],
+          "controlId": "5.1.4.6",
+          "title": "Ensure users are restricted from recovering BitLocker keys"
+        },
+        "nist-800-53": {
+          "controlId": "AC-6;AC-3"
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.8.24"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-AUTHMETHOD-003",
+      "name": "Ensure Microsoft Authenticator is configured to protect against MFA fatigue",
+      "category": "Authentication Methods",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "pci-dss": {
+          "controlId": "8.4.x"
+        },
+        "hipaa": {
+          "controlId": "§164.312(d)"
+        },
+        "cmmc": {
+          "controlId": "3.5.3"
+        },
+        "soc2": {
+          "evidenceType": "config-export",
+          "controlId": "CC6.1"
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-03"
+        },
+        "nist-800-53": {
+          "controlId": "IA-2(1);IA-2(2);IA-5c;IA-5g;IA-2(8);IA-2(13)"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.AAD.3.5v1"
+        },
+        "iso-27001": {
+          "controlId": "A.8.5"
+        },
+        "cis-m365-v6": {
+          "profiles": [
+            "E3-L1",
+            "E5-L1"
+          ],
+          "controlId": "5.2.3.1",
+          "title": "Ensure Microsoft Authenticator is configured to protect against MFA fatigue"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-AUTHMETHOD-004",
+      "name": "Ensure system-preferred multifactor authentication is enabled",
+      "category": "Authentication Methods",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "soc2": {
+          "evidenceType": "config-export",
+          "controlId": "CC6.1"
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-03"
+        },
+        "pci-dss": {
+          "controlId": "8.4.x"
+        },
+        "cmmc": {
+          "controlId": "3.5.3"
+        },
+        "hipaa": {
+          "controlId": "§164.312(d)"
+        },
+        "cis-m365-v6": {
+          "profiles": [
+            "E3-L1",
+            "E5-L1"
+          ],
+          "controlId": "5.2.3.6",
+          "title": "Ensure system-preferred multifactor authentication is enabled"
+        },
+        "nist-800-53": {
+          "controlId": "IA-2(1);IA-2(2)"
+        },
+        "iso-27001": {
+          "controlId": "A.8.5"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-PIM-001",
+      "name": "Ensure 'Privileged Identity Management' is used to manage roles",
+      "category": "Privileged Identity Management",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E5"
+      },
+      "frameworks": {
+        "stig": {
+          "controlId": "V-260336"
+        },
+        "pci-dss": {
+          "controlId": "7.2.x;8.2.x"
+        },
+        "hipaa": {
+          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)"
+        },
+        "cmmc": {
+          "controlId": "3.1.1;3.1.5;3.1.6"
+        },
+        "soc2": {
+          "evidenceType": "config-export",
+          "controlId": "CC6.1;CC6.2;CC6.3"
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05"
+        },
+        "nist-800-53": {
+          "controlId": "AC-2;AC-6(1)"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.AAD.7.5v1;MS.AAD.7.7v1"
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.5.18;A.8.2"
+        },
+        "cis-m365-v6": {
+          "profiles": [
+            "E5-L2"
+          ],
+          "controlId": "5.3.1",
+          "title": "Ensure 'Privileged Identity Management' is used to manage roles"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-PIM-002",
+      "name": "Ensure 'Access reviews' for Guest Users are configured",
+      "category": "Privileged Identity Management",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E5"
+      },
+      "frameworks": {
+        "pci-dss": {
+          "controlId": "7.2.x;8.2.x"
+        },
+        "hipaa": {
+          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)"
+        },
+        "cmmc": {
+          "controlId": "3.1.1;3.1.5"
+        },
+        "soc2": {
+          "evidenceType": "config-export",
+          "controlId": "CC6.1;CC6.2;CC6.3"
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05"
+        },
+        "nist-800-53": {
+          "controlId": "AC-2(3);AC-2(1)"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.AAD.7.3v1"
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.5.18"
+        },
+        "cis-m365-v6": {
+          "profiles": [
+            "E5-L1"
+          ],
+          "controlId": "5.3.2",
+          "title": "Ensure 'Access reviews' for Guest Users are configured"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-PIM-003",
+      "name": "Ensure 'Access reviews' for privileged roles are configured",
+      "category": "Privileged Identity Management",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E5"
+      },
+      "frameworks": {
+        "pci-dss": {
+          "controlId": "7.2.x;8.2.x"
+        },
+        "hipaa": {
+          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)"
+        },
+        "cmmc": {
+          "controlId": "3.1.1;3.1.5"
+        },
+        "soc2": {
+          "evidenceType": "config-export",
+          "controlId": "CC6.1;CC6.2;CC6.3"
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05"
+        },
+        "nist-800-53": {
+          "controlId": "AC-2(3);AC-2(1)"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.AAD.7.3v1"
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.5.18;A.8.2"
+        },
+        "cis-m365-v6": {
+          "profiles": [
+            "E5-L1"
+          ],
+          "controlId": "5.3.3",
+          "title": "Ensure 'Access reviews' for privileged roles are configured"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-PIM-004",
+      "name": "Ensure approval is required for Global Administrator role activation",
+      "category": "Privileged Identity Management",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E5"
+      },
+      "frameworks": {
+        "pci-dss": {
+          "controlId": "7.2.x;8.2.x"
+        },
+        "hipaa": {
+          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)"
+        },
+        "cmmc": {
+          "controlId": "3.1.5;3.1.6"
+        },
+        "soc2": {
+          "evidenceType": "config-export",
+          "controlId": "CC6.1;CC6.3"
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05"
+        },
+        "nist-800-53": {
+          "controlId": "AC-6(1)"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.AAD.7.8v1"
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.8.2"
+        },
+        "cis-m365-v6": {
+          "profiles": [
+            "E5-L1"
+          ],
+          "controlId": "5.3.4",
+          "title": "Ensure approval is required for Global Administrator role activation"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-PIM-005",
+      "name": "Ensure approval is required for Privileged Role Administrator activation",
+      "category": "Privileged Identity Management",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E5"
+      },
+      "frameworks": {
+        "pci-dss": {
+          "controlId": "7.2.x;8.2.x"
+        },
+        "hipaa": {
+          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)"
+        },
+        "cmmc": {
+          "controlId": "3.1.5;3.1.6"
+        },
+        "soc2": {
+          "evidenceType": "config-export",
+          "controlId": "CC6.1;CC6.3"
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05"
+        },
+        "nist-800-53": {
+          "controlId": "AC-6(1)"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.AAD.7.9v1"
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.8.2"
+        },
+        "cis-m365-v6": {
+          "profiles": [
+            "E5-L1"
+          ],
+          "controlId": "5.3.5",
+          "title": "Ensure approval is required for Privileged Role Administrator activation"
         }
       }
     },

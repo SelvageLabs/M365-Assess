@@ -545,6 +545,401 @@ catch {
 }
 
 # ------------------------------------------------------------------
+# 15. Per-user MFA Disabled (CIS 5.1.2.1)
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking per-user MFA state..."
+    Invoke-MgGraphRequest -Method GET `
+        -Uri '/beta/reports/authenticationMethods/userRegistrationDetails?$select=userPrincipalName,isMfaRegistered,isMfaCapable&$top=1' -ErrorAction Stop | Out-Null
+    # Graph doesn't directly expose legacy per-user MFA state (MSOnline concept).
+    # We confirm API access works, then emit Review since we can't verify enforcement mode.
+    Add-Setting -Category 'Authentication Methods' -Setting 'Per-user MFA (Legacy)' `
+        -CurrentValue 'Review -- verify no per-user MFA states are set to Enforced or Enabled' `
+        -RecommendedValue 'All per-user MFA disabled (use CA policies)' `
+        -Status 'Review' `
+        -CheckId 'ENTRA-PERUSER-001' `
+        -Remediation 'Entra admin center > Users > Per-user MFA > Ensure all users show Disabled. Use Conditional Access policies for MFA enforcement instead of per-user MFA.'
+}
+catch {
+    Write-Warning "Could not check per-user MFA: $_"
+    Add-Setting -Category 'Authentication Methods' -Setting 'Per-user MFA (Legacy)' `
+        -CurrentValue 'Could not query -- verify manually' `
+        -RecommendedValue 'All per-user MFA disabled (use CA policies)' `
+        -Status 'Review' `
+        -CheckId 'ENTRA-PERUSER-001' `
+        -Remediation 'Entra admin center > Users > Per-user MFA > Ensure all users show Disabled. Use Conditional Access policies for MFA enforcement instead.'
+}
+
+# ------------------------------------------------------------------
+# 16. Third-party Integrated Apps Blocked (CIS 5.1.2.2)
+# ------------------------------------------------------------------
+if ($authPolicy) {
+    try {
+        Write-Verbose "Checking third-party integrated apps..."
+        $allowedToCreateApps = $authPolicy['defaultUserRolePermissions']['allowedToCreateApps']
+        # CIS 5.1.2.2 checks that third-party integrated apps are not allowed
+        # This is closely related to ENTRA-APPREG-001 but specifically targets integrated apps
+        Add-Setting -Category 'Application Consent' -Setting 'Third-party Integrated Apps Restricted' `
+            -CurrentValue $(if (-not $allowedToCreateApps) { 'Restricted' } else { 'Allowed' }) `
+            -RecommendedValue 'Restricted' `
+            -Status $(if (-not $allowedToCreateApps) { 'Pass' } else { 'Fail' }) `
+            -CheckId 'ENTRA-APPS-001' `
+            -Remediation 'Entra admin center > Users > User settings > Users can register applications > No. Also review Enterprise applications > User settings > Users can consent to apps.'
+    }
+    catch {
+        Write-Warning "Could not check third-party app restrictions: $_"
+    }
+}
+
+# ------------------------------------------------------------------
+# 17. Guest Invitation Domain Restrictions (CIS 5.1.6.1)
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking guest invitation domain restrictions..."
+    $crossTenantPolicy = Invoke-MgGraphRequest -Method GET `
+        -Uri '/v1.0/policies/crossTenantAccessPolicy/default' -ErrorAction Stop
+
+    $b2bCollabInbound = $crossTenantPolicy['b2bCollaborationInbound']
+    $isRestricted = $false
+    if ($b2bCollabInbound -and $b2bCollabInbound['applications']) {
+        $accessType = $b2bCollabInbound['applications']['accessType']
+        $isRestricted = ($accessType -eq 'blocked' -or $accessType -eq 'allowed')
+    }
+
+    # Also check authorizationPolicy allowInvitesFrom
+    $invitesFrom = if ($authPolicy) { $authPolicy['allowInvitesFrom'] } else { 'unknown' }
+    $domainRestricted = ($invitesFrom -ne 'everyone') -and $isRestricted
+
+    Add-Setting -Category 'External Collaboration' -Setting 'Guest Invitation Domain Restrictions' `
+        -CurrentValue $(if ($domainRestricted) { "Restricted (invites: $invitesFrom)" } else { "Open (invites: $invitesFrom)" }) `
+        -RecommendedValue 'Restricted to allowed domains only' `
+        -Status $(if ($invitesFrom -eq 'none' -or $domainRestricted) { 'Pass' } elseif ($invitesFrom -ne 'everyone') { 'Review' } else { 'Fail' }) `
+        -CheckId 'ENTRA-GUEST-004' `
+        -Remediation 'Entra admin center > External Identities > External collaboration settings > Collaboration restrictions > Allow invitations only to the specified domains.'
+}
+catch {
+    Write-Warning "Could not check guest invitation restrictions: $_"
+}
+
+# ------------------------------------------------------------------
+# 18. Dynamic Group for Guest Users (CIS 5.1.3.1)
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking for dynamic guest group..."
+    $dynamicGroups = Invoke-MgGraphRequest -Method GET `
+        -Uri "/v1.0/groups?`$filter=groupTypes/any(g:g eq 'DynamicMembership')&`$select=displayName,membershipRule&`$top=999" -ErrorAction Stop
+    $guestGroups = @($dynamicGroups['value'] | Where-Object {
+        $_['membershipRule'] -and $_['membershipRule'] -match 'user\.userType\s+(-eq|-contains)\s+.?Guest'
+    })
+
+    if ($guestGroups.Count -gt 0) {
+        $names = ($guestGroups | ForEach-Object { $_['displayName'] }) -join '; '
+        Add-Setting -Category 'External Collaboration' -Setting 'Dynamic Group for Guest Users' `
+            -CurrentValue "Yes ($($guestGroups.Count) group: $names)" `
+            -RecommendedValue 'At least 1 dynamic group for guests' `
+            -Status 'Pass' `
+            -CheckId 'ENTRA-GROUP-002' `
+            -Remediation 'No action needed.'
+    }
+    else {
+        Add-Setting -Category 'External Collaboration' -Setting 'Dynamic Group for Guest Users' `
+            -CurrentValue 'No dynamic guest group found' `
+            -RecommendedValue 'At least 1 dynamic group for guests' `
+            -Status 'Fail' `
+            -CheckId 'ENTRA-GROUP-002' `
+            -Remediation 'Entra admin center > Groups > New group > Membership type = Dynamic User > Rule: (user.userType -eq "Guest"). This enables targeted policies for guest users.'
+    }
+}
+catch {
+    Write-Warning "Could not check dynamic guest groups: $_"
+}
+
+# ------------------------------------------------------------------
+# 19. Device Registration Extensions (CIS 5.1.4.4, 5.1.4.5, 5.1.4.6)
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking extended device registration settings..."
+    $devicePolicyBeta = Invoke-MgGraphRequest -Method GET `
+        -Uri '/beta/policies/deviceRegistrationPolicy' -ErrorAction Stop
+
+    if ($devicePolicyBeta) {
+        # CIS 5.1.4.4 -- Local admin assignment limited during Entra join
+        $localAdminSettings = $devicePolicyBeta['azureADJoin']['localAdmins']
+        $additionalAdmins = if ($localAdminSettings -and $localAdminSettings['registeredUsers']) {
+            $localAdminSettings['registeredUsers']['additionalLocalAdminsCount']
+        } else { 0 }
+        Add-Setting -Category 'Device Management' -Setting 'Local Admin Assignment on Entra Join' `
+            -CurrentValue "Additional local admins configured: $additionalAdmins" `
+            -RecommendedValue 'Minimal local admin assignment' `
+            -Status $(if ($additionalAdmins -le 0) { 'Pass' } else { 'Review' }) `
+            -CheckId 'ENTRA-DEVICE-004' `
+            -Remediation 'Entra admin center > Devices > Device settings > Manage Additional local administrators on all Azure AD joined devices. Minimize additional local admins.'
+
+        # CIS 5.1.4.5 -- LAPS enabled
+        $lapsEnabled = $false
+        if ($devicePolicyBeta['localAdminPassword']) {
+            $lapsEnabled = $devicePolicyBeta['localAdminPassword']['isEnabled']
+        }
+        Add-Setting -Category 'Device Management' -Setting 'Local Administrator Password Solution (LAPS)' `
+            -CurrentValue $(if ($lapsEnabled) { 'Enabled' } else { 'Disabled' }) `
+            -RecommendedValue 'Enabled' `
+            -Status $(if ($lapsEnabled) { 'Pass' } else { 'Fail' }) `
+            -CheckId 'ENTRA-DEVICE-005' `
+            -Remediation 'Entra admin center > Devices > Device settings > Enable Microsoft Entra Local Administrator Password Solution (LAPS) > Yes.'
+
+        # CIS 5.1.4.6 -- BitLocker recovery key restricted
+        # Beta API may expose this via deviceRegistrationPolicy or directorySettings
+        Add-Setting -Category 'Device Management' -Setting 'BitLocker Recovery Key Restriction' `
+            -CurrentValue 'Review -- verify users cannot read own BitLocker keys' `
+            -RecommendedValue 'Users restricted from recovering BitLocker keys' `
+            -Status 'Review' `
+            -CheckId 'ENTRA-DEVICE-006' `
+            -Remediation 'Entra admin center > Devices > Device settings > Restrict users from recovering the BitLocker key(s) for their owned devices > Yes.'
+    }
+}
+catch {
+    Write-Warning "Could not check extended device registration settings: $_"
+}
+
+# ------------------------------------------------------------------
+# 20. Authenticator Fatigue Protection (CIS 5.2.3.1)
+# ------------------------------------------------------------------
+try {
+    if ($sspr) {
+        $authMethods = $sspr['authenticationMethodConfigurations']
+        $authenticator = $authMethods | Where-Object { $_['id'] -eq 'MicrosoftAuthenticator' }
+
+        if ($authenticator) {
+            $featureSettings = $authenticator['featureSettings']
+            $numberMatch = $featureSettings['numberMatchingRequiredState']['state']
+            $appInfo = $featureSettings['displayAppInformationRequiredState']['state']
+
+            $fatiguePassed = ($numberMatch -eq 'enabled') -and ($appInfo -eq 'enabled')
+            Add-Setting -Category 'Authentication Methods' -Setting 'Authenticator Fatigue Protection' `
+                -CurrentValue "Number matching: $numberMatch; App context: $appInfo" `
+                -RecommendedValue 'Both enabled' `
+                -Status $(if ($fatiguePassed) { 'Pass' } else { 'Fail' }) `
+                -CheckId 'ENTRA-AUTHMETHOD-003' `
+                -Remediation 'Entra admin center > Protection > Authentication methods > Microsoft Authenticator > Configure > Require number matching = Enabled, Show application name = Enabled.'
+        }
+        else {
+            Add-Setting -Category 'Authentication Methods' -Setting 'Authenticator Fatigue Protection' `
+                -CurrentValue 'Microsoft Authenticator not configured' `
+                -RecommendedValue 'Both enabled' `
+                -Status 'Review' `
+                -CheckId 'ENTRA-AUTHMETHOD-003' `
+                -Remediation 'Enable Microsoft Authenticator and configure number matching + application context display.'
+        }
+    }
+}
+catch {
+    Write-Warning "Could not check authenticator fatigue protection: $_"
+}
+
+# ------------------------------------------------------------------
+# 21. System-Preferred MFA (CIS 5.2.3.6)
+# ------------------------------------------------------------------
+try {
+    if ($sspr) {
+        $systemPreferred = $sspr['systemCredentialPreferences']
+        $sysState = if ($systemPreferred) { $systemPreferred['state'] } else { 'not configured' }
+
+        Add-Setting -Category 'Authentication Methods' -Setting 'System-Preferred MFA' `
+            -CurrentValue "$sysState" `
+            -RecommendedValue 'enabled' `
+            -Status $(if ($sysState -eq 'enabled') { 'Pass' } else { 'Fail' }) `
+            -CheckId 'ENTRA-AUTHMETHOD-004' `
+            -Remediation 'Entra admin center > Protection > Authentication methods > Settings > System-preferred multifactor authentication > Enabled.'
+    }
+}
+catch {
+    Write-Warning "Could not check system-preferred MFA: $_"
+}
+
+# ------------------------------------------------------------------
+# 22. Privileged Identity Management (CIS 5.3.x) -- requires Entra ID P2
+# ------------------------------------------------------------------
+$pimAvailable = $true
+$pimRoleAssignments = $null
+try {
+    Write-Verbose "Checking PIM role assignments..."
+    $pimRoleAssignments = Invoke-MgGraphRequest -Method GET `
+        -Uri '/beta/roleManagement/directory/roleAssignmentScheduleInstances' -ErrorAction Stop
+}
+catch {
+    if ($_.Exception.Message -match '403|Forbidden|Authorization|license') {
+        $pimAvailable = $false
+    }
+    else {
+        Write-Warning "Could not check PIM role assignments: $_"
+        $pimAvailable = $false
+    }
+}
+
+if ($pimAvailable -and $pimRoleAssignments) {
+    # CIS 5.3.1 -- PIM manages privileged roles (no permanent GA assignments)
+    $gaRoleTemplateId = '62e90394-69f5-4237-9190-012177145e10'
+    $permanentGA = @($pimRoleAssignments['value'] | Where-Object {
+        $_['roleDefinitionId'] -eq $gaRoleTemplateId -and
+        $_['assignmentType'] -eq 'Activated' -and
+        (-not $_['endDateTime'] -or $_['endDateTime'] -eq '9999-12-31T23:59:59Z')
+    })
+
+    Add-Setting -Category 'Privileged Identity Management' -Setting 'PIM Manages Privileged Roles' `
+        -CurrentValue $(if ($permanentGA.Count -eq 0) { 'No permanent GA assignments' } else { "$($permanentGA.Count) permanent GA assignment(s) found" }) `
+        -RecommendedValue 'No permanent Global Admin assignments' `
+        -Status $(if ($permanentGA.Count -eq 0) { 'Pass' } else { 'Fail' }) `
+        -CheckId 'ENTRA-PIM-001' `
+        -Remediation 'Entra admin center > Identity Governance > Privileged Identity Management > Azure AD roles > Global Administrator > Remove permanent active assignments. Use eligible assignments with time-bound activation.'
+}
+elseif (-not $pimAvailable) {
+    Add-Setting -Category 'Privileged Identity Management' -Setting 'PIM Manages Privileged Roles' `
+        -CurrentValue 'Requires Entra ID P2 license -- PIM API returned 403' `
+        -RecommendedValue 'PIM enabled for all privileged roles' `
+        -Status 'Review' `
+        -CheckId 'ENTRA-PIM-001' `
+        -Remediation 'This check requires Entra ID P2 (included in M365 E5). Enable PIM at Entra admin center > Identity Governance > Privileged Identity Management.'
+}
+
+# CIS 5.3.2/5.3.3 -- Access reviews for guests and privileged roles
+$accessReviews = $null
+if ($pimAvailable) {
+    try {
+        Write-Verbose "Checking access reviews..."
+        $accessReviews = Invoke-MgGraphRequest -Method GET `
+            -Uri '/beta/identityGovernance/accessReviews/definitions?$top=100' -ErrorAction Stop
+    }
+    catch {
+        if ($_.Exception.Message -match '403|Forbidden|Authorization|license') {
+            $pimAvailable = $false
+        }
+        else {
+            Write-Warning "Could not check access reviews: $_"
+        }
+    }
+}
+
+if ($accessReviews) {
+    $allReviews = @($accessReviews['value'])
+
+    # CIS 5.3.2 -- Guest access reviews
+    $guestReviews = @($allReviews | Where-Object {
+        $_['scope'] -and ($_['scope']['query'] -match 'guest' -or $_['scope']['@odata.type'] -match 'guest')
+    })
+    Add-Setting -Category 'Privileged Identity Management' -Setting 'Access Reviews for Guest Users' `
+        -CurrentValue $(if ($guestReviews.Count -gt 0) { "$($guestReviews.Count) guest access review(s) configured" } else { 'No guest access reviews found' }) `
+        -RecommendedValue 'At least 1 access review for guests' `
+        -Status $(if ($guestReviews.Count -gt 0) { 'Pass' } else { 'Fail' }) `
+        -CheckId 'ENTRA-PIM-002' `
+        -Remediation 'Entra admin center > Identity Governance > Access reviews > New access review > Review type: Guest users only. Schedule recurring reviews.'
+
+    # CIS 5.3.3 -- Privileged role access reviews
+    $roleReviews = @($allReviews | Where-Object {
+        $_['scope'] -and ($_['scope']['query'] -match 'roleManagement|directoryRole')
+    })
+    Add-Setting -Category 'Privileged Identity Management' -Setting 'Access Reviews for Privileged Roles' `
+        -CurrentValue $(if ($roleReviews.Count -gt 0) { "$($roleReviews.Count) privileged role review(s) configured" } else { 'No privileged role access reviews found' }) `
+        -RecommendedValue 'At least 1 access review for admin roles' `
+        -Status $(if ($roleReviews.Count -gt 0) { 'Pass' } else { 'Fail' }) `
+        -CheckId 'ENTRA-PIM-003' `
+        -Remediation 'Entra admin center > Identity Governance > Access reviews > New access review > Review type: Members of a group or Users assigned to a privileged role.'
+}
+elseif (-not $pimAvailable) {
+    Add-Setting -Category 'Privileged Identity Management' -Setting 'Access Reviews for Guest Users' `
+        -CurrentValue 'Requires Entra ID P2 license -- Access Reviews API returned 403' `
+        -RecommendedValue 'At least 1 access review for guests' `
+        -Status 'Review' `
+        -CheckId 'ENTRA-PIM-002' `
+        -Remediation 'This check requires Entra ID P2 (included in M365 E5). Entra admin center > Identity Governance > Access reviews.'
+
+    Add-Setting -Category 'Privileged Identity Management' -Setting 'Access Reviews for Privileged Roles' `
+        -CurrentValue 'Requires Entra ID P2 license -- Access Reviews API returned 403' `
+        -RecommendedValue 'At least 1 access review for admin roles' `
+        -Status 'Review' `
+        -CheckId 'ENTRA-PIM-003' `
+        -Remediation 'This check requires Entra ID P2 (included in M365 E5). Entra admin center > Identity Governance > Access reviews.'
+}
+
+# CIS 5.3.4/5.3.5 -- PIM activation approval for GA and PRA
+$roleManagementPolicies = $null
+if ($pimAvailable) {
+    try {
+        Write-Verbose "Checking PIM role management policies..."
+        $roleManagementPolicies = Invoke-MgGraphRequest -Method GET `
+            -Uri '/beta/policies/roleManagementPolicies?$expand=rules' -ErrorAction Stop
+    }
+    catch {
+        if ($_.Exception.Message -match '403|Forbidden|Authorization|license') {
+            $pimAvailable = $false
+        }
+        else {
+            Write-Warning "Could not check PIM policies: $_"
+        }
+    }
+}
+
+if ($roleManagementPolicies) {
+    $allPolicies = @($roleManagementPolicies['value'])
+
+    # CIS 5.3.4 -- GA activation approval
+    $gaPolicy = $allPolicies | Where-Object {
+        $_['scopeId'] -eq '/' -and $_['scopeType'] -eq 'DirectoryRole' -and
+        $_['displayName'] -match 'Global Administrator'
+    } | Select-Object -First 1
+
+    $gaApprovalRequired = $false
+    if ($gaPolicy -and $gaPolicy['rules']) {
+        $approvalRule = $gaPolicy['rules'] | Where-Object { $_['@odata.type'] -match 'ApprovalRule' }
+        if ($approvalRule) {
+            $gaApprovalRequired = $approvalRule['setting']['isApprovalRequired']
+        }
+    }
+
+    Add-Setting -Category 'Privileged Identity Management' -Setting 'GA Activation Requires Approval' `
+        -CurrentValue $(if ($gaApprovalRequired) { 'Yes' } else { 'No' }) `
+        -RecommendedValue 'Yes' `
+        -Status $(if ($gaApprovalRequired) { 'Pass' } else { 'Fail' }) `
+        -CheckId 'ENTRA-PIM-004' `
+        -Remediation 'Entra admin center > Identity Governance > PIM > Azure AD roles > Settings > Global Administrator > Require approval to activate > Yes.'
+
+    # CIS 5.3.5 -- PRA activation approval
+    $praPolicy = $allPolicies | Where-Object {
+        $_['scopeId'] -eq '/' -and $_['scopeType'] -eq 'DirectoryRole' -and
+        $_['displayName'] -match 'Privileged Role Administrator'
+    } | Select-Object -First 1
+
+    $praApprovalRequired = $false
+    if ($praPolicy -and $praPolicy['rules']) {
+        $approvalRule = $praPolicy['rules'] | Where-Object { $_['@odata.type'] -match 'ApprovalRule' }
+        if ($approvalRule) {
+            $praApprovalRequired = $approvalRule['setting']['isApprovalRequired']
+        }
+    }
+
+    Add-Setting -Category 'Privileged Identity Management' -Setting 'PRA Activation Requires Approval' `
+        -CurrentValue $(if ($praApprovalRequired) { 'Yes' } else { 'No' }) `
+        -RecommendedValue 'Yes' `
+        -Status $(if ($praApprovalRequired) { 'Pass' } else { 'Fail' }) `
+        -CheckId 'ENTRA-PIM-005' `
+        -Remediation 'Entra admin center > Identity Governance > PIM > Azure AD roles > Settings > Privileged Role Administrator > Require approval to activate > Yes.'
+}
+elseif (-not $pimAvailable) {
+    Add-Setting -Category 'Privileged Identity Management' -Setting 'GA Activation Requires Approval' `
+        -CurrentValue 'Requires Entra ID P2 license -- PIM Policies API returned 403' `
+        -RecommendedValue 'Yes' `
+        -Status 'Review' `
+        -CheckId 'ENTRA-PIM-004' `
+        -Remediation 'This check requires Entra ID P2 (included in M365 E5). Entra admin center > Identity Governance > PIM > Azure AD roles > Settings.'
+
+    Add-Setting -Category 'Privileged Identity Management' -Setting 'PRA Activation Requires Approval' `
+        -CurrentValue 'Requires Entra ID P2 license -- PIM Policies API returned 403' `
+        -RecommendedValue 'Yes' `
+        -Status 'Review' `
+        -CheckId 'ENTRA-PIM-005' `
+        -Remediation 'This check requires Entra ID P2 (included in M365 E5). Entra admin center > Identity Governance > PIM > Azure AD roles > Settings.'
+}
+
+# ------------------------------------------------------------------
 # Output results
 # ------------------------------------------------------------------
 $report = @($settings)
