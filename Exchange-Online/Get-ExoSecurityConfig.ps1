@@ -17,7 +17,7 @@
 
     Displays Exchange Online security configuration settings.
 .NOTES
-    Version: 0.6.0
+    Version: 0.7.0
     Author:  Daren9m
     Settings checked are aligned with CIS Microsoft 365 Foundations Benchmark v6.0.1 recommendations.
 #>
@@ -268,6 +268,120 @@ try {
 }
 catch {
     Write-Warning "Could not check role assignment policies: $_"
+}
+
+# ------------------------------------------------------------------
+# 9. Connection Filter Policy (CIS 2.1.12, 2.1.13)
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking connection filter policies..."
+    $connFilter = Get-HostedConnectionFilterPolicy -ErrorAction Stop
+
+    foreach ($policy in @($connFilter)) {
+        $policyLabel = if ($policy.Name -eq 'Default') { 'Default' } else { $policy.Name }
+
+        # CIS 2.1.12 — IP Allow List should be empty
+        $ipAllowList = @($policy.IPAllowList)
+        $ipAllowCount = $ipAllowList.Count
+        Add-Setting -Category 'Connection Filter' `
+            -Setting "IP Allow List ($policyLabel)" `
+            -CurrentValue $(if ($ipAllowCount -eq 0) { 'Empty' } else { "$ipAllowCount IPs: $($ipAllowList -join ', ')" }) `
+            -RecommendedValue 'Empty (0 IPs)' `
+            -Status $(if ($ipAllowCount -eq 0) { 'Pass' } else { 'Fail' }) `
+            -CheckId 'EXO-CONNFILTER-001' `
+            -Remediation 'Run: Set-HostedConnectionFilterPolicy -Identity <Policy> -IPAllowList @{}. Exchange admin center > Protection > Connection filter > Edit the policy and remove all IP allow list entries.'
+
+        # CIS 2.1.13 — Safe List should be off
+        $safeList = $policy.EnableSafeList
+        Add-Setting -Category 'Connection Filter' `
+            -Setting "Enable Safe List ($policyLabel)" `
+            -CurrentValue "$safeList" -RecommendedValue 'False' `
+            -Status $(if (-not $safeList) { 'Pass' } else { 'Fail' }) `
+            -CheckId 'EXO-CONNFILTER-002' `
+            -Remediation 'Run: Set-HostedConnectionFilterPolicy -Identity <Policy> -EnableSafeList $false. Exchange admin center > Protection > Connection filter > Edit the policy and uncheck "Turn on safe list".'
+    }
+}
+catch {
+    Write-Warning "Could not check connection filter policies: $_"
+}
+
+# ------------------------------------------------------------------
+# 10. Transport Rules — Domain Whitelisting (CIS 6.2.2)
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking transport rules for domain whitelisting..."
+    $transportRules = Get-TransportRule -ErrorAction Stop
+
+    $whitelistRules = @($transportRules | Where-Object {
+        $_.SetSCL -eq -1 -and $_.SenderDomainIs
+    })
+
+    if ($whitelistRules.Count -eq 0) {
+        Add-Setting -Category 'Transport Rules' `
+            -Setting 'Domain whitelist transport rules' `
+            -CurrentValue 'None found' -RecommendedValue 'No rules whitelisting domains' `
+            -Status 'Pass' `
+            -CheckId 'EXO-TRANSPORT-001' `
+            -Remediation 'No action needed.'
+    }
+    else {
+        $ruleNames = ($whitelistRules | ForEach-Object { $_.Name }) -join '; '
+        Add-Setting -Category 'Transport Rules' `
+            -Setting 'Domain whitelist transport rules' `
+            -CurrentValue "$($whitelistRules.Count) rules: $ruleNames" `
+            -RecommendedValue 'No rules whitelisting domains' `
+            -Status 'Fail' `
+            -CheckId 'EXO-TRANSPORT-001' `
+            -Remediation 'Exchange admin center > Mail flow > Rules. Remove or disable any transport rules that set SCL to -1 for specific sender domains, as this bypasses spam filtering.'
+    }
+}
+catch {
+    Write-Warning "Could not check transport rules: $_"
+}
+
+# ------------------------------------------------------------------
+# 11. Mailbox Auditing Enabled — Sample (CIS 6.1.2)
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking mailbox auditing (sampling 50 mailboxes)..."
+    $mailboxes = Get-Mailbox -ResultSize 50 -RecipientTypeDetails UserMailbox -ErrorAction Stop
+
+    if (@($mailboxes).Count -eq 0) {
+        Add-Setting -Category 'Audit' `
+            -Setting 'Mailbox Auditing (sample)' `
+            -CurrentValue 'No user mailboxes found' -RecommendedValue 'AuditEnabled = True' `
+            -Status 'Review' `
+            -CheckId 'EXO-AUDIT-003' `
+            -Remediation 'No user mailboxes found to sample.'
+    }
+    else {
+        $sampleSize = @($mailboxes).Count
+        $disabledAudit = @($mailboxes | Where-Object { -not $_.AuditEnabled })
+
+        if ($disabledAudit.Count -eq 0) {
+            Add-Setting -Category 'Audit' `
+                -Setting "Mailbox Auditing (sample of $sampleSize)" `
+                -CurrentValue "All $sampleSize sampled mailboxes have auditing enabled" `
+                -RecommendedValue 'AuditEnabled = True' `
+                -Status 'Pass' `
+                -CheckId 'EXO-AUDIT-003' `
+                -Remediation 'No action needed.'
+        }
+        else {
+            $disabledNames = ($disabledAudit | Select-Object -First 5 | ForEach-Object { $_.UserPrincipalName }) -join '; '
+            $suffix = if ($disabledAudit.Count -gt 5) { " (and $($disabledAudit.Count - 5) more)" } else { '' }
+            Add-Setting -Category 'Audit' `
+                -Setting "Mailbox Auditing (sample of $sampleSize)" `
+                -CurrentValue "$($disabledAudit.Count)/$sampleSize disabled: $disabledNames$suffix" `
+                -RecommendedValue 'AuditEnabled = True' `
+                -Status 'Fail' `
+                -CheckId 'EXO-AUDIT-003' `
+                -Remediation 'Run: Set-Mailbox -Identity <UPN> -AuditEnabled $true. Or org-wide: Set-OrganizationConfig -AuditDisabled $false. Exchange admin center > Compliance management > Auditing.'
+        }
+    }
+}
+catch {
+    Write-Warning "Could not check mailbox auditing: $_"
 }
 
 # ------------------------------------------------------------------

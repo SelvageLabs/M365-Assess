@@ -25,7 +25,7 @@
 
     Exports the security configuration to CSV.
 .NOTES
-    Version: 0.6.0
+    Version: 0.7.0
     Author:  Daren9m
     Settings checked are aligned with CIS Microsoft 365 Foundations Benchmark v6.0.1 recommendations.
     Some checks require Defender for Office 365 Plan 1 or Plan 2 licensing.
@@ -455,6 +455,36 @@ try {
 }
 catch {
     Write-Warning "Could not retrieve Safe Attachments policies: $_"
+}
+
+# ------------------------------------------------------------------
+# 5b. Safe Attachments for SPO/OneDrive/Teams (CIS 2.1.5)
+# ------------------------------------------------------------------
+try {
+    $atpO365Available = Get-Command -Name Get-AtpPolicyForO365 -ErrorAction SilentlyContinue
+    if ($atpO365Available) {
+        Write-Verbose "Checking Safe Attachments for SPO/OneDrive/Teams..."
+        $atpPolicy = Get-AtpPolicyForO365 -ErrorAction Stop
+
+        $atpEnabled = $atpPolicy.EnableATPForSPOTeamsODB
+        Add-Setting -Category 'Safe Attachments' `
+            -Setting 'Safe Attachments for SPO/OneDrive/Teams' `
+            -CurrentValue "$atpEnabled" -RecommendedValue 'True' `
+            -Status $(if ($atpEnabled) { 'Pass' } else { 'Fail' }) `
+            -CheckId 'DEFENDER-SAFEATTACH-002' `
+            -Remediation 'Run: Set-AtpPolicyForO365 -EnableATPForSPOTeamsODB $true. Security admin center > Safe Attachments > Global settings > Turn on Defender for Office 365 for SharePoint, OneDrive, and Microsoft Teams.'
+    }
+    else {
+        Add-Setting -Category 'Safe Attachments' `
+            -Setting 'Safe Attachments for SPO/OneDrive/Teams' `
+            -CurrentValue 'Not licensed' -RecommendedValue 'Defender for Office 365 P1+' `
+            -Status 'Review' `
+            -CheckId 'DEFENDER-SAFEATTACH-002' `
+            -Remediation 'Safe Attachments for SPO/OneDrive/Teams requires Defender for Office 365 Plan 1 or higher.'
+    }
+}
+catch {
+    Write-Warning "Could not check Safe Attachments for SPO/OneDrive/Teams: $_"
 }
 
 # ------------------------------------------------------------------

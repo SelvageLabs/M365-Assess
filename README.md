@@ -14,14 +14,14 @@
 
 [![PowerShell 7.x](https://img.shields.io/badge/PowerShell-7.x-blue?logo=powershell&logoColor=white)](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows)
 [![Read-Only](https://img.shields.io/badge/Operations-Read--Only-brightgreen)](.)
-[![Version](https://img.shields.io/badge/version-0.6.0-blue)](.)
+[![Version](https://img.shields.io/badge/version-0.7.0-blue)](.)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 </div>
 
 ---
 
-Run a single command to produce CSV reports, a branded HTML assessment report, and an XLSX compliance matrix covering identity, email, security, devices, collaboration, and compliance baselines. **57 automated security checks** mapped across **13 compliance frameworks**.
+Run a single command to produce CSV reports, a branded HTML assessment report, and an XLSX compliance matrix covering identity, email, security, devices, collaboration, and compliance baselines. **82 automated security checks** mapped across **13 compliance frameworks**.
 
 ## Quick Start
 
@@ -194,7 +194,7 @@ M365-Assess/
     Export-ComplianceMatrix.ps1   # XLSX compliance matrix export
     Show-CheckProgress.ps1       # Real-time progress display
   controls/                       # Control registry and framework mappings
-    registry.json                 # Master registry (151 entries, 57 automated)
+    registry.json                 # Master registry (176 entries, 82 automated)
     frameworks/                   # Per-framework mapping files
   Entra/                          # Users, MFA, admin roles, CA, apps, licensing, security config
   Exchange-Online/                # Mailboxes, mail flow, email security, EXO config

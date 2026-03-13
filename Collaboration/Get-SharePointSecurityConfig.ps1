@@ -21,7 +21,7 @@
 
     Exports the security configuration to CSV.
 .NOTES
-    Version: 0.6.0
+    Version: 0.7.0
     Author:  Daren9m
     Settings checked are aligned with CIS Microsoft 365 Foundations Benchmark v6.0.1 recommendations.
 #>
@@ -396,6 +396,30 @@ try {
 }
 catch {
     Write-Warning "Could not check default link permission: $_"
+}
+
+# ------------------------------------------------------------------
+# 13. Legacy Authentication Protocols (CIS 7.2.1)
+# ------------------------------------------------------------------
+try {
+    $legacyAuth = $spoSettings['legacyAuthProtocolsEnabled']
+    if ($null -ne $legacyAuth) {
+        Add-Setting -Category 'Authentication' -Setting 'Legacy Authentication Protocols' `
+            -CurrentValue "$legacyAuth" -RecommendedValue 'False' `
+            -Status $(if (-not $legacyAuth) { 'Pass' } else { 'Fail' }) `
+            -CheckId 'SPO-AUTH-001' `
+            -Remediation 'Run: Set-SPOTenant -LegacyAuthProtocolsEnabled $false. SharePoint admin center > Policies > Access control > Apps that do not use modern authentication > Block access.'
+    }
+    else {
+        Add-Setting -Category 'Authentication' -Setting 'Legacy Authentication Protocols' `
+            -CurrentValue 'Not available via API' -RecommendedValue 'False' `
+            -Status 'Review' `
+            -CheckId 'SPO-AUTH-001' `
+            -Remediation 'Check via SharePoint admin center > Policies > Access control > Apps that do not use modern authentication.'
+    }
+}
+catch {
+    Write-Warning "Could not check legacy authentication: $_"
 }
 
 # ------------------------------------------------------------------
