@@ -1120,7 +1120,12 @@ foreach ($sectionName in $sections) {
                 # Domain Restriction
                 $domainRestrict = if ($spoProps -contains 'SharingDomainRestrictionMode') { $spo.SharingDomainRestrictionMode } else { 'Unknown' }
                 $drClass = if ($domainRestrict -eq 'None' -or $domainRestrict -eq 'none') { 'warning' } else { 'success' }
-                $drDisplay = switch ($domainRestrict) { 'AllowList' { 'Allow List' }; 'BlockList' { 'Block List' }; 'None' { 'None' }; 'none' { 'None' }; default { $domainRestrict } }
+                $drDisplay = switch ($domainRestrict) {
+                    'AllowList'  { 'Allow List' }
+                    'BlockList'  { 'Block List' }
+                    'None'       { 'None' }
+                    default      { $domainRestrict }
+                }
                 $null = $sectionHtml.AppendLine("<div class='email-metric-card id-metric-$drClass'><div class='email-metric-icon'>&#127760;</div><div class='email-metric-body'><div class='email-metric-value'>$(ConvertTo-HtmlSafe -Text $drDisplay)</div><div class='email-metric-label'>Domain Restriction</div></div></div>")
 
                 # Resharing
@@ -2641,6 +2646,7 @@ $html = @"
         /* Color-coded identity metric cards */
         .id-metric-danger { border-left: 3px solid var(--m365a-danger); }
         .id-metric-danger .email-metric-value { color: var(--m365a-danger); }
+        .id-metric-success { border-left: 3px solid var(--m365a-success); }
         .id-metric-success .email-metric-value { color: var(--m365a-success); }
         .id-metric-warning { border-left: 3px solid var(--m365a-warning); }
         .id-metric-warning .email-metric-value { color: var(--m365a-warning); }
