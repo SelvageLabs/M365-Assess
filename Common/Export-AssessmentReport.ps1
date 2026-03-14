@@ -510,7 +510,7 @@ foreach ($sectionName in $sections) {
                 $createdDisplay = $createdDt.ToString('MMMM yyyy')
             }
             catch {
-                # Keep raw value if parsing fails
+                Write-Verbose "Could not parse tenant creation date: $_"
             }
         }
 
@@ -1314,7 +1314,7 @@ foreach ($sectionName in $sections) {
             }
 
             $scoreClass = if ($pctRaw -ge 80) { 'success' } elseif ($pctRaw -ge 60) { 'warning' } else { 'danger' }
-            $scoreDonut = Get-SvgDonut -Percentage $pctRaw -CssClass $scoreClass -Size 160 -StrokeWidth 14
+            $null = Get-SvgDonut -Percentage $pctRaw -CssClass $scoreClass -Size 160 -StrokeWidth 14  # Warm up; small variant used below
 
             # Load Defender Security Config for status breakdown
             $defCsvPath = Join-Path -Path $AssessmentFolder -ChildPath '18b-Defender-Security-Config.csv'

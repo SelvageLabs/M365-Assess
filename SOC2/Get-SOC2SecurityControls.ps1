@@ -410,7 +410,7 @@ catch {
 try {
     Write-Verbose "S-08: Checking alert triage activity..."
     $resolvedAlerts = Invoke-MgGraphRequest -Method GET -Uri "/v1.0/security/alerts_v2?`$filter=status ne 'new'&`$top=10" -ErrorAction Stop
-    $resolvedList = @($resolvedAlerts['value'])
+    $null = $resolvedAlerts  # Response used only to confirm API access; counts derived from allAlerts below
 
     $allAlerts = Invoke-MgGraphRequest -Method GET -Uri '/v1.0/security/alerts_v2?$top=50' -ErrorAction Stop
     $allList = @($allAlerts['value'])

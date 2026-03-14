@@ -102,18 +102,19 @@ $frameworkColumns = [ordered]@{
 }
 
 # Registry framework key mapping (registry key → column property name)
-$registryToCol = @{
-    'cis-m365-v6' = $null  # Handled specially via profiles
-    'nist-800-53' = 'Nist80053'
-    'nist-csf'    = 'NistCsf'
-    'iso-27001'   = 'Iso27001'
-    'stig'        = 'Stig'
-    'pci-dss'     = 'PciDss'
-    'cmmc'        = 'Cmmc'
-    'hipaa'       = 'Hipaa'
-    'cisa-scuba'  = 'CisaScuba'
-    'soc2'        = 'Soc2'
-}
+# Used by planned multi-framework XLSX export (v1.0.0, issue #67)
+# $registryToCol = @{
+#     'cis-m365-v6' = $null  # Handled specially via profiles
+#     'nist-800-53' = 'Nist80053'
+#     'nist-csf'    = 'NistCsf'
+#     'iso-27001'   = 'Iso27001'
+#     'stig'        = 'Stig'
+#     'pci-dss'     = 'PciDss'
+#     'cmmc'        = 'Cmmc'
+#     'hipaa'       = 'Hipaa'
+#     'cisa-scuba'  = 'CisaScuba'
+#     'soc2'        = 'Soc2'
+# }
 
 # ------------------------------------------------------------------
 # Scan CSVs and build findings
