@@ -78,6 +78,7 @@
         'Inventory\Get-TeamsInventory.ps1'
         'Inventory\Get-SharePointInventory.ps1'
         'Inventory\Get-OneDriveInventory.ps1'
+        'PowerBI\Get-PowerBISecurityConfig.ps1'
         'Purview\Get-AuditRetentionReport.ps1'
         'Purview\Search-AuditLog.ps1'
         'Networking\Test-PortConnectivity.ps1'
@@ -87,7 +88,7 @@
     # Private data / PSData for PowerShell Gallery
     PrivateData       = @{
         PSData = @{
-            Tags         = @('Microsoft365', 'M365', 'Security', 'Assessment', 'EntraID', 'Exchange', 'Intune', 'Defender', 'SharePoint', 'Teams', 'ScubaGear', 'CIS')
+            Tags         = @('Microsoft365', 'M365', 'Security', 'Assessment', 'EntraID', 'Exchange', 'Intune', 'Defender', 'SharePoint', 'Teams', 'PowerBI', 'ScubaGear', 'CIS')
             LicenseUri   = 'https://github.com/SelvageLabs/M365-Assess/blob/main/LICENSE'
             ProjectUri   = 'https://github.com/SelvageLabs/M365-Assess'
             ReleaseNotes = 'v0.8.5 - Centralized version management to module manifest, eliminated 30-file version bumps'
