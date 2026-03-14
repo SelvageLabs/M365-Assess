@@ -1134,6 +1134,125 @@ Add-Setting -Category 'Organization Settings' -Setting 'Shared Bookings Pages Re
     -Remediation 'M365 admin center > Settings > Org settings > Bookings > restrict shared booking pages to selected staff members.'
 
 # ------------------------------------------------------------------
+# 31. Entra Admin Center Access Restriction (CIS 5.1.2.4)
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking Entra admin center access restriction..."
+    if ($authPolicy -and $null -ne $authPolicy['restrictNonAdminUsers']) {
+        $restricted = $authPolicy['restrictNonAdminUsers']
+        Add-Setting -Category 'Access Control' -Setting 'Entra Admin Center Restricted' `
+            -CurrentValue "$restricted" -RecommendedValue 'True' `
+            -Status $(if ($restricted) { 'Pass' } else { 'Fail' }) `
+            -CheckId 'ENTRA-ADMIN-002' `
+            -Remediation 'Entra admin center > Identity > Users > User settings > Administration center > set "Restrict access to Microsoft Entra admin center" to Yes.'
+    }
+    else {
+        Add-Setting -Category 'Access Control' -Setting 'Entra Admin Center Restricted' `
+            -CurrentValue 'Property not available' -RecommendedValue 'True' `
+            -Status 'Review' `
+            -CheckId 'ENTRA-ADMIN-002' `
+            -Remediation 'Entra admin center > Identity > Users > User settings > Administration center > verify "Restrict access to Microsoft Entra admin center" is set to Yes.'
+    }
+}
+catch {
+    Write-Warning "Could not check Entra admin center restriction: $_"
+}
+
+# ------------------------------------------------------------------
+# 32. Emergency Access Accounts (CIS 1.1.2)
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking for emergency access (break-glass) accounts..."
+    $breakGlassPatterns = @('break.?glass', 'emergency.?access', 'breakglass', 'emer.?admin')
+    $patternRegex = ($breakGlassPatterns | ForEach-Object { "($_)" }) -join '|'
+
+    $allUsers = Invoke-MgGraphRequest -Method GET `
+        -Uri "/v1.0/users?`$select=displayName,userPrincipalName,accountEnabled&`$top=999" `
+        -ErrorAction Stop
+
+    $breakGlassAccounts = @($allUsers['value'] | Where-Object {
+        $_['displayName'] -match $patternRegex -or $_['userPrincipalName'] -match $patternRegex
+    })
+    $bgCount = $breakGlassAccounts.Count
+    $enabledBg = @($breakGlassAccounts | Where-Object { $_['accountEnabled'] -eq $true })
+
+    if ($bgCount -ge 2 -and $enabledBg.Count -ge 2) {
+        $bgNames = ($breakGlassAccounts | ForEach-Object { $_['displayName'] }) -join ', '
+        Add-Setting -Category 'Admin Accounts' -Setting 'Emergency Access Accounts' `
+            -CurrentValue "$bgCount found ($bgNames)" -RecommendedValue '2+ enabled break-glass accounts' `
+            -Status 'Pass' `
+            -CheckId 'ENTRA-ADMIN-003' `
+            -Remediation 'Maintain at least two cloud-only emergency access accounts excluded from all Conditional Access policies.'
+    }
+    else {
+        Add-Setting -Category 'Admin Accounts' -Setting 'Emergency Access Accounts' `
+            -CurrentValue "$bgCount detected (heuristic: name contains break glass/emergency)" `
+            -RecommendedValue '2+ enabled break-glass accounts' `
+            -Status 'Review' `
+            -CheckId 'ENTRA-ADMIN-003' `
+            -Remediation 'Create 2+ cloud-only emergency access accounts with Global Administrator role, excluded from all Conditional Access policies. Use naming convention including "BreakGlass" or "EmergencyAccess" for detection.'
+    }
+}
+catch {
+    Write-Warning "Could not check emergency access accounts: $_"
+}
+
+# ------------------------------------------------------------------
+# 33. Password Hash Sync (CIS 5.1.8.1)
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking password hash sync for hybrid deployments..."
+    $orgInfo = Invoke-MgGraphRequest -Method GET `
+        -Uri '/v1.0/organization' -ErrorAction Stop
+
+    $orgValue = $orgInfo['value']
+    if ($orgValue -and $orgValue.Count -gt 0) {
+        $org = $orgValue[0]
+        $onPremSync = $org['onPremisesSyncEnabled']
+
+        if ($null -eq $onPremSync -or $onPremSync -eq $false) {
+            # Cloud-only tenant, PHS not applicable
+            Add-Setting -Category 'Hybrid Identity' -Setting 'Password Hash Sync' `
+                -CurrentValue 'Cloud-only tenant (no directory sync)' `
+                -RecommendedValue 'Enabled (if hybrid)' `
+                -Status 'Info' `
+                -CheckId 'ENTRA-HYBRID-001' `
+                -Remediation 'Not applicable for cloud-only tenants. If you configure hybrid identity in the future, enable Password Hash Sync in Azure AD Connect.'
+        }
+        else {
+            # Hybrid tenant, check PHS via on-premises sync status
+            $phsEnabled = $org['onPremisesLastPasswordSyncDateTime']
+            if ($phsEnabled) {
+                Add-Setting -Category 'Hybrid Identity' -Setting 'Password Hash Sync' `
+                    -CurrentValue "Enabled (last sync: $phsEnabled)" `
+                    -RecommendedValue 'Enabled' `
+                    -Status 'Pass' `
+                    -CheckId 'ENTRA-HYBRID-001' `
+                    -Remediation 'Password Hash Sync is enabled. Verify it remains active in Azure AD Connect configuration.'
+            }
+            else {
+                Add-Setting -Category 'Hybrid Identity' -Setting 'Password Hash Sync' `
+                    -CurrentValue 'Directory sync enabled but no password sync detected' `
+                    -RecommendedValue 'Enabled' `
+                    -Status 'Fail' `
+                    -CheckId 'ENTRA-HYBRID-001' `
+                    -Remediation 'Enable Password Hash Sync in Azure AD Connect > Optional Features. This provides leaked credential detection and backup authentication.'
+            }
+        }
+    }
+    else {
+        Add-Setting -Category 'Hybrid Identity' -Setting 'Password Hash Sync' `
+            -CurrentValue 'Organization data not available' -RecommendedValue 'Enabled (if hybrid)' `
+            -Status 'Review' `
+            -CheckId 'ENTRA-HYBRID-001' `
+            -Remediation 'Verify Password Hash Sync status in Azure AD Connect. Entra admin center > Identity > Hybrid management > Azure AD Connect.'
+    }
+}
+catch {
+    Write-Warning "Could not check password hash sync: $_"
+}
+
+# ------------------------------------------------------------------
 # Output results
 # ------------------------------------------------------------------
 $report = @($settings)

@@ -524,6 +524,74 @@ catch {
 }
 
 # ------------------------------------------------------------------
+# External Sharing Restricted by Security Group (CIS 7.2.8)
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking external sharing security group restriction..."
+    if ($betaSpoSettings -and $null -ne $betaSpoSettings['sharingCapability']) {
+        # Security group sharing restriction is only available via SPO PowerShell
+        # Graph API does not expose OnlyAllowMembersOfSpecificSecurityGroupsToShareExternally
+        Add-Setting -Category 'Sharing' `
+            -Setting 'External Sharing Restricted by Security Group' `
+            -CurrentValue 'Requires SPO PowerShell verification' `
+            -RecommendedValue 'Enabled (specific security groups only)' `
+            -Status 'Review' `
+            -CheckId 'SPO-SHARING-008' `
+            -Remediation 'SharePoint admin center > Policies > Sharing > More external sharing settings > "Allow only users in specific security groups to share externally". Verify via: Get-SPOTenant | Select OnlyAllowMembersOfSpecificSecurityGroupsToShareExternally.'
+    }
+    else {
+        Add-Setting -Category 'Sharing' `
+            -Setting 'External Sharing Restricted by Security Group' `
+            -CurrentValue 'SharePoint settings not available' `
+            -RecommendedValue 'Enabled (specific security groups only)' `
+            -Status 'Review' `
+            -CheckId 'SPO-SHARING-008' `
+            -Remediation 'SharePoint admin center > Policies > Sharing > More external sharing settings > enable security group restriction for external sharing.'
+    }
+}
+catch {
+    Write-Warning "Could not check external sharing security group restriction: $_"
+}
+
+# ------------------------------------------------------------------
+# Custom Script Execution on Personal Sites (CIS 7.3.3)
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking custom script execution on personal sites..."
+    # Custom script settings are not exposed via Graph API
+    # They require SPO PowerShell: Get-SPOSite -Identity <OneDrive-URL> | Select DenyAddAndCustomizePages
+    Add-Setting -Category 'Script Execution' `
+        -Setting 'Custom Script on Personal Sites' `
+        -CurrentValue 'Requires SPO PowerShell verification' `
+        -RecommendedValue 'DenyAddAndCustomizePages = Enabled' `
+        -Status 'Review' `
+        -CheckId 'SPO-SCRIPT-001' `
+        -Remediation 'Run: Set-SPOSite -Identity <PersonalSiteUrl> -DenyAddAndCustomizePages 1. SharePoint admin center > Settings > Custom Script > prevent users from running custom script on personal sites.'
+}
+catch {
+    Write-Warning "Could not check custom script on personal sites: $_"
+}
+
+# ------------------------------------------------------------------
+# Custom Script Execution on Self-Service Sites (CIS 7.3.4)
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking custom script execution on self-service created sites..."
+    # Custom script settings are not exposed via Graph API
+    # They require SPO PowerShell: Get-SPOTenant | Select DenyAddAndCustomizePagesForSitesCreatedByUser
+    Add-Setting -Category 'Script Execution' `
+        -Setting 'Custom Script on Self-Service Sites' `
+        -CurrentValue 'Requires SPO PowerShell verification' `
+        -RecommendedValue 'DenyAddAndCustomizePages = Enabled' `
+        -Status 'Review' `
+        -CheckId 'SPO-SCRIPT-002' `
+        -Remediation 'Run: Set-SPOTenant -DenyAddAndCustomizePagesForSitesCreatedByUser 1. SharePoint admin center > Settings > Custom Script > prevent users from running custom script on self-service created sites.'
+}
+catch {
+    Write-Warning "Could not check custom script on self-service sites: $_"
+}
+
+# ------------------------------------------------------------------
 # Output
 # ------------------------------------------------------------------
 $report = @($settings)
