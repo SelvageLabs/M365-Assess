@@ -2,6 +2,40 @@
 
 All notable changes to M365 Assess are documented here. This project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [0.8.4] - 2026-03-14
+
+### Added
+- Pester unit tests for all 9 security config collectors (CA, EXO, DNS, Defender, Compliance, Intune, SharePoint, Teams + existing Entra), bringing total test count from 137 to 236
+- Edge case test for missing Global Administrator directory role
+
+### Changed
+- Org attribution updated to SelvageLabs across repository
+- CLAUDE.md testing policy updated: Pester tests are now part of standard workflow (previously "on demand only")
+
+### Fixed
+- Unsafe array access in Get-EntraSecurityConfig.ps1 when Global Admin role is not activated (#88)
+- Unsafe array access in Export-AssessmentReport.ps1 when tenantData is empty (#89)
+
+## [0.8.3] - 2026-03-14
+
+### Added
+- Dark mode toggle with CSS variable theming and accessibility improvements
+- Email report section redesigned with improved flow and categorization
+
+### Fixed
+- Print/PDF layout broken for client delivery (#78)
+- MFA adoption metric using proxy data instead of registration status (#76)
+
+## [0.8.2] - 2026-03-14
+
+### Added
+- GitHub Actions CI pipeline: PSScriptAnalyzer, Pester tests, version consistency checks
+- 137 Pester tests across smoke, Entra, registry, and control integrity suites
+- Dependency pinning with compatibility matrix
+
+### Fixed
+- Global admin count now excludes breakglass accounts (#72)
+
 ## [0.8.1] - 2026-03-14
 
 ### Added
