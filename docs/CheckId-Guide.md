@@ -10,26 +10,44 @@ A CheckId is a stable, human-readable identifier assigned to every security chec
 
 | Part | Description | Examples |
 |------|-------------|---------|
-| Collector | Which M365 service | `ENTRA`, `EXO`, `DEFENDER`, `SPO`, `TEAMS` |
-| Area | Security domain | `ADMIN`, `MFA`, `PASSWORD`, `SHARING`, `MEETING` |
+| Collector | Which M365 service | `ENTRA`, `EXO`, `DEFENDER`, `SPO`, `TEAMS`, `CA`, `DNS`, `INTUNE`, `COMPLIANCE` |
+| Area | Security domain | `ADMIN`, `MFA`, `PASSWORD`, `SHARING`, `MEETING`, `HYBRID`, `SCRIPT`, `B2B` |
 | NNN | Sequential number | `001`, `002`, `003` |
 
 **Examples:**
-- `ENTRA-ADMIN-001` — Global administrator count check
-- `EXO-FORWARD-001` — Auto-forwarding to external domains
-- `DEFENDER-ANTIPHISH-001` — Anti-phishing policy settings
-- `SPO-SHARING-004` — Default sharing link type
-- `TEAMS-MEETING-003` — Lobby bypass configuration
+- `ENTRA-ADMIN-001` -- Global administrator count check
+- `ENTRA-HYBRID-001` -- Password hash sync for hybrid deployments
+- `CA-BLOCK-001` -- Conditional Access policy evaluation
+- `EXO-FORWARD-001` -- Auto-forwarding to external domains
+- `DNS-SPF-001` -- SPF record validation
+- `DEFENDER-ANTIPHISH-001` -- Anti-phishing policy settings
+- `SPO-SHARING-004` -- Default sharing link type
+- `SPO-SCRIPT-001` -- Custom script execution restriction
+- `TEAMS-MEETING-003` -- Lobby bypass configuration
+- `INTUNE-ENROLL-001` -- Device enrollment restrictions
 
-Manual checks (not yet automated) use the format `MANUAL-CIS-{controlId}` (e.g., `MANUAL-CIS-1-1-1`).
+### Sub-Numbering
+
+When a single CheckId evaluates multiple settings (e.g., an anti-phishing policy has several configurable thresholds), collectors auto-append a sub-number:
+
+- `DEFENDER-ANTIPHISH-001.1` -- Phishing email threshold
+- `DEFENDER-ANTIPHISH-001.2` -- Spoof action
+- `DEFENDER-ANTIPHISH-001.3` -- Mailbox intelligence action
+
+This is handled automatically by the `Add-Setting` function's `$checkIdCounter` hash in each collector. The registry entry uses the base CheckId (`DEFENDER-ANTIPHISH-001`); the sub-numbers appear only in CSV output and the report.
+
+### Manual Check Format
+
+Controls not yet automated use the format `MANUAL-CIS-{controlId}` (e.g., `MANUAL-CIS-1-1-1`). When a manual check gets automated, the MANUAL entry receives a `supersededBy` field pointing to the new automated CheckId.
 
 ## How Many CheckIds Exist?
 
 | Type | Count | Description |
 |------|-------|-------------|
-| Automated | 57 | Checked by collectors, appear in CSV output and reports |
-| Manual | 94 | CIS benchmark controls not yet automated, tracked for coverage |
-| **Total** | **151** | Full registry across all frameworks |
+| Automated | 138 | Checked by collectors, appear in CSV output and reports |
+| Superseded | 81 | Former manual checks now replaced by automated equivalents |
+| Manual | 14 | CIS benchmark controls not yet automated, tracked for coverage |
+| **Total** | **233** | Full registry across all frameworks |
 
 ## The Control Registry
 
@@ -63,10 +81,25 @@ All CheckIds live in `controls/registry.json`. Each entry contains:
 ```
 
 **Key fields:**
-- `hasAutomatedCheck` — Whether a collector evaluates this check automatically
-- `collector` — Which collector script produces the result (Entra, ExchangeOnline, Defender, SharePoint, Teams)
-- `licensing.minimum` — E3 or E5 license required
-- `frameworks` — Maps to every applicable compliance framework
+- `hasAutomatedCheck` -- Whether a collector evaluates this check automatically
+- `collector` -- Which collector script produces the result (see Collectors table below)
+- `licensing.minimum` -- E3 or E5 license required
+- `frameworks` -- Maps to every applicable compliance framework
+- `supersededBy` -- (on MANUAL entries) Points to the automated CheckId that replaced it
+
+### Collectors
+
+| Registry Name | Script | Section |
+|--------------|--------|---------|
+| `Entra` | `Entra/Get-EntraSecurityConfig.ps1` | Identity |
+| `CAEvaluator` | `Entra/Get-CASecurityConfig.ps1` | Identity |
+| `ExchangeOnline` | `Exchange-Online/Get-ExoSecurityConfig.ps1` | Email |
+| `DNS` | `Exchange-Online/Get-DnsSecurityConfig.ps1` | Email |
+| `Defender` | `Security/Get-DefenderSecurityConfig.ps1` | Security |
+| `Compliance` | `Purview/Get-ComplianceSecurityConfig.ps1` | Security |
+| `Intune` | `Intune/Get-IntuneSecurityConfig.ps1` | Intune |
+| `SharePoint` | `Collaboration/Get-SharePointSecurityConfig.ps1` | Collaboration |
+| `Teams` | `Collaboration/Get-TeamsSecurityConfig.ps1` | Collaboration |
 
 ## Supported Frameworks
 
@@ -79,7 +112,7 @@ All CheckIds live in `controls/registry.json`. Each entry contains:
 | DISA STIG | `stig` | Vulnerability IDs (V-xxxxxx) |
 | PCI DSS v4.0.1 | `pci-dss` | Requirements |
 | CMMC 2.0 | `cmmc` | Practices (3.x.x) |
-| HIPAA Security Rule | `hipaa` | §164.3xx references |
+| HIPAA Security Rule | `hipaa` | Sec. 164.3xx references |
 | CISA SCuBA | `cisa-scuba` | MS.AAD/EXO/DEFENDER/SPO/TEAMS baselines |
 | SOC 2 TSC | `soc2` | Trust Services Criteria (CC/A/C/PI/P) |
 
@@ -89,15 +122,15 @@ SOC 2 mappings are auto-derived from NIST 800-53 control families using rules in
 
 ```
 Collector runs          CSV output              Report generator
-─────────────          ──────────              ────────────────
-Entra collector   →  CheckId column in CSV  →  Looks up CheckId
+---------------        ----------              ----------------
+Entra collector   ->  CheckId column in CSV  ->  Looks up CheckId
 checks settings      (e.g., ENTRA-ADMIN-001)   in registry.json
-                                                    │
-                                                    ▼
+                                                    |
+                                                    v
                                               Extracts ALL framework
                                               mappings from one entry
-                                                    │
-                                                    ▼
+                                                    |
+                                                    v
                                               Populates 13 framework
                                               columns in compliance
                                               matrix (HTML + XLSX)
@@ -115,24 +148,45 @@ Each check produces one of five statuses:
 | Status | Meaning | Scoring |
 |--------|---------|---------|
 | Pass | Meets benchmark requirement | Counted in pass rate |
-| Fail | Violates benchmark — CIS says "Ensure" and the setting is wrong | Counted in pass rate |
-| Warning | Degraded security — suboptimal but not a hard violation | Counted in pass rate |
-| Review | Cannot determine automatically — requires manual assessment | Counted in pass rate |
-| Info | Informational data point — no right/wrong answer | **Excluded** from scoring |
+| Fail | Violates benchmark -- CIS says "Ensure" and the setting is wrong | Counted in pass rate |
+| Warning | Degraded security -- suboptimal but not a hard violation | Counted in pass rate |
+| Review | Cannot determine automatically -- requires manual assessment | Counted in pass rate |
+| Info | Informational data point -- no right/wrong answer | **Excluded** from scoring |
+
+## Superseded Checks
+
+When a manual check gets automated, the MANUAL entry is kept in the registry with a `supersededBy` field:
+
+```json
+{
+  "checkId": "MANUAL-CIS-5-1-2-4",
+  "name": "Ensure access to the Entra admin center is restricted",
+  "hasAutomatedCheck": false,
+  "supersededBy": "ENTRA-ADMIN-002",
+  ...
+}
+```
+
+Superseded entries are excluded from:
+- Active check counts
+- Compliance matrix pass rates
+- Progress display totals
+
+They remain in the registry for historical traceability and to prevent duplicate CheckId assignments.
 
 ## Building the Registry
 
-The registry is generated from two CSV source files:
+The registry can be generated from two CSV source files:
 
 ```
-Common/framework-mappings.csv     →  CIS controls + framework cross-references
-controls/check-id-mapping.csv     →  CheckId assignments + collector mapping
-                                         │
-                                         ▼
+Common/framework-mappings.csv     ->  CIS controls + framework cross-references
+controls/check-id-mapping.csv     ->  CheckId assignments + collector mapping
+                                         |
+                                         v
                                controls/Build-Registry.ps1
-                                         │
-                                         ▼
-                               controls/registry.json (151 entries)
+                                         |
+                                         v
+                               controls/registry.json (233 entries)
 ```
 
 To rebuild after editing the source CSVs:
@@ -141,20 +195,32 @@ To rebuild after editing the source CSVs:
 .\controls\Build-Registry.ps1
 ```
 
+> **Note:** New automated checks added since v0.7.0 are typically added directly to `registry.json` rather than going through the CSV pipeline. Both approaches produce the same registry format.
+
 ## Adding a New CheckId
 
 1. **Assign the CheckId** following the `{COLLECTOR}-{AREA}-{NNN}` convention
-2. **Add to `controls/check-id-mapping.csv`** with the CIS control (if applicable), collector, area, and name
-3. **Add framework mappings** to the corresponding row in `Common/framework-mappings.csv`
-4. **Run `Build-Registry.ps1`** to regenerate `registry.json`
-5. **Add the check** to the appropriate collector script using `Add-Setting -CheckId 'YOUR-CHECK-001'`
-6. **Run tests** to validate: `Invoke-Pester -Path './tests/controls'`
+2. **Add the entry** to `controls/registry.json` with framework mappings
+3. **If superseding a manual check**, add `"supersededBy": "YOUR-CHECK-001"` to the MANUAL entry
+4. **Add the check** to the appropriate collector script using `Add-Setting -CheckId 'YOUR-CHECK-001'`
+5. **Run tests** to validate: `Invoke-Pester -Path './tests/controls'`
+
+### Checklist for New Checks
+
+- [ ] CheckId follows `{COLLECTOR}-{AREA}-{NNN}` format
+- [ ] Registry entry has `hasAutomatedCheck: true`, `collector`, `category`, and `licensing`
+- [ ] All applicable framework mappings included (at minimum: `cis-m365-v6`, `nist-800-53`, `soc2`)
+- [ ] Collector uses `Add-Setting` with `-CheckId` parameter
+- [ ] Status logic: Pass/Fail for deterministic checks, Review for API gaps, Info for data points
+- [ ] Remediation text includes specific portal path or PowerShell command
+- [ ] MANUAL entry (if exists) has `supersededBy` pointing to new CheckId
+- [ ] Registry integrity tests pass (7/7)
 
 ## Using CheckIds in Reports
 
 The compliance matrix appears in both the HTML report and the XLSX export:
 
-- **HTML report** — Interactive table with framework column toggles and status filters
-- **XLSX export** — `_Compliance-Matrix_{tenant}.xlsx` with two sheets: full matrix + per-framework summary with pass rates
+- **HTML report** -- Interactive table with framework column toggles and status filters
+- **XLSX export** -- `_Compliance-Matrix_{tenant}.xlsx` with two sheets: full matrix + per-framework summary with pass rates
 
-Both are driven by the same CheckId → registry lookup. If a check has a CheckId and the registry has an entry, it appears in the compliance matrix automatically.
+Both are driven by the same CheckId -> registry lookup. If a check has a CheckId and the registry has an entry, it appears in the compliance matrix automatically.

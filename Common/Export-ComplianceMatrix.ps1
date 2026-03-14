@@ -15,7 +15,7 @@
 .EXAMPLE
     .\Common\Export-ComplianceMatrix.ps1 -AssessmentFolder .\M365-Assessment\Assessment_20260311_033912_dzmlab
 .NOTES
-    Version: 0.6.0
+    Version: 0.8.0
     Requires: ImportExcel module (Install-Module ImportExcel -Scope CurrentUser)
 #>
 [CmdletBinding()]
