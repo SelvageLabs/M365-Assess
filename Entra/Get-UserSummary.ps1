@@ -27,7 +27,7 @@
 
     Exports user summary counts to CSV for reporting.
 .NOTES
-    Version: 0.8.1
+    Version: 0.8.4
     M365 Assess
 #>
 [CmdletBinding()]

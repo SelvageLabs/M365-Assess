@@ -32,7 +32,7 @@
 
     Exports the OneDrive inventory to CSV.
 .NOTES
-    Version: 0.8.1
+    Version: 0.8.4
     M365 Assess — M&A Inventory
 #>
 [CmdletBinding()]

@@ -37,7 +37,7 @@
 
     Generates a report with the specified tenant name on the cover page.
 .NOTES
-    Version: 0.8.1
+    Version: 0.8.4
     Author:  Daren9m
 #>
 [CmdletBinding()]
@@ -153,7 +153,7 @@ if (-not $TenantName) {
 # (avoids fragile CSV-scanning; the main script already resolved it from TenantId or Graph)
 
 # Read assessment version and cloud environment from log if available
-$assessmentVersion = '0.8.1'
+$assessmentVersion = '0.8.4'
 $cloudEnvironment = 'commercial'
 # Find the log file (may have domain suffix, e.g., _Assessment-Log_contoso.txt)
 $logFile = Get-ChildItem -Path $AssessmentFolder -Filter '_Assessment-Log*.txt' -ErrorAction SilentlyContinue | Select-Object -First 1

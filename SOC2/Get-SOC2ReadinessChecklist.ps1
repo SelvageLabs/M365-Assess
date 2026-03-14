@@ -30,7 +30,7 @@
 
     Exports the checklist to CSV for tracking.
 .NOTES
-    Version: 0.8.1
+    Version: 0.8.4
     Author:  Daren9m
 #>
 [CmdletBinding()]

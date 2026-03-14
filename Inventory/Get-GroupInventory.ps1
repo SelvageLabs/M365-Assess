@@ -29,7 +29,7 @@
 
     Exports group inventory without per-DL member counts (faster on large tenants).
 .NOTES
-    Version: 0.8.1
+    Version: 0.8.4
     M365 Assess — M&A Inventory
 #>
 [CmdletBinding()]
