@@ -36,11 +36,7 @@ $ErrorActionPreference = 'Stop'
 
 # Verify Power BI connection by attempting to get an access token
 try {
-    $pbiToken = Get-PowerBIAccessToken -ErrorAction Stop
-    if (-not $pbiToken) {
-        Write-Error "Not connected to Power BI. Run Connect-PowerBIServiceAccount first."
-        return
-    }
+    Get-PowerBIAccessToken -ErrorAction Stop | Out-Null
 }
 catch {
     Write-Error "Not connected to Power BI. Run Connect-PowerBIServiceAccount first."
