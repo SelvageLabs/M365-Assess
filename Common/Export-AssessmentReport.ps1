@@ -975,7 +975,7 @@ foreach ($sectionName in $sections) {
     # Hybrid Dashboard — sync status visual panel
     # ------------------------------------------------------------------
     if ($sectionName -eq 'Hybrid') {
-        $hybridCsvPath = Join-Path -Path $AssessmentFolder -ChildPath '22-Hybrid-Sync.csv'
+        $hybridCsvPath = Join-Path -Path $AssessmentFolder -ChildPath '23-Hybrid-Sync.csv'
         $hybridData = if (Test-Path $hybridCsvPath) { @(Import-Csv $hybridCsvPath) } else { @() }
 
         if ($hybridData.Count -gt 0) {
