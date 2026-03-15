@@ -3511,7 +3511,6 @@ $html = @"
         body.dark-theme .fw-checkbox.active { background: #3B82F6; color: #ffffff; border-color: #3B82F6; }
         body.dark-theme .section-checkbox.active { background: #0d9488; color: #ffffff; border-color: #0d9488; }
         body.dark-theme .matrix-table tbody tr[class*="cis-row-"]:hover { color: #1a1a1a; }
-        body.dark-theme .matrix-table tbody tr[class*="cis-row-"]:hover .fw-tag { color: #1a1a1a; }
         body.dark-theme .matrix-table tbody tr[class*="cis-row-"]:hover .badge { color: #1a1a1a; }
         body.dark-theme .status-fail.active { background: #7F1D1D; color: #FCA5A5; border-color: #991B1B; }
         body.dark-theme .status-warning.active { background: #78350F; color: #FCD34D; border-color: #92400E; }
