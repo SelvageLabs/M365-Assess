@@ -1975,8 +1975,7 @@ if (Test-Path -Path $reportScriptPath) {
         $reportParams = @{
             AssessmentFolder = $assessmentFolder
         }
-        if ($script:domainPrefix) { $reportParams['TenantName'] = $script:domainPrefix }
-        elseif ($TenantId)        { $reportParams['TenantName'] = $TenantId }
+        if ($TenantId) { $reportParams['TenantName'] = $TenantId }
         if ($NoBranding) { $reportParams['NoBranding'] = $true }
 
         $reportOutput = & $reportScriptPath @reportParams
