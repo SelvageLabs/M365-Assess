@@ -3820,94 +3820,176 @@ $html += @"
             });
         });
 
-        // --- Framework multi-selector ---
-        var selector = document.getElementById('fwSelector');
-        if (selector) {
-            var checkboxes = selector.querySelectorAll('input[type="checkbox"]');
-            var table = document.getElementById('complianceTable');
-            var cards = document.querySelectorAll('.fw-card');
-            function applyFrameworkFilter() {
+        // --- Unified compliance filters ---
+        var fwSelector = document.getElementById('fwSelector');
+        var statusFilter = document.getElementById('statusFilter');
+        var sectionFilter = document.getElementById('sectionFilter');
+        var compTable = document.getElementById('complianceTable');
+        var cards = document.querySelectorAll('.fw-card');
+
+        if (compTable) {
+            var compRows = compTable.querySelectorAll('tbody tr');
+            var allFwCols = compTable.querySelectorAll('.fw-col');
+            var fwCbs = fwSelector ? fwSelector.querySelectorAll('input[type="checkbox"]') : [];
+            var statusCbs = statusFilter ? statusFilter.querySelectorAll('input[type="checkbox"]') : [];
+            var sectionCbs = sectionFilter ? sectionFilter.querySelectorAll('input[type="checkbox"]') : [];
+
+            function getActive(cbs, parentClass) {
                 var active = [];
-                checkboxes.forEach(function(cb) {
-                    var lbl = cb.closest('.fw-checkbox');
-                    if (cb.checked) { lbl.classList.add('active'); active.push(cb.value); }
-                    else { lbl.classList.remove('active'); }
+                cbs.forEach(function(cb) {
+                    var lbl = cb.closest(parentClass);
+                    if (cb.checked) { if (lbl) lbl.classList.add('active'); active.push(cb.value); }
+                    else { if (lbl) lbl.classList.remove('active'); }
                 });
-                // Toggle table columns
-                if (table) {
-                    var allCols = table.querySelectorAll('.fw-col');
-                    allCols.forEach(function(el) {
-                        var fw = el.getAttribute('data-fw');
-                        el.style.display = active.indexOf(fw) !== -1 ? '' : 'none';
-                    });
-                }
-                // Toggle coverage cards
+                return active;
+            }
+
+            function applyAllFilters() {
+                var activeFw = getActive(fwCbs, '.fw-checkbox');
+                var activeStatus = getActive(statusCbs, '.status-checkbox');
+                var activeSections = getActive(sectionCbs, '.section-checkbox');
+
+                // 1. Toggle framework columns and cards
+                allFwCols.forEach(function(el) {
+                    var fw = el.getAttribute('data-fw');
+                    el.style.display = activeFw.indexOf(fw) !== -1 ? '' : 'none';
+                });
                 cards.forEach(function(card) {
                     var fw = card.getAttribute('data-fw');
-                    card.style.display = active.indexOf(fw) !== -1 ? '' : 'none';
+                    card.style.display = activeFw.indexOf(fw) !== -1 ? '' : 'none';
                 });
-            }
 
-            checkboxes.forEach(function(cb) {
-                cb.addEventListener('change', applyFrameworkFilter);
-            });
+                // 2. Filter rows by status + section
+                var visibleCount = 0;
+                compRows.forEach(function(row) {
+                    var sec = row.getAttribute('data-section') || '';
+                    var sectionOk = activeSections.length === 0 || activeSections.indexOf(sec) !== -1;
+                    var statusOk = false;
+                    for (var i = 0; i < activeStatus.length; i++) {
+                        if ((row.className || '').indexOf('cis-row-' + activeStatus[i]) !== -1) { statusOk = true; break; }
+                    }
+                    var show = sectionOk && statusOk;
+                    row.style.display = show ? '' : 'none';
+                    if (show) visibleCount++;
+                });
 
-            var btnAll = document.getElementById('fwSelectAll');
-            var btnNone = document.getElementById('fwSelectNone');
-            if (btnAll) btnAll.addEventListener('click', function() {
-                checkboxes.forEach(function(cb) { cb.checked = true; });
-                applyFrameworkFilter();
-            });
-            if (btnNone) btnNone.addEventListener('click', function() {
-                checkboxes.forEach(function(cb) { cb.checked = false; });
-                applyFrameworkFilter();
-            });
+                // 3. No-results message
+                var noResults = document.getElementById('complianceNoResults');
+                if (noResults) noResults.style.display = visibleCount === 0 ? '' : 'none';
 
-            // Initialize visual state
-            applyFrameworkFilter();
-        }
-
-        // --- Status filter (multi-select) ---
-        var statusFilter = document.getElementById('statusFilter');
-        if (statusFilter) {
-            var statusCbs = statusFilter.querySelectorAll('input[type="checkbox"]');
-            var compTable = document.getElementById('complianceTable');
-            if (compTable) {
-                var compRows = compTable.querySelectorAll('tbody tr');
-
-                function applyStatusFilter() {
-                    var active = [];
-                    statusCbs.forEach(function(cb) {
-                        var lbl = cb.closest('.status-checkbox');
-                        if (cb.checked) { lbl.classList.add('active'); active.push(cb.value); }
-                        else { lbl.classList.remove('active'); }
-                    });
-                    compRows.forEach(function(row) {
-                        var show = false;
-                        for (var i = 0; i < active.length; i++) {
-                            if ((row.className || '').indexOf('cis-row-' + active[i]) !== -1) { show = true; break; }
-                        }
-                        row.style.display = show ? '' : 'none';
-                    });
+                // 4. Recalculate cards and status bar
+                if (typeof complianceData !== 'undefined') {
+                    recalculateCards(activeFw, activeSections);
+                    recalculateStatusBar(activeSections);
                 }
-
-                statusCbs.forEach(function(cb) {
-                    cb.addEventListener('change', applyStatusFilter);
-                });
-
-                var sAll = document.getElementById('statusSelectAll');
-                var sNone = document.getElementById('statusSelectNone');
-                if (sAll) sAll.addEventListener('click', function() {
-                    statusCbs.forEach(function(cb) { cb.checked = true; });
-                    applyStatusFilter();
-                });
-                if (sNone) sNone.addEventListener('click', function() {
-                    statusCbs.forEach(function(cb) { cb.checked = false; });
-                    applyStatusFilter();
-                });
-
-                applyStatusFilter();
             }
+
+            function recalculateCards(activeFw, activeSections) {
+                cards.forEach(function(card) {
+                    var fw = card.getAttribute('data-fw');
+                    if (activeFw.indexOf(fw) === -1) return;
+                    var catalogTotal = parseInt(card.getAttribute('data-catalog-total')) || 0;
+
+                    var findings = complianceData.filter(function(f) {
+                        return (activeSections.length === 0 || activeSections.indexOf(f.s) !== -1) && f.fw[fw];
+                    });
+                    var passCount = findings.filter(function(f) { return f.st === 'Pass'; }).length;
+                    var total = findings.length;
+                    var passRate = total > 0 ? (passCount / total * 100) : 0;
+                    var coveragePct = catalogTotal > 0 ? Math.round(total / catalogTotal * 100) : 0;
+
+                    var valEl = card.querySelector('.stat-value');
+                    if (valEl) valEl.textContent = (total > 0 ? passRate.toFixed(1) : '0') + '%';
+                    var subEl = card.querySelector('.stat-sublabel');
+                    if (subEl) subEl.textContent = passCount + ' of ' + total + ' assessed';
+                    var fill = card.querySelector('.coverage-fill');
+                    if (fill) fill.style.width = coveragePct + '%';
+                    var covLabel = card.querySelector('.coverage-label');
+                    if (covLabel) covLabel.textContent = coveragePct + '% coverage';
+
+                    card.classList.remove('success', 'warning', 'danger');
+                    if (total === 0) { /* no class */ }
+                    else if (passRate >= 80) card.classList.add('success');
+                    else if (passRate >= 60) card.classList.add('warning');
+                    else card.classList.add('danger');
+                });
+            }
+
+            function recalculateStatusBar(activeSections) {
+                var bar = document.querySelector('.compliance-status-bar');
+                if (!bar || typeof complianceData === 'undefined') return;
+                var findings = activeSections.length === 0 ? complianceData :
+                    complianceData.filter(function(f) { return activeSections.indexOf(f.s) !== -1; });
+                var total = findings.length;
+
+                var statusMap = [
+                    { css: 'pass', label: 'Pass' },
+                    { css: 'fail', label: 'Fail' },
+                    { css: 'warning', label: 'Warning' },
+                    { css: 'review', label: 'Review' },
+                    { css: 'info', label: 'Info' }
+                ];
+                var counts = {};
+                statusMap.forEach(function(s) { counts[s.label] = 0; });
+                findings.forEach(function(f) { if (counts.hasOwnProperty(f.st)) counts[f.st]++; });
+
+                var totalEl = bar.querySelector('.compliance-bar-total');
+                if (totalEl) totalEl.textContent = total + ' controls assessed';
+
+                statusMap.forEach(function(s) {
+                    var seg = bar.querySelector('.hbar-segment.hbar-' + s.css);
+                    if (seg) {
+                        var count = counts[s.label] || 0;
+                        var pct = total > 0 ? (count / total * 100) : 0;
+                        seg.style.width = pct > 0 ? pct + '%' : '0';
+                        seg.style.display = pct > 0 ? '' : 'none';
+                        seg.title = s.label + ': ' + count;
+                        var lbl = seg.querySelector('.hbar-label');
+                        if (lbl) lbl.textContent = count > 0 ? count : '';
+                    }
+                });
+
+                bar.querySelectorAll('.hbar-legend-item').forEach(function(item) {
+                    var text = item.textContent;
+                    var match = text.match(/^(.+?)\s*\(\d+\)$/);
+                    if (match) {
+                        var label = match[1].trim();
+                        var count = counts[label] || 0;
+                        if (count > 0) {
+                            item.textContent = label + ' (' + count + ')';
+                            item.style.display = '';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    }
+                });
+            }
+
+            // Wire up change handlers
+            fwCbs.forEach(function(cb) { cb.addEventListener('change', applyAllFilters); });
+            statusCbs.forEach(function(cb) { cb.addEventListener('change', applyAllFilters); });
+            sectionCbs.forEach(function(cb) { cb.addEventListener('change', applyAllFilters); });
+
+            // All/None buttons -- framework
+            var fwAll = document.getElementById('fwSelectAll');
+            var fwNone = document.getElementById('fwSelectNone');
+            if (fwAll) fwAll.addEventListener('click', function() { fwCbs.forEach(function(cb) { cb.checked = true; }); applyAllFilters(); });
+            if (fwNone) fwNone.addEventListener('click', function() { fwCbs.forEach(function(cb) { cb.checked = false; }); applyAllFilters(); });
+
+            // All/None buttons -- status
+            var sAll = document.getElementById('statusSelectAll');
+            var sNone = document.getElementById('statusSelectNone');
+            if (sAll) sAll.addEventListener('click', function() { statusCbs.forEach(function(cb) { cb.checked = true; }); applyAllFilters(); });
+            if (sNone) sNone.addEventListener('click', function() { statusCbs.forEach(function(cb) { cb.checked = false; }); applyAllFilters(); });
+
+            // All/None buttons -- section
+            var secAll = document.getElementById('sectionSelectAll');
+            var secNone = document.getElementById('sectionSelectNone');
+            if (secAll) secAll.addEventListener('click', function() { sectionCbs.forEach(function(cb) { cb.checked = true; }); applyAllFilters(); });
+            if (secNone) secNone.addEventListener('click', function() { sectionCbs.forEach(function(cb) { cb.checked = false; }); applyAllFilters(); });
+
+            // Initialize
+            applyAllFilters();
         }
 
         // --- Expand/Collapse All buttons ---

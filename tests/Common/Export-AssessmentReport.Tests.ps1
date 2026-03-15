@@ -72,6 +72,29 @@ Describe 'Export-AssessmentReport HTML structure' {
         }
     }
 
+    Context 'Unified filter JavaScript' {
+        It 'Should include unified applyAllFilters function' {
+            $html | Should -Match 'function applyAllFilters'
+        }
+
+        It 'Should include recalculateCards function' {
+            $html | Should -Match 'function recalculateCards'
+        }
+
+        It 'Should include recalculateStatusBar function' {
+            $html | Should -Match 'function recalculateStatusBar'
+        }
+
+        It 'Should wire up section filter change handlers' {
+            $html | Should -Match "getElementById\('sectionFilter'\)"
+        }
+
+        It 'Should not contain old independent filter functions' {
+            $html | Should -Not -Match 'function applyFrameworkFilter'
+            $html | Should -Not -Match 'function applyStatusFilter'
+        }
+    }
+
     Context 'Section filter UI' {
         It 'Should include section filter HTML structure' {
             $html | Should -Match "id='sectionFilter'"
