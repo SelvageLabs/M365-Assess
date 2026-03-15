@@ -176,10 +176,11 @@ M365-Assessment/
     20b-SharePoint-Security-Config.csv
     21-Teams-Access.csv
     21b-Teams-Security-Config.csv
-    22-Hybrid-Sync.csv
-    _Assessment-Summary.csv              # Status of every collector
-    _Assessment-Log.txt                  # Timestamped execution log
-    _Assessment-Issues.log               # Issue report with recommendations
+    22-PowerBI-Security-Config.csv
+    23-Hybrid-Sync.csv
+    _Assessment-Summary_<tenant>.csv     # Status of every collector
+    _Assessment-Log_<tenant>.txt         # Timestamped execution log
+    _Assessment-Issues_<tenant>.log      # Issue report with recommendations
     _Assessment-Report_<tenant>.html     # Self-contained HTML report
     _Compliance-Matrix_<tenant>.xlsx     # Framework compliance matrix (requires ImportExcel)
 ```
