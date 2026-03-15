@@ -135,7 +135,7 @@ try {
 
         $members = Invoke-MgGraphRequest -Method GET `
             -Uri "/v1.0/directoryRoles/$roleId/members" -ErrorAction Stop
-        $allAdmins = @($members['value'])
+        $allAdmins = if ($members -and $members['value']) { @($members['value']) } else { @() }
 
         # Exclude break-glass accounts from the operational admin count
         $breakGlassAdmins = Get-BreakGlassAccounts -Users $allAdmins
@@ -356,9 +356,12 @@ try {
     }
 
     if ($pwSettings) {
-        $bannedList = ($pwSettings['values'] | Where-Object { $_['name'] -eq 'BannedPasswordList' })['value']
-        $enforceCustom = ($pwSettings['values'] | Where-Object { $_['name'] -eq 'EnableBannedPasswordCheck' })['value']
-        $lockoutThreshold = ($pwSettings['values'] | Where-Object { $_['name'] -eq 'LockoutThreshold' })['value']
+        $bannedListEntry = if ($pwSettings['values']) { $pwSettings['values'] | Where-Object { $_['name'] -eq 'BannedPasswordList' } } else { $null }
+        $bannedList = if ($bannedListEntry) { $bannedListEntry['value'] } else { $null }
+        $enforceCustomEntry = if ($pwSettings['values']) { $pwSettings['values'] | Where-Object { $_['name'] -eq 'EnableBannedPasswordCheck' } } else { $null }
+        $enforceCustom = if ($enforceCustomEntry) { $enforceCustomEntry['value'] } else { $null }
+        $lockoutEntry = if ($pwSettings['values']) { $pwSettings['values'] | Where-Object { $_['name'] -eq 'LockoutThreshold' } } else { $null }
+        $lockoutThreshold = if ($lockoutEntry) { $lockoutEntry['value'] } else { $null }
 
         Add-Setting -Category 'Password Management' -Setting 'Custom Banned Password List Enforced' `
             -CurrentValue "$enforceCustom" -RecommendedValue 'True' `
@@ -390,7 +393,8 @@ catch {
 try {
     Write-Verbose "Checking password expiration..."
     $domains = Invoke-MgGraphRequest -Method GET -Uri '/v1.0/domains' -ErrorAction Stop
-    foreach ($domain in $domains['value']) {
+    $domainList = if ($domains -and $domains['value']) { @($domains['value']) } else { @() }
+    foreach ($domain in $domainList) {
         if (-not $domain['isVerified']) { continue }
         $validityDays = $domain['passwordValidityPeriodInDays']
         $neverExpires = ($validityDays -eq 2147483647)
@@ -463,8 +467,9 @@ try {
     Write-Verbose "Counting conditional access policies..."
     $caPolicies = Invoke-MgGraphRequest -Method GET `
         -Uri '/v1.0/identity/conditionalAccess/policies' -ErrorAction Stop
-    $caCount = @($caPolicies['value']).Count
-    $enabledCount = @($caPolicies['value'] | Where-Object { $_['state'] -eq 'enabled' }).Count
+    $policyList = if ($caPolicies -and $caPolicies['value']) { @($caPolicies['value']) } else { @() }
+    $caCount = $policyList.Count
+    $enabledCount = @($policyList | Where-Object { $_['state'] -eq 'enabled' }).Count
 
     Add-Setting -Category 'Conditional Access' -Setting 'Total CA Policies' `
         -CurrentValue "$caCount" -RecommendedValue '1+' `
@@ -653,7 +658,8 @@ try {
     Write-Verbose "Checking for dynamic guest group..."
     $dynamicGroups = Invoke-MgGraphRequest -Method GET `
         -Uri "/v1.0/groups?`$filter=groupTypes/any(g:g eq 'DynamicMembership')&`$select=displayName,membershipRule&`$top=999" -ErrorAction Stop
-    $guestGroups = @($dynamicGroups['value'] | Where-Object {
+    $dynamicGroupList = if ($dynamicGroups -and $dynamicGroups['value']) { @($dynamicGroups['value']) } else { @() }
+    $guestGroups = @($dynamicGroupList | Where-Object {
         $_['membershipRule'] -and $_['membershipRule'] -match 'user\.userType\s+(-eq|-contains)\s+.?Guest'
     })
 
@@ -974,11 +980,12 @@ try {
         -Uri "/v1.0/directoryRoles/roleTemplateId=$gaRoleTemplateId/members?`$select=displayName,userPrincipalName,onPremisesSyncEnabled" `
         -ErrorAction Stop
 
-    $syncedAdmins = @($gaMembers['value'] | Where-Object { $_['onPremisesSyncEnabled'] -eq $true })
+    $gaList = if ($gaMembers -and $gaMembers['value']) { @($gaMembers['value']) } else { @() }
+    $syncedAdmins = @($gaList | Where-Object { $_['onPremisesSyncEnabled'] -eq $true })
 
     if ($syncedAdmins.Count -eq 0) {
         Add-Setting -Category 'Admin Accounts' -Setting 'Cloud-Only Global Admins' `
-            -CurrentValue "All $($gaMembers['value'].Count) GA accounts are cloud-only" `
+            -CurrentValue "All $($gaList.Count) GA accounts are cloud-only" `
             -RecommendedValue 'All admin accounts cloud-only' `
             -Status 'Pass' `
             -CheckId 'ENTRA-CLOUDADMIN-001' `
@@ -1016,7 +1023,8 @@ try {
         'c7df2760-2c81-4ef7-b578-5b5392b571df'   # ENTERPRISEPREMIUM (O365 E5)
     )
 
-    $heavyLicensed = @($gaUsersLicense['value'] | Where-Object {
+    $gaLicenseList = if ($gaUsersLicense -and $gaUsersLicense['value']) { @($gaUsersLicense['value']) } else { @() }
+    $heavyLicensed = @($gaLicenseList | Where-Object {
         $licenses = $_['assignedLicenses']
         $licenses | Where-Object { $productivitySkus -contains $_['skuId'] }
     })
@@ -1052,8 +1060,9 @@ try {
         -Uri "/v1.0/groups?`$filter=visibility eq 'Public' and groupTypes/any(g:g eq 'Unified')&`$select=displayName,id&`$top=100" `
         -ErrorAction Stop
 
+    $publicGroupList = if ($publicGroups -and $publicGroups['value']) { @($publicGroups['value']) } else { @() }
     $noOwnerGroups = @()
-    foreach ($group in $publicGroups['value']) {
+    foreach ($group in $publicGroupList) {
         $owners = Invoke-MgGraphRequest -Method GET `
             -Uri "/v1.0/groups/$($group['id'])/owners?`$select=id" -ErrorAction SilentlyContinue
         if (-not $owners['value'] -or $owners['value'].Count -eq 0) {
@@ -1063,7 +1072,7 @@ try {
 
     if ($noOwnerGroups.Count -eq 0) {
         Add-Setting -Category 'Group Management' -Setting 'Public Groups Have Owners' `
-            -CurrentValue "$($publicGroups['value'].Count) public groups, all have owners" `
+            -CurrentValue "$($publicGroupList.Count) public groups, all have owners" `
             -RecommendedValue 'All public groups have assigned owners' `
             -Status 'Pass' `
             -CheckId 'ENTRA-GROUP-003' `
@@ -1114,7 +1123,8 @@ try {
     Write-Verbose "Checking password protection on-premises setting..."
     # Reuse $pwSettings from section 8 if available
     if ($pwSettings) {
-        $onPremEnabled = ($pwSettings['values'] | Where-Object { $_['name'] -eq 'EnableBannedPasswordCheckOnPremises' })['value']
+        $onPremEntry = if ($pwSettings['values']) { $pwSettings['values'] | Where-Object { $_['name'] -eq 'EnableBannedPasswordCheckOnPremises' } } else { $null }
+        $onPremEnabled = if ($onPremEntry) { $onPremEntry['value'] } else { $null }
         Add-Setting -Category 'Password Management' -Setting 'Password Protection On-Premises' `
             -CurrentValue "$onPremEnabled" -RecommendedValue 'True' `
             -Status $(if ($onPremEnabled -eq 'True') { 'Pass' } else { 'Fail' }) `
@@ -1192,7 +1202,8 @@ try {
         -Uri "/v1.0/users?`$select=displayName,userPrincipalName,accountEnabled&`$top=999" `
         -ErrorAction Stop
 
-    $breakGlassAccounts = Get-BreakGlassAccounts -Users $allUsers['value']
+    $allUserList = if ($allUsers -and $allUsers['value']) { @($allUsers['value']) } else { @() }
+    $breakGlassAccounts = Get-BreakGlassAccounts -Users $allUserList
     $bgCount = $breakGlassAccounts.Count
     $enabledBg = @($breakGlassAccounts | Where-Object { $_['accountEnabled'] -eq $true })
 
@@ -1225,7 +1236,7 @@ try {
     $orgInfo = Invoke-MgGraphRequest -Method GET `
         -Uri '/v1.0/organization' -ErrorAction Stop
 
-    $orgValue = $orgInfo['value']
+    $orgValue = if ($orgInfo -and $orgInfo['value']) { @($orgInfo['value']) } else { @() }
     if ($orgValue -and $orgValue.Count -gt 0) {
         $org = $orgValue[0]
         $onPremSync = $org['onPremisesSyncEnabled']
