@@ -57,4 +57,18 @@ Describe 'Export-AssessmentReport HTML structure' {
             $html | Should -Match "btn\.closest\('\.section'\)"
         }
     }
+
+    Context 'Section filter data preparation' {
+        It 'Should include Section property in allCisFindings population' {
+            $html | Should -Match "Section\s*=\s*\`$c\.Section"
+        }
+
+        It 'Should include data-section attribute on compliance table rows' {
+            $html | Should -Match "data-section="
+        }
+
+        It 'Should embed complianceData JSON blob' {
+            $html | Should -Match 'var complianceData\s*='
+        }
+    }
 }

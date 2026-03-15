@@ -1710,6 +1710,7 @@ foreach ($c in $summary) {
             Recommended  = $row.RecommendedValue
             Status       = $row.Status
             Remediation  = $row.Remediation
+            Section      = $c.Section
             Source       = $c.Collector
             CisE3L1      = if ($cisProfiles -contains 'E3-L1') { $cisId } else { '' }
             CisE3L2      = if ($cisProfiles -contains 'E3-L2') { $cisId } else { '' }
@@ -1903,7 +1904,7 @@ if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
         $checkRef = ConvertTo-HtmlSafe -Text $finding.CheckId
         $settingText = ConvertTo-HtmlSafe -Text $finding.Setting
 
-        $null = $complianceHtml.AppendLine("<tr class='cis-row-$($finding.Status.ToLower())'>")
+        $null = $complianceHtml.AppendLine("<tr class='cis-row-$($finding.Status.ToLower())' data-section='$(ConvertTo-HtmlSafe -Text $finding.Section)'>")
         $null = $complianceHtml.AppendLine("<td class='cis-id'>$checkRef</td>")
         $null = $complianceHtml.AppendLine("<td>$settingText</td>")
         $null = $complianceHtml.AppendLine("<td>$statusBadge</td>")
@@ -1927,6 +1928,24 @@ if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
     }
 
     $null = $complianceHtml.AppendLine("</tbody></table>")
+
+    # Embed compliance data for client-side filtering/recalculation
+    $complianceJson = @($allCisFindings | ForEach-Object {
+        $fwMap = [ordered]@{}
+        foreach ($fwKey in $allFrameworkKeys) {
+            $fwCol = $frameworkLookup[$fwKey].Col
+            $val = $_.$fwCol
+            if ($val -and $val -ne '') { $fwMap[$fwCol] = $val }
+        }
+        [PSCustomObject]@{
+            c  = $_.CheckId
+            s  = $_.Section
+            st = $_.Status
+            fw = $fwMap
+        }
+    }) | ConvertTo-Json -Compress -Depth 3
+    $null = $complianceHtml.AppendLine("<script>var complianceData = $complianceJson;</script>")
+
     $null = $complianceHtml.AppendLine("</div>")
     $null = $complianceHtml.AppendLine("</details>")
 }
