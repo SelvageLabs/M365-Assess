@@ -191,6 +191,9 @@ try {
                 $connectParams['AppId'] = $ClientId
                 $connectParams['CertificateThumbprint'] = $CertificateThumbprint
             }
+            elseif ($ClientId -and $ClientSecret) {
+                throw "Exchange Online does not support client secret authentication. Use -CertificateThumbprint for app-only auth."
+            }
             elseif ($UseDeviceCode) {
                 $connectParams['Device'] = $true
             }
@@ -217,6 +220,9 @@ try {
             if ($ClientId -and $CertificateThumbprint) {
                 $connectParams['AppId'] = $ClientId
                 $connectParams['CertificateThumbprint'] = $CertificateThumbprint
+            }
+            elseif ($ClientId -and $ClientSecret) {
+                throw "Purview does not support client secret authentication. Use -CertificateThumbprint for app-only auth."
             }
             elseif ($UserPrincipalName) {
                 $connectParams['UserPrincipalName'] = $UserPrincipalName
