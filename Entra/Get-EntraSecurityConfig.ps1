@@ -792,6 +792,30 @@ catch {
 # ------------------------------------------------------------------
 $pimAvailable = $true
 $pimRoleAssignments = $null
+$script:pimMessage = $null
+
+# Check if tenant has P2/E5 capability for PIM
+$hasPimLicense = $false
+try {
+    $skus = Invoke-MgGraphRequest -Method GET -Uri '/v1.0/subscribedSkus' -ErrorAction Stop
+    $skuList = if ($skus -and $skus['value']) { @($skus['value']) } else { @() }
+    $pimSkuIds = @(
+        'eec0eb4f-6444-4f95-aba0-50c24d67f998'  # AAD_PREMIUM_P2
+        '06ebc4ee-1bb5-47dd-8120-11324bc54e06'  # SPE_E5 (M365 E5)
+        'b05e124f-c7cc-45a0-a6aa-8cf78c946968'  # EMSPREMIUM (EMS E5)
+        'cd2925a3-5076-4233-8931-638a8c94f773'  # SPE_E5_NOPSTNCONF
+    )
+    foreach ($sku in $skuList) {
+        if ($sku['skuId'] -in $pimSkuIds -and $sku['capabilityStatus'] -eq 'Enabled') {
+            $hasPimLicense = $true
+            break
+        }
+    }
+}
+catch {
+    Write-Verbose "Could not check SKU licenses: $_"
+}
+
 try {
     Write-Verbose "Checking PIM role assignments..."
     $pimRoleAssignments = Invoke-MgGraphRequest -Method GET `
@@ -800,10 +824,17 @@ try {
 catch {
     if ($_.Exception.Message -match '403|Forbidden|Authorization|license') {
         $pimAvailable = $false
+        if ($hasPimLicense) {
+            $script:pimMessage = 'PIM is available but not configured in this tenant'
+        }
+        else {
+            $script:pimMessage = 'Requires Entra ID P2 license (included in M365 E5)'
+        }
     }
     else {
         Write-Warning "Could not check PIM role assignments: $_"
         $pimAvailable = $false
+        $script:pimMessage = "Could not check PIM: $($_.Exception.Message)"
     }
 }
 
@@ -825,7 +856,7 @@ if ($pimAvailable -and $pimRoleAssignments) {
 }
 elseif (-not $pimAvailable) {
     Add-Setting -Category 'Privileged Identity Management' -Setting 'PIM Manages Privileged Roles' `
-        -CurrentValue 'Requires Entra ID P2 license -- PIM API returned 403' `
+        -CurrentValue $script:pimMessage `
         -RecommendedValue 'PIM enabled for all privileged roles' `
         -Status 'Review' `
         -CheckId 'ENTRA-PIM-001' `
@@ -877,14 +908,14 @@ if ($accessReviews) {
 }
 elseif (-not $pimAvailable) {
     Add-Setting -Category 'Privileged Identity Management' -Setting 'Access Reviews for Guest Users' `
-        -CurrentValue 'Requires Entra ID P2 license -- Access Reviews API returned 403' `
+        -CurrentValue $script:pimMessage `
         -RecommendedValue 'At least 1 access review for guests' `
         -Status 'Review' `
         -CheckId 'ENTRA-PIM-002' `
         -Remediation 'This check requires Entra ID P2 (included in M365 E5). Entra admin center > Identity Governance > Access reviews.'
 
     Add-Setting -Category 'Privileged Identity Management' -Setting 'Access Reviews for Privileged Roles' `
-        -CurrentValue 'Requires Entra ID P2 license -- Access Reviews API returned 403' `
+        -CurrentValue $script:pimMessage `
         -RecommendedValue 'At least 1 access review for admin roles' `
         -Status 'Review' `
         -CheckId 'ENTRA-PIM-003' `
@@ -956,14 +987,14 @@ if ($roleManagementPolicies) {
 }
 elseif (-not $pimAvailable) {
     Add-Setting -Category 'Privileged Identity Management' -Setting 'GA Activation Requires Approval' `
-        -CurrentValue 'Requires Entra ID P2 license -- PIM Policies API returned 403' `
+        -CurrentValue $script:pimMessage `
         -RecommendedValue 'Yes' `
         -Status 'Review' `
         -CheckId 'ENTRA-PIM-004' `
         -Remediation 'This check requires Entra ID P2 (included in M365 E5). Entra admin center > Identity Governance > PIM > Azure AD roles > Settings.'
 
     Add-Setting -Category 'Privileged Identity Management' -Setting 'PRA Activation Requires Approval' `
-        -CurrentValue 'Requires Entra ID P2 license -- PIM Policies API returned 403' `
+        -CurrentValue $script:pimMessage `
         -RecommendedValue 'Yes' `
         -Status 'Review' `
         -CheckId 'ENTRA-PIM-005' `
