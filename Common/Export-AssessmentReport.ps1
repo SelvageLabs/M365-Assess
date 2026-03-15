@@ -77,7 +77,10 @@ $frameworkLookup = @{
     'CIS-E3-L2'  = @{ Col = 'CisE3L2';   Label = 'CIS E3 L2';          Css = 'fw-cis-l2' }
     'CIS-E5-L1'  = @{ Col = 'CisE5L1';   Label = 'CIS E5 L1';          Css = 'fw-cis' }
     'CIS-E5-L2'  = @{ Col = 'CisE5L2';   Label = 'CIS E5 L2';          Css = 'fw-cis-l2' }
-    'NIST-800-53'= @{ Col = 'Nist80053';  Label = 'NIST 800-53 Rev 5';  Css = 'fw-nist' }
+    'NIST-Low'     = @{ Col = 'Nist80053Low';      Label = 'NIST Low';      Css = 'fw-nist' }
+    'NIST-Moderate'= @{ Col = 'Nist80053Moderate';  Label = 'NIST Moderate'; Css = 'fw-nist' }
+    'NIST-High'    = @{ Col = 'Nist80053High';      Label = 'NIST High';     Css = 'fw-nist-high' }
+    'NIST-Privacy' = @{ Col = 'Nist80053Privacy';   Label = 'NIST Privacy';  Css = 'fw-nist-privacy' }
     'NIST-CSF'   = @{ Col = 'NistCsf';    Label = 'NIST CSF 2.0';       Css = 'fw-csf' }
     'ISO-27001'  = @{ Col = 'Iso27001';   Label = 'ISO 27001:2022';     Css = 'fw-iso' }
     'STIG'       = @{ Col = 'Stig';       Label = 'DISA STIG';          Css = 'fw-stig' }
@@ -88,8 +91,9 @@ $frameworkLookup = @{
     'SOC-2'      = @{ Col = 'Soc2';       Label = 'SOC 2 TSC';          Css = 'fw-soc2' }
 }
 # Ordered list for consistent rendering (all frameworks always included)
-$allFrameworkKeys = @('CIS-E3-L1','CIS-E3-L2','CIS-E5-L1','CIS-E5-L2','NIST-800-53','NIST-CSF','ISO-27001','STIG','PCI-DSS','CMMC','HIPAA','CISA-SCuBA','SOC-2')
+$allFrameworkKeys = @('CIS-E3-L1','CIS-E3-L2','CIS-E5-L1','CIS-E5-L2','NIST-Low','NIST-Moderate','NIST-High','NIST-Privacy','NIST-CSF','ISO-27001','STIG','PCI-DSS','CMMC','HIPAA','CISA-SCuBA','SOC-2')
 $cisProfileKeys = @('CIS-E3-L1','CIS-E3-L2','CIS-E5-L1','CIS-E5-L2')
+$nistProfileKeys = @('NIST-Low','NIST-Moderate','NIST-High','NIST-Privacy')
 
 # ------------------------------------------------------------------
 # Validate input
@@ -1701,6 +1705,8 @@ foreach ($c in $summary) {
         $fw = if ($entry) { $entry.frameworks } else { @{} }
         $cisProfiles = if ($fw.'cis-m365-v6' -and $fw.'cis-m365-v6'.profiles) { $fw.'cis-m365-v6'.profiles } else { @() }
         $cisId = if ($fw.'cis-m365-v6' -and $fw.'cis-m365-v6'.controlId) { $fw.'cis-m365-v6'.controlId } else { '' }
+        $nistProfiles = if ($fw.'nist-800-53' -and $fw.'nist-800-53'.profiles) { $fw.'nist-800-53'.profiles } else { @() }
+        $nistControlId = if ($fw.'nist-800-53' -and $fw.'nist-800-53'.controlId) { $fw.'nist-800-53'.controlId } else { '' }
         $allCisFindings.Add([PSCustomObject]@{
             CheckId      = $row.CheckId
             CisControl   = $cisId
@@ -1717,7 +1723,11 @@ foreach ($c in $summary) {
             CisE5L1      = if ($cisProfiles -contains 'E5-L1') { $cisId } else { '' }
             CisE5L2      = if ($cisProfiles -contains 'E5-L2') { $cisId } else { '' }
             NistCsf      = if ($fw.'nist-csf')    { $fw.'nist-csf'.controlId }    else { '' }
-            Nist80053    = if ($fw.'nist-800-53')  { $fw.'nist-800-53'.controlId } else { '' }
+            Nist80053         = if ($fw.'nist-800-53')  { $fw.'nist-800-53'.controlId } else { '' }
+            Nist80053Low      = if ($nistProfiles -contains 'Low')      { $nistControlId } else { '' }
+            Nist80053Moderate = if ($nistProfiles -contains 'Moderate') { $nistControlId } else { '' }
+            Nist80053High     = if ($nistProfiles -contains 'High')     { $nistControlId } else { '' }
+            Nist80053Privacy  = if ($nistProfiles -contains 'Privacy')  { $nistControlId } else { '' }
             Iso27001     = if ($fw.'iso-27001')    { $fw.'iso-27001'.controlId }   else { '' }
             Stig         = if ($fw.stig)           { $fw.stig.controlId }          else { '' }
             PciDss       = if ($fw.'pci-dss')      { $fw.'pci-dss'.controlId }     else { '' }
@@ -1739,7 +1749,6 @@ if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
         'CIS-E3-L2'   = 'cis-e3-l2.csv'
         'CIS-E5-L1'   = 'cis-e5-l1.csv'
         'CIS-E5-L2'   = 'cis-e5-l2.csv'
-        'NIST-800-53'  = 'nist-800-53-r5.csv'
         'NIST-CSF'     = 'nist-csf-2.0.csv'
         'ISO-27001'    = 'iso-27001-2022.csv'
         'STIG'         = 'disa-stig-m365.csv'
@@ -1754,6 +1763,19 @@ if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
             if (Test-Path -Path $catPath) {
                 $catData = Import-Csv -Path $catPath
                 $catalogCounts[$fwKey] = @($catData).Count
+            }
+        }
+    }
+    # Load NIST 800-53 baseline counts from framework definition
+    $nistFwDefPath = Join-Path -Path $projectRoot -ChildPath 'controls/frameworks/nist-800-53-r5.json'
+    if (Test-Path -Path $nistFwDefPath) {
+        $nistFwDef = Get-Content -Path $nistFwDefPath -Raw | ConvertFrom-Json
+        if ($nistFwDef.scoring -and $nistFwDef.scoring.profiles) {
+            foreach ($profileName in @('Low','Moderate','High','Privacy')) {
+                $profile = $nistFwDef.scoring.profiles.$profileName
+                if ($profile -and $profile.controlCount) {
+                    $catalogCounts["NIST-$profileName"] = [int]$profile.controlCount
+                }
             }
         }
     }
@@ -1781,7 +1803,8 @@ if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
     $null = $complianceHtml.AppendLine("<span class='fw-selector-label'>Frameworks:</span>")
     foreach ($fwKey in $allFrameworkKeys) {
         $fwInfo = $frameworkLookup[$fwKey]
-        $null = $complianceHtml.AppendLine("<label class='fw-checkbox'><input type='checkbox' value='$($fwInfo.Col)' checked> $($fwInfo.Label)</label>")
+        $checkedAttr = if ($fwKey -in $nistProfileKeys) { '' } else { ' checked' }
+        $null = $complianceHtml.AppendLine("<label class='fw-checkbox'><input type='checkbox' value='$($fwInfo.Col)'$checkedAttr> $($fwInfo.Label)</label>")
     }
     $null = $complianceHtml.AppendLine("<span class='fw-selector-actions'><button type='button' id='fwSelectAll' class='fw-action-btn'>All</button><button type='button' id='fwSelectNone' class='fw-action-btn'>None</button></span>")
     $null = $complianceHtml.AppendLine("</div>")
@@ -1820,8 +1843,8 @@ if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
     foreach ($fwKey in $allFrameworkKeys) {
         $fwInfo = $frameworkLookup[$fwKey]
         $col = $fwInfo.Col
-        if ($fwKey -in $cisProfileKeys) {
-            # CIS profile card — pass rate as primary, coverage bar as secondary
+        if ($fwKey -in $cisProfileKeys -or $fwKey -in $nistProfileKeys) {
+            # CIS/NIST profile card — pass rate as primary, coverage bar as secondary
             $profileFindings = @($allCisFindings | Where-Object { $_.$col -and $_.$col -ne '' })
             $profilePass = @($profileFindings | Where-Object { $_.Status -eq 'Pass' }).Count
             $profileScored = $profileFindings.Count

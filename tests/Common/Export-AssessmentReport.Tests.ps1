@@ -113,4 +113,38 @@ Describe 'Export-AssessmentReport HTML structure' {
             $html | Should -Match '\.section-checkbox'
         }
     }
+
+    Context 'NIST 800-53 baseline profiles' {
+        It 'Should include NIST baseline keys in framework lookup' {
+            $html | Should -Match "'NIST-Low'"
+            $html | Should -Match "'NIST-Moderate'"
+            $html | Should -Match "'NIST-High'"
+            $html | Should -Match "'NIST-Privacy'"
+        }
+
+        It 'Should include nistProfileKeys variable' {
+            $html | Should -Match '\$nistProfileKeys'
+        }
+
+        It 'Should include NIST profile columns in finding data' {
+            $html | Should -Match 'Nist80053Low'
+            $html | Should -Match 'Nist80053Moderate'
+            $html | Should -Match 'Nist80053High'
+            $html | Should -Match 'Nist80053Privacy'
+        }
+
+        It 'Should default NIST baselines to unchecked in framework selector' {
+            $html | Should -Match 'nistProfileKeys'
+            $html | Should -Match 'checkedAttr'
+        }
+
+        It 'Should treat NIST baselines as profile cards' {
+            $html | Should -Match 'cisProfileKeys.*-or.*nistProfileKeys'
+        }
+
+        It 'Should read NIST catalog counts from framework definition JSON' {
+            $html | Should -Match 'nist-800-53-r5\.json'
+            $html | Should -Match 'controlCount'
+        }
+    }
 }
