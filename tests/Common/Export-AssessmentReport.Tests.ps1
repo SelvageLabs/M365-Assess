@@ -7,6 +7,22 @@ Describe 'Export-AssessmentReport HTML structure' {
         $html = Get-Content -Path $scriptPath -Raw
     }
 
+    Context 'Dual-metric framework cards' {
+        It 'Should include coverage bar CSS classes in stylesheet' {
+            $html | Should -Match 'coverage-bar'
+            $html | Should -Match 'coverage-fill'
+            $html | Should -Match 'coverage-label'
+        }
+
+        It 'Should include data-catalog-total attribute on framework cards' {
+            $html | Should -Match 'data-catalog-total'
+        }
+
+        It 'Should include stat-sublabel in card HTML generation' {
+            $html | Should -Match 'stat-sublabel'
+        }
+    }
+
     Context 'Expand/Collapse All buttons' {
         It 'Should include expand/collapse buttons in section panels' {
             $html | Should -Match 'expand-all-btn'

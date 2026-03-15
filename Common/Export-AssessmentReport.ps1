@@ -1820,7 +1820,7 @@ if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
         $fwInfo = $frameworkLookup[$fwKey]
         $col = $fwInfo.Col
         if ($fwKey -in $cisProfileKeys) {
-            # CIS profile card — show compliance score for controls in this profile
+            # CIS profile card — pass rate as primary, coverage bar as secondary
             $profileFindings = @($allCisFindings | Where-Object { $_.$col -and $_.$col -ne '' })
             $profilePass = @($profileFindings | Where-Object { $_.Status -eq 'Pass' }).Count
             $profileScored = $profileFindings.Count
@@ -1829,17 +1829,23 @@ if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
             $scoreClass = if ($profileScored -eq 0) { '' } elseif ($profileScore -ge 80) { 'success' } elseif ($profileScore -ge 60) { 'warning' } else { 'danger' }
             $catalogTotal = if ($catalogCounts.ContainsKey($fwKey)) { $catalogCounts[$fwKey] } else { 0 }
             $coverageLabel = if ($catalogTotal -gt 0) { "$($profileFindings.Count) of $catalogTotal assessed" } else { "$($profileFindings.Count) assessed" }
-            $null = $complianceHtml.AppendLine("<div class='stat-card fw-card $scoreClass' data-fw='$col'><div class='stat-value'>$scoreDisplay</div><div class='stat-label'>$($fwInfo.Label)<br><small>$coverageLabel</small></div></div>")
+            $coveragePct = if ($catalogTotal -gt 0) { [math]::Round(($profileScored / $catalogTotal) * 100, 0) } else { 0 }
+            $null = $complianceHtml.AppendLine("<div class='stat-card fw-card $scoreClass' data-fw='$col' data-catalog-total='$catalogTotal'><div class='stat-value'>$scoreDisplay</div><div class='stat-label'>$($fwInfo.Label)</div><div class='stat-sublabel'>$coverageLabel</div><div class='coverage-bar'><div class='coverage-fill' style='width: $coveragePct%'></div></div><div class='coverage-label'>$coveragePct% coverage</div></div>")
         }
         else {
-            # Non-CIS card — show mapping coverage
-            $mappedControls = @($allCisFindings | Where-Object { $_.$col -and $_.$col -ne '' } | ForEach-Object { $_.$col -split ';' } | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' } | Sort-Object -Unique)
+            # Non-CIS card — pass rate as primary, coverage bar as secondary
+            $mappedFindings = @($allCisFindings | Where-Object { $_.$col -and $_.$col -ne '' })
+            $mappedControls = @($mappedFindings | ForEach-Object { $_.$col -split ';' } | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' } | Sort-Object -Unique)
             $mappedCount = $mappedControls.Count
+            $mappedPass = @($mappedFindings | Where-Object { $_.Status -eq 'Pass' }).Count
+            $mappedTotal = $mappedFindings.Count
+            $passRate = if ($mappedTotal -gt 0) { [math]::Round(($mappedPass / $mappedTotal) * 100, 1) } else { 0 }
+            $passDisplay = if ($mappedTotal -gt 0) { "$passRate%" } else { 'N/A' }
+            $passClass = if ($mappedTotal -eq 0) { '' } elseif ($passRate -ge 80) { 'success' } elseif ($passRate -ge 60) { 'warning' } else { 'danger' }
             $totalCount = if ($catalogCounts.ContainsKey($fwKey)) { $catalogCounts[$fwKey] } else { 0 }
             $coveragePct = if ($totalCount -gt 0) { [math]::Round(($mappedCount / $totalCount) * 100, 0) } else { 0 }
-            $coverageClass = if ($totalCount -eq 0) { '' } elseif ($coveragePct -ge 70) { 'success' } elseif ($coveragePct -ge 50) { 'warning' } else { 'danger' }
-            $coverageLabel = if ($totalCount -gt 0) { "$mappedCount of $totalCount mapped" } else { "$mappedCount controls mapped" }
-            $null = $complianceHtml.AppendLine("<div class='stat-card fw-card $coverageClass' data-fw='$col'><div class='stat-value'>$coveragePct%</div><div class='stat-label'>$($fwInfo.Label)<br><small>$coverageLabel</small></div></div>")
+            $coverageLabel = if ($totalCount -gt 0) { "$mappedTotal of $totalCount assessed" } else { "$mappedTotal assessed" }
+            $null = $complianceHtml.AppendLine("<div class='stat-card fw-card $passClass' data-fw='$col' data-catalog-total='$totalCount'><div class='stat-value'>$passDisplay</div><div class='stat-label'>$($fwInfo.Label)</div><div class='stat-sublabel'>$coverageLabel</div><div class='coverage-bar'><div class='coverage-fill' style='width: $coveragePct%'></div></div><div class='coverage-label'>$coveragePct% coverage</div></div>")
         }
     }
     $null = $complianceHtml.AppendLine("</div>")
@@ -3341,6 +3347,15 @@ $html = @"
         /* Info status explanation note */
         .info-status-note { display: flex; align-items: center; gap: 8px; padding: 8px 14px; margin: 0 0 12px; font-size: 0.82em; color: var(--m365a-medium-gray); background: var(--m365a-light-gray); border: 1px solid var(--m365a-border); border-radius: 6px; border-left: 3px solid var(--m365a-neutral); }
         .info-status-note .badge { flex-shrink: 0; }
+
+        /* Dual-metric framework cards */
+        .coverage-bar { margin-top: 6px; background: var(--m365a-border); border-radius: 4px; height: 6px; overflow: hidden; }
+        .coverage-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+        .fw-card.success .coverage-fill { background: var(--m365a-success); }
+        .fw-card.warning .coverage-fill { background: var(--m365a-warning); }
+        .fw-card.danger .coverage-fill { background: var(--m365a-danger); }
+        .stat-sublabel { font-size: 0.75em; color: var(--m365a-medium-gray); }
+        .coverage-label { font-size: 0.65em; color: var(--m365a-medium-gray); margin-top: 2px; }
 
         /* Expand/Collapse all buttons */
         .matrix-controls { display: flex; gap: 6px; margin: 8px 0; }
