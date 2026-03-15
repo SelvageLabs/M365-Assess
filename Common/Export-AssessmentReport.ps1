@@ -1868,7 +1868,8 @@ if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
             $totalCount = if ($catalogCounts.ContainsKey($fwKey)) { $catalogCounts[$fwKey] } else { 0 }
             $coveragePct = if ($totalCount -gt 0) { [math]::Min(100, [math]::Round(($mappedCount / $totalCount) * 100, 0)) } else { 0 }
             $coverageLabel = if ($totalCount -gt 0) { "$mappedTotal of $totalCount assessed" } else { "$mappedTotal assessed" }
-            $null = $complianceHtml.AppendLine("<div class='stat-card fw-card $passClass' data-fw='$col' data-catalog-total='$totalCount'><div class='stat-value'>$passDisplay</div><div class='stat-label'>$($fwInfo.Label)</div><div class='stat-sublabel'>$coverageLabel</div><div class='coverage-bar'><div class='coverage-fill' style='width: $coveragePct%'></div></div><div class='coverage-label'>$coveragePct% coverage</div></div>")
+            $coverageBarHtml = if ($totalCount -gt 0) { "<div class='coverage-bar'><div class='coverage-fill' style='width: $coveragePct%'></div></div><div class='coverage-label'>$coveragePct% coverage</div>" } else { '' }
+            $null = $complianceHtml.AppendLine("<div class='stat-card fw-card $passClass' data-fw='$col' data-catalog-total='$totalCount'><div class='stat-value'>$passDisplay</div><div class='stat-label'>$($fwInfo.Label)</div><div class='stat-sublabel'>$coverageLabel</div>$coverageBarHtml</div>")
         }
     }
     $null = $complianceHtml.AppendLine("</div>")
