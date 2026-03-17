@@ -910,7 +910,7 @@ $sectionScopeMap = @{
     'Licensing'     = @('Organization.Read.All', 'User.Read.All')
     'Intune'        = @('DeviceManagementManagedDevices.Read.All', 'DeviceManagementConfiguration.Read.All')
     'Security'      = @('SecurityEvents.Read.All')
-    'Collaboration' = @('SharePointTenantSettings.Read.All', 'TeamSettings.Read.All', 'TeamworkAppSettings.Read.All')
+    'Collaboration' = @('SharePointTenantSettings.Read.All', 'TeamSettings.Read.All', 'TeamworkAppSettings.Read.All', 'OrgSettings-Forms.Read.All')
     'PowerBI'       = @()
     'Hybrid'           = @('Organization.Read.All', 'Domain.Read.All')
     'Inventory'        = @('Group.Read.All', 'Team.ReadBasic.All', 'TeamMember.Read.All', 'Channel.ReadBasic.All', 'Reports.Read.All', 'Sites.Read.All', 'User.Read.All')
@@ -978,12 +978,14 @@ $collectorMap = [ordered]@{
         @{ Name = '18b-Defender-Security-Config'; Script = 'Security\Get-DefenderSecurityConfig.ps1'; Label = 'Defender Security Config'; RequiredServices = @('ExchangeOnline') }
         @{ Name = '19-DLP-Policies';       Script = 'Security\Get-DlpPolicyReport.ps1';     Label = 'DLP Policies'; RequiredServices = @('Purview') }
         @{ Name = '19b-Compliance-Security-Config'; Script = 'Security\Get-ComplianceSecurityConfig.ps1'; Label = 'Compliance Security Config'; RequiredServices = @('Purview') }
+        @{ Name = '19c-Purview-Retention-Config'; Script = 'Purview\Get-PurviewRetentionConfig.ps1'; Label = 'Purview Retention Config'; RequiredServices = @('Purview') }
     )
     'Collaboration' = @(
         @{ Name = '20-SharePoint-OneDrive'; Script = 'Collaboration\Get-SharePointOneDriveReport.ps1'; Label = 'SharePoint & OneDrive' }
         @{ Name = '20b-SharePoint-Security-Config'; Script = 'Collaboration\Get-SharePointSecurityConfig.ps1'; Label = 'SharePoint Security Config' }
         @{ Name = '21-Teams-Access';        Script = 'Collaboration\Get-TeamsAccessReport.ps1';         Label = 'Teams Access' }
         @{ Name = '21b-Teams-Security-Config'; Script = 'Collaboration\Get-TeamsSecurityConfig.ps1';    Label = 'Teams Security Config' }
+        @{ Name = '21c-Forms-Security-Config'; Script = 'Collaboration\Get-FormsSecurityConfig.ps1'; Label = 'Forms Security Config' }
     )
     'PowerBI' = @(
         @{ Name = '22-PowerBI-Security-Config'; Script = 'PowerBI\Get-PowerBISecurityConfig.ps1'; Label = 'Power BI Security Config'; IsChildProcess = $true }

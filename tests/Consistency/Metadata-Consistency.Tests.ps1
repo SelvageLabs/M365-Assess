@@ -99,7 +99,7 @@ Describe 'Metadata Consistency' {
 
     Context 'Registry integrity' {
         It 'Should have all automated checks reference a valid collector' {
-            $validCollectors = @('Entra', 'CAEvaluator', 'ExchangeOnline', 'DNS', 'Defender', 'Compliance', 'Intune', 'SharePoint', 'Teams', 'PowerBI')
+            $validCollectors = @('Entra', 'CAEvaluator', 'ExchangeOnline', 'DNS', 'Defender', 'Compliance', 'Intune', 'SharePoint', 'Teams', 'PowerBI', 'Forms', 'PurviewRetention')
             $automated = @($registry.checks | Where-Object { $_.hasAutomatedCheck -eq $true })
             $automated.Count | Should -BeGreaterThan 0 -Because 'registry should contain automated checks'
 

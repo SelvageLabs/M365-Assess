@@ -48,7 +48,7 @@
           "controlId": "3.1.5;3.1.6;3.1.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -118,7 +118,7 @@
           "controlId": "3.1.5;3.1.6;3.1.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -189,7 +189,7 @@
           "controlId": "3.1.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(7)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(7)(i)",
           "title": "Access Control; Contingency Plan"
         },
         "soc2": {
@@ -250,7 +250,7 @@
           "controlId": "3.1.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(7)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(7)(i)",
           "title": "Access Control; Contingency Plan"
         },
         "soc2": {
@@ -311,7 +311,7 @@
           "controlId": "3.1.5;3.1.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -377,7 +377,7 @@
           "controlId": "3.1.5;3.1.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "soc2": {
@@ -440,7 +440,7 @@
           "controlId": "3.1.5;3.1.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "soc2": {
@@ -505,7 +505,7 @@
           "controlId": "3.1.1;3.4.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "soc2": {
@@ -569,7 +569,7 @@
           "controlId": "3.1.1;3.4.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "soc2": {
@@ -634,7 +634,7 @@
           "controlId": "3.1.1;3.1.2"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.312(a)(2)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.312(a)(2)(i)",
           "title": "Access Control; Unique User Identification"
         },
         "soc2": {
@@ -692,7 +692,7 @@
           "controlId": "3.1.1;3.1.2"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.312(a)(2)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.312(a)(2)(i)",
           "title": "Access Control; Unique User Identification"
         },
         "soc2": {
@@ -751,7 +751,7 @@
           "controlId": "3.5.7;3.5.8"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(D)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(D)",
           "title": "Password Management"
         },
         "cisa-scuba": {
@@ -814,7 +814,7 @@
           "controlId": "3.1.10"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(2)(iii)",
+          "controlId": "\u00a7164.312(a)(2)(iii)",
           "title": "Automatic Logoff"
         },
         "soc2": {
@@ -875,7 +875,7 @@
           "controlId": "3.1.22;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -936,7 +936,7 @@
           "controlId": "3.4.6;3.4.9"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -997,7 +997,7 @@
           "controlId": "3.4.6;3.4.9"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -1058,7 +1058,7 @@
           "controlId": "3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -1118,7 +1118,7 @@
           "controlId": "3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -1179,7 +1179,7 @@
           "controlId": "3.1.1;3.1.2"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "soc2": {
@@ -1243,7 +1243,7 @@
           "controlId": "3.4.6;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -1304,7 +1304,7 @@
           "controlId": "3.4.6;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -1366,7 +1366,7 @@
           "controlId": "3.1.22;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -1427,7 +1427,7 @@
           "controlId": "3.1.1;3.1.2"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -1491,7 +1491,7 @@
           "controlId": "3.1.1;3.1.2"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -1555,7 +1555,7 @@
           "controlId": "3.14.2;3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "cisa-scuba": {
@@ -1619,7 +1619,7 @@
           "controlId": "3.14.2;3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "cisa-scuba": {
@@ -1683,7 +1683,7 @@
           "controlId": "3.14.2;3.14.6"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B);§164.308(a)(6)(i)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B);\u00a7164.308(a)(6)(i)",
           "title": "Protection from Malicious Software; Security Incident Procedures"
         },
         "soc2": {
@@ -1743,7 +1743,7 @@
           "controlId": "3.14.2;3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "cisa-scuba": {
@@ -1806,7 +1806,7 @@
           "controlId": "3.14.2;3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -1857,7 +1857,7 @@
           "controlId": "3.14.2;3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -1910,7 +1910,7 @@
           "controlId": "3.14.2;3.14.6"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B);§164.308(a)(6)(i)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B);\u00a7164.308(a)(6)(i)",
           "title": "Protection from Malicious Software; Security Incident Procedures"
         },
         "soc2": {
@@ -1969,7 +1969,7 @@
           "controlId": "3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "cisa-scuba": {
@@ -2033,7 +2033,7 @@
           "controlId": "3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.312(e)(1)",
+          "controlId": "\u00a7164.312(e)(1)",
           "title": "Transmission Security"
         },
         "cisa-scuba": {
@@ -2097,7 +2097,7 @@
           "controlId": "3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.312(e)(1)",
+          "controlId": "\u00a7164.312(e)(1)",
           "title": "Transmission Security"
         },
         "cisa-scuba": {
@@ -2161,7 +2161,7 @@
           "controlId": "3.13.8"
         },
         "hipaa": {
-          "controlId": "§164.312(e)(1)",
+          "controlId": "\u00a7164.312(e)(1)",
           "title": "Transmission Security"
         },
         "cisa-scuba": {
@@ -2224,7 +2224,7 @@
           "controlId": "3.13.8"
         },
         "hipaa": {
-          "controlId": "§164.312(e)(1)",
+          "controlId": "\u00a7164.312(e)(1)",
           "title": "Transmission Security"
         },
         "cisa-scuba": {
@@ -2288,7 +2288,7 @@
           "controlId": "3.14.5;3.14.6"
         },
         "hipaa": {
-          "controlId": "§164.312(e)(1)",
+          "controlId": "\u00a7164.312(e)(1)",
           "title": "Transmission Security"
         },
         "cisa-scuba": {
@@ -2351,7 +2351,7 @@
           "controlId": "3.14.5;3.14.6"
         },
         "hipaa": {
-          "controlId": "§164.312(e)(1)",
+          "controlId": "\u00a7164.312(e)(1)",
           "title": "Transmission Security"
         },
         "cisa-scuba": {
@@ -2416,7 +2416,7 @@
           "controlId": "3.14.2;3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -2480,7 +2480,7 @@
           "controlId": "3.14.2;3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -2544,7 +2544,7 @@
           "controlId": "3.14.5;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -2605,7 +2605,7 @@
           "controlId": "3.14.5;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -2665,7 +2665,7 @@
           "controlId": "3.14.5;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -2725,7 +2725,7 @@
           "controlId": "3.14.5;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -2786,7 +2786,7 @@
           "controlId": "3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -2846,7 +2846,7 @@
           "controlId": "3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -2908,7 +2908,7 @@
           "controlId": "3.14.5;3.4.2"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -2968,7 +2968,7 @@
           "controlId": "3.14.2;3.14.5;3.4.2"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -3028,7 +3028,7 @@
           "controlId": "3.14.2;3.14.5;3.4.2"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -3089,7 +3089,7 @@
           "controlId": "3.14.2;3.14.5;3.4.2"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -3149,7 +3149,7 @@
           "controlId": "3.14.2;3.14.5;3.4.2"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -3209,7 +3209,7 @@
           "controlId": "3.14.6;3.14.7"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B);§164.308(a)(6)(i)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B);\u00a7164.308(a)(6)(i)",
           "title": "Protection from Malicious Software; Security Incident Procedures"
         },
         "soc2": {
@@ -3269,7 +3269,7 @@
           "controlId": "3.14.2;3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -3329,7 +3329,7 @@
           "controlId": "3.14.2;3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -3391,7 +3391,7 @@
           "controlId": "3.3.1;3.3.2"
         },
         "hipaa": {
-          "controlId": "§164.312(b)",
+          "controlId": "\u00a7164.312(b)",
           "title": "Audit Controls"
         },
         "cisa-scuba": {
@@ -3449,7 +3449,7 @@
           "controlId": "3.3.1;3.3.2"
         },
         "hipaa": {
-          "controlId": "§164.312(b)",
+          "controlId": "\u00a7164.312(b)",
           "title": "Audit Controls"
         },
         "cisa-scuba": {
@@ -3503,7 +3503,7 @@
           "controlId": "3.1.22;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(c)(1);§164.312(e)(1)",
+          "controlId": "\u00a7164.312(c)(1);\u00a7164.312(e)(1)",
           "title": "Integrity; Transmission Security"
         },
         "cisa-scuba": {
@@ -3563,7 +3563,7 @@
           "controlId": "3.1.22;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(c)(1);§164.312(e)(1)",
+          "controlId": "\u00a7164.312(c)(1);\u00a7164.312(e)(1)",
           "title": "Integrity; Transmission Security"
         },
         "cisa-scuba": {
@@ -3621,7 +3621,7 @@
           "controlId": "3.1.22;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(c)(1);§164.312(e)(1)",
+          "controlId": "\u00a7164.312(c)(1);\u00a7164.312(e)(1)",
           "title": "Integrity; Transmission Security"
         },
         "soc2": {
@@ -3676,7 +3676,7 @@
           "controlId": "3.1.22;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(c)(1);§164.312(e)(1)",
+          "controlId": "\u00a7164.312(c)(1);\u00a7164.312(e)(1)",
           "title": "Integrity; Transmission Security"
         },
         "soc2": {
@@ -3738,7 +3738,7 @@
           "controlId": "3.1.22;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(c)(1)",
+          "controlId": "\u00a7164.312(c)(1)",
           "title": "Integrity"
         },
         "soc2": {
@@ -3799,7 +3799,7 @@
           "controlId": "3.1.22;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(c)(1)",
+          "controlId": "\u00a7164.312(c)(1)",
           "title": "Integrity"
         },
         "soc2": {
@@ -3861,7 +3861,7 @@
           "controlId": "3.4.1;3.4.2"
         },
         "hipaa": {
-          "controlId": "§164.310(b);§164.310(c)",
+          "controlId": "\u00a7164.310(b);\u00a7164.310(c)",
           "title": "Workstation Use; Workstation Security"
         },
         "soc2": {
@@ -3925,7 +3925,7 @@
           "controlId": "3.4.1;3.4.2"
         },
         "hipaa": {
-          "controlId": "§164.310(b);§164.310(c)",
+          "controlId": "\u00a7164.310(b);\u00a7164.310(c)",
           "title": "Workstation Use; Workstation Security"
         },
         "soc2": {
@@ -3990,7 +3990,7 @@
           "controlId": "3.1.18;3.1.19;3.4.6"
         },
         "hipaa": {
-          "controlId": "§164.310(b);§164.310(c)",
+          "controlId": "\u00a7164.310(b);\u00a7164.310(c)",
           "title": "Workstation Use; Workstation Security"
         },
         "soc2": {
@@ -4051,7 +4051,7 @@
           "controlId": "3.1.18;3.1.19;3.4.6"
         },
         "hipaa": {
-          "controlId": "§164.310(b);§164.310(c)",
+          "controlId": "\u00a7164.310(b);\u00a7164.310(c)",
           "title": "Workstation Use; Workstation Security"
         },
         "soc2": {
@@ -4113,7 +4113,7 @@
           "controlId": "3.5.3;3.4.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "soc2": {
@@ -4177,7 +4177,7 @@
           "controlId": "3.5.3;3.4.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "soc2": {
@@ -4242,7 +4242,7 @@
           "controlId": "3.1.1;3.4.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -4309,7 +4309,7 @@
           "controlId": "3.1.1;3.4.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -4377,7 +4377,7 @@
           "controlId": "3.1.5;3.4.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -4441,7 +4441,7 @@
           "controlId": "3.1.5;3.1.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "soc2": {
@@ -4506,7 +4506,7 @@
           "controlId": "3.1.5;3.1.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "soc2": {
@@ -4569,7 +4569,7 @@
           "controlId": "3.1.10"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(2)(iii)",
+          "controlId": "\u00a7164.312(a)(2)(iii)",
           "title": "Automatic Logoff"
         },
         "soc2": {
@@ -4630,7 +4630,7 @@
           "controlId": "3.4.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -4691,7 +4691,7 @@
           "controlId": "3.4.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -4753,7 +4753,7 @@
           "controlId": "3.1.1;3.1.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "soc2": {
@@ -4817,7 +4817,7 @@
           "controlId": "3.1.1;3.1.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "soc2": {
@@ -4882,7 +4882,7 @@
           "controlId": "3.1.5;3.4.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -4946,7 +4946,7 @@
           "controlId": "3.1.2;3.4.6"
         },
         "hipaa": {
-          "controlId": "§164.310(b);§164.312(a)(1)",
+          "controlId": "\u00a7164.310(b);\u00a7164.312(a)(1)",
           "title": "Workstation Use; Access Control"
         },
         "soc2": {
@@ -5007,7 +5007,7 @@
           "controlId": "3.1.2;3.4.6"
         },
         "hipaa": {
-          "controlId": "§164.310(b);§164.312(a)(1)",
+          "controlId": "\u00a7164.310(b);\u00a7164.312(a)(1)",
           "title": "Workstation Use; Access Control"
         },
         "soc2": {
@@ -5069,7 +5069,7 @@
           "controlId": "3.4.1;3.1.18"
         },
         "hipaa": {
-          "controlId": "§164.310(b);§164.310(c)",
+          "controlId": "\u00a7164.310(b);\u00a7164.310(c)",
           "title": "Workstation Use; Workstation Security"
         },
         "soc2": {
@@ -5133,7 +5133,7 @@
           "controlId": "3.4.1;3.1.18"
         },
         "hipaa": {
-          "controlId": "§164.310(b);§164.310(c)",
+          "controlId": "\u00a7164.310(b);\u00a7164.310(c)",
           "title": "Workstation Use; Workstation Security"
         },
         "soc2": {
@@ -5198,7 +5198,7 @@
           "controlId": "3.1.5;3.1.6;3.4.2"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -5262,7 +5262,7 @@
           "controlId": "3.1.5;3.1.6;3.4.2"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -5327,7 +5327,7 @@
           "controlId": "3.1.5;3.1.6;3.4.2"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -5392,7 +5392,7 @@
           "controlId": "3.1.5;3.1.6;3.4.2"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -5456,7 +5456,7 @@
           "controlId": "3.5.7;3.5.10;3.4.2"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(D)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(D)",
           "title": "Password Management"
         },
         "soc2": {
@@ -5520,7 +5520,7 @@
           "controlId": "3.5.7;3.5.10;3.4.2"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(D)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(D)",
           "title": "Password Management"
         },
         "soc2": {
@@ -5585,7 +5585,7 @@
           "controlId": "3.1.5;3.1.2"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.312(a)(2)(iv)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.312(a)(2)(iv)",
           "title": "Access Control; Encryption and Decryption"
         },
         "soc2": {
@@ -5649,7 +5649,7 @@
           "controlId": "3.1.5;3.1.2"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.312(a)(2)(iv)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.312(a)(2)(iv)",
           "title": "Access Control; Encryption and Decryption"
         },
         "soc2": {
@@ -5714,7 +5714,7 @@
           "controlId": "3.1.5;3.4.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -5782,7 +5782,7 @@
           "controlId": "3.1.5;3.4.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -5849,7 +5849,7 @@
           "controlId": "3.1.2;3.1.20"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -5910,7 +5910,7 @@
           "controlId": "3.1.2;3.1.20"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -5974,7 +5974,7 @@
           "controlId": "3.1.5;3.1.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -6040,7 +6040,7 @@
           "controlId": "3.1.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -6107,7 +6107,7 @@
           "controlId": "3.5.7;3.5.8"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.308(a)(5)(ii)(D)",
+          "controlId": "\u00a7164.312(d);\u00a7164.308(a)(5)(ii)(D)",
           "title": "Person or Entity Authentication; Password Management"
         },
         "soc2": {
@@ -6168,7 +6168,7 @@
           "controlId": "3.5.7;3.5.8"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.308(a)(5)(ii)(D)",
+          "controlId": "\u00a7164.312(d);\u00a7164.308(a)(5)(ii)(D)",
           "title": "Person or Entity Authentication; Password Management"
         },
         "soc2": {
@@ -6233,7 +6233,7 @@
           "controlId": "3.5.3"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "cisa-scuba": {
@@ -6304,7 +6304,7 @@
           "controlId": "3.5.3"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "cisa-scuba": {
@@ -6374,7 +6374,7 @@
           "controlId": "3.5.3"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "cisa-scuba": {
@@ -6444,7 +6444,7 @@
           "controlId": "3.5.3"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "cisa-scuba": {
@@ -6515,7 +6515,7 @@
           "controlId": "3.4.6;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.312(a)(1)",
+          "controlId": "\u00a7164.312(d);\u00a7164.312(a)(1)",
           "title": "Person or Entity Authentication; Access Control"
         },
         "cisa-scuba": {
@@ -6582,7 +6582,7 @@
           "controlId": "3.4.6;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.312(a)(1)",
+          "controlId": "\u00a7164.312(d);\u00a7164.312(a)(1)",
           "title": "Person or Entity Authentication; Access Control"
         },
         "cisa-scuba": {
@@ -6646,7 +6646,7 @@
           "controlId": "3.1.10"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(2)(iii);§164.312(d)",
+          "controlId": "\u00a7164.312(a)(2)(iii);\u00a7164.312(d)",
           "title": "Automatic Logoff; Person or Entity Authentication"
         },
         "cisa-scuba": {
@@ -6709,7 +6709,7 @@
           "controlId": "3.1.10"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(2)(iii);§164.312(d)",
+          "controlId": "\u00a7164.312(a)(2)(iii);\u00a7164.312(d)",
           "title": "Automatic Logoff; Person or Entity Authentication"
         },
         "cisa-scuba": {
@@ -6756,7 +6756,7 @@
         },
         "nist-800-53": {
           "controlId": "IA-2(1);IA-5c;IA-5g;IA-2(8)",
-          "title": "Multi-factor Authentication to Privileged Accounts; Authenticator Management; Access to Accounts — Replay Resistant",
+          "title": "Multi-factor Authentication to Privileged Accounts; Authenticator Management; Access to Accounts \u2014 Replay Resistant",
           "profiles": [
             "Low",
             "Moderate",
@@ -6777,7 +6777,7 @@
           "controlId": "3.5.3"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "cisa-scuba": {
@@ -6826,7 +6826,7 @@
         },
         "nist-800-53": {
           "controlId": "IA-2(1);IA-5c;IA-5g;IA-2(8)",
-          "title": "Multi-factor Authentication to Privileged Accounts; Authenticator Management; Access to Accounts — Replay Resistant",
+          "title": "Multi-factor Authentication to Privileged Accounts; Authenticator Management; Access to Accounts \u2014 Replay Resistant",
           "profiles": [
             "Low",
             "Moderate",
@@ -6847,7 +6847,7 @@
           "controlId": "3.5.3"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "cisa-scuba": {
@@ -6916,7 +6916,7 @@
           "controlId": "3.1.1;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.308(a)(1)(ii)(A)",
+          "controlId": "\u00a7164.312(d);\u00a7164.308(a)(1)(ii)(A)",
           "title": "Person or Entity Authentication; Risk Analysis"
         },
         "cisa-scuba": {
@@ -6978,7 +6978,7 @@
           "controlId": "3.1.1;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.308(a)(1)(ii)(A)",
+          "controlId": "\u00a7164.312(d);\u00a7164.308(a)(1)(ii)(A)",
           "title": "Person or Entity Authentication; Risk Analysis"
         },
         "cisa-scuba": {
@@ -7041,7 +7041,7 @@
           "controlId": "3.1.1;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.308(a)(1)(ii)(A)",
+          "controlId": "\u00a7164.312(d);\u00a7164.308(a)(1)(ii)(A)",
           "title": "Person or Entity Authentication; Risk Analysis"
         },
         "cisa-scuba": {
@@ -7103,7 +7103,7 @@
           "controlId": "3.1.1;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.308(a)(1)(ii)(A)",
+          "controlId": "\u00a7164.312(d);\u00a7164.308(a)(1)(ii)(A)",
           "title": "Person or Entity Authentication; Risk Analysis"
         },
         "cisa-scuba": {
@@ -7166,7 +7166,7 @@
           "controlId": "3.1.1;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.308(a)(1)(ii)(A)",
+          "controlId": "\u00a7164.312(d);\u00a7164.308(a)(1)(ii)(A)",
           "title": "Person or Entity Authentication; Risk Analysis"
         },
         "cisa-scuba": {
@@ -7228,7 +7228,7 @@
           "controlId": "3.1.1;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.308(a)(1)(ii)(A)",
+          "controlId": "\u00a7164.312(d);\u00a7164.308(a)(1)(ii)(A)",
           "title": "Person or Entity Authentication; Risk Analysis"
         },
         "cisa-scuba": {
@@ -7290,7 +7290,7 @@
           "controlId": "3.1.18;3.1.19;3.5.1"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.310(b)",
+          "controlId": "\u00a7164.312(d);\u00a7164.310(b)",
           "title": "Person or Entity Authentication; Workstation Use"
         },
         "cisa-scuba": {
@@ -7355,7 +7355,7 @@
           "controlId": "3.1.18;3.1.19;3.5.1"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.310(b)",
+          "controlId": "\u00a7164.312(d);\u00a7164.310(b)",
           "title": "Person or Entity Authentication; Workstation Use"
         },
         "cisa-scuba": {
@@ -7419,7 +7419,7 @@
           "controlId": "3.1.18;3.1.19;3.5.1"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.310(b)",
+          "controlId": "\u00a7164.312(d);\u00a7164.310(b)",
           "title": "Person or Entity Authentication; Workstation Use"
         },
         "cisa-scuba": {
@@ -7483,7 +7483,7 @@
           "controlId": "3.1.18;3.1.19;3.5.1"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.310(b)",
+          "controlId": "\u00a7164.312(d);\u00a7164.310(b)",
           "title": "Person or Entity Authentication; Workstation Use"
         },
         "cisa-scuba": {
@@ -7548,7 +7548,7 @@
           "controlId": "3.1.10;3.5.3"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.312(a)(2)(iii)",
+          "controlId": "\u00a7164.312(d);\u00a7164.312(a)(2)(iii)",
           "title": "Person or Entity Authentication; Automatic Logoff"
         },
         "cisa-scuba": {
@@ -7615,7 +7615,7 @@
           "controlId": "3.1.10;3.5.3"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.312(a)(2)(iii)",
+          "controlId": "\u00a7164.312(d);\u00a7164.312(a)(2)(iii)",
           "title": "Person or Entity Authentication; Automatic Logoff"
         },
         "cisa-scuba": {
@@ -7683,7 +7683,7 @@
           "controlId": "3.4.6;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.312(a)(1)",
+          "controlId": "\u00a7164.312(d);\u00a7164.312(a)(1)",
           "title": "Person or Entity Authentication; Access Control"
         },
         "soc2": {
@@ -7744,7 +7744,7 @@
           "controlId": "3.4.6;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.312(a)(1)",
+          "controlId": "\u00a7164.312(d);\u00a7164.312(a)(1)",
           "title": "Person or Entity Authentication; Access Control"
         },
         "soc2": {
@@ -7788,7 +7788,7 @@
         },
         "nist-800-53": {
           "controlId": "IA-2(1);IA-2(2);IA-5c;IA-5g;IA-2(8);IA-2(13)",
-          "title": "Multi-factor Authentication to Privileged Accounts; Multi-factor Authentication to Non-privileged Accounts; Authenticator Management; Access to Accounts — Replay Resistant; Out-of-band Authentication",
+          "title": "Multi-factor Authentication to Privileged Accounts; Multi-factor Authentication to Non-privileged Accounts; Authenticator Management; Access to Accounts \u2014 Replay Resistant; Out-of-band Authentication",
           "profiles": [
             "Low",
             "Moderate",
@@ -7806,7 +7806,7 @@
           "controlId": "3.5.3"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "cisa-scuba": {
@@ -7855,7 +7855,7 @@
         },
         "nist-800-53": {
           "controlId": "IA-2(1);IA-2(2);IA-5c;IA-5g;IA-2(8);IA-2(13)",
-          "title": "Multi-factor Authentication to Privileged Accounts; Multi-factor Authentication to Non-privileged Accounts; Authenticator Management; Access to Accounts — Replay Resistant; Out-of-band Authentication",
+          "title": "Multi-factor Authentication to Privileged Accounts; Multi-factor Authentication to Non-privileged Accounts; Authenticator Management; Access to Accounts \u2014 Replay Resistant; Out-of-band Authentication",
           "profiles": [
             "Low",
             "Moderate",
@@ -7873,7 +7873,7 @@
           "controlId": "3.5.3"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "cisa-scuba": {
@@ -7941,7 +7941,7 @@
           "controlId": "3.5.7"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(D)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(D)",
           "title": "Password Management"
         },
         "soc2": {
@@ -8002,7 +8002,7 @@
           "controlId": "3.5.7"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(D)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(D)",
           "title": "Password Management"
         },
         "soc2": {
@@ -8063,7 +8063,7 @@
           "controlId": "3.5.7"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(D)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(D)",
           "title": "Password Management"
         },
         "soc2": {
@@ -8125,7 +8125,7 @@
           "controlId": "3.5.3"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "soc2": {
@@ -8189,7 +8189,7 @@
           "controlId": "3.4.6;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "cisa-scuba": {
@@ -8245,7 +8245,7 @@
           "controlId": "3.4.6;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "cisa-scuba": {
@@ -8300,7 +8300,7 @@
           "controlId": "3.5.3"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "soc2": {
@@ -8364,7 +8364,7 @@
           "controlId": "3.5.3"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "soc2": {
@@ -8429,7 +8429,7 @@
           "controlId": "3.4.6;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "soc2": {
@@ -8490,7 +8490,7 @@
           "controlId": "3.4.6;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "soc2": {
@@ -8552,7 +8552,7 @@
           "controlId": "3.5.7;3.5.8"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(D)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(D)",
           "title": "Password Management"
         },
         "soc2": {
@@ -8613,7 +8613,7 @@
           "controlId": "3.5.7;3.5.8"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(D)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(D)",
           "title": "Password Management"
         },
         "soc2": {
@@ -8677,7 +8677,7 @@
           "controlId": "3.1.1;3.1.5;3.1.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -8746,7 +8746,7 @@
           "controlId": "3.1.1;3.1.5;3.1.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -8812,7 +8812,7 @@
           "controlId": "3.1.1;3.1.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -8877,7 +8877,7 @@
           "controlId": "3.1.1;3.1.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -8943,7 +8943,7 @@
           "controlId": "3.1.1;3.1.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -9008,7 +9008,7 @@
           "controlId": "3.1.1;3.1.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -9074,7 +9074,7 @@
           "controlId": "3.1.5;3.1.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -9140,7 +9140,7 @@
           "controlId": "3.1.5;3.1.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -9205,7 +9205,7 @@
           "controlId": "3.1.5;3.1.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -9270,7 +9270,7 @@
           "controlId": "3.1.5;3.1.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.308(a)(4)(i)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.308(a)(4)(i)",
           "title": "Access Control; Information Access Management"
         },
         "cisa-scuba": {
@@ -9338,7 +9338,7 @@
           "controlId": "3.3.1;3.3.2"
         },
         "hipaa": {
-          "controlId": "§164.312(b)",
+          "controlId": "\u00a7164.312(b)",
           "title": "Audit Controls"
         },
         "cisa-scuba": {
@@ -9396,7 +9396,7 @@
           "controlId": "3.3.1;3.3.2"
         },
         "hipaa": {
-          "controlId": "§164.312(b)",
+          "controlId": "\u00a7164.312(b)",
           "title": "Audit Controls"
         },
         "cisa-scuba": {
@@ -9454,7 +9454,7 @@
           "controlId": "3.3.1;3.3.2"
         },
         "hipaa": {
-          "controlId": "§164.312(b)",
+          "controlId": "\u00a7164.312(b)",
           "title": "Audit Controls"
         },
         "cisa-scuba": {
@@ -9513,7 +9513,7 @@
           "controlId": "3.3.1;3.3.2"
         },
         "hipaa": {
-          "controlId": "§164.312(b)",
+          "controlId": "\u00a7164.312(b)",
           "title": "Audit Controls"
         },
         "cisa-scuba": {
@@ -9570,7 +9570,7 @@
           "controlId": "3.1.22;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(e)(1);§164.312(b)",
+          "controlId": "\u00a7164.312(e)(1);\u00a7164.312(b)",
           "title": "Transmission Security; Audit Controls"
         },
         "cisa-scuba": {
@@ -9633,7 +9633,7 @@
           "controlId": "3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -9693,7 +9693,7 @@
           "controlId": "3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -9754,7 +9754,7 @@
           "controlId": "3.14.5;3.2.1"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(i)",
+          "controlId": "\u00a7164.308(a)(5)(i)",
           "title": "Security Awareness and Training"
         },
         "cisa-scuba": {
@@ -9818,7 +9818,7 @@
           "controlId": "3.4.9;3.4.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -9879,7 +9879,7 @@
           "controlId": "3.4.6;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.312(a)(1)",
+          "controlId": "\u00a7164.312(d);\u00a7164.312(a)(1)",
           "title": "Person or Entity Authentication; Access Control"
         },
         "soc2": {
@@ -9935,7 +9935,7 @@
           "title": "Information security awareness, education and training"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(i)",
+          "controlId": "\u00a7164.308(a)(5)(i)",
           "title": "Security Awareness and Training"
         }
       }
@@ -9982,7 +9982,7 @@
           "controlId": "3.4.6;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -10043,7 +10043,7 @@
           "controlId": "3.4.6;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.312(a)(1)",
+          "controlId": "\u00a7164.312(d);\u00a7164.312(a)(1)",
           "title": "Person or Entity Authentication; Access Control"
         },
         "cisa-scuba": {
@@ -10155,7 +10155,7 @@
           "controlId": "3.4.6;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.312(a)(1)",
+          "controlId": "\u00a7164.312(d);\u00a7164.312(a)(1)",
           "title": "Person or Entity Authentication; Access Control"
         },
         "soc2": {
@@ -10216,7 +10216,7 @@
           "controlId": "3.4.6;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d);§164.312(a)(1)",
+          "controlId": "\u00a7164.312(d);\u00a7164.312(a)(1)",
           "title": "Person or Entity Authentication; Access Control"
         },
         "soc2": {
@@ -10278,7 +10278,7 @@
           "controlId": "3.1.1;3.5.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.312(d)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.312(d)",
           "title": "Access Control; Person or Entity Authentication"
         },
         "soc2": {
@@ -10339,7 +10339,7 @@
           "controlId": "3.1.1;3.5.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.312(d)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.312(d)",
           "title": "Access Control; Person or Entity Authentication"
         },
         "soc2": {
@@ -10401,7 +10401,7 @@
           "controlId": "3.1.2;3.1.22"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -10462,7 +10462,7 @@
           "controlId": "3.1.2;3.1.22"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -10523,7 +10523,7 @@
           "controlId": "3.1.2;3.1.22"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -10585,7 +10585,7 @@
           "controlId": "3.1.2;3.1.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -10649,7 +10649,7 @@
           "controlId": "3.1.2;3.1.20"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -10712,7 +10712,7 @@
           "controlId": "3.1.5;3.1.22"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -10776,7 +10776,7 @@
           "controlId": "3.1.2;3.1.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -10840,7 +10840,7 @@
           "controlId": "3.1.2;3.1.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -10905,7 +10905,7 @@
           "controlId": "3.1.1;3.1.20"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -10963,7 +10963,7 @@
           "controlId": "3.5.1;3.5.2"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "soc2": {
@@ -11020,7 +11020,7 @@
           "controlId": "3.1.5;3.1.22"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -11083,7 +11083,7 @@
           "controlId": "3.14.2"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -11134,7 +11134,7 @@
           "controlId": "3.14.2"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(5)(ii)(B)",
+          "controlId": "\u00a7164.308(a)(5)(ii)(B)",
           "title": "Protection from Malicious Software"
         },
         "soc2": {
@@ -11187,7 +11187,7 @@
           "controlId": "3.1.18;3.1.19;3.4.6"
         },
         "hipaa": {
-          "controlId": "§164.310(b);§164.312(a)(1)",
+          "controlId": "\u00a7164.310(b);\u00a7164.312(a)(1)",
           "title": "Workstation Use; Access Control"
         },
         "soc2": {
@@ -11245,7 +11245,7 @@
           "controlId": "3.4.6;3.4.9"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -11303,7 +11303,7 @@
           "controlId": "3.4.6;3.4.9"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -11362,7 +11362,7 @@
           "controlId": "3.4.6;3.4.9"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -11420,7 +11420,7 @@
           "controlId": "3.4.6;3.4.9"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -11482,7 +11482,7 @@
           "controlId": "3.4.6;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -11543,7 +11543,7 @@
           "controlId": "3.4.6;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -11604,7 +11604,7 @@
           "controlId": "3.13.1;3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.312(e)(1)",
+          "controlId": "\u00a7164.312(e)(1)",
           "title": "Transmission Security"
         },
         "soc2": {
@@ -11665,7 +11665,7 @@
           "controlId": "3.13.1;3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.312(e)(1)",
+          "controlId": "\u00a7164.312(e)(1)",
           "title": "Transmission Security"
         },
         "soc2": {
@@ -11726,7 +11726,7 @@
           "controlId": "3.1.2;3.1.20"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -11784,7 +11784,7 @@
           "controlId": "3.1.2;3.1.20"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -11843,7 +11843,7 @@
           "controlId": "3.4.6;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -11904,7 +11904,7 @@
           "controlId": "3.4.6;3.14.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -11965,7 +11965,7 @@
           "controlId": "3.4.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -12026,7 +12026,7 @@
           "controlId": "3.4.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -12088,7 +12088,7 @@
           "controlId": "3.4.9;3.1.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -12146,7 +12146,7 @@
           "controlId": "3.4.9;3.1.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -12205,7 +12205,7 @@
           "controlId": "3.1.2;3.13.12"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.312(d)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.312(d)",
           "title": "Access Control; Person or Entity Authentication"
         },
         "soc2": {
@@ -12263,7 +12263,7 @@
           "controlId": "3.1.2;3.13.12"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1);§164.312(d)",
+          "controlId": "\u00a7164.312(a)(1);\u00a7164.312(d)",
           "title": "Access Control; Person or Entity Authentication"
         },
         "soc2": {
@@ -12315,7 +12315,7 @@
           "controlId": "3.1.2"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -12373,7 +12373,7 @@
           "controlId": "3.1.2;3.13.12"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -12425,7 +12425,7 @@
           "controlId": "3.1.2;3.13.12"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -12484,7 +12484,7 @@
           "controlId": "3.1.2;3.13.12"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -12542,7 +12542,7 @@
           "controlId": "3.1.2"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -12600,7 +12600,7 @@
           "controlId": "3.1.2"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -12659,7 +12659,7 @@
           "controlId": "3.1.12;3.1.14"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -12711,7 +12711,7 @@
           "controlId": "3.4.6;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -12772,7 +12772,7 @@
           "controlId": "3.4.6;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -12834,7 +12834,7 @@
           "controlId": "3.4.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -12895,7 +12895,7 @@
           "controlId": "3.4.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -12950,7 +12950,7 @@
           "title": "Information security event reporting; Monitoring activities"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(6)(i)",
+          "controlId": "\u00a7164.308(a)(6)(i)",
           "title": "Security Incident Procedures"
         },
         "soc2": {
@@ -13004,7 +13004,7 @@
           "title": "Information security event reporting; Monitoring activities"
         },
         "hipaa": {
-          "controlId": "§164.308(a)(6)(i)",
+          "controlId": "\u00a7164.308(a)(6)(i)",
           "title": "Security Incident Procedures"
         },
         "soc2": {
@@ -13066,7 +13066,7 @@
           "controlId": "3.1.5;3.4.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -13130,7 +13130,7 @@
           "controlId": "3.1.5;3.4.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -13194,7 +13194,7 @@
           "controlId": "3.1.5;3.4.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -13258,7 +13258,7 @@
           "controlId": "3.4.6;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -13319,7 +13319,7 @@
           "controlId": "3.4.6;3.14.2"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -13383,7 +13383,7 @@
           "controlId": "3.1.22;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(c)(1)",
+          "controlId": "\u00a7164.312(c)(1)",
           "title": "Integrity"
         },
         "soc2": {
@@ -13443,7 +13443,7 @@
           "controlId": "3.1.22;3.1.5"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -13504,7 +13504,7 @@
           "controlId": "3.4.6;3.13.1"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -13565,7 +13565,7 @@
           "controlId": "3.5.2;3.4.6"
         },
         "hipaa": {
-          "controlId": "§164.312(d)",
+          "controlId": "\u00a7164.312(d)",
           "title": "Person or Entity Authentication"
         },
         "soc2": {
@@ -13625,7 +13625,7 @@
           "controlId": "3.1.5;3.1.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -13688,7 +13688,7 @@
           "controlId": "3.1.5;3.1.6"
         },
         "hipaa": {
-          "controlId": "§164.312(a)(1)",
+          "controlId": "\u00a7164.312(a)(1)",
           "title": "Access Control"
         },
         "soc2": {
@@ -13784,7 +13784,7 @@
           "controlId": "3.5.7"
         },
         "hipaa": {
-          "controlId": "┬º164.308(a)(5)(ii)(D)"
+          "controlId": "\u252c\u00ba164.308(a)(5)(ii)(D)"
         },
         "soc2": {
           "controlId": "CC6.1",
@@ -13918,7 +13918,7 @@
           "controlId": "3.1.8"
         },
         "hipaa": {
-          "controlId": "┬º164.312(a)(2)(i)"
+          "controlId": "\u252c\u00ba164.312(a)(2)(i)"
         },
         "soc2": {
           "controlId": "CC6.1",
@@ -13968,7 +13968,7 @@
           "controlId": "3.4.6"
         },
         "hipaa": {
-          "controlId": "┬º164.312(a)(1)"
+          "controlId": "\u252c\u00ba164.312(a)(1)"
         },
         "soc2": {
           "controlId": "CC5;CC8.1",
@@ -14094,7 +14094,7 @@
           "controlId": "3.4.6"
         },
         "hipaa": {
-          "controlId": "┬º164.312(a)(1)"
+          "controlId": "\u252c\u00ba164.312(a)(1)"
         },
         "cisa-scuba": {
           "controlId": "MS.AAD.5.3v1"
@@ -14147,7 +14147,7 @@
           "controlId": "3.1.1;3.5.3"
         },
         "hipaa": {
-          "controlId": "┬º164.312(d);┬º164.312(a)(1)"
+          "controlId": "\u252c\u00ba164.312(d);\u252c\u00ba164.312(a)(1)"
         },
         "cisa-scuba": {
           "controlId": "MS.AAD.1.1v1"
@@ -14200,7 +14200,7 @@
           "controlId": "3.1.1;3.1.2"
         },
         "hipaa": {
-          "controlId": "┬º164.312(a)(1)"
+          "controlId": "\u252c\u00ba164.312(a)(1)"
         },
         "soc2": {
           "controlId": "CC5;CC6.1",
@@ -14254,6 +14254,423 @@
         },
         "mitre-attack": {
           "controlId": "T1011.001;T1020.001;T1021.001;T1021.003;T1021.004;T1021.005;T1021.006;T1046;T1052;T1052.001"
+        }
+      }
+    },
+    {
+      "checkId": "FORMS-CONFIG-001",
+      "name": "Ensure external users cannot respond to Microsoft Forms",
+      "category": "CONFIG",
+      "collector": "Forms",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "cis-m365-v6": {
+          "controlId": "3.6.1",
+          "title": "Ensure 'External sharing' of calendars is not available",
+          "profiles": [
+            "E3-L1",
+            "E5-L1"
+          ]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05;PR.DS-5",
+          "title": "Access permissions, entitlements, and authorizations are managed; Data are protected from unauthorized disclosure and exfiltration"
+        },
+        "nist-800-53": {
+          "controlId": "AC-3;AC-22",
+          "title": "Access Enforcement; Publicly Accessible Content",
+          "profiles": [
+            "Low",
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.5.14",
+          "title": "Access control; Information transfer"
+        },
+        "soc2": {
+          "controlId": "CC6.1;CC6.7",
+          "evidenceType": "config-export",
+          "title": "Logical Access Security Software, Infrastructure, and Architectures; Data Transmission and Movement Restriction"
+        },
+        "fedramp": {
+          "controlId": "AC-3;AC-22;SC-28"
+        },
+        "mitre-attack": {
+          "controlId": "T1530;T1213;T1114"
+        }
+      }
+    },
+    {
+      "checkId": "FORMS-CONFIG-002",
+      "name": "Ensure external users cannot collaborate on Microsoft Forms",
+      "category": "CONFIG",
+      "collector": "Forms",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "cis-m365-v6": {
+          "controlId": "3.6.1",
+          "title": "Ensure Microsoft Forms external sharing is restricted",
+          "profiles": [
+            "E3-L1",
+            "E5-L1"
+          ]
+        },
+        "nist-800-53": {
+          "controlId": "AC-3;AC-22",
+          "title": "Access Enforcement; Publicly Accessible Content",
+          "profiles": [
+            "Low",
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.5.14",
+          "title": "Access control; Information transfer"
+        },
+        "soc2": {
+          "controlId": "CC6.1;CC6.7",
+          "evidenceType": "config-export",
+          "title": "Logical Access Security Software, Infrastructure, and Architectures; Data Transmission and Movement Restriction"
+        },
+        "fedramp": {
+          "controlId": "AC-3;AC-22"
+        }
+      }
+    },
+    {
+      "checkId": "FORMS-CONFIG-003",
+      "name": "Ensure external users cannot view Microsoft Forms results",
+      "category": "CONFIG",
+      "collector": "Forms",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-3;AC-22",
+          "title": "Access Enforcement; Publicly Accessible Content",
+          "profiles": [
+            "Low",
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.5.14",
+          "title": "Access control; Information transfer"
+        },
+        "soc2": {
+          "controlId": "CC6.1",
+          "evidenceType": "config-export",
+          "title": "Logical Access Security Software, Infrastructure, and Architectures"
+        },
+        "fedramp": {
+          "controlId": "AC-3;AC-22"
+        }
+      }
+    },
+    {
+      "checkId": "FORMS-CONFIG-004",
+      "name": "Ensure Microsoft Forms phishing protection is enabled",
+      "category": "CONFIG",
+      "collector": "Forms",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "cis-m365-v6": {
+          "controlId": "3.6.2",
+          "title": "Ensure Microsoft Forms settings do not allow phishing",
+          "profiles": [
+            "E3-L1",
+            "E5-L1"
+          ]
+        },
+        "nist-csf": {
+          "controlId": "DE.CM-04;PR.PS-01",
+          "title": "Malicious code is detected; Configuration management practices are established"
+        },
+        "nist-800-53": {
+          "controlId": "SI-3;SC-18",
+          "title": "Malicious Code Protection; Mobile Code",
+          "profiles": [
+            "Low",
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.8.7;A.8.23",
+          "title": "Protection against malware; Web filtering"
+        },
+        "soc2": {
+          "controlId": "CC6.8",
+          "evidenceType": "config-export",
+          "title": "Protection Against or Detection and Prevention of Unauthorized or Malicious Software"
+        },
+        "fedramp": {
+          "controlId": "SI-3;SC-18"
+        },
+        "mitre-attack": {
+          "controlId": "T1566;T1566.001;T1566.002"
+        }
+      }
+    },
+    {
+      "checkId": "FORMS-CONFIG-005",
+      "name": "Ensure Microsoft Forms records respondent identity by default",
+      "category": "CONFIG",
+      "collector": "Forms",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AU-9;AC-16",
+          "title": "Protection of Audit Information; Security and Privacy Attributes",
+          "profiles": [
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.8.15;A.5.33",
+          "title": "Logging; Protection of records"
+        },
+        "soc2": {
+          "controlId": "CC7.2",
+          "evidenceType": "config-export",
+          "title": "Monitoring of System Components for Anomalies"
+        },
+        "fedramp": {
+          "controlId": "AU-9;AU-12"
+        }
+      }
+    },
+    {
+      "checkId": "FORMS-CONFIG-006",
+      "name": "Ensure Bing image and video search is disabled in Microsoft Forms",
+      "category": "CONFIG",
+      "collector": "Forms",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "SC-18;CA-3",
+          "title": "Mobile Code; Information Exchange",
+          "profiles": [
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.5.14;A.8.23",
+          "title": "Information transfer; Web filtering"
+        },
+        "soc2": {
+          "controlId": "CC6.7",
+          "evidenceType": "config-export",
+          "title": "Data Transmission and Movement Restriction"
+        },
+        "fedramp": {
+          "controlId": "SC-18;CA-3"
+        }
+      }
+    },
+    {
+      "checkId": "PURVIEW-RETENTION-001",
+      "name": "Ensure Microsoft Purview retention policies are configured",
+      "category": "RETENTION",
+      "collector": "PurviewRetention",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AU-11;SI-12",
+          "title": "Audit Record Retention; Information Management and Retention",
+          "profiles": [
+            "Low",
+            "Moderate",
+            "High"
+          ]
+        },
+        "nist-csf": {
+          "controlId": "PR.IP-06",
+          "title": "Data is destroyed according to policy"
+        },
+        "iso-27001": {
+          "controlId": "A.5.33;A.8.10",
+          "title": "Protection of records; Information deletion"
+        },
+        "hipaa": {
+          "controlId": "\u00a7164.316(b)(2)",
+          "title": "Documentation; Time limit"
+        },
+        "soc2": {
+          "controlId": "CC6.5",
+          "evidenceType": "config-export",
+          "title": "Logical and Physical Address Restrictions Are Placed on Information Assets"
+        },
+        "pci-dss": {
+          "controlId": "10.7.x;3.3.x"
+        },
+        "fedramp": {
+          "controlId": "AU-11;SI-12"
+        },
+        "cis-controls-v8": {
+          "controlId": "3.7"
+        }
+      }
+    },
+    {
+      "checkId": "PURVIEW-RETENTION-002",
+      "name": "Ensure Exchange email is covered by a Purview retention policy",
+      "category": "RETENTION",
+      "collector": "PurviewRetention",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AU-11",
+          "title": "Audit Record Retention",
+          "profiles": [
+            "Low",
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.5.33",
+          "title": "Protection of records"
+        },
+        "hipaa": {
+          "controlId": "\u00a7164.316(b)(2)",
+          "title": "Documentation; Time limit"
+        },
+        "soc2": {
+          "controlId": "CC6.5",
+          "evidenceType": "config-export",
+          "title": "Logical and Physical Address Restrictions Are Placed on Information Assets"
+        },
+        "fedramp": {
+          "controlId": "AU-11"
+        }
+      }
+    },
+    {
+      "checkId": "PURVIEW-RETENTION-003",
+      "name": "Ensure Microsoft Teams is covered by a Purview retention policy",
+      "category": "RETENTION",
+      "collector": "PurviewRetention",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AU-11;SC-28",
+          "title": "Audit Record Retention; Protection of Information at Rest",
+          "profiles": [
+            "Low",
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.5.33",
+          "title": "Protection of records"
+        },
+        "soc2": {
+          "controlId": "CC6.5",
+          "evidenceType": "config-export",
+          "title": "Logical and Physical Address Restrictions Are Placed on Information Assets"
+        },
+        "fedramp": {
+          "controlId": "AU-11"
+        }
+      }
+    },
+    {
+      "checkId": "PURVIEW-RETENTION-004",
+      "name": "Ensure SharePoint and OneDrive are covered by a Purview retention policy",
+      "category": "RETENTION",
+      "collector": "PurviewRetention",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AU-11;SI-12",
+          "title": "Audit Record Retention; Information Management and Retention",
+          "profiles": [
+            "Low",
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.5.33;A.8.10",
+          "title": "Protection of records; Information deletion"
+        },
+        "soc2": {
+          "controlId": "CC6.5",
+          "evidenceType": "config-export",
+          "title": "Logical and Physical Address Restrictions Are Placed on Information Assets"
+        },
+        "fedramp": {
+          "controlId": "AU-11;SI-12"
+        }
+      }
+    },
+    {
+      "checkId": "PURVIEW-RETENTION-005",
+      "name": "Ensure all Purview retention policies are in Enforce mode",
+      "category": "RETENTION",
+      "collector": "PurviewRetention",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "CM-6;CM-7",
+          "title": "Configuration Settings; Least Functionality",
+          "profiles": [
+            "Low",
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.5.33;A.8.9",
+          "title": "Protection of records; Configuration management"
+        },
+        "soc2": {
+          "controlId": "CC6.5;CC8.1",
+          "evidenceType": "config-export",
+          "title": "Logical and Physical Address Restrictions; Change Management"
+        },
+        "fedramp": {
+          "controlId": "CM-6;AU-11"
         }
       }
     }
