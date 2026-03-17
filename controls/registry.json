@@ -13784,7 +13784,7 @@
           "controlId": "3.5.7"
         },
         "hipaa": {
-          "controlId": "┬º164.308(a)(5)(ii)(D)"
+          "controlId": "§164.308(a)(5)(ii)(D)"
         },
         "soc2": {
           "controlId": "CC6.1",
@@ -13918,7 +13918,7 @@
           "controlId": "3.1.8"
         },
         "hipaa": {
-          "controlId": "┬º164.312(a)(2)(i)"
+          "controlId": "§164.312(a)(2)(i)"
         },
         "soc2": {
           "controlId": "CC6.1",
@@ -13968,7 +13968,7 @@
           "controlId": "3.4.6"
         },
         "hipaa": {
-          "controlId": "┬º164.312(a)(1)"
+          "controlId": "§164.312(a)(1)"
         },
         "soc2": {
           "controlId": "CC5;CC8.1",
@@ -14094,7 +14094,7 @@
           "controlId": "3.4.6"
         },
         "hipaa": {
-          "controlId": "┬º164.312(a)(1)"
+          "controlId": "§164.312(a)(1)"
         },
         "cisa-scuba": {
           "controlId": "MS.AAD.5.3v1"
@@ -14147,7 +14147,7 @@
           "controlId": "3.1.1;3.5.3"
         },
         "hipaa": {
-          "controlId": "┬º164.312(d);┬º164.312(a)(1)"
+          "controlId": "§164.312(d);§164.312(a)(1)"
         },
         "cisa-scuba": {
           "controlId": "MS.AAD.1.1v1"
@@ -14200,7 +14200,7 @@
           "controlId": "3.1.1;3.1.2"
         },
         "hipaa": {
-          "controlId": "┬º164.312(a)(1)"
+          "controlId": "§164.312(a)(1)"
         },
         "soc2": {
           "controlId": "CC5;CC6.1",
@@ -14254,6 +14254,481 @@
         },
         "mitre-attack": {
           "controlId": "T1011.001;T1020.001;T1021.001;T1021.003;T1021.004;T1021.005;T1021.006;T1046;T1052;T1052.001"
+        }
+      }
+    },
+    {
+      "checkId": "FORMS-CONFIG-001",
+      "name": "Ensure external users cannot respond to Microsoft Forms",
+      "category": "CONFIG",
+      "collector": "Forms",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "cis-m365-v6": {
+          "controlId": "3.6.1",
+          "title": "Ensure Microsoft Forms external sharing is restricted",
+          "profiles": [
+            "E3-L1",
+            "E5-L1"
+          ]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05;PR.DS-5",
+          "title": "Access permissions, entitlements, and authorizations are managed; Data are protected from unauthorized disclosure and exfiltration"
+        },
+        "nist-800-53": {
+          "controlId": "AC-3;AC-22",
+          "title": "Access Enforcement; Publicly Accessible Content",
+          "profiles": [
+            "Low",
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.5.14",
+          "title": "Access control; Information transfer"
+        },
+        "soc2": {
+          "controlId": "CC6.1;CC6.7",
+          "evidenceType": "config-export",
+          "title": "Logical Access Security Software, Infrastructure, and Architectures; Data Transmission and Movement Restriction"
+        },
+        "fedramp": {
+          "controlId": "AC-3;AC-22;SC-28"
+        },
+        "mitre-attack": {
+          "controlId": "T1530;T1213;T1114"
+        }
+      }
+    },
+    {
+      "checkId": "FORMS-CONFIG-002",
+      "name": "Ensure external users cannot collaborate on Microsoft Forms",
+      "category": "CONFIG",
+      "collector": "Forms",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "cis-m365-v6": {
+          "controlId": "3.6.1",
+          "title": "Ensure Microsoft Forms external sharing is restricted",
+          "profiles": [
+            "E3-L1",
+            "E5-L1"
+          ]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05;PR.DS-5",
+          "title": "Access permissions, entitlements, and authorizations are managed; Data are protected from unauthorized disclosure and exfiltration"
+        },
+        "nist-800-53": {
+          "controlId": "AC-3;AC-22",
+          "title": "Access Enforcement; Publicly Accessible Content",
+          "profiles": [
+            "Low",
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.5.14",
+          "title": "Access control; Information transfer"
+        },
+        "soc2": {
+          "controlId": "CC6.1;CC6.7",
+          "evidenceType": "config-export",
+          "title": "Logical Access Security Software, Infrastructure, and Architectures; Data Transmission and Movement Restriction"
+        },
+        "fedramp": {
+          "controlId": "AC-3;AC-22;SC-28"
+        },
+        "mitre-attack": {
+          "controlId": "T1530;T1213"
+        }
+      }
+    },
+    {
+      "checkId": "FORMS-CONFIG-003",
+      "name": "Ensure external users cannot view form results",
+      "category": "CONFIG",
+      "collector": "Forms",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "PR.DS-5",
+          "title": "Data are protected from unauthorized disclosure and exfiltration"
+        },
+        "nist-800-53": {
+          "controlId": "AC-3;AC-22",
+          "title": "Access Enforcement; Publicly Accessible Content",
+          "profiles": [
+            "Low",
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.5.15",
+          "title": "Access control"
+        },
+        "soc2": {
+          "controlId": "CC6.1",
+          "evidenceType": "config-export",
+          "title": "Logical Access Security Software, Infrastructure, and Architectures"
+        },
+        "fedramp": {
+          "controlId": "AC-3;AC-22"
+        },
+        "mitre-attack": {
+          "controlId": "T1530;T1213"
+        }
+      }
+    },
+    {
+      "checkId": "FORMS-CONFIG-004",
+      "name": "Ensure Microsoft Forms phishing protection is enabled",
+      "category": "CONFIG",
+      "collector": "Forms",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "cis-m365-v6": {
+          "controlId": "3.6.2",
+          "title": "Ensure Microsoft Forms settings do not allow phishing",
+          "profiles": [
+            "E3-L1",
+            "E5-L1"
+          ]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05;DE.CM-01",
+          "title": "Access permissions, entitlements, and authorizations are managed; Networks and network services are monitored"
+        },
+        "nist-800-53": {
+          "controlId": "SI-3;SI-8",
+          "title": "Malicious Code Protection; Spam Protection",
+          "profiles": [
+            "Low",
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.8.23;A.8.7",
+          "title": "Web filtering; Protection against malware"
+        },
+        "soc2": {
+          "controlId": "CC6.8;CC7.1",
+          "evidenceType": "config-export",
+          "title": "Malicious Software Prevention; Detection and Monitoring"
+        },
+        "fedramp": {
+          "controlId": "SI-3;SI-8;SC-7"
+        },
+        "mitre-attack": {
+          "controlId": "T1566;T1598"
+        }
+      }
+    },
+    {
+      "checkId": "FORMS-CONFIG-005",
+      "name": "Ensure respondent identity recording is enabled by default",
+      "category": "CONFIG",
+      "collector": "Forms",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "PR.AA-01;DE.AE-03",
+          "title": "Identities and credentials are issued, managed, verified, revoked, and audited; Information is correlated from multiple sources"
+        },
+        "nist-800-53": {
+          "controlId": "AU-2;AU-3",
+          "title": "Event Logging; Content of Audit Records",
+          "profiles": [
+            "Low",
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.8.15",
+          "title": "Logging"
+        },
+        "soc2": {
+          "controlId": "CC7.2",
+          "evidenceType": "config-export",
+          "title": "Security Event Analysis"
+        },
+        "fedramp": {
+          "controlId": "AU-2;AU-3;AU-6"
+        },
+        "mitre-attack": {
+          "controlId": "T1114"
+        }
+      }
+    },
+    {
+      "checkId": "FORMS-CONFIG-006",
+      "name": "Ensure Bing image and video search is disabled in Forms",
+      "category": "CONFIG",
+      "collector": "Forms",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "PR.DS-5;GV.SC-07",
+          "title": "Data are protected from unauthorized disclosure and exfiltration; Supply chain security practices are integrated into cybersecurity supply chain risk management"
+        },
+        "nist-800-53": {
+          "controlId": "SC-7;AC-22",
+          "title": "Boundary Protection; Publicly Accessible Content",
+          "profiles": [
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.5.23;A.8.22",
+          "title": "Information security for use of cloud services; Segregation of networks"
+        },
+        "soc2": {
+          "controlId": "CC6.6;CC6.7",
+          "evidenceType": "config-export",
+          "title": "System Boundary Protection; Data Transmission and Movement Restriction"
+        },
+        "fedramp": {
+          "controlId": "SC-7;AC-22"
+        },
+        "mitre-attack": {
+          "controlId": "T1530;T1190"
+        }
+      }
+    },
+    {
+      "checkId": "PURVIEW-RETENTION-001",
+      "name": "Ensure at least one retention policy is enabled",
+      "category": "CONFIG",
+      "collector": "PurviewRetention",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "PR.DS-3;GV.RM-01",
+          "title": "Data retention and disposal are managed; Organizational context — risk management strategy is established"
+        },
+        "nist-800-53": {
+          "controlId": "AU-11;SI-12",
+          "title": "Audit Record Retention; Information Management and Retention",
+          "profiles": [
+            "Low",
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.5.33;A.8.10",
+          "title": "Protection of records; Information deletion"
+        },
+        "hipaa": {
+          "controlId": "§164.530(j);§164.316(b)(2)(i)",
+          "title": "Retention and Disposal; Documentation retention period"
+        },
+        "soc2": {
+          "controlId": "CC6.5;C1.2",
+          "evidenceType": "config-export",
+          "title": "Secure Data Disposal; Confidential Information Disposal"
+        },
+        "fedramp": {
+          "controlId": "AU-11;SI-12;RA-5"
+        },
+        "mitre-attack": {
+          "controlId": "T1485;T1561"
+        }
+      }
+    },
+    {
+      "checkId": "PURVIEW-RETENTION-002",
+      "name": "Ensure Exchange is covered by a retention policy",
+      "category": "CONFIG",
+      "collector": "PurviewRetention",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "PR.DS-3",
+          "title": "Data retention and disposal are managed"
+        },
+        "nist-800-53": {
+          "controlId": "AU-11;SI-12",
+          "title": "Audit Record Retention; Information Management and Retention",
+          "profiles": [
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.5.33",
+          "title": "Protection of records"
+        },
+        "hipaa": {
+          "controlId": "§164.530(j)",
+          "title": "Retention and Disposal"
+        },
+        "soc2": {
+          "controlId": "CC6.5",
+          "evidenceType": "config-export",
+          "title": "Secure Data Disposal"
+        },
+        "fedramp": {
+          "controlId": "AU-11;SI-12"
+        },
+        "mitre-attack": {
+          "controlId": "T1114;T1485"
+        }
+      }
+    },
+    {
+      "checkId": "PURVIEW-RETENTION-003",
+      "name": "Ensure Teams is covered by a retention policy",
+      "category": "CONFIG",
+      "collector": "PurviewRetention",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "PR.DS-3",
+          "title": "Data retention and disposal are managed"
+        },
+        "nist-800-53": {
+          "controlId": "AU-11;SI-12",
+          "title": "Audit Record Retention; Information Management and Retention",
+          "profiles": [
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.5.33",
+          "title": "Protection of records"
+        },
+        "hipaa": {
+          "controlId": "§164.530(j)",
+          "title": "Retention and Disposal"
+        },
+        "soc2": {
+          "controlId": "CC6.5",
+          "evidenceType": "config-export",
+          "title": "Secure Data Disposal"
+        },
+        "fedramp": {
+          "controlId": "AU-11;SI-12"
+        },
+        "mitre-attack": {
+          "controlId": "T1485"
+        }
+      }
+    },
+    {
+      "checkId": "PURVIEW-RETENTION-004",
+      "name": "Ensure SharePoint/OneDrive is covered by a retention policy",
+      "category": "CONFIG",
+      "collector": "PurviewRetention",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "PR.DS-3",
+          "title": "Data retention and disposal are managed"
+        },
+        "nist-800-53": {
+          "controlId": "AU-11;SI-12",
+          "title": "Audit Record Retention; Information Management and Retention",
+          "profiles": [
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.5.33",
+          "title": "Protection of records"
+        },
+        "hipaa": {
+          "controlId": "§164.530(j)",
+          "title": "Retention and Disposal"
+        },
+        "soc2": {
+          "controlId": "CC6.5",
+          "evidenceType": "config-export",
+          "title": "Secure Data Disposal"
+        },
+        "fedramp": {
+          "controlId": "AU-11;SI-12"
+        },
+        "mitre-attack": {
+          "controlId": "T1530;T1485"
+        }
+      }
+    },
+    {
+      "checkId": "PURVIEW-RETENTION-005",
+      "name": "Ensure all retention policies are in Enforce mode",
+      "category": "CONFIG",
+      "collector": "PurviewRetention",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "PR.DS-3;GV.RM-01",
+          "title": "Data retention and disposal are managed; Organizational context — risk management strategy is established"
+        },
+        "nist-800-53": {
+          "controlId": "AU-11;CM-3",
+          "title": "Audit Record Retention; Configuration Change Control",
+          "profiles": [
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.5.33;A.8.9",
+          "title": "Protection of records; Configuration management"
+        },
+        "soc2": {
+          "controlId": "CC6.5;CC8.1",
+          "evidenceType": "config-export",
+          "title": "Secure Data Disposal; Change Management"
+        },
+        "fedramp": {
+          "controlId": "AU-11;CM-3;CM-6"
+        },
+        "mitre-attack": {
+          "controlId": "T1485"
         }
       }
     }
