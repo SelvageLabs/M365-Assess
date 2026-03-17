@@ -24,7 +24,7 @@
     Exports retention policy configuration to CSV.
 .NOTES
     Author:  Daren9m
-    Settings checked are aligned with CIS Microsoft 365 Foundations Benchmark v3.1.0
+    Settings checked are aligned with CIS Microsoft 365 Foundations Benchmark v6.0.1
     and NIST SP 800-53 AU-11 (Audit Record Retention) recommendations.
 #>
 [CmdletBinding()]
@@ -93,20 +93,29 @@ if ($null -ne $policies) {
 
     # Check 1: Any enabled retention policies exist
     if ($enabledPolicies.Count -gt 0) {
-        Add-Setting -Category 'Retention Policies' -Setting 'Retention Policies Configured' `
-            -CurrentValue "$($enabledPolicies.Count) enabled (of $($policies.Count) total)" `
-            -RecommendedValue 'At least 1 enabled' `
-            -Status 'Pass' `
-            -CheckId 'PURVIEW-RETENTION-001' `
-            -Remediation 'No action needed.'
+        $settingParams = @{
+            Category         = 'Retention Policies'
+            Setting          = 'Retention Policies Configured'
+            CurrentValue     = "$($enabledPolicies.Count) enabled (of $($policies.Count) total)"
+            RecommendedValue = 'At least 1 enabled'
+            Status           = 'Pass'
+            CheckId          = 'PURVIEW-RETENTION-001'
+            Remediation      = 'No action needed.'
+        }
+        Add-Setting @settingParams
     }
     else {
-        Add-Setting -Category 'Retention Policies' -Setting 'Retention Policies Configured' `
-            -CurrentValue $(if ($policies.Count -eq 0) { 'None configured' } else { "$($policies.Count) policies (none enabled)" }) `
-            -RecommendedValue 'At least 1 enabled' `
-            -Status 'Fail' `
-            -CheckId 'PURVIEW-RETENTION-001' `
-            -Remediation 'Microsoft Purview > Data lifecycle management > Retention policies > Create a retention policy to preserve or delete content per your requirements.'
+        $currentVal = if ($policies.Count -eq 0) { 'None configured' } else { "$($policies.Count) policies (none enabled)" }
+        $settingParams = @{
+            Category         = 'Retention Policies'
+            Setting          = 'Retention Policies Configured'
+            CurrentValue     = $currentVal
+            RecommendedValue = 'At least 1 enabled'
+            Status           = 'Fail'
+            CheckId          = 'PURVIEW-RETENTION-001'
+            Remediation      = 'Microsoft Purview > Data lifecycle management > Retention policies > Create a retention policy to preserve or delete content per your requirements.'
+        }
+        Add-Setting @settingParams
     }
 
     # Check 2: Exchange covered by a retention policy
@@ -115,20 +124,28 @@ if ($null -ne $policies) {
         ($_.Workload -and $_.Workload -match 'Exchange')
     })
     if ($exchangePolicies.Count -gt 0) {
-        Add-Setting -Category 'Retention Policies' -Setting 'Exchange Covered by Retention' `
-            -CurrentValue "$($exchangePolicies.Count) policies cover Exchange" `
-            -RecommendedValue 'At least 1 policy covers Exchange' `
-            -Status 'Pass' `
-            -CheckId 'PURVIEW-RETENTION-002' `
-            -Remediation 'No action needed.'
+        $settingParams = @{
+            Category         = 'Retention Policies'
+            Setting          = 'Exchange Covered by Retention'
+            CurrentValue     = "$($exchangePolicies.Count) policies cover Exchange"
+            RecommendedValue = 'At least 1 policy covers Exchange'
+            Status           = 'Pass'
+            CheckId          = 'PURVIEW-RETENTION-002'
+            Remediation      = 'No action needed.'
+        }
+        Add-Setting @settingParams
     }
     else {
-        Add-Setting -Category 'Retention Policies' -Setting 'Exchange Covered by Retention' `
-            -CurrentValue 'No retention policies cover Exchange' `
-            -RecommendedValue 'At least 1 policy covers Exchange' `
-            -Status 'Fail' `
-            -CheckId 'PURVIEW-RETENTION-002' `
-            -Remediation 'Microsoft Purview > Data lifecycle management > Retention policies > Create or edit a retention policy to include Exchange email and mailboxes.'
+        $settingParams = @{
+            Category         = 'Retention Policies'
+            Setting          = 'Exchange Covered by Retention'
+            CurrentValue     = 'No retention policies cover Exchange'
+            RecommendedValue = 'At least 1 policy covers Exchange'
+            Status           = 'Fail'
+            CheckId          = 'PURVIEW-RETENTION-002'
+            Remediation      = 'Microsoft Purview > Data lifecycle management > Retention policies > Create or edit a retention policy to include Exchange email and mailboxes.'
+        }
+        Add-Setting @settingParams
     }
 
     # Check 3: Teams covered by a retention policy
@@ -138,20 +155,28 @@ if ($null -ne $policies) {
         ($_.Workload -and $_.Workload -match 'Teams')
     })
     if ($teamsPolicies.Count -gt 0) {
-        Add-Setting -Category 'Retention Policies' -Setting 'Teams Covered by Retention' `
-            -CurrentValue "$($teamsPolicies.Count) policies cover Teams" `
-            -RecommendedValue 'At least 1 policy covers Teams' `
-            -Status 'Pass' `
-            -CheckId 'PURVIEW-RETENTION-003' `
-            -Remediation 'No action needed.'
+        $settingParams = @{
+            Category         = 'Retention Policies'
+            Setting          = 'Teams Covered by Retention'
+            CurrentValue     = "$($teamsPolicies.Count) policies cover Teams"
+            RecommendedValue = 'At least 1 policy covers Teams'
+            Status           = 'Pass'
+            CheckId          = 'PURVIEW-RETENTION-003'
+            Remediation      = 'No action needed.'
+        }
+        Add-Setting @settingParams
     }
     else {
-        Add-Setting -Category 'Retention Policies' -Setting 'Teams Covered by Retention' `
-            -CurrentValue 'No retention policies cover Teams' `
-            -RecommendedValue 'At least 1 policy covers Teams' `
-            -Status 'Fail' `
-            -CheckId 'PURVIEW-RETENTION-003' `
-            -Remediation 'Microsoft Purview > Data lifecycle management > Retention policies > Create or edit a retention policy to include Teams channel messages and chats.'
+        $settingParams = @{
+            Category         = 'Retention Policies'
+            Setting          = 'Teams Covered by Retention'
+            CurrentValue     = 'No retention policies cover Teams'
+            RecommendedValue = 'At least 1 policy covers Teams'
+            Status           = 'Fail'
+            CheckId          = 'PURVIEW-RETENTION-003'
+            Remediation      = 'Microsoft Purview > Data lifecycle management > Retention policies > Create or edit a retention policy to include Teams channel messages and chats.'
+        }
+        Add-Setting @settingParams
     }
 
     # Check 4: SharePoint/OneDrive covered by a retention policy
@@ -161,57 +186,82 @@ if ($null -ne $policies) {
         ($_.Workload -and $_.Workload -match 'SharePoint')
     })
     if ($sharepointPolicies.Count -gt 0) {
-        Add-Setting -Category 'Retention Policies' -Setting 'SharePoint/OneDrive Covered by Retention' `
-            -CurrentValue "$($sharepointPolicies.Count) policies cover SharePoint/OneDrive" `
-            -RecommendedValue 'At least 1 policy covers SharePoint/OneDrive' `
-            -Status 'Pass' `
-            -CheckId 'PURVIEW-RETENTION-004' `
-            -Remediation 'No action needed.'
+        $settingParams = @{
+            Category         = 'Retention Policies'
+            Setting          = 'SharePoint/OneDrive Covered by Retention'
+            CurrentValue     = "$($sharepointPolicies.Count) policies cover SharePoint/OneDrive"
+            RecommendedValue = 'At least 1 policy covers SharePoint/OneDrive'
+            Status           = 'Pass'
+            CheckId          = 'PURVIEW-RETENTION-004'
+            Remediation      = 'No action needed.'
+        }
+        Add-Setting @settingParams
     }
     else {
-        Add-Setting -Category 'Retention Policies' -Setting 'SharePoint/OneDrive Covered by Retention' `
-            -CurrentValue 'No retention policies cover SharePoint/OneDrive' `
-            -RecommendedValue 'At least 1 policy covers SharePoint/OneDrive' `
-            -Status 'Fail' `
-            -CheckId 'PURVIEW-RETENTION-004' `
-            -Remediation 'Microsoft Purview > Data lifecycle management > Retention policies > Create or edit a retention policy to include SharePoint sites and OneDrive accounts.'
+        $settingParams = @{
+            Category         = 'Retention Policies'
+            Setting          = 'SharePoint/OneDrive Covered by Retention'
+            CurrentValue     = 'No retention policies cover SharePoint/OneDrive'
+            RecommendedValue = 'At least 1 policy covers SharePoint/OneDrive'
+            Status           = 'Fail'
+            CheckId          = 'PURVIEW-RETENTION-004'
+            Remediation      = 'Microsoft Purview > Data lifecycle management > Retention policies > Create or edit a retention policy to include SharePoint sites and OneDrive accounts.'
+        }
+        Add-Setting @settingParams
     }
 
     # Check 5: All active policies are in Enforce mode (not simulation/test)
     $testModePolicies = @($enabledPolicies | Where-Object { $_.Mode -ne 'Enforce' })
     if ($testModePolicies.Count -eq 0 -and $enabledPolicies.Count -gt 0) {
-        Add-Setting -Category 'Retention Policies' -Setting 'Retention Policies in Enforce Mode' `
-            -CurrentValue "All $($enabledPolicies.Count) enabled policies in Enforce mode" `
-            -RecommendedValue 'All policies in Enforce mode' `
-            -Status 'Pass' `
-            -CheckId 'PURVIEW-RETENTION-005' `
-            -Remediation 'No action needed.'
+        $settingParams = @{
+            Category         = 'Retention Policies'
+            Setting          = 'Retention Policies in Enforce Mode'
+            CurrentValue     = "All $($enabledPolicies.Count) enabled policies in Enforce mode"
+            RecommendedValue = 'All policies in Enforce mode'
+            Status           = 'Pass'
+            CheckId          = 'PURVIEW-RETENTION-005'
+            Remediation      = 'No action needed.'
+        }
+        Add-Setting @settingParams
     }
     elseif ($testModePolicies.Count -gt 0) {
         $testNames = ($testModePolicies | Select-Object -ExpandProperty Name -First 5) -join ', '
-        Add-Setting -Category 'Retention Policies' -Setting 'Retention Policies in Enforce Mode' `
-            -CurrentValue "$($testModePolicies.Count) policies in simulation/test mode: $testNames" `
-            -RecommendedValue 'All policies in Enforce mode' `
-            -Status 'Warning' `
-            -CheckId 'PURVIEW-RETENTION-005' `
-            -Remediation 'Microsoft Purview > Data lifecycle management > Retention policies > Edit each policy in simulation mode and switch it to Enforce once validated.'
+        $settingParams = @{
+            Category         = 'Retention Policies'
+            Setting          = 'Retention Policies in Enforce Mode'
+            CurrentValue     = "$($testModePolicies.Count) policies in simulation/test mode: $testNames"
+            RecommendedValue = 'All policies in Enforce mode'
+            Status           = 'Warning'
+            CheckId          = 'PURVIEW-RETENTION-005'
+            Remediation      = 'Microsoft Purview > Data lifecycle management > Retention policies > Edit each policy in simulation mode and switch it to Enforce once validated.'
+        }
+        Add-Setting @settingParams
     }
     else {
-        Add-Setting -Category 'Retention Policies' -Setting 'Retention Policies in Enforce Mode' `
-            -CurrentValue 'No enabled policies to evaluate' `
-            -RecommendedValue 'At least 1 policy in Enforce mode' `
-            -Status 'Review' `
-            -CheckId 'PURVIEW-RETENTION-005' `
-            -Remediation 'Create and enforce retention policies in Microsoft Purview > Data lifecycle management.'
+        $settingParams = @{
+            Category         = 'Retention Policies'
+            Setting          = 'Retention Policies in Enforce Mode'
+            CurrentValue     = 'No enabled policies to evaluate'
+            RecommendedValue = 'At least 1 policy in Enforce mode'
+            Status           = 'Review'
+            CheckId          = 'PURVIEW-RETENTION-005'
+            Remediation      = 'Create and enforce retention policies in Microsoft Purview > Data lifecycle management.'
+        }
+        Add-Setting @settingParams
     }
 }
 else {
-    # Cmdlet not available — Purview connection required
-    Add-Setting -Category 'Retention Policies' -Setting 'Retention Policies Configured' `
-        -CurrentValue 'Cmdlet not available' -RecommendedValue 'At least 1 enabled' `
-        -Status 'Review' `
-        -CheckId 'PURVIEW-RETENTION-001' `
-        -Remediation 'Connect to Security & Compliance PowerShell to check retention policies: Connect-Service -Service Purview.'
+    # Cmdlet not available -- Purview connection required
+    $settingParams = @{
+        Category         = 'Retention Policies'
+        Setting          = 'Retention Policies Configured'
+        CurrentValue     = 'Cmdlet not available'
+        RecommendedValue = 'At least 1 enabled'
+        Status           = 'Review'
+        CheckId          = 'PURVIEW-RETENTION-001'
+        Remediation      = 'Connect to Security & Compliance PowerShell to check retention policies: Connect-Service -Service Purview.'
+    }
+    Add-Setting @settingParams
 }
 
 # ------------------------------------------------------------------
