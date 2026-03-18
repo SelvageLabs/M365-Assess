@@ -60,6 +60,10 @@
     Omit the Compliance Overview section from the HTML report. Useful when
     running a single section assessment where framework coverage cards are
     not relevant.
+.PARAMETER SkipCoverPage
+    Omit the branded cover page from the HTML report.
+.PARAMETER SkipExecutiveSummary
+    Omit the executive summary hero panel from the HTML report.
 .EXAMPLE
     PS> .\Invoke-M365Assessment.ps1 -TenantId 'contoso.onmicrosoft.com'
 
@@ -144,7 +148,13 @@ param(
     [switch]$SkipDLP,
 
     [Parameter()]
-    [switch]$SkipComplianceOverview
+    [switch]$SkipComplianceOverview,
+
+    [Parameter()]
+    [switch]$SkipCoverPage,
+
+    [Parameter()]
+    [switch]$SkipExecutiveSummary
 )
 
 $ErrorActionPreference = 'Stop'
@@ -2097,6 +2107,8 @@ if (Test-Path -Path $reportScriptPath) {
         elseif ($TenantId)        { $reportParams['TenantName'] = $TenantId }
         if ($NoBranding) { $reportParams['NoBranding'] = $true }
         if ($SkipComplianceOverview) { $reportParams['SkipComplianceOverview'] = $true }
+        if ($SkipCoverPage) { $reportParams['SkipCoverPage'] = $true }
+        if ($SkipExecutiveSummary) { $reportParams['SkipExecutiveSummary'] = $true }
 
         $reportOutput = & $reportScriptPath @reportParams
         foreach ($line in $reportOutput) {

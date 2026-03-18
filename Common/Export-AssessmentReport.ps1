@@ -31,6 +31,12 @@
 .PARAMETER SkipComplianceOverview
     Omit the Compliance Overview section from the report. Useful when running
     a single section assessment where framework coverage cards are not relevant.
+.PARAMETER SkipCoverPage
+    Omit the branded cover page (logo, tenant name, date, version). The report
+    starts directly at the executive summary or section content.
+.PARAMETER SkipExecutiveSummary
+    Omit the executive summary hero panel (donut chart, metrics, TOC, alert
+    banners). Useful for data-only exports.
 .EXAMPLE
     PS> .\Common\Export-AssessmentReport.ps1 -AssessmentFolder '.\M365-Assessment\Assessment_20260306_195618'
 
@@ -62,7 +68,13 @@ param(
     [switch]$SkipPdf,
 
     [Parameter()]
-    [switch]$SkipComplianceOverview
+    [switch]$SkipComplianceOverview,
+
+    [Parameter()]
+    [switch]$SkipCoverPage,
+
+    [Parameter()]
+    [switch]$SkipExecutiveSummary
 )
 
 $ErrorActionPreference = 'Stop'
@@ -3740,6 +3752,8 @@ $html = @"
         <span class="theme-icon-dark">&#9790;</span>
     </button>
 
+$(if (-not $SkipCoverPage) {
+@"
     <!-- Cover Page -->
     <header class="cover-page">
         $logoImgTag
@@ -3760,9 +3774,36 @@ $(if (-not $NoBranding) {
 '@
 })
     </header>
+"@
+})
 
     <!-- Content -->
     <main class="content">
+"@
+
+if (-not $SkipExecutiveSummary) {
+    $completePct = if ($totalCollectors -gt 0) { [math]::Round(($completeCount / $totalCollectors) * 100, 0) } else { 0 }
+    $donutClass = if ($completePct -ge 90) { 'success' } elseif ($completePct -ge 70) { 'warning' } else { 'danger' }
+    $donutSvg = Get-SvgDonut -Percentage $completePct -CssClass $donutClass -Label "$completeCount/$totalCollectors" -Size 120 -StrokeWidth 10
+    $tocItems = foreach ($tocSection in $sections) {
+        if ($tocSection -eq 'Tenant') {
+            "<li><a href='#section-tenant'>Organization Profile</a></li>"
+        } else {
+            $tocId = ($tocSection -replace '[^a-zA-Z0-9]', '-').ToLower()
+            $tocLabel = [System.Web.HttpUtility]::HtmlEncode($tocSection)
+            "<li><a href='#section-$tocId'>$tocLabel</a></li>"
+        }
+    }
+    if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0 -and -not $SkipComplianceOverview) {
+        $tocItems += "<li><a href='#compliance-overview'>Compliance Overview</a></li>"
+    }
+    if ($issues.Count -gt 0) {
+        $tocItems += "<li><a href='#issues'>Technical Issues</a></li>"
+    }
+    $tocHtmlBlock = $tocItems -join "`n                    "
+
+    $html += @"
+
         <!-- Executive Summary — Hero Panel -->
         <div class="exec-hero">
             <div class="exec-hero-left">
@@ -3771,11 +3812,7 @@ $(if (-not $NoBranding) {
                 <strong>$(ConvertTo-HtmlSafe -Text $TenantName)</strong> conducted on
                 <strong>$assessmentDate</strong>.</p>
                 <div class="exec-hero-donut">
-                    $(
-                        $completePct = if ($totalCollectors -gt 0) { [math]::Round(($completeCount / $totalCollectors) * 100, 0) } else { 0 }
-                        $donutClass = if ($completePct -ge 90) { 'success' } elseif ($completePct -ge 70) { 'warning' } else { 'danger' }
-                        Get-SvgDonut -Percentage $completePct -CssClass $donutClass -Label "$completeCount/$totalCollectors" -Size 120 -StrokeWidth 10
-                    )
+                    $donutSvg
                     <div class="exec-hero-stats">
                         <div class="exec-hero-stat"><span class="chart-legend-dot dot-success"></span><strong>$completeCount</strong> Completed</div>
                         <div class="exec-hero-stat"><span class="chart-legend-dot dot-warning"></span><strong>$skippedCount</strong> Skipped</div>
@@ -3806,38 +3843,29 @@ $(if (-not $NoBranding) {
             <div class="exec-hero-right">
                 <div class="exec-hero-toc-label">Sections</div>
                 <ol class="exec-hero-toc">
-                    $( foreach ($tocSection in $sections) {
-                        if ($tocSection -eq 'Tenant') {
-                            "<li><a href='#section-tenant'>Organization Profile</a></li>`n"
-                        } else {
-                            $tocId = ($tocSection -replace '[^a-zA-Z0-9]', '-').ToLower()
-                            $tocLabel = [System.Web.HttpUtility]::HtmlEncode($tocSection)
-                            "<li><a href='#section-$tocId'>$tocLabel</a></li>`n"
-                        }
-                    })
-                    $( if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0 -and -not $SkipComplianceOverview) { "<li><a href='#compliance-overview'>Compliance Overview</a></li>`n" })
-                    $( if ($issues.Count -gt 0) { "<li><a href='#issues'>Technical Issues</a></li>`n" })
+                    $tocHtmlBlock
                 </ol>
             </div>
         </div>
 "@
 
-if ($issues.Count -gt 0) {
-    $html += @"
+    if ($issues.Count -gt 0) {
+        $html += @"
 
         <div class="exec-alert exec-alert-warn">&#9888; <strong>$($issues.Count) issue(s)</strong> identified:
         $errorCount error(s) and $warningCount warning(s). See <a href="#issues">Technical Issues</a>.</div>
 "@
-}
+    }
 
-if ($allCisFindings.Count -gt 0 -and -not $SkipComplianceOverview) {
-    $nonPassingCount = @($allCisFindings | Where-Object { $_.Status -ne 'Pass' }).Count
-    if ($nonPassingCount -gt 0) {
-        $html += @"
+    if ($allCisFindings.Count -gt 0 -and -not $SkipComplianceOverview) {
+        $nonPassingCount = @($allCisFindings | Where-Object { $_.Status -ne 'Pass' }).Count
+        if ($nonPassingCount -gt 0) {
+            $html += @"
 
         <div class="exec-alert exec-alert-info">&#128270; <strong>$nonPassingCount finding(s)</strong> across
         $($allCisFindings.Count) controls require attention. See <a href="#compliance-overview">Compliance Overview</a>.</div>
 "@
+        }
     }
 }
 
