@@ -3460,6 +3460,23 @@ $html = @"
         .section-checkbox input[type="checkbox"] { display: none; }
         .no-results { text-align: center; padding: 40px; color: var(--m365a-medium-gray); font-style: italic; }
 
+        /* Compact scan header (shown when exec summary is skipped) */
+        .scan-header {
+            background: var(--m365a-card-bg); border: 1px solid var(--m365a-border);
+            border-radius: 8px; padding: 16px 20px; margin-bottom: 16px;
+        }
+        .scan-header-title { font-size: 1.3em; font-weight: 600; color: var(--m365a-text); }
+        .scan-header-meta {
+            display: flex; flex-wrap: wrap; gap: 6px 16px;
+            margin-top: 6px; font-size: 0.88em; color: var(--m365a-medium-gray);
+        }
+        .scan-header-meta span:not(:last-child)::after {
+            content: '\00b7'; margin-left: 16px; color: var(--m365a-border);
+        }
+        .scan-header-sections {
+            margin-top: 8px; font-size: 0.82em; color: var(--m365a-medium-gray);
+        }
+
         /* Global expand/collapse controls */
         .report-controls {
             display: flex; gap: 8px; justify-content: flex-end;
@@ -3867,6 +3884,23 @@ if (-not $SkipExecutiveSummary) {
 "@
         }
     }
+}
+else {
+    # Compact scan header when executive summary is skipped
+    $scanSections = ($sections | ForEach-Object { [System.Web.HttpUtility]::HtmlEncode($_) }) -join ', '
+    $html += @"
+
+        <div class="scan-header">
+            <div class="scan-header-title">$(ConvertTo-HtmlSafe -Text $TenantName)</div>
+            <div class="scan-header-meta">
+                <span>$assessmentDate</span>
+                <span>v$assessmentVersion</span>
+                <span>$cloudDisplayName</span>
+                <span>$completeCount / $totalCollectors collectors</span>
+            </div>
+            <div class="scan-header-sections">$scanSections</div>
+        </div>
+"@
 }
 
 $html += @"
