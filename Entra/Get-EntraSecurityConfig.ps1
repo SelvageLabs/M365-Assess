@@ -1402,14 +1402,19 @@ catch {
 # ------------------------------------------------------------------
 try {
     Write-Verbose "Checking public M365 groups for owner assignment..."
+    # Fetch M365 groups and filter for Public visibility client-side.
+    # Server-side $filter on 'visibility' requires Directory.Read.All and
+    # can fail in tenants with restricted directory permissions.
     $graphParams = @{
         Method      = 'GET'
-        Uri         = "/v1.0/groups?`$filter=visibility eq 'Public' and groupTypes/any(g:g eq 'Unified')&`$select=displayName,id&`$top=100"
+        Uri         = "/v1.0/groups?`$filter=groupTypes/any(g:g eq 'Unified')&`$select=displayName,id,visibility&`$top=999"
         ErrorAction = 'Stop'
     }
-    $publicGroups = Invoke-MgGraphRequest @graphParams
+    $unifiedGroups = Invoke-MgGraphRequest @graphParams
 
-    $publicGroupList = if ($publicGroups -and $publicGroups['value']) { @($publicGroups['value']) } else { @() }
+    $publicGroupList = if ($unifiedGroups -and $unifiedGroups['value']) {
+        @($unifiedGroups['value'] | Where-Object { $_['visibility'] -eq 'Public' })
+    } else { @() }
     $noOwnerGroups = @()
     foreach ($group in $publicGroupList) {
         $graphParams = @{
