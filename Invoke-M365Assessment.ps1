@@ -1360,19 +1360,19 @@ function Connect-RequiredService {
                             $script:dnsPrefetchJobs = @()
                             foreach ($vdName in $verifiedDomainNames) {
                                 $script:dnsPrefetchJobs += Start-ThreadJob -ScriptBlock {
-                                    param($d)
-                                    $spf   = Resolve-DnsName -Name $d -Type TXT -DnsOnly -ErrorAction SilentlyContinue
-                                    $dmarc = Resolve-DnsName -Name "_dmarc.$d" -Type TXT -DnsOnly -ErrorAction SilentlyContinue
-                                    $dkim1 = Resolve-DnsName -Name "selector1._domainkey.$d" -Type CNAME -DnsOnly -ErrorAction SilentlyContinue
-                                    $dkim2 = Resolve-DnsName -Name "selector2._domainkey.$d" -Type CNAME -DnsOnly -ErrorAction SilentlyContinue
-                                    $mtaSts = Resolve-DnsName -Name "_mta-sts.$d" -Type TXT -DnsOnly -ErrorAction SilentlyContinue
-                                    $tlsRpt = Resolve-DnsName -Name "_smtp._tls.$d" -Type TXT -DnsOnly -ErrorAction SilentlyContinue
+                                    $d      = $using:vdName
+                                    $spf    = Resolve-DnsName -Name $d -Type TXT -DnsOnly -ErrorAction SilentlyContinue
+                                    $dmarc  = Resolve-DnsName -Name ('_dmarc.' + $d) -Type TXT -DnsOnly -ErrorAction SilentlyContinue
+                                    $dkim1  = Resolve-DnsName -Name ('selector1._domainkey.' + $d) -Type CNAME -DnsOnly -ErrorAction SilentlyContinue
+                                    $dkim2  = Resolve-DnsName -Name ('selector2._domainkey.' + $d) -Type CNAME -DnsOnly -ErrorAction SilentlyContinue
+                                    $mtaSts = Resolve-DnsName -Name ('_mta-sts.' + $d) -Type TXT -DnsOnly -ErrorAction SilentlyContinue
+                                    $tlsRpt = Resolve-DnsName -Name ('_smtp._tls.' + $d) -Type TXT -DnsOnly -ErrorAction SilentlyContinue
                                     [PSCustomObject]@{
                                         Domain = $d; Spf = $spf; Dmarc = $dmarc
                                         Dkim1 = $dkim1; Dkim2 = $dkim2
                                         MtaSts = $mtaSts; TlsRpt = $tlsRpt
                                     }
-                                } -ArgumentList $vdName
+                                }
                             }
                         }
 
