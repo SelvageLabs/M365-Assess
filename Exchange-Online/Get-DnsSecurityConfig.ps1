@@ -155,7 +155,7 @@ else {
         }
     }
     catch {
-        Write-Warning "SPF check failed on domain '$domainName' (auth domains: $($authDomains.Count), spfPresent: $($spfPresent.Count), spfMissing: $($spfMissing.Count)): $_ at $($_.InvocationInfo.ScriptLineNumber)"
+        Write-Warning "Could not check SPF records: $_"
     }
 
     # ------------------------------------------------------------------
