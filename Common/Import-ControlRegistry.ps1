@@ -2,12 +2,19 @@
 .SYNOPSIS
     Loads the control registry and builds lookup tables for the report layer.
 .DESCRIPTION
-    Reads controls/registry.json and returns a hashtable keyed by CheckId.
+    Loads check data from the CheckID PSGallery module (primary) or falls back
+    to the local controls/registry.json file (offline/air-gapped). Returns a
+    hashtable keyed by CheckId with framework mappings and risk severity.
+
     Also builds a reverse lookup from CIS control IDs to CheckIds (stored
     under the special key '__cisReverseLookup') for backward compatibility
     with CSVs that still use the CisControl column.
 .PARAMETER ControlsPath
-    Path to the controls/ directory containing registry.json.
+    Path to the controls/ directory containing registry.json (fallback) and
+    risk-severity.json (local overlay).
+.PARAMETER CisFrameworkId
+    Framework ID for the active CIS benchmark version, used for the reverse
+    lookup. Defaults to 'cis-m365-v6'.
 .OUTPUTS
     [hashtable] - Keys are CheckIds, values are registry entry objects.
     Special key '__cisReverseLookup' maps CIS control IDs to CheckIds.
@@ -16,20 +23,45 @@ function Import-ControlRegistry {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [string]$ControlsPath
+        [string]$ControlsPath,
+
+        [Parameter()]
+        [string]$CisFrameworkId = 'cis-m365-v6'
     )
 
-    $registryPath = Join-Path -Path $ControlsPath -ChildPath 'registry.json'
-    if (-not (Test-Path -Path $registryPath)) {
-        Write-Warning "Control registry not found: $registryPath"
-        return @{}
+    $checks = $null
+
+    # Primary: load from CheckID PSGallery module
+    if (Get-Module -ListAvailable -Name CheckID) {
+        try {
+            Import-Module CheckID -ErrorAction Stop
+            $checks = @(Get-CheckRegistry -ErrorAction Stop)
+            Write-Verbose "Loaded $($checks.Count) checks from CheckID module"
+        }
+        catch {
+            Write-Warning "CheckID module available but failed to load: $_"
+            $checks = $null
+        }
     }
 
-    $raw = Get-Content -Path $registryPath -Raw | ConvertFrom-Json
+    # Fallback: load from local controls/registry.json
+    if (-not $checks) {
+        $registryPath = Join-Path -Path $ControlsPath -ChildPath 'registry.json'
+        if (-not (Test-Path -Path $registryPath)) {
+            Write-Warning "Control registry not found: $registryPath"
+            return @{}
+        }
+
+        $raw = Get-Content -Path $registryPath -Raw | ConvertFrom-Json
+        $checks = @($raw.checks)
+        Write-Verbose "Loaded $($checks.Count) checks from local registry.json"
+    }
+
+    # Build hashtable keyed by CheckId
     $lookup = @{}
     $cisReverse = @{}
 
-    foreach ($check in $raw.checks) {
+    foreach ($check in $checks) {
         $entry = @{
             checkId           = $check.checkId
             name              = $check.name
@@ -48,8 +80,8 @@ function Import-ControlRegistry {
         $entry.riskSeverity = 'Medium'  # default, overridden from risk-severity.json below
         $lookup[$check.checkId] = $entry
 
-        # Build CIS reverse lookup
-        $cisMapping = $check.frameworks.'cis-m365-v6'
+        # Build CIS reverse lookup (parameterized for version upgrades)
+        $cisMapping = $check.frameworks.$CisFrameworkId
         if ($cisMapping -and $cisMapping.controlId) {
             $cisReverse[$cisMapping.controlId] = $check.checkId
         }
@@ -57,7 +89,7 @@ function Import-ControlRegistry {
 
     $lookup['__cisReverseLookup'] = $cisReverse
 
-    # Load risk severity overlay
+    # Load risk severity overlay (local to M365-Assess, not in CheckID)
     $severityPath = Join-Path -Path $ControlsPath -ChildPath 'risk-severity.json'
     if (Test-Path -Path $severityPath) {
         $severityData = Get-Content -Path $severityPath -Raw | ConvertFrom-Json

@@ -28,4 +28,25 @@ Describe 'Import-ControlRegistry' {
         $result = Import-ControlRegistry -ControlsPath (Join-Path $TestDrive 'nonexistent') -WarningAction SilentlyContinue
         $result.Count | Should -Be 0
     }
+
+    It 'Applies risk severity overlay from risk-severity.json' {
+        $registry = Import-ControlRegistry -ControlsPath $testRoot
+        # At least one check should have a non-default severity
+        $severities = @($registry.Keys | Where-Object { $_ -ne '__cisReverseLookup' } |
+            ForEach-Object { $registry[$_].riskSeverity } | Sort-Object -Unique)
+        $severities.Count | Should -BeGreaterThan 1 -Because 'risk-severity.json should override some defaults'
+    }
+
+    It 'Accepts CisFrameworkId parameter for reverse lookup' {
+        $registry = Import-ControlRegistry -ControlsPath $testRoot -CisFrameworkId 'cis-m365-v6'
+        $reverseLookup = $registry['__cisReverseLookup']
+        $reverseLookup.Count | Should -BeGreaterThan 0
+    }
+
+    It 'Falls back to local JSON when CheckID module is not available' {
+        # This test verifies the fallback path works (CheckID module unlikely
+        # to be installed in CI). The function should load from controls/registry.json.
+        $registry = Import-ControlRegistry -ControlsPath $testRoot
+        $registry.Keys.Count | Should -BeGreaterThan 10 -Because 'local registry.json should load as fallback'
+    }
 }

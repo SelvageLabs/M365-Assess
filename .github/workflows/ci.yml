@@ -132,7 +132,7 @@ jobs:
           path: coverage.xml
 
   sync-checkid:
-    name: Sync CheckID Registry
+    name: Sync CheckID Fallback Cache
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
