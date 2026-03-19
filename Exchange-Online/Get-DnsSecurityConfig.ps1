@@ -158,7 +158,7 @@ else {
         }
     }
     catch {
-        Write-Warning "Could not check SPF records: $_"
+        Write-Warning "Could not check SPF records: $($_.Exception.Message) [Line: $($_.InvocationInfo.ScriptLineNumber) in $($_.InvocationInfo.ScriptName)]"
     }
 
     # ------------------------------------------------------------------
