@@ -43,6 +43,10 @@
 .PARAMETER CustomBranding
     Hashtable for white-label reports. Supported keys: CompanyName (string),
     LogoPath (file path to PNG/JPEG/SVG), AccentColor (hex color like '#1a56db').
+.PARAMETER CisFrameworkId
+    The framework ID for the active CIS benchmark version used for the CisControl
+    property and reverse lookup. Defaults to 'cis-m365-v6'. Set to 'cis-m365-v7'
+    when CIS v7.0 framework data is available.
 .EXAMPLE
     PS> .\Common\Export-AssessmentReport.ps1 -AssessmentFolder '.\M365-Assessment\Assessment_20260306_195618'
 
@@ -87,7 +91,10 @@ param(
     [string[]]$FrameworkFilter,
 
     [Parameter()]
-    [hashtable]$CustomBranding
+    [hashtable]$CustomBranding,
+
+    [Parameter()]
+    [string]$CisFrameworkId = 'cis-m365-v6'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -98,7 +105,7 @@ $projectRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
 # ------------------------------------------------------------------
 . (Join-Path -Path $PSScriptRoot -ChildPath 'Import-ControlRegistry.ps1')
 $controlsPath = Join-Path -Path $projectRoot -ChildPath 'controls'
-$controlRegistry = Import-ControlRegistry -ControlsPath $controlsPath
+$controlRegistry = Import-ControlRegistry -ControlsPath $controlsPath -CisFrameworkId $CisFrameworkId
 
 # ------------------------------------------------------------------
 # Framework definitions (auto-discovered from JSON)
@@ -1763,7 +1770,7 @@ foreach ($c in $summary) {
                 if ($fwData.profiles) { $fwHash[$fwDef.frameworkId].profiles = @($fwData.profiles) }
             }
         }
-        $cisData = $fwHash['cis-m365-v6']
+        $cisData = $fwHash[$CisFrameworkId]
         $cisId = if ($cisData) { $cisData.controlId } else { '' }
 
         $allCisFindings.Add([PSCustomObject]@{
