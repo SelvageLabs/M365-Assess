@@ -1872,6 +1872,31 @@ foreach ($sectionName in $Section) {
 # Deferred DNS checks (runs after all sections, uses prefetch cache)
 # ------------------------------------------------------------------
 if ($script:runDnsAuthentication) {
+    # Verify Exchange Online is still connected (session may have dropped)
+    $exoAvailable = $false
+    try {
+        $null = Get-Command -Name Get-AcceptedDomain -ErrorAction Stop
+        $exoAvailable = $true
+    }
+    catch {
+        # Try to reconnect
+        if (-not $SkipConnection -and -not $failedServices.Contains('ExchangeOnline')) {
+            Write-AssessmentLog -Level INFO -Message "Reconnecting Exchange Online for deferred DNS checks" -Section 'Email'
+            try {
+                Connect-RequiredService -Services @('ExchangeOnline') -SectionName 'Email'
+                $exoAvailable = $true
+            }
+            catch {
+                Write-AssessmentLog -Level WARN -Message "Could not reconnect Exchange Online: $($_.Exception.Message)" -Section 'Email'
+            }
+        }
+    }
+
+    if (-not $exoAvailable) {
+        Write-AssessmentLog -Level WARN -Message "Skipping deferred DNS checks -- Exchange Online not available" -Section 'Email'
+    }
+    else {
+
     # Collect prefetched DNS cache (started during Graph connect)
     $dnsCache = @{}
     if ($script:dnsPrefetchJobs) {
@@ -2139,6 +2164,8 @@ if ($script:runDnsAuthentication) {
 
     Show-CollectorResult -Label $dnsCollector.Label -Status $dnsStatus -Items $dnsItemCount -DurationSeconds $dnsDuration.TotalSeconds -ErrorMessage $dnsError
     Write-AssessmentLog -Level INFO -Message "Completed: $($dnsCollector.Label) -- $dnsStatus, $dnsItemCount items" -Section 'Email' -Collector $dnsCollector.Label
+
+    } # end else (exoAvailable)
 }
 
 # Clean up check progress display
