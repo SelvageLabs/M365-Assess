@@ -252,7 +252,7 @@ function Show-InteractiveWizard {
     # Determine which steps to show and compute dynamic numbering
     $skipSections = $PreSelectedSections.Count -gt 0
     $skipOutput   = $PreSelectedOutputFolder -ne ''
-    $totalSteps   = 3  # Tenant + Auth + Confirmation are always shown
+    $totalSteps   = 4  # Tenant + Auth + Report Options + Confirmation are always shown
     if (-not $skipSections) { $totalSteps++ }
     if (-not $skipOutput)   { $totalSteps++ }
     $currentStep  = 0
@@ -442,6 +442,87 @@ function Show-InteractiveWizard {
     }
 
     # ================================================================
+    # STEP: Report Options
+    # ================================================================
+    $currentStep++
+    $reportOptions = [ordered]@{
+        '1' = @{ Name = 'ComplianceOverview'; Label = 'Compliance Overview';  Selected = $true }
+        '2' = @{ Name = 'CoverPage';          Label = 'Cover Page';           Selected = $true }
+        '3' = @{ Name = 'ExecutiveSummary';    Label = 'Executive Summary';    Selected = $true }
+        '4' = @{ Name = 'NoBranding';          Label = 'Remove Branding';      Selected = $false }
+        '5' = @{ Name = 'FrameworkFilter';     Label = 'Framework Filter';     Selected = $false }
+    }
+    $wizFrameworkFilter = @()
+    $validFamilies = @('CIS','NIST','ISO','STIG','PCI','CMMC','HIPAA','CISA','SOC2','FedRAMP','Essential8','MITRE','CISv8')
+
+    $reportStepDone = $false
+    while (-not $reportStepDone) {
+        Show-Header
+        Show-StepHeader -Step $currentStep -Total $totalSteps -Title 'Report Options'
+        Write-Host '  Toggle options by number, separated by spaces.' -ForegroundColor $cNormal
+        Write-Host '  Press ENTER when done.' -ForegroundColor $cMuted
+        Write-Host ''
+
+        foreach ($key in $reportOptions.Keys) {
+            $opt = $reportOptions[$key]
+            $marker = if ($opt.Selected) { [char]0x25CF } else { [char]0x25CB }
+            $color = if ($opt.Selected) { $cNormal } else { $cMuted }
+            $extra = ''
+            if ($opt.Name -eq 'FrameworkFilter' -and $opt.Selected -and $wizFrameworkFilter.Count -gt 0) {
+                $extra = "  ($($wizFrameworkFilter -join ', '))"
+            }
+            elseif ($opt.Name -eq 'FrameworkFilter' -and -not $opt.Selected) {
+                $extra = '  (all 14)'
+            }
+            Write-Host "  [$key] $marker $($opt.Label)$extra" -ForegroundColor $color
+        }
+
+        Write-Host ''
+        Write-Host '  > ' -ForegroundColor $cPrompt -NoNewline
+        $reportChoice = (Read-Host) ?? ''
+
+        switch ($reportChoice.Trim().ToUpper()) {
+            '' {
+                # If FrameworkFilter is toggled on but no families selected, prompt
+                if ($reportOptions['5'].Selected -and $wizFrameworkFilter.Count -eq 0) {
+                    Write-Host ''
+                    Write-Host '  Enter framework families to include (e.g. CIS NIST HIPAA):' -ForegroundColor $cNormal
+                    Write-Host "  Available: $($validFamilies -join ', ')" -ForegroundColor $cMuted
+                    Write-Host '  > ' -ForegroundColor $cPrompt -NoNewline
+                    $fwInput = (Read-Host) ?? ''
+                    if ($fwInput.Trim()) {
+                        $wizFrameworkFilter = @($fwInput.Trim() -split '[,\s]+' | ForEach-Object {
+                            $inputVal = $_.Trim()
+                            $validFamilies | Where-Object { $_ -eq $inputVal } | Select-Object -First 1
+                        } | Where-Object { $_ })
+                    }
+                    if ($wizFrameworkFilter.Count -eq 0) {
+                        Write-Host '  No valid families entered. Framework filter disabled.' -ForegroundColor $cError
+                        $reportOptions['5'].Selected = $false
+                        Start-Sleep -Seconds 1
+                    }
+                }
+                else {
+                    $reportStepDone = $true
+                }
+            }
+            default {
+                $tokens = $reportChoice.Trim() -split '[,\s]+'
+                foreach ($token in $tokens) {
+                    $num = 0
+                    if ($token -ne '' -and [int]::TryParse($token, [ref]$num) -and $reportOptions.Contains("$num")) {
+                        $reportOptions["$num"].Selected = -not $reportOptions["$num"].Selected
+                        # Clear framework filter when toggling off
+                        if ($num -eq 5 -and -not $reportOptions['5'].Selected) {
+                            $wizFrameworkFilter = @()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    # ================================================================
     # Confirmation
     # ================================================================
     Show-Header
@@ -469,6 +550,25 @@ function Show-InteractiveWizard {
         Write-Host "    Cloud:     $M365Environment" -ForegroundColor $cNormal
     }
     Write-Host "    Output:    $wizOutputFolder\" -ForegroundColor $cNormal
+
+    # Report options summary
+    $reportIncludes = @()
+    if ($reportOptions['1'].Selected) { $reportIncludes += 'Compliance Overview' }
+    if ($reportOptions['2'].Selected) { $reportIncludes += 'Cover Page' }
+    if ($reportOptions['3'].Selected) { $reportIncludes += 'Executive Summary' }
+    $reportExcludes = @()
+    if (-not $reportOptions['1'].Selected) { $reportExcludes += 'Compliance Overview' }
+    if (-not $reportOptions['2'].Selected) { $reportExcludes += 'Cover Page' }
+    if (-not $reportOptions['3'].Selected) { $reportExcludes += 'Executive Summary' }
+    if ($reportOptions['4'].Selected) { $reportExcludes += 'Branding' }
+    $reportDisplay = if ($reportIncludes.Count -eq 3 -and $reportExcludes.Count -eq 0) { 'All sections, branded' } else { $reportIncludes -join ', ' }
+    Write-Host "    Report:    $reportDisplay" -ForegroundColor $cNormal
+    if ($reportExcludes.Count -gt 0) {
+        Write-Host "    Skipping:  $($reportExcludes -join ', ')" -ForegroundColor $cMuted
+    }
+    if ($wizFrameworkFilter.Count -gt 0) {
+        Write-Host "    Frameworks: $($wizFrameworkFilter -join ', ')" -ForegroundColor $cNormal
+    }
     Write-Host ''
     Write-Host '  Press ENTER to begin, or Q to quit.' -ForegroundColor $cPrompt
     Write-Host '  > ' -ForegroundColor $cPrompt -NoNewline
@@ -485,6 +585,13 @@ function Show-InteractiveWizard {
         Section      = $selectedSections
         OutputFolder = $wizOutputFolder
     }
+
+    # Report options
+    if (-not $reportOptions['1'].Selected) { $wizardResult['SkipComplianceOverview'] = $true }
+    if (-not $reportOptions['2'].Selected) { $wizardResult['SkipCoverPage'] = $true }
+    if (-not $reportOptions['3'].Selected) { $wizardResult['SkipExecutiveSummary'] = $true }
+    if ($reportOptions['4'].Selected) { $wizardResult['NoBranding'] = $true }
+    if ($wizFrameworkFilter.Count -gt 0) { $wizardResult['FrameworkFilter'] = $wizFrameworkFilter }
 
     if ($tenantInput.Trim()) {
         $wizardResult['TenantId'] = $tenantInput.Trim()
@@ -621,6 +728,23 @@ if ($isInteractive -and [Environment]::UserInteractive) {
     }
     if ($wizardParams.ContainsKey('UserPrincipalName')) {
         $UserPrincipalName = $wizardParams['UserPrincipalName']
+    }
+
+    # Report options from wizard
+    if ($wizardParams.ContainsKey('SkipComplianceOverview')) {
+        $SkipComplianceOverview = [switch]$true
+    }
+    if ($wizardParams.ContainsKey('SkipCoverPage')) {
+        $SkipCoverPage = [switch]$true
+    }
+    if ($wizardParams.ContainsKey('SkipExecutiveSummary')) {
+        $SkipExecutiveSummary = [switch]$true
+    }
+    if ($wizardParams.ContainsKey('NoBranding')) {
+        $NoBranding = [switch]$true
+    }
+    if ($wizardParams.ContainsKey('FrameworkFilter') -and -not $PSBoundParameters.ContainsKey('FrameworkFilter')) {
+        $FrameworkFilter = $wizardParams['FrameworkFilter']
     }
 }
 
