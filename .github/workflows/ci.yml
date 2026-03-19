@@ -10,19 +10,20 @@ permissions:
   contents: read
 
 jobs:
-  lint:
-    name: PSScriptAnalyzer
+  quality-gates:
+    name: Quality Gates
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install PSScriptAnalyzer
+      - name: Install modules
         shell: pwsh
         run: |
           Set-PSRepository PSGallery -InstallationPolicy Trusted
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
 
-      - name: Run PSScriptAnalyzer
+      - name: PSScriptAnalyzer
         shell: pwsh
         run: |
           $results = Invoke-ScriptAnalyzer -Path . -Settings ./PSScriptAnalyzerSettings.psd1 -Recurse |
@@ -36,26 +37,57 @@ jobs:
           }
           Write-Host "PSScriptAnalyzer: All checks passed" -ForegroundColor Green
 
-  smoke-tests:
-    name: Smoke Tests
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Pester
-        shell: pwsh
-        run: |
-          Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
-
-      - name: Run smoke tests
+      - name: Smoke tests
         shell: pwsh
         run: |
           $config = New-PesterConfiguration
-          $config.Run.Path = @('./tests/Smoke', './tests/Consistency', './tests/Common/Export-AssessmentReport.Tests.ps1', './tests/Common/Import-ControlRegistry.Tests.ps1', './tests/controls')
+          $config.Run.Path = @(
+            './tests/Smoke'
+            './tests/Consistency'
+            './tests/Common/Export-AssessmentReport.Tests.ps1'
+            './tests/Common/Import-ControlRegistry.Tests.ps1'
+            './tests/Common/Import-FrameworkDefinitions.Tests.ps1'
+            './tests/controls'
+          )
           $config.Run.Exit = $true
           $config.Output.Verbosity = 'Detailed'
           Invoke-Pester -Configuration $config
+
+      - name: Version consistency
+        shell: pwsh
+        run: |
+          $manifest = Import-PowerShellDataFile -Path ./M365-Assess.psd1
+          $expected = $manifest.ModuleVersion
+          Write-Host "Manifest version: $expected"
+
+          $failures = @()
+          $esc = [regex]::Escape($expected)
+
+          # README badge
+          $readme = Get-Content ./README.md -Raw
+          if ($readme -notmatch "version-$esc-") {
+            $failures += 'README.md badge'
+          }
+
+          # Verify runtime readers use Import-PowerShellDataFile (not hardcoded)
+          $orch = Get-Content ./Invoke-M365Assessment.ps1 -Raw
+          if ($orch -notmatch 'Import-PowerShellDataFile') {
+            $failures += 'Invoke-M365Assessment.ps1 should read version from manifest'
+          }
+
+          $report = Get-Content ./Common/Export-AssessmentReport.ps1 -Raw
+          if ($report -notmatch 'Import-PowerShellDataFile') {
+            $failures += 'Export-AssessmentReport.ps1 should read version from manifest'
+          }
+
+          if ($failures.Count -gt 0) {
+            Write-Host "`nVersion issues:" -ForegroundColor Red
+            $failures | ForEach-Object { Write-Host "  - $_" -ForegroundColor Yellow }
+            Write-Error "$($failures.Count) version issue(s) found"
+            exit 1
+          }
+
+          Write-Host "Version consistency: manifest=$expected, README badge matches, runtime readers use manifest" -ForegroundColor Green
 
   test:
     name: Pester Tests (Full)
@@ -101,6 +133,7 @@ jobs:
 
   sync-checkid:
     name: Sync CheckID Registry
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -128,45 +161,3 @@ jobs:
           else
             echo "CheckID data is up to date"
           fi
-
-  version-check:
-    name: Version Consistency
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Check version consistency
-        shell: pwsh
-        run: |
-          $manifest = Import-PowerShellDataFile -Path ./M365-Assess.psd1
-          $expected = $manifest.ModuleVersion
-          Write-Host "Manifest version: $expected"
-
-          $failures = @()
-          $esc = [regex]::Escape($expected)
-
-          # README badge
-          $readme = Get-Content ./README.md -Raw
-          if ($readme -notmatch "version-$esc-") {
-            $failures += 'README.md badge'
-          }
-
-          # Verify runtime readers use Import-PowerShellDataFile (not hardcoded)
-          $orch = Get-Content ./Invoke-M365Assessment.ps1 -Raw
-          if ($orch -notmatch 'Import-PowerShellDataFile') {
-            $failures += 'Invoke-M365Assessment.ps1 should read version from manifest'
-          }
-
-          $report = Get-Content ./Common/Export-AssessmentReport.ps1 -Raw
-          if ($report -notmatch 'Import-PowerShellDataFile') {
-            $failures += 'Export-AssessmentReport.ps1 should read version from manifest'
-          }
-
-          if ($failures.Count -gt 0) {
-            Write-Host "`nVersion issues:" -ForegroundColor Red
-            $failures | ForEach-Object { Write-Host "  - $_" -ForegroundColor Yellow }
-            Write-Error "$($failures.Count) version issue(s) found"
-            exit 1
-          }
-
-          Write-Host "Version consistency: manifest=$expected, README badge matches, runtime readers use manifest" -ForegroundColor Green
