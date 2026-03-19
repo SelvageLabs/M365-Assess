@@ -64,6 +64,10 @@
     Omit the branded cover page from the HTML report.
 .PARAMETER SkipExecutiveSummary
     Omit the executive summary hero panel from the HTML report.
+.PARAMETER FrameworkFilter
+    Limit the compliance overview to specific framework families.
+.PARAMETER CustomBranding
+    Hashtable for white-label reports. Keys: CompanyName, LogoPath, AccentColor.
 .EXAMPLE
     PS> .\Invoke-M365Assessment.ps1 -TenantId 'contoso.onmicrosoft.com'
 
@@ -154,7 +158,14 @@ param(
     [switch]$SkipCoverPage,
 
     [Parameter()]
-    [switch]$SkipExecutiveSummary
+    [switch]$SkipExecutiveSummary,
+
+    [Parameter()]
+    [ValidateSet('CIS','NIST','ISO','STIG','PCI','CMMC','HIPAA','CISA','SOC2')]
+    [string[]]$FrameworkFilter,
+
+    [Parameter()]
+    [hashtable]$CustomBranding
 )
 
 $ErrorActionPreference = 'Stop'
@@ -1864,6 +1875,16 @@ foreach ($sectionName in $Section) {
     # DNS Authentication: deferred until after all sections complete
     if ($sectionName -eq 'Email') {
         $script:runDnsAuthentication = $true
+        # Cache accepted domains for deferred DNS checks (avoids EXO session timeout)
+        if (-not $SkipConnection) {
+            try {
+                $script:cachedAcceptedDomains = @(Get-AcceptedDomain -ErrorAction Stop)
+                Write-AssessmentLog -Level INFO -Message "Cached $($script:cachedAcceptedDomains.Count) accepted domain(s) for deferred DNS" -Section 'Email'
+            }
+            catch {
+                Write-AssessmentLog -Level WARN -Message "Could not cache accepted domains: $($_.Exception.Message)" -Section 'Email'
+            }
+        }
     }
 }
 
@@ -1872,30 +1893,17 @@ foreach ($sectionName in $Section) {
 # Deferred DNS checks (runs after all sections, uses prefetch cache)
 # ------------------------------------------------------------------
 if ($script:runDnsAuthentication) {
-    # Verify Exchange Online is still connected (session may have dropped)
-    $exoAvailable = $false
-    try {
-        $null = Get-Command -Name Get-AcceptedDomain -ErrorAction Stop
-        $exoAvailable = $true
-    }
-    catch {
-        # Try to reconnect
-        if (-not $SkipConnection -and -not $failedServices.Contains('ExchangeOnline')) {
-            Write-AssessmentLog -Level INFO -Message "Reconnecting Exchange Online for deferred DNS checks" -Section 'Email'
-            try {
-                Connect-RequiredService -Services @('ExchangeOnline') -SectionName 'Email'
-                $exoAvailable = $true
-            }
-            catch {
-                Write-AssessmentLog -Level WARN -Message "Could not reconnect Exchange Online: $($_.Exception.Message)" -Section 'Email'
-            }
+    $acceptedDomains = $script:cachedAcceptedDomains
+    if (-not $acceptedDomains -or $acceptedDomains.Count -eq 0) {
+        try {
+            $acceptedDomains = @(Get-AcceptedDomain -ErrorAction Stop)
+        }
+        catch {
+            Write-AssessmentLog -Level WARN -Message "Skipping deferred DNS checks -- no cached domains and EXO unavailable" -Section 'Email'
         }
     }
 
-    if (-not $exoAvailable) {
-        Write-AssessmentLog -Level WARN -Message "Skipping deferred DNS checks -- Exchange Online not available" -Section 'Email'
-    }
-    else {
+    if ($acceptedDomains -and $acceptedDomains.Count -gt 0) {
 
     # Collect prefetched DNS cache (started during Graph connect)
     $dnsCache = @{}
@@ -1953,8 +1961,6 @@ if ($script:runDnsAuthentication) {
     Write-AssessmentLog -Level INFO -Message "Running: $($dnsCollector.Label)" -Section 'Email' -Collector $dnsCollector.Label
 
     try {
-        $acceptedDomains = Get-AcceptedDomain -ErrorAction Stop
-
         $dnsResults = foreach ($domain in $acceptedDomains) {
             $domainName = $domain.DomainName
             $cached = $dnsCache[$domainName]
@@ -2165,7 +2171,7 @@ if ($script:runDnsAuthentication) {
     Show-CollectorResult -Label $dnsCollector.Label -Status $dnsStatus -Items $dnsItemCount -DurationSeconds $dnsDuration.TotalSeconds -ErrorMessage $dnsError
     Write-AssessmentLog -Level INFO -Message "Completed: $($dnsCollector.Label) -- $dnsStatus, $dnsItemCount items" -Section 'Email' -Collector $dnsCollector.Label
 
-    } # end else (exoAvailable)
+    }
 }
 
 # Clean up check progress display
@@ -2211,6 +2217,8 @@ if (Test-Path -Path $reportScriptPath) {
         if ($SkipComplianceOverview) { $reportParams['SkipComplianceOverview'] = $true }
         if ($SkipCoverPage) { $reportParams['SkipCoverPage'] = $true }
         if ($SkipExecutiveSummary) { $reportParams['SkipExecutiveSummary'] = $true }
+        if ($FrameworkFilter) { $reportParams['FrameworkFilter'] = $FrameworkFilter }
+        if ($CustomBranding) { $reportParams['CustomBranding'] = $CustomBranding }
 
         $reportOutput = & $reportScriptPath @reportParams
         foreach ($line in $reportOutput) {

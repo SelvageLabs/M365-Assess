@@ -142,6 +142,13 @@ During execution, the console displays real-time streaming progress for each sec
 | `-M365Environment` | string | `commercial` | Cloud environment: `commercial`, `gcc`, `gcchigh`, `dod` |
 | `-NoBranding` | switch | | Generate report without M365 Assess branding |
 | `-SkipDLP` | switch | | Skip DLP collector and Purview connection (saves ~46s) |
+| `-SkipComplianceOverview` | switch | | Omit Compliance Overview section from report |
+| `-SkipCoverPage` | switch | | Omit branded cover page from report |
+| `-SkipExecutiveSummary` | switch | | Omit executive summary, show compact scan header instead |
+
+### Interactive Wizard
+
+When no connection parameters are provided (`-TenantId`, `-SkipConnection`, `-ClientId`, or `-ManagedIdentity`), an interactive wizard prompts for tenant, auth method, and output folder. If `-Section` or `-OutputFolder` are provided on the command line, those wizard steps are skipped automatically.
 
 See [Authentication](AUTHENTICATION.md) for detailed auth examples and App Registration setup.
 

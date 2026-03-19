@@ -78,6 +78,10 @@ jobs:
           $config.TestResult.Enabled = $true
           $config.TestResult.OutputPath = './test-results.xml'
           $config.TestResult.OutputFormat = 'NUnitXml'
+          $config.CodeCoverage.Enabled = $true
+          $config.CodeCoverage.Path = @('./Invoke-M365Assessment.ps1', './Common/', './Entra/', './Exchange-Online/', './Security/', './Intune/', './Collaboration/', './PowerBI/', './Purview/', './SOC2/')
+          $config.CodeCoverage.OutputPath = './coverage.xml'
+          $config.CodeCoverage.OutputFormat = 'JaCoCo'
           $config.Output.Verbosity = 'Detailed'
           Invoke-Pester -Configuration $config
 
@@ -87,6 +91,13 @@ jobs:
         with:
           name: test-results
           path: test-results.xml
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
 
   sync-checkid:
     name: Sync CheckID Registry

@@ -98,6 +98,7 @@ function Initialize-CheckProgress {
         CollectorCounts   = @{}      # collector -> total count
         CollectorDone     = @{}      # collector -> completed count
         PrintedHeaders    = @{}      # collector -> $true (header printed)
+        LabelMap          = $script:CollectorLabelMap  # accessible from any scope via global state
     }
 
     # Populate check IDs and collector counts
@@ -174,7 +175,8 @@ function global:Update-CheckProgress {
     # Print collector sub-header on first check from this collector
     if (-not $state.PrintedHeaders[$collectorName]) {
         $state.PrintedHeaders[$collectorName] = $true
-        $label = $script:CollectorLabelMap[$collectorName]
+        $labelMap = if ($script:CollectorLabelMap) { $script:CollectorLabelMap } else { $global:CheckProgressState.LabelMap }
+        $label = if ($labelMap) { $labelMap[$collectorName] } else { $collectorName }
         $count = $state.CollectorCounts[$collectorName]
         Write-Host "    $([char]0x250C) $label ($count checks)" -ForegroundColor White
     }
