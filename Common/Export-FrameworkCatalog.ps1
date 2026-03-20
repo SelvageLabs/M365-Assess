@@ -146,6 +146,10 @@ function Invoke-FrameworkScoring {
         'policy-compliance'       { Invoke-PolicyCompliance -Framework $Framework -MappedFindings $mappedFindings }
     }
 
+    # Sort groups by key for consistent display order
+    # Scoring data key order maps: numeric (1,2,3), alpha-numeric (L1,L2,ML1,ML2), Roman (CAT-I,CAT-II)
+    $groups = @($groups | Sort-Object -Property { Get-GroupSortKey -Key $_.Key })
+
     # Build summary
     $totalMapped = ($mappedFindings | ForEach-Object { $_.Finding.CheckId } | Select-Object -Unique).Count
     $totalPassed = ($mappedFindings | Where-Object { $_.Finding.Status -eq 'Pass' } |
@@ -639,6 +643,42 @@ function Get-ScoringSubObject {
         return $ht
     }
     return $val
+}
+
+# ---------------------------------------------------------------------------
+# Private helper: generate a sortable key for group ordering
+# Handles: numeric (1,2,3), alpha-numeric (L1,L2,ML1,GV,ID,PR), Roman (CAT-I,CAT-II)
+# ---------------------------------------------------------------------------
+function Get-GroupSortKey {
+    [CmdletBinding()]
+    param([string]$Key)
+
+    # Roman numeral suffix (CAT-I, CAT-II, CAT-III)
+    $romanMap = @{ 'I' = 1; 'II' = 2; 'III' = 3; 'IV' = 4; 'V' = 5 }
+    if ($Key -match '-([IV]+)$') {
+        $prefix = $Key -replace '-[IV]+$', ''
+        $romanVal = if ($romanMap.ContainsKey($Matches[1])) { $romanMap[$Matches[1]] } else { 99 }
+        return '{0}-{1:D3}' -f $prefix, $romanVal
+    }
+
+    # Alpha prefix + numeric suffix (L1, L2, ML1, ML2, IG1, IG2)
+    if ($Key -match '^([A-Za-z]+)(\d+)$') {
+        return '{0}{1:D3}' -f $Matches[1], [int]$Matches[2]
+    }
+
+    # Pure numeric (5, 6, 7, 8)
+    if ($Key -match '^\d+$') {
+        return '{0:D5}' -f [int]$Key
+    }
+
+    # CSF function order (canonical: GV=1, ID=2, PR=3, DE=4, RS=5, RC=6)
+    $csfOrder = @{ 'GV' = 1; 'ID' = 2; 'PR' = 3; 'DE' = 4; 'RS' = 5; 'RC' = 6 }
+    if ($csfOrder.ContainsKey($Key)) {
+        return '{0:D3}' -f $csfOrder[$Key]
+    }
+
+    # Fallback: alphabetic
+    return $Key
 }
 
 # ---------------------------------------------------------------------------
