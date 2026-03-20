@@ -21,7 +21,7 @@
 
 ---
 
-Run a single command to produce CSV reports, a branded HTML assessment report, and an XLSX compliance matrix covering identity, email, security, devices, collaboration, and compliance baselines. **149 automated security checks** mapped across **13 compliance frameworks**.
+Run a single command to produce CSV reports, a branded HTML assessment report, and an XLSX compliance matrix covering identity, email, security, devices, collaboration, and compliance baselines. **160 automated security checks** mapped across **14 compliance frameworks**.
 
 ## Quick Start
 
@@ -109,7 +109,7 @@ During execution, the console displays real-time streaming progress for each sec
 | **Email** | Mailbox Summary, Mail Flow, Email Security, EXO Security Config, DNS Authentication | Mailbox types, transport rules, anti-spam/phishing, modern auth, audit settings, external sender tagging, SPF/DKIM/DMARC |
 | **Intune** | Device Summary, Compliance Policies, Config Profiles | Managed devices, compliance state, configuration profiles |
 | **Security** | Secure Score, Improvement Actions, Defender Policies, Defender Security Config, DLP Policies | Microsoft Secure Score, Defender for Office 365, anti-phishing/spam/malware, Safe Links/Attachments, data loss prevention |
-| **Collaboration** | SharePoint & OneDrive, SharePoint Security Config, Teams Access, Teams Security Config | Sharing settings, external sharing controls, sync restrictions, Teams meeting policies, third-party app restrictions |
+| **Collaboration** | SharePoint & OneDrive, SharePoint Security Config, Teams Access, Teams Security Config, Forms Security Config | Sharing settings, external sharing controls, sync restrictions, Teams meeting policies, third-party app restrictions, Forms phishing/data sharing settings |
 | **Hybrid** | Hybrid Sync | Azure AD Connect sync status and domain configuration |
 | **PowerBI** | Power BI Security Config | 11 CIS 9.1.x tenant setting checks: guest access, external sharing, publish to web, sensitivity labels, service principal restrictions. Requires MicrosoftPowerBIMgmt module. |
 | **Inventory** *(opt-in)* | Mailbox, Group, Teams, SharePoint, OneDrive Inventory | Per-object M&A inventory: mailboxes, distribution lists, M365 groups, Teams, SharePoint sites, OneDrive accounts |
@@ -145,6 +145,11 @@ During execution, the console displays real-time streaming progress for each sec
 | `-SkipComplianceOverview` | switch | | Omit Compliance Overview section from report |
 | `-SkipCoverPage` | switch | | Omit branded cover page from report |
 | `-SkipExecutiveSummary` | switch | | Omit executive summary, show compact scan header instead |
+| `-SkipPdf` | switch | | Skip PDF generation even when wkhtmltopdf is available |
+| `-FrameworkFilter` | string[] | *(all)* | Limit compliance overview to specific framework families (e.g., `CIS`, `NIST`) |
+| `-CustomBranding` | hashtable | | White-label reports. Keys: `CompanyName`, `LogoPath`, `AccentColor` |
+| `-CisBenchmarkVersion` | string | `v6` | CIS benchmark version (`v6` for v6.0.1). Set to `v7` when available |
+| `-ClientSecret` | SecureString | | App Registration client secret for app-only auth |
 
 ### Interactive Wizard
 
@@ -174,15 +179,19 @@ M365-Assessment/
     13-Device-Summary.csv
     14-Compliance-Policies.csv
     15-Config-Profiles.csv
+    15b-Intune-Security-Config.csv
     16-Secure-Score.csv
     17-Improvement-Actions.csv
     18-Defender-Policies.csv
     18b-Defender-Security-Config.csv
     19-DLP-Policies.csv
+    19b-Compliance-Security-Config.csv
+    19c-Purview-Retention-Config.csv
     20-SharePoint-OneDrive.csv
     20b-SharePoint-Security-Config.csv
     21-Teams-Access.csv
     21b-Teams-Security-Config.csv
+    21c-Forms-Security-Config.csv
     22-PowerBI-Security-Config.csv
     23-Hybrid-Sync.csv
     _Assessment-Summary_<tenant>.csv     # Status of every collector
@@ -194,7 +203,7 @@ M365-Assessment/
 
 ## Report Preview
 
-The self-contained HTML report opens in any browser with no dependencies. Click through from the cover page to the executive summary, drill into each security domain, and review compliance posture across 13 frameworks.
+The self-contained HTML report opens in any browser with no dependencies. Click through from the cover page to the executive summary, drill into each security domain, and review compliance posture across 14 frameworks.
 
 <div align="center">
 
@@ -230,7 +239,7 @@ M365-Assess/
     Export-ComplianceMatrix.ps1   # XLSX compliance matrix export
     Show-CheckProgress.ps1       # Real-time progress display
   controls/                       # Control registry and framework mappings
-    registry.json                 # Master registry (233 entries, 149 automated)
+    registry.json                 # Master registry (244 entries, 160 automated)
     frameworks/                   # Per-framework mapping files
   Entra/                          # Users, MFA, admin roles, CA, apps, licensing, security config
   Exchange-Online/                # Mailboxes, mail flow, email security, EXO config
@@ -250,7 +259,7 @@ M365-Assess/
 |-------|-------------|
 | [Authentication](AUTHENTICATION.md) | Interactive, certificate, device code, managed identity, and pre-existing connection methods |
 | [HTML Report](REPORT.md) | Report features, custom branding, `-NoBranding`, standalone generation |
-| [Compliance](COMPLIANCE.md) | 13 frameworks, XLSX export, CheckId system, control registry |
+| [Compliance](COMPLIANCE.md) | 14 frameworks, XLSX export, CheckId system, control registry |
 | [Compatibility](docs/COMPATIBILITY.md) | Module versions, dependency matrix, known incompatibilities |
 | [ScubaGear](docs/SCUBAGEAR.md) | CISA baseline integration, first run, products, GCC support |
 | [CheckId Guide](docs/CheckId-Guide.md) | CheckId naming convention and mapping reference |

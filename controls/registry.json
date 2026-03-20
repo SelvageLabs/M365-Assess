@@ -6542,7 +6542,7 @@
       "name": "Enable Conditional Access policies to block legacy authentication",
       "category": "CA",
       "collector": "Entra",
-      "hasAutomatedCheck": true,
+      "hasAutomatedCheck": false,
       "licensing": {
         "minimum": "E3"
       },

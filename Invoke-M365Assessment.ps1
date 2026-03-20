@@ -64,6 +64,8 @@
     Omit the branded cover page from the HTML report.
 .PARAMETER SkipExecutiveSummary
     Omit the executive summary hero panel from the HTML report.
+.PARAMETER SkipPdf
+    Skip PDF generation even when wkhtmltopdf is available.
 .PARAMETER FrameworkFilter
     Limit the compliance overview to specific framework families.
 .PARAMETER CustomBranding
@@ -162,6 +164,9 @@ param(
 
     [Parameter()]
     [switch]$SkipExecutiveSummary,
+
+    [Parameter()]
+    [switch]$SkipPdf,
 
     [Parameter()]
     [ValidateSet('CIS','NIST','ISO','STIG','PCI','CMMC','HIPAA','CISA','SOC2','FedRAMP','Essential8','MITRE','CISv8')]
@@ -1916,7 +1921,7 @@ foreach ($sectionName in $Section) {
                 $scriptLines.Add("try { & '$connectServicePath' @connectParams } catch { Write-Error `$_; exit 1 }")
                 $scriptLines.Add("& '$scriptPath' -OutputPath '$childCsvPath'")
 
-                $childScriptFile = Join-Path -Path $assessmentFolder -ChildPath '_powerbi_child.ps1'
+                $childScriptFile = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "m365assess_pbi_$([System.IO.Path]::GetRandomFileName()).ps1"
                 Set-Content -Path $childScriptFile -Value ($scriptLines -join "`n") -Encoding UTF8
                 try {
                     $childOutput = & pwsh -NoProfile -File $childScriptFile 2>&1
@@ -2416,6 +2421,7 @@ if (Test-Path -Path $reportScriptPath) {
         if ($SkipComplianceOverview) { $reportParams['SkipComplianceOverview'] = $true }
         if ($SkipCoverPage) { $reportParams['SkipCoverPage'] = $true }
         if ($SkipExecutiveSummary) { $reportParams['SkipExecutiveSummary'] = $true }
+        if ($SkipPdf) { $reportParams['SkipPdf'] = $true }
         if ($FrameworkFilter) { $reportParams['FrameworkFilter'] = $FrameworkFilter }
         if ($CustomBranding) { $reportParams['CustomBranding'] = $CustomBranding }
         $reportParams['CisFrameworkId'] = "cis-m365-$CisBenchmarkVersion"

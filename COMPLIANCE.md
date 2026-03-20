@@ -1,6 +1,6 @@
 # Multi-Framework Compliance
 
-The HTML report includes a **Compliance Overview** section that maps all assessed security controls across 13 compliance frameworks simultaneously. No parameters needed; all framework data is always included.
+The HTML report includes a **Compliance Overview** section that maps all assessed security controls across 14 compliance frameworks simultaneously. No parameters needed; all framework data is always included.
 
 ## Supported Frameworks
 
@@ -19,6 +19,10 @@ The HTML report includes a **Compliance Overview** section that maps all assesse
 | HIPAA Security Rule | 45 | Coverage mapping |
 | CISA SCuBA | 80 | Coverage mapping |
 | SOC 2 TSC | varies | Coverage mapping |
+| FedRAMP | varies | Coverage mapping |
+| Essential Eight | 8 | Coverage mapping |
+| CIS Controls v8 | 153 | Coverage mapping |
+| MITRE ATT&CK | varies | Coverage mapping |
 
 **CIS profiles** show a compliance score (pass rate against benchmarked controls). Other frameworks show coverage mapping, indicating which of your assessed findings align to that framework's controls.
 
@@ -48,11 +52,11 @@ ENTRA-ADMIN-001.1    First setting assessed under ENTRA-ADMIN-001
 ENTRA-ADMIN-001.2    Second setting assessed under ENTRA-ADMIN-001
 ```
 
-The assessment suite includes **160 automated security checks** across 12 security config collectors (Entra, CA Evaluator, EXO, DNS, Defender, Compliance, Intune, SharePoint, Teams, Power BI, Forms, Purview Retention), each mapped to one or more compliance frameworks.
+The assessment suite includes **160 automated security checks** across 13 security config collectors (Entra, CA Evaluator, EXO, DNS, Defender, Compliance, Intune, SharePoint, Teams, Power BI, Forms, Purview Retention), each mapped to one or more compliance frameworks.
 
 ## Control Registry
 
-Framework mappings are defined in `controls/registry.json`, which contains **244 control entries** (160 automated, 163 active). Each entry specifies the check ID, description, and mappings to all applicable frameworks.
+Framework mappings are defined in `controls/registry.json`, which contains **244 control entries** (160 automated, 163 active, 81 manual-only). Each entry specifies the check ID, description, and mappings to all applicable frameworks.
 
 To view or edit mappings:
 
