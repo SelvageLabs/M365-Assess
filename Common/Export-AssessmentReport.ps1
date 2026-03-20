@@ -43,6 +43,10 @@
 .PARAMETER CustomBranding
     Hashtable for white-label reports. Supported keys: CompanyName (string),
     LogoPath (file path to PNG/JPEG/SVG), AccentColor (hex color like '#1a56db').
+.PARAMETER FrameworkExport
+    Generate standalone per-framework HTML catalog exports alongside the main report.
+    Specify framework families (CIS, NIST, ISO, etc.) or 'All'. Output files are
+    named _<Framework>-Catalog_<tenant>.html in the assessment folder.
 .PARAMETER CisFrameworkId
     The framework ID for the active CIS benchmark version used for the CisControl
     property and reverse lookup. Defaults to 'cis-m365-v6'. Set to 'cis-m365-v7'
@@ -92,6 +96,10 @@ param(
 
     [Parameter()]
     [hashtable]$CustomBranding,
+
+    [Parameter()]
+    [ValidateSet('CIS','NIST','ISO','STIG','PCI','CMMC','HIPAA','CISA','SOC2','FedRAMP','Essential8','MITRE','CISv8','All')]
+    [string[]]$FrameworkExport,
 
     [Parameter()]
     [string]$CisFrameworkId = 'cis-m365-v6'
@@ -1809,6 +1817,29 @@ if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
         $fwCatalog = Export-FrameworkCatalog -Findings @($allCisFindings) -Framework $fw `
             -ControlRegistry $controlRegistry -Mode Inline
         if ($fwCatalog) { $catalogHtml += $fwCatalog }
+    }
+}
+
+# ------------------------------------------------------------------
+# Framework Catalog standalone exports (optional)
+# ------------------------------------------------------------------
+if ($FrameworkExport -and $allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
+    if (-not (Get-Command -Name Export-FrameworkCatalog -ErrorAction SilentlyContinue)) {
+        . (Join-Path -Path $PSScriptRoot -ChildPath 'Export-FrameworkCatalog.ps1')
+    }
+    $exportFrameworks = $allFrameworks
+    if ('All' -notin $FrameworkExport) {
+        $exportFrameworks = @($allFrameworks | Where-Object { $_.filterFamily -in $FrameworkExport })
+    }
+    $catalogTenantName = if ($reportDomainPrefix) { $reportDomainPrefix } elseif ($TenantName) { $TenantName } else { 'Unknown' }
+    $catalogSuffix = if ($reportDomainPrefix) { "_$reportDomainPrefix" } else { '' }
+    foreach ($fw in $exportFrameworks) {
+        $fwFileName = "_$($fw.label -replace '[^a-zA-Z0-9]','-')-Catalog${catalogSuffix}.html"
+        $fwPath = Join-Path -Path $AssessmentFolder -ChildPath $fwFileName
+        Export-FrameworkCatalog -Findings @($allCisFindings) -Framework $fw `
+            -ControlRegistry $controlRegistry -Mode Standalone `
+            -OutputPath $fwPath -TenantName $catalogTenantName
+        Write-Verbose "Framework catalog exported: $fwFileName"
     }
 }
 
