@@ -3296,6 +3296,11 @@ $html = @"
         .stat-sublabel { font-size: 0.75em; color: var(--m365a-medium-gray); }
         .coverage-label { font-size: 0.65em; color: var(--m365a-medium-gray); margin-top: 2px; }
 
+        /* Profile level breakdown (L1/L2 sub-metrics in framework cards) */
+        .profile-level-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 0.75em; }
+        .profile-level-label { font-weight: 600; min-width: 20px; color: var(--m365a-dark); }
+        .profile-level-detail { color: var(--m365a-medium-gray); font-size: 0.9em; }
+
         /* Section filter */
         .section-filter { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px 14px; margin: 0 0 12px; background: var(--m365a-light-gray); border: 1px solid var(--m365a-border); border-radius: 6px; }
         .section-filter-label { font-weight: 600; font-size: 0.85em; color: var(--m365a-dark); margin-right: 4px; }
