@@ -15,14 +15,14 @@
 [![CI](https://github.com/Galvnyz/M365-Assess/actions/workflows/ci.yml/badge.svg)](https://github.com/Galvnyz/M365-Assess/actions/workflows/ci.yml)
 [![PowerShell 7.x](https://img.shields.io/badge/PowerShell-7.x-blue?logo=powershell&logoColor=white)](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows)
 [![Read-Only](https://img.shields.io/badge/Operations-Read--Only-brightgreen)](.)
-[![Version](https://img.shields.io/badge/version-0.9.7-blue)](.)
+[![Version](https://img.shields.io/badge/version-0.9.8-blue)](.)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 </div>
 
 ---
 
-Run a single command to produce CSV reports, a branded HTML assessment report, and an XLSX compliance matrix covering identity, email, security, devices, collaboration, and compliance baselines. **160 automated security checks** mapped across **14 compliance frameworks**.
+Run a single command to produce CSV reports, a branded HTML assessment report, and an XLSX compliance matrix covering identity, email, security, devices, collaboration, and compliance baselines. **169 automated security checks** mapped across **14 compliance frameworks**.
 
 ## Quick Start
 
@@ -109,7 +109,7 @@ During execution, the console displays real-time streaming progress for each sec
 | **Licensing** | License Summary | SKU allocation and assignment counts |
 | **Email** | Mailbox Summary, Mail Flow, Email Security, EXO Security Config, DNS Authentication | Mailbox types, transport rules, anti-spam/phishing, modern auth, audit settings, external sender tagging, SPF/DKIM/DMARC |
 | **Intune** | Device Summary, Compliance Policies, Config Profiles | Managed devices, compliance state, configuration profiles |
-| **Security** | Secure Score, Improvement Actions, Defender Policies, Defender Security Config, DLP Policies | Microsoft Secure Score, Defender for Office 365, anti-phishing/spam/malware, Safe Links/Attachments, data loss prevention |
+| **Security** | Secure Score, Improvement Actions, Defender Policies, Defender Security Config, DLP Policies, Stryker Incident Readiness | Microsoft Secure Score, Defender for Office 365, anti-phishing/spam/malware, Safe Links/Attachments, data loss prevention, incident readiness checks (stale admins, CA exclusions, break-glass, device wipe audit) |
 | **Collaboration** | SharePoint & OneDrive, SharePoint Security Config, Teams Access, Teams Security Config, Forms Security Config | Sharing settings, external sharing controls, sync restrictions, Teams meeting policies, third-party app restrictions, Forms phishing/data sharing settings |
 | **Hybrid** | Hybrid Sync | Azure AD Connect sync status and domain configuration |
 | **PowerBI** | Power BI Security Config | 11 CIS 9.1.x tenant setting checks: guest access, external sharing, publish to web, sensitivity labels, service principal restrictions. Requires MicrosoftPowerBIMgmt module. |

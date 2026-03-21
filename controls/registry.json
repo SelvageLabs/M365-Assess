@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "dataVersion": "2026-03-15",
+  "dataVersion": "2026-03-20",
   "generatedFrom": "data/framework-mappings.csv + data/check-id-mapping.csv + data/standalone-checks.json",
   "checks": [
     {
@@ -14729,6 +14729,841 @@
         },
         "mitre-attack": {
           "controlId": "T1485"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-PIM-006",
+      "name": "Tier-0 role activation duration exceeds 4 hours",
+      "category": "PIM",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E5"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-2(2);AC-6(1)",
+          "title": "Automated Temporary and Emergency Account Management; Authorize Access to Security Functions",
+          "profiles": ["Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05",
+          "title": "Access permissions, entitlements, and authorizations are defined in a policy, managed, enforced, and reviewed"
+        },
+        "mitre-attack": {
+          "controlId": "T1078.004",
+          "title": "Valid Accounts: Cloud Accounts"
+        },
+        "cis-controls-v8": {
+          "controlId": "6.2"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-PIM-007",
+      "name": "Justification not required on Tier-0 role activation",
+      "category": "PIM",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E5"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-2(4);AU-2",
+          "title": "Automated Audit Actions; Event Logging",
+          "profiles": ["Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05",
+          "title": "Access permissions, entitlements, and authorizations are defined in a policy, managed, enforced, and reviewed"
+        },
+        "mitre-attack": {
+          "controlId": "T1078.004",
+          "title": "Valid Accounts: Cloud Accounts"
+        },
+        "soc2": {
+          "controlId": "CC6.1;CC6.2",
+          "evidenceType": "config-export",
+          "title": "Logical Access Security; Credentials Management"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-PIM-008",
+      "name": "MFA not required on Tier-0 role activation",
+      "category": "PIM",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E5"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "IA-2(1);AC-6(5)",
+          "title": "Multi-factor Authentication to Privileged Accounts; Privileged Accounts",
+          "profiles": ["Low", "Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-03",
+          "title": "Users, services, and hardware are authenticated"
+        },
+        "mitre-attack": {
+          "controlId": "T1078.004;T1556",
+          "title": "Valid Accounts: Cloud Accounts; Modify Authentication Process"
+        },
+        "cis-controls-v8": {
+          "controlId": "6.4;6.5"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-PIM-009",
+      "name": "Permanent eligible assignments allowed for Tier-0 roles",
+      "category": "PIM",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E5"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-2(2);AC-2(3)",
+          "title": "Automated Temporary and Emergency Account Management; Disable Accounts",
+          "profiles": ["Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05",
+          "title": "Access permissions, entitlements, and authorizations are defined in a policy, managed, enforced, and reviewed"
+        },
+        "mitre-attack": {
+          "controlId": "T1078.004",
+          "title": "Valid Accounts: Cloud Accounts"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-PIM-010",
+      "name": "No admin notification on Tier-0 role activation",
+      "category": "PIM",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E5"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AU-6;IR-5",
+          "title": "Audit Record Review, Analysis, and Reporting; Incident Monitoring",
+          "profiles": ["Low", "Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "DE.AE-03;DE.CM-01",
+          "title": "Events are analyzed; Networks are monitored"
+        },
+        "mitre-attack": {
+          "controlId": "T1078.004",
+          "title": "Valid Accounts: Cloud Accounts"
+        },
+        "soc2": {
+          "controlId": "CC7.2;CC7.3",
+          "evidenceType": "config-export",
+          "title": "Monitoring of System Components; Evaluation of Detected Events"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-HYBRID-002",
+      "name": "On-premises synced users holding Tier-0/1 Entra roles",
+      "category": "HYBRID",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-6(5);AC-2",
+          "title": "Privileged Accounts; Account Management",
+          "profiles": ["Low", "Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05;PR.AA-03",
+          "title": "Access permissions managed; Users authenticated"
+        },
+        "mitre-attack": {
+          "controlId": "T1078.002;T1078.004",
+          "title": "Valid Accounts: Domain Accounts; Valid Accounts: Cloud Accounts"
+        },
+        "cis-controls-v8": {
+          "controlId": "5.4;6.8"
+        },
+        "essential-eight": {
+          "controlId": "ML2-P4;ML3-P4"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-GROUP-004",
+      "name": "Dynamic groups with user-controllable membership rules in privileged contexts",
+      "category": "GROUP",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-6;AC-2",
+          "title": "Least Privilege; Account Management",
+          "profiles": ["Moderate", "High"]
+        },
+        "mitre-attack": {
+          "controlId": "T1078.004;T1484.001",
+          "title": "Valid Accounts: Cloud Accounts; Group Policy Modification: Group Policy Object"
+        },
+        "cis-controls-v8": {
+          "controlId": "6.8"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-GROUP-005",
+      "name": "Sensitive groups not protected with role-assignable flag",
+      "category": "GROUP",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-6(5);AC-3",
+          "title": "Privileged Accounts; Access Enforcement",
+          "profiles": ["Moderate", "High"]
+        },
+        "mitre-attack": {
+          "controlId": "T1078.004;T1098",
+          "title": "Valid Accounts: Cloud Accounts; Account Manipulation"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-GROUP-006",
+      "name": "Public M365 groups count",
+      "category": "GROUP",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-3;AC-4",
+          "title": "Access Enforcement; Information Flow Enforcement",
+          "profiles": ["Low", "Moderate", "High"]
+        },
+        "mitre-attack": {
+          "controlId": "T1213.002",
+          "title": "Data from Information Repositories: Sharepoint"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-SSPR-002",
+      "name": "SSPR enabled for admin accounts",
+      "category": "SSPR",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "IA-5;AC-6(5)",
+          "title": "Authenticator Management; Privileged Accounts",
+          "profiles": ["Moderate", "High"]
+        },
+        "mitre-attack": {
+          "controlId": "T1556;T1078.004",
+          "title": "Modify Authentication Process; Valid Accounts: Cloud Accounts"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-MFA-002",
+      "name": "Percentage of users without MFA method registered",
+      "category": "MFA",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "IA-2(1);IA-2(2)",
+          "title": "Multi-factor Authentication to Privileged Accounts; Multi-factor Authentication to Non-Privileged Accounts",
+          "profiles": ["Low", "Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-03",
+          "title": "Users, services, and hardware are authenticated"
+        },
+        "mitre-attack": {
+          "controlId": "T1078;T1110",
+          "title": "Valid Accounts; Brute Force"
+        },
+        "cis-controls-v8": {
+          "controlId": "6.3;6.4"
+        }
+      }
+    },
+    {
+      "checkId": "CA-RISKPOLICY-001",
+      "name": "CA policy combines sign-in risk and user risk (anti-pattern)",
+      "category": "RISKPOLICY",
+      "collector": "CA",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E5"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-7;SI-4",
+          "title": "Unsuccessful Logon Attempts; System Monitoring",
+          "profiles": ["Moderate", "High"]
+        },
+        "mitre-attack": {
+          "controlId": "T1078.004",
+          "title": "Valid Accounts: Cloud Accounts"
+        }
+      }
+    },
+    {
+      "checkId": "CA-ROLECOVERAGE-001",
+      "name": "CA policies targeting directory roles miss active Tier-0 roles",
+      "category": "ROLECOVERAGE",
+      "collector": "CA",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-6(5);AC-3",
+          "title": "Privileged Accounts; Access Enforcement",
+          "profiles": ["Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05",
+          "title": "Access permissions managed"
+        },
+        "mitre-attack": {
+          "controlId": "T1078.004",
+          "title": "Valid Accounts: Cloud Accounts"
+        },
+        "cis-controls-v8": {
+          "controlId": "6.5;6.8"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-ENTAPP-001",
+      "name": "Enabled apps with client credentials (secrets or certificates)",
+      "category": "ENTAPP",
+      "collector": "EntApp",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "IA-5;CM-6",
+          "title": "Authenticator Management; Configuration Settings",
+          "profiles": ["Low", "Moderate", "High"]
+        },
+        "mitre-attack": {
+          "controlId": "T1078.004;T1552.004",
+          "title": "Valid Accounts: Cloud Accounts; Unsecured Credentials: Private Keys"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-ENTAPP-002",
+      "name": "Inactive apps with credentials (no sign-in > 90 days)",
+      "category": "ENTAPP",
+      "collector": "EntApp",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-2(3);IA-5",
+          "title": "Disable Accounts; Authenticator Management",
+          "profiles": ["Moderate", "High"]
+        },
+        "mitre-attack": {
+          "controlId": "T1078.004;T1552",
+          "title": "Valid Accounts: Cloud Accounts; Unsecured Credentials"
+        },
+        "cis-controls-v8": {
+          "controlId": "5.3;16.9"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-ENTAPP-003",
+      "name": "Foreign apps with dangerous application permissions",
+      "category": "ENTAPP",
+      "collector": "EntApp",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-6(1);AC-6(5);SA-9",
+          "title": "Authorize Access to Security Functions; Privileged Accounts; External Information System Services",
+          "profiles": ["Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05;ID.SC-02",
+          "title": "Access permissions managed; Suppliers identified and assessed"
+        },
+        "mitre-attack": {
+          "controlId": "T1098.003;T1550.001",
+          "title": "Additional Cloud Credentials; Application Access Token"
+        },
+        "cis-controls-v8": {
+          "controlId": "6.8;18.3"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-ENTAPP-004",
+      "name": "Foreign apps with dangerous delegated permissions",
+      "category": "ENTAPP",
+      "collector": "EntApp",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-6(1);SA-9",
+          "title": "Authorize Access to Security Functions; External Information System Services",
+          "profiles": ["Moderate", "High"]
+        },
+        "mitre-attack": {
+          "controlId": "T1550.001",
+          "title": "Application Access Token"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-ENTAPP-005",
+      "name": "Foreign apps with Entra directory roles",
+      "category": "ENTAPP",
+      "collector": "EntApp",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-6(5);SA-9;AC-2",
+          "title": "Privileged Accounts; External Information System Services; Account Management",
+          "profiles": ["Moderate", "High"]
+        },
+        "mitre-attack": {
+          "controlId": "T1098.003;T1078.004",
+          "title": "Additional Cloud Credentials; Valid Accounts: Cloud Accounts"
+        },
+        "cis-controls-v8": {
+          "controlId": "5.4;6.8"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-ENTAPP-006",
+      "name": "Apps with excessive permission count (>10 application permissions)",
+      "category": "ENTAPP",
+      "collector": "EntApp",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-6;AC-6(1)",
+          "title": "Least Privilege; Authorize Access to Security Functions",
+          "profiles": ["Low", "Moderate", "High"]
+        },
+        "mitre-attack": {
+          "controlId": "T1078.004",
+          "title": "Valid Accounts: Cloud Accounts"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-ENTAPP-007",
+      "name": "App instance property lock not enabled",
+      "category": "ENTAPP",
+      "collector": "EntApp",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "CM-6;CM-7",
+          "title": "Configuration Settings; Least Functionality",
+          "profiles": ["Moderate", "High"]
+        },
+        "mitre-attack": {
+          "controlId": "T1098",
+          "title": "Account Manipulation"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-ENTAPP-008",
+      "name": "Managed identities with dangerous application permissions",
+      "category": "ENTAPP",
+      "collector": "EntApp",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-6;AC-6(1)",
+          "title": "Least Privilege; Authorize Access to Security Functions",
+          "profiles": ["Low", "Moderate", "High"]
+        },
+        "mitre-attack": {
+          "controlId": "T1078.004;T1550.001",
+          "title": "Valid Accounts: Cloud Accounts; Application Access Token"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-ENTAPP-009",
+      "name": "Managed identities with Entra directory roles",
+      "category": "ENTAPP",
+      "collector": "EntApp",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-6(5);AC-2",
+          "title": "Privileged Accounts; Account Management",
+          "profiles": ["Moderate", "High"]
+        },
+        "mitre-attack": {
+          "controlId": "T1078.004",
+          "title": "Valid Accounts: Cloud Accounts"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-STALEADMIN-001",
+      "name": "Admin accounts inactive for more than 90 days",
+      "category": "STALEADMIN",
+      "collector": "StrykerReadiness",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-2(3);AC-2",
+          "title": "Disable Accounts; Account Management",
+          "profiles": ["Low", "Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-01;PR.AA-05",
+          "title": "Identities and credentials for authorized users, services, and hardware are managed; Access permissions are managed"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.AAD.7.4v1"
+        },
+        "iso-27001": {
+          "controlId": "A.5.18;A.8.2",
+          "title": "Access rights; Privileged access rights"
+        },
+        "cis-controls-v8": {
+          "controlId": "5.3"
+        },
+        "mitre-attack": {
+          "controlId": "T1078;T1078.004"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-SYNCADMIN-001",
+      "name": "On-premises synced admin accounts (compromise path)",
+      "category": "SYNCADMIN",
+      "collector": "StrykerReadiness",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "cis-m365-v6": {
+          "controlId": "1.1.1",
+          "title": "Ensure Administrative accounts are cloud-only",
+          "profiles": ["E3-L1", "E5-L1"]
+        },
+        "nist-800-53": {
+          "controlId": "AC-6(5);AC-2",
+          "title": "Privileged Accounts; Account Management",
+          "profiles": ["Low", "Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-03;PR.AA-05",
+          "title": "Users, services, and hardware are authenticated; Access permissions are managed"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.AAD.7.4v1"
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.5.18;A.8.2",
+          "title": "Access control; Access rights; Privileged access rights"
+        },
+        "mitre-attack": {
+          "controlId": "T1078;T1078.001"
+        }
+      }
+    },
+    {
+      "checkId": "CA-EXCLUSION-001",
+      "name": "Privileged admins excluded from Conditional Access policies",
+      "category": "CAEXCLUSION",
+      "collector": "StrykerReadiness",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-3;AC-6",
+          "title": "Access Enforcement; Least Privilege",
+          "profiles": ["Low", "Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05",
+          "title": "Access permissions, entitlements, and authorizations are managed"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.AAD.3.1v1;MS.AAD.3.2v1"
+        },
+        "cis-m365-v6": {
+          "controlId": "5.1.2.1",
+          "title": "Ensure Conditional Access policies do not exclude admins",
+          "profiles": ["E3-L1", "E5-L1"]
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.8.3",
+          "title": "Access control; Information access restriction"
+        },
+        "mitre-attack": {
+          "controlId": "T1556;T1548"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-ROLEGROUP-001",
+      "name": "Unprotected groups in privileged role assignments",
+      "category": "ROLEGROUP",
+      "collector": "StrykerReadiness",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-6(7);AC-2(7)",
+          "title": "Review of User Privileges; Privileged User Accounts",
+          "profiles": ["Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05",
+          "title": "Access permissions, entitlements, and authorizations are managed"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.AAD.7.2v1"
+        },
+        "iso-27001": {
+          "controlId": "A.5.18;A.8.2",
+          "title": "Access rights; Privileged access rights"
+        },
+        "mitre-attack": {
+          "controlId": "T1078.004;T1098"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-APPS-002",
+      "name": "App registrations with dangerous Intune write permissions",
+      "category": "APPS",
+      "collector": "StrykerReadiness",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-6(10);CM-7(5)",
+          "title": "Prohibit Non-Privileged Users from Executing Privileged Functions; Authorized Software",
+          "profiles": ["Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05;PR.PS-01",
+          "title": "Access permissions are managed; Configuration management practices are established"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.AAD.6.1v1"
+        },
+        "iso-27001": {
+          "controlId": "A.5.18;A.8.9",
+          "title": "Access rights; Configuration management"
+        },
+        "mitre-attack": {
+          "controlId": "T1098.003;T1550.001"
+        }
+      }
+    },
+    {
+      "checkId": "INTUNE-MAA-001",
+      "name": "Multi-Admin Approval not enabled for destructive operations",
+      "category": "MAA",
+      "collector": "StrykerReadiness",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E5"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-3(2);CM-5(1)",
+          "title": "Dual Authorization; Automated Access Enforcement",
+          "profiles": ["High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05;PR.PS-01",
+          "title": "Access permissions are managed; Configuration management practices are established"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.INTUNE.1.1v1"
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.8.2",
+          "title": "Access control; Privileged access rights"
+        },
+        "mitre-attack": {
+          "controlId": "T1485;T1489"
+        }
+      }
+    },
+    {
+      "checkId": "INTUNE-RBAC-001",
+      "name": "RBAC role assignments without scope tags",
+      "category": "RBAC",
+      "collector": "StrykerReadiness",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-6(1);AC-6(2)",
+          "title": "Authorize Access to Security Functions; Non-Privileged Access for Nonsecurity Functions",
+          "profiles": ["Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-05",
+          "title": "Access permissions, entitlements, and authorizations are managed"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.INTUNE.1.2v1"
+        },
+        "iso-27001": {
+          "controlId": "A.5.15;A.5.18",
+          "title": "Access control; Access rights"
+        },
+        "mitre-attack": {
+          "controlId": "T1078.004"
+        }
+      }
+    },
+    {
+      "checkId": "ENTRA-BREAKGLASS-001",
+      "name": "No break-glass emergency access account detected",
+      "category": "BREAKGLASS",
+      "collector": "StrykerReadiness",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-2(2);CP-2",
+          "title": "Automated Temporary and Emergency Account Management; Contingency Plan",
+          "profiles": ["Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AA-01;RC.RP-01",
+          "title": "Identities and credentials are managed; Recovery plan is executed"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.AAD.1.1v1"
+        },
+        "cis-m365-v6": {
+          "controlId": "1.1.4",
+          "title": "Ensure two emergency access accounts have been defined",
+          "profiles": ["E3-L1", "E5-L1"]
+        },
+        "iso-27001": {
+          "controlId": "A.5.30;A.5.29",
+          "title": "ICT readiness for business continuity; Information security during disruption"
+        },
+        "mitre-attack": {
+          "controlId": "T1531"
+        }
+      }
+    },
+    {
+      "checkId": "INTUNE-WIPEAUDIT-001",
+      "name": "Mass device wipe activity detected (attack indicator)",
+      "category": "WIPEAUDIT",
+      "collector": "StrykerReadiness",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AU-6;IR-4;SI-4",
+          "title": "Audit Record Review, Analysis, and Reporting; Incident Handling; System Monitoring",
+          "profiles": ["Low", "Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "DE.AE-02;DE.CM-01",
+          "title": "Anomalous activity is detected; Networks and network services are monitored"
+        },
+        "cisa-scuba": {
+          "controlId": "MS.INTUNE.1.3v1"
+        },
+        "iso-27001": {
+          "controlId": "A.5.28;A.8.15;A.8.16",
+          "title": "Collection of evidence; Logging; Monitoring activities"
+        },
+        "mitre-attack": {
+          "controlId": "T1485;T1561"
         }
       }
     }

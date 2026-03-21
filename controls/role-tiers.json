@@ -1,0 +1,38 @@
+{
+  "description": "Entra ID role tier classification based on Microsoft Enterprise Access Model. Tier-0 roles can compromise the entire directory. Tier-1 roles have significant blast radius over specific services. Tier-2 is everything else with an active assignment.",
+  "version": "1.0.0",
+  "tiers": {
+    "0": {
+      "label": "Control Plane",
+      "description": "Roles that can compromise the entire Entra ID directory or escalate to full control",
+      "roles": {
+        "62e90394-69f5-4237-9190-012177145e10": "Global Administrator",
+        "e8611ab8-c189-46e8-94e1-60213ab1f814": "Privileged Role Administrator",
+        "7be44c8a-adaf-4e2a-84d6-ab2649e08a13": "Privileged Authentication Administrator",
+        "d29b2b05-8046-44ba-8758-1e26182fcf32": "Directory Synchronization Accounts"
+      }
+    },
+    "1": {
+      "label": "Management Plane",
+      "description": "Roles with significant blast radius over specific M365 services or user populations",
+      "roles": {
+        "29232cdf-9323-42fd-ade2-1d097af3e4de": "Exchange Administrator",
+        "f28a1f50-f6e7-4571-818b-6a12f2af6b6c": "SharePoint Administrator",
+        "194ae4cb-b126-40b2-bd5b-6091b380977d": "Security Administrator",
+        "3a2c62db-5318-420d-8d74-23affee5d9d5": "Intune Administrator",
+        "fe930be7-5e62-47db-91af-98c3a49a38b1": "User Administrator",
+        "9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3": "Application Administrator",
+        "158c047a-c907-4556-b7ef-446551a6b5f7": "Cloud Application Administrator",
+        "c4e39bd9-1100-46d3-8c65-fb160da0071f": "Authentication Administrator",
+        "b1be1c3e-b65d-4f19-8427-f6fa0d97feb9": "Conditional Access Administrator",
+        "fdd7a751-b60b-444a-984c-02652fe8fa1c": "Groups Administrator",
+        "966707d0-3269-4727-9be2-8c3a10f19b9d": "Password Administrator",
+        "8835291a-918c-4fd7-a9ce-faa49f0cf7d9": "Teams Administrator",
+        "11648597-926c-4cf3-9c36-bcebb0ba8dcc": "Power Platform Administrator",
+        "729827e3-9c14-49f7-bb1b-9608f156bbb8": "Helpdesk Administrator",
+        "b0f54661-2d74-4c50-afa3-1ec803f12efe": "Billing Administrator",
+        "112f9a7f-7249-4951-bd88-c42b60cebe72": "Fabric Administrator"
+      }
+    }
+  }
+}

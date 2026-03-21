@@ -3,7 +3,7 @@
     # Generated: 2026-03-08
 
     RootModule        = 'Invoke-M365Assessment.ps1'
-    ModuleVersion     = '0.9.7'
+    ModuleVersion     = '0.9.8'
     GUID              = 'f7e3b2a1-4c5d-6e8f-9a0b-1c2d3e4f5a6b'
     Author            = 'Galvnyz'
     CompanyName       = 'Community'
@@ -47,6 +47,7 @@
         'Entra\Get-PasswordPolicyReport.ps1'
         'Entra\Get-EntraSecurityConfig.ps1'
         'Entra\Get-CASecurityConfig.ps1'
+        'Entra\Get-EntAppSecurityConfig.ps1'
         'Entra\Get-LicenseReport.ps1'
         'Entra\Get-InactiveUsers.ps1'
         'Exchange-Online\Get-MailboxSummary.ps1'
@@ -65,6 +66,7 @@
         'Security\Get-DefenderSecurityConfig.ps1'
         'Security\Get-DlpPolicyReport.ps1'
         'Security\Get-ComplianceSecurityConfig.ps1'
+        'Security\Get-StrykerIncidentReadiness.ps1'
         'Security\Get-LocalAdmins.ps1'
         'Security\Invoke-ScubaGearScan.ps1'
         'Collaboration\Get-SharePointOneDriveReport.ps1'
@@ -93,6 +95,7 @@
         'SOC2\Get-SOC2ReadinessChecklist.ps1'
         'Networking\Test-PortConnectivity.ps1'
         'Windows\Get-InstalledSoftware.ps1'
+        'controls\role-tiers.json'
     )
 
     # Private data / PSData for PowerShell Gallery
@@ -101,7 +104,7 @@
             Tags         = @('Microsoft365', 'M365', 'Security', 'Assessment', 'EntraID', 'Exchange', 'Intune', 'Defender', 'SharePoint', 'Teams', 'PowerBI', 'ScubaGear', 'CIS')
             LicenseUri   = 'https://github.com/Galvnyz/M365-Assess/blob/main/LICENSE'
             ProjectUri   = 'https://github.com/Galvnyz/M365-Assess'
-            ReleaseNotes = 'v0.9.7 - Framework Sync: XLSX dynamic columns, CIS version param, CheckID module integration, DLP perf'
+            ReleaseNotes = 'v0.9.8 - Stryker Incident Readiness: 9 new security checks ported from StrykerScan covering incident-response attack vectors'
         }
     }
 }
