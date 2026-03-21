@@ -2,6 +2,22 @@
 
 All notable changes to M365 Assess are documented here. This project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [0.9.8] - 2026-03-20
+
+### Added
+- **Stryker Incident Readiness** — 9 new security checks ported from StrykerScan, covering attack vectors from the Stryker Corporation cyberattack (March 2026):
+  - ENTRA-STALEADMIN-001: Admin accounts inactive >90 days
+  - ENTRA-SYNCADMIN-001: On-prem synced admin accounts (compromise path)
+  - CA-EXCLUSION-001: Privileged admins excluded from CA policies
+  - ENTRA-ROLEGROUP-001: Unprotected groups in privileged role assignments
+  - ENTRA-APPS-002: App registrations with dangerous Intune write permissions
+  - INTUNE-MAA-001: Multi-Admin Approval not enabled
+  - INTUNE-RBAC-001: RBAC role assignments without scope tags
+  - ENTRA-BREAKGLASS-001: Break-glass emergency access account detection
+  - INTUNE-WIPEAUDIT-001: Mass device wipe activity (attack indicator)
+- New collector: `Security/Get-StrykerIncidentReadiness.ps1` with full control registry mappings (NIST 800-53, CISA SCuBA, CIS M365 v6, ISO 27001, MITRE ATT&CK)
+- Automated security check count increased from 160 to 169
+
 ## [0.9.7] - 2026-03-19
 
 ### Added

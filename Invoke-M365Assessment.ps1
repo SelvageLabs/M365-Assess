@@ -1214,6 +1214,7 @@ $collectorMap = [ordered]@{
         @{ Name = '07-Password-Policy';        Script = 'Entra\Get-PasswordPolicyReport.ps1';      Label = 'Password Policy' }
         @{ Name = '07b-Entra-Security-Config'; Script = 'Entra\Get-EntraSecurityConfig.ps1';       Label = 'Entra Security Config' }
         @{ Name = '07c-CA-Security-Config';   Script = 'Entra\Get-CASecurityConfig.ps1';         Label = 'CA Policy Evaluation' }
+        @{ Name = '07d-EntApp-Security-Config'; Script = 'Entra\Get-EntAppSecurityConfig.ps1';   Label = 'Enterprise App Security' }
     )
     'Licensing' = @(
         @{ Name = '08-License-Summary'; Script = 'Entra\Get-LicenseReport.ps1'; Label = 'License Summary'; Params = @{} }
@@ -1238,6 +1239,7 @@ $collectorMap = [ordered]@{
         @{ Name = '19-DLP-Policies';       Script = 'Security\Get-DlpPolicyReport.ps1';     Label = 'DLP Policies'; RequiredServices = @('Purview') }
         @{ Name = '19b-Compliance-Security-Config'; Script = 'Security\Get-ComplianceSecurityConfig.ps1'; Label = 'Compliance Security Config'; RequiredServices = @('Purview') }
         @{ Name = '19c-Purview-Retention-Config'; Script = 'Purview\Get-PurviewRetentionConfig.ps1'; Label = 'Purview Retention Config'; RequiredServices = @('Purview') }
+        @{ Name = '24-StrykerIncidentReadiness'; Script = 'Security\Get-StrykerIncidentReadiness.ps1'; Label = 'Stryker Incident Readiness'; RequiredServices = @('Graph') }
     )
     'Collaboration' = @(
         @{ Name = '20-SharePoint-OneDrive'; Script = 'Collaboration\Get-SharePointOneDriveReport.ps1'; Label = 'SharePoint & OneDrive' }
