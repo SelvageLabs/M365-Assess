@@ -1,4 +1,5 @@
 name: Sync CheckID on Release
+# Triggered by CheckID tag push via repository_dispatch, or manually via workflow_dispatch
 
 on:
   repository_dispatch:
