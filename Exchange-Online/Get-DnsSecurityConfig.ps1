@@ -48,6 +48,35 @@ $ErrorActionPreference = 'Stop'
 $settings = [System.Collections.Generic.List[PSCustomObject]]::new()
 $checkIdCounter = @{}
 
+# ------------------------------------------------------------------
+# Cross-platform DNS TXT record resolver
+# Uses Resolve-DnsName on Windows; falls back to dig on Linux/macOS.
+# Returns objects with a .Strings property for compatibility.
+# ------------------------------------------------------------------
+function Resolve-DnsTxtRecord {
+    param([string]$Name)
+
+    if (Get-Command Resolve-DnsName -ErrorAction SilentlyContinue) {
+        return @(Resolve-DnsName -Name $Name -Type TXT -DnsOnly -ErrorAction SilentlyContinue 2>$null)
+    }
+
+    if (Get-Command dig -ErrorAction SilentlyContinue) {
+        $raw = & dig +short -t TXT $Name 2>$null
+        if ($LASTEXITCODE -ne 0 -or -not $raw) { return @() }
+        $results = @()
+        foreach ($line in $raw) {
+            $cleaned = $line.Trim('"')
+            if ($cleaned) {
+                $results += [PSCustomObject]@{ Strings = $cleaned }
+            }
+        }
+        return $results
+    }
+
+    Write-Warning "Neither Resolve-DnsName nor dig is available — cannot resolve DNS TXT records for $Name"
+    return @()
+}
+
 function Add-Setting {
     param(
         [string]$Category,
@@ -147,7 +176,7 @@ else {
         $spfPresent = @()
         foreach ($domain in $authDomains) {
             $domainName = $domain.DomainName
-            $txtRecords = @(Resolve-DnsName -Name $domainName -Type TXT -DnsOnly -ErrorAction SilentlyContinue 2>$null)
+            $txtRecords = @(Resolve-DnsTxtRecord -Name $domainName)
             $spfRecord = $txtRecords | Where-Object { $_.Strings -and $_.Strings -match '^v=spf1' }
             if ($spfRecord) { $spfPresent += $domainName }
             else { $spfMissing += $domainName }
@@ -252,7 +281,7 @@ else {
         $dmarcStrong = @()
         foreach ($domain in $authDomains) {
             $domainName = $domain.DomainName
-            $dmarcRecords = @(Resolve-DnsName -Name "_dmarc.$domainName" -Type TXT -DnsOnly -ErrorAction SilentlyContinue 2>$null)
+            $dmarcRecords = @(Resolve-DnsTxtRecord -Name "_dmarc.$domainName")
             $dmarcRecord = $dmarcRecords | Where-Object { $_.Strings -and $_.Strings -match '^v=DMARC1' }
             if (-not $dmarcRecord) {
                 $dmarcMissing += $domainName

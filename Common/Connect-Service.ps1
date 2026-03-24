@@ -111,6 +111,25 @@ if (-not (Get-Module -Name $requiredModule -ListAvailable)) {
     return
 }
 
+# ------------------------------------------------------------------
+# Headless / WSL detection — when no browser launcher is available,
+# auto-promote interactive auth to device code for all services.
+# ------------------------------------------------------------------
+$script:IsHeadless = $false
+if (-not $IsWindows -and -not $ManagedIdentity -and -not $ClientId) {
+    $hasBrowser = ($env:BROWSER) -or
+                  (Get-Command xdg-open  -ErrorAction SilentlyContinue) -or
+                  (Get-Command wslview   -ErrorAction SilentlyContinue) -or
+                  (Get-Command gnome-open -ErrorAction SilentlyContinue)
+    if (-not $hasBrowser) {
+        $script:IsHeadless = $true
+        if (-not $UseDeviceCode) {
+            Write-Host "    No browser launcher found — switching to device code auth for $Service" -ForegroundColor DarkYellow
+            $UseDeviceCode = [switch]::new($true)
+        }
+    }
+}
+
 try {
     # ------------------------------------------------------------------
     # Environment endpoint configuration
@@ -229,7 +248,7 @@ try {
             }
 
             if ($UseDeviceCode) {
-                Write-Warning "Purview (Connect-IPPSSession) does not support device code auth. Falling back to browser-based login."
+                $connectParams['Device'] = $true
             }
 
             foreach ($key in $currentEnv.PurviewParams.Keys) {

@@ -959,6 +959,7 @@ function Get-RecommendedAction {
     param([string]$ErrorMessage)
 
     $actionPatterns = @(
+        @{ Pattern = 'DeviceCodeCredential authentication failed'; Action = 'Graph token refresh failed — likely caused by EXO MSAL assembly conflict. Fix: Uninstall-Module ExchangeOnlineManagement -AllVersions -Force; Install-Module ExchangeOnlineManagement -RequiredVersion 3.7.1 -Scope CurrentUser' }
         @{ Pattern = 'WAM|broker|RuntimeBroker'; Action = 'WAM broker issue. Try -UseDeviceCode (choose your browser profile), -UserPrincipalName admin@tenant.onmicrosoft.com, certificate auth (-ClientId/-CertificateThumbprint), or -SkipConnection with a pre-existing session.' }
         @{ Pattern = '401|Unauthorized'; Action = 'Re-authenticate or ensure admin consent has been granted for the required scopes.' }
         @{ Pattern = '403|Forbidden|Insufficient privileges'; Action = 'Grant the required Graph/API permissions to the app registration or user account.' }
@@ -1437,7 +1438,8 @@ $failedServices = [System.Collections.Generic.HashSet[string]]::new()
 # cause silent auth failures with no useful error message.
 # ------------------------------------------------------------------
 if (-not $SkipConnection) {
-    $compatErrors = @()
+    $compatWarnings = @()
+    $compatErrors   = @()
 
     # EXO 3.8.0+ ships MSAL that conflicts with Graph SDK 2.x
     $exoModule = Get-Module -Name ExchangeOnlineManagement -ListAvailable -ErrorAction SilentlyContinue |
@@ -1446,15 +1448,15 @@ if (-not $SkipConnection) {
         Sort-Object -Property Version -Descending | Select-Object -First 1
 
     if ($exoModule -and $exoModule.Version -ge [version]'3.8.0') {
-        $compatErrors += "ExchangeOnlineManagement $($exoModule.Version) has known MSAL conflicts with Microsoft.Graph.Authentication. Downgrade to 3.7.1: Uninstall-Module ExchangeOnlineManagement -AllVersions -Force; Install-Module ExchangeOnlineManagement -RequiredVersion 3.7.1 -Scope CurrentUser"
+        $compatWarnings += "ExchangeOnlineManagement $($exoModule.Version) has known MSAL conflicts with Microsoft.Graph.Authentication. Recommended: Uninstall-Module ExchangeOnlineManagement -AllVersions -Force; Install-Module ExchangeOnlineManagement -RequiredVersion 3.7.1 -Scope CurrentUser"
 
-        # msalruntime.dll issue only affects EXO 3.8.0+ — the module buries
-        # the DLL in a nested folder that .NET can't find automatically
-        $exoNetCorePath = Join-Path -Path $exoModule.ModuleBase -ChildPath 'netCore'
-        $msalDllDirect = Join-Path -Path $exoNetCorePath -ChildPath 'msalruntime.dll'
-        $msalDllNested = Join-Path -Path $exoNetCorePath -ChildPath 'runtimes\win-x64\native\msalruntime.dll'
-        if (-not (Test-Path -Path $msalDllDirect) -and (Test-Path -Path $msalDllNested)) {
-            $compatErrors += "msalruntime.dll is missing from EXO module load path. Fix: Copy-Item '$msalDllNested' '$msalDllDirect'"
+        if ($IsWindows -ne $false) {
+            $exoNetCorePath = Join-Path -Path $exoModule.ModuleBase -ChildPath 'netCore'
+            $msalDllDirect = Join-Path -Path $exoNetCorePath -ChildPath 'msalruntime.dll'
+            $msalDllNested = Join-Path -Path $exoNetCorePath -ChildPath 'runtimes\win-x64\native\msalruntime.dll'
+            if (-not (Test-Path -Path $msalDllDirect) -and (Test-Path -Path $msalDllNested)) {
+                $compatWarnings += "msalruntime.dll is missing from EXO module load path. Fix: Copy-Item '$msalDllNested' '$msalDllDirect'"
+            }
         }
     }
 
@@ -1469,37 +1471,47 @@ if (-not $SkipConnection) {
         if ($s -eq 'PowerBI')                                               { $needsPowerBI = $true }
     }
 
-    $missingModules = @()
     if ($needsGraph -and -not $graphModule) {
-        $missingModules += "Microsoft.Graph.Authentication — Install-Module Microsoft.Graph.Authentication -Scope CurrentUser"
+        $compatErrors += "Microsoft.Graph.Authentication — Install-Module Microsoft.Graph.Authentication -Scope CurrentUser"
     }
     if ($needsExo -and -not $exoModule) {
-        $missingModules += "ExchangeOnlineManagement — Install-Module ExchangeOnlineManagement -RequiredVersion 3.7.1 -Scope CurrentUser"
+        $compatErrors += "ExchangeOnlineManagement — Install-Module ExchangeOnlineManagement -RequiredVersion 3.7.1 -Scope CurrentUser"
     }
-    if ($needsPowerBI -and -not (Get-Module -Name MicrosoftPowerBIMgmt -ListAvailable)) {
-        $missingModules += "MicrosoftPowerBIMgmt — Install-Module MicrosoftPowerBIMgmt -Scope CurrentUser"
-    }
-
-    if ($missingModules.Count -gt 0) {
-        $compatErrors += $missingModules
+    if ($needsPowerBI -and -not (Get-Module -Name MicrosoftPowerBIMgmt -ListAvailable -ErrorAction SilentlyContinue)) {
+        $compatWarnings += "MicrosoftPowerBIMgmt not installed — PowerBI section will be skipped. Install: Install-Module MicrosoftPowerBIMgmt -Scope CurrentUser"
+        $Section = @($Section | Where-Object { $_ -ne 'PowerBI' })
+        Write-AssessmentLog -Level WARN -Message 'MicrosoftPowerBIMgmt not installed. Excluding PowerBI section.'
     }
 
-    if ($compatErrors.Count -gt 0) {
+    if ($compatWarnings.Count -gt 0) {
         Write-Host ''
-        Write-Host '  ╔══════════════════════════════════════════════════════════╗' -ForegroundColor Magenta
-        Write-Host '  ║  Module Issue                                            ║' -ForegroundColor Magenta
-        Write-Host '  ╚══════════════════════════════════════════════════════════╝' -ForegroundColor Magenta
-        foreach ($err in $compatErrors) {
-            Write-Host "    • $err" -ForegroundColor Yellow
+        Write-Host '  ╔══════════════════════════════════════════════════════════╗' -ForegroundColor Yellow
+        Write-Host '  ║  Module Warning                                          ║' -ForegroundColor Yellow
+        Write-Host '  ╚══════════════════════════════════════════════════════════╝' -ForegroundColor Yellow
+        foreach ($w in $compatWarnings) {
+            Write-Host "    • $w" -ForegroundColor Yellow
         }
         Write-Host ''
         Write-Host '  Known compatible combo: Graph SDK 2.35.x + EXO 3.7.1' -ForegroundColor DarkGray
         Write-Host '  Also: Always connect Graph BEFORE EXO in the same session.' -ForegroundColor DarkGray
         Write-Host ''
+        Write-AssessmentLog -Level WARN -Message "Module warnings: $($compatWarnings -join '; ')"
+    }
+
+    if ($compatErrors.Count -gt 0) {
+        Write-Host ''
+        Write-Host '  ╔══════════════════════════════════════════════════════════╗' -ForegroundColor Magenta
+        Write-Host '  ║  Missing Required Modules                                ║' -ForegroundColor Magenta
+        Write-Host '  ╚══════════════════════════════════════════════════════════╝' -ForegroundColor Magenta
+        foreach ($err in $compatErrors) {
+            Write-Host "    • $err" -ForegroundColor Red
+        }
+        Write-Host ''
         Write-AssessmentLog -Level ERROR -Message "Module check failed: $($compatErrors -join '; ')"
-        Write-Error "Required modules are missing or incompatible. See above for details."
+        Write-Error "Required modules are missing. See above for details."
         return
     }
+
 
     # Pre-compute combined Graph scopes across all selected sections
     # (Graph scopes must be requested at initial connection time)
@@ -1510,6 +1522,23 @@ if (-not $SkipConnection) {
         }
     }
     $graphScopes = $graphScopes | Select-Object -Unique
+
+    # ------------------------------------------------------------------
+    # Headless / WSL detection (one-time, before any connections).
+    # When no browser launcher is available, auto-enable device code auth
+    # so Connect-Service.ps1 receives -UseDeviceCode explicitly — this
+    # avoids relying on in-child-process detection which can be defeated
+    # by MSAL assembly version conflicts after Graph SDK loads first.
+    # ------------------------------------------------------------------
+    $script:isHeadlessEnv = (-not $IsWindows) -and (-not $ManagedIdentity) -and (-not $ClientId) -and
+                            (-not $env:BROWSER) -and
+                            (-not (Get-Command xdg-open -ErrorAction SilentlyContinue)) -and
+                            (-not (Get-Command wslview -ErrorAction SilentlyContinue))
+    if ($script:isHeadlessEnv -and -not $UseDeviceCode) {
+        Write-Host "    Headless environment detected — enabling device code auth" -ForegroundColor DarkYellow
+        Write-AssessmentLog -Level INFO -Message "Headless environment detected (no browser launcher). Auto-enabling device code auth."
+        $UseDeviceCode = [switch]::new($true)
+    }
 
     # Resolve Connect-Service script path
     $connectServicePath = Join-Path -Path $projectRoot -ChildPath 'Common\Connect-Service.ps1'
@@ -1582,13 +1611,14 @@ function Connect-RequiredService {
             if ($ManagedIdentity) {
                 $connectParams['ManagedIdentity'] = $true
             }
-            if ($UseDeviceCode) {
+            if ($UseDeviceCode -or $script:isHeadlessEnv) {
                 $connectParams['UseDeviceCode'] = $true
             }
 
             # Suppress noisy output during connection (skip when device code
-            # is active — the user needs to see the code and URL).
-            $suppressOutput = -not $UseDeviceCode
+            # is active or on headless systems — the user needs to see the
+            # device code / auth URL).
+            $suppressOutput = -not $UseDeviceCode -and -not $script:isHeadlessEnv
             $prevConsoleOut = [Console]::Out
             $prevConsoleError = [Console]::Error
             if ($suppressOutput) {
@@ -1633,13 +1663,41 @@ function Connect-RequiredService {
                             $script:dnsPrefetchJobs = @()
                             foreach ($vdName in $verifiedDomainNames) {
                                 $script:dnsPrefetchJobs += Start-ThreadJob -ScriptBlock {
-                                    $d      = $using:vdName
-                                    $spf    = Resolve-DnsName -Name $d -Type TXT -DnsOnly -ErrorAction SilentlyContinue
-                                    $dmarc  = Resolve-DnsName -Name ('_dmarc.' + $d) -Type TXT -DnsOnly -ErrorAction SilentlyContinue
-                                    $dkim1  = Resolve-DnsName -Name ('selector1._domainkey.' + $d) -Type CNAME -DnsOnly -ErrorAction SilentlyContinue
-                                    $dkim2  = Resolve-DnsName -Name ('selector2._domainkey.' + $d) -Type CNAME -DnsOnly -ErrorAction SilentlyContinue
-                                    $mtaSts = Resolve-DnsName -Name ('_mta-sts.' + $d) -Type TXT -DnsOnly -ErrorAction SilentlyContinue
-                                    $tlsRpt = Resolve-DnsName -Name ('_smtp._tls.' + $d) -Type TXT -DnsOnly -ErrorAction SilentlyContinue
+                                    $d = $using:vdName
+                                    $useDigTool = -not (Get-Command Resolve-DnsName -ErrorAction SilentlyContinue) -and (Get-Command dig -ErrorAction SilentlyContinue)
+
+                                    function Invoke-DnsQuery {
+                                        param([string]$Name, [string]$Type, [string]$Server)
+                                        if ($useDigTool) {
+                                            $serverArg = if ($Server) { "@$Server" } else { $null }
+                                            $args_ = @('+short', '-t', $Type, $Name)
+                                            if ($serverArg) { $args_ = @($serverArg) + $args_ }
+                                            $raw = & dig @args_ 2>$null
+                                            if ($LASTEXITCODE -ne 0 -or -not $raw) { return @() }
+                                            $results = @()
+                                            foreach ($line in $raw) {
+                                                $cleaned = $line.Trim('"').Trim()
+                                                if ($cleaned) {
+                                                    if ($Type -eq 'CNAME') {
+                                                        $results += [PSCustomObject]@{ NameHost = $cleaned.TrimEnd('.') }
+                                                    } else {
+                                                        $results += [PSCustomObject]@{ Strings = $cleaned }
+                                                    }
+                                                }
+                                            }
+                                            return $results
+                                        }
+                                        $dnsParams = @{ Name = $Name; Type = $Type; DnsOnly = $true; ErrorAction = 'SilentlyContinue' }
+                                        if ($Server) { $dnsParams['Server'] = $Server }
+                                        return @(Resolve-DnsName @dnsParams)
+                                    }
+
+                                    $spf    = Invoke-DnsQuery -Name $d -Type TXT
+                                    $dmarc  = Invoke-DnsQuery -Name ('_dmarc.' + $d) -Type TXT
+                                    $dkim1  = Invoke-DnsQuery -Name ('selector1._domainkey.' + $d) -Type CNAME
+                                    $dkim2  = Invoke-DnsQuery -Name ('selector2._domainkey.' + $d) -Type CNAME
+                                    $mtaSts = Invoke-DnsQuery -Name ('_mta-sts.' + $d) -Type TXT
+                                    $tlsRpt = Invoke-DnsQuery -Name ('_smtp._tls.' + $d) -Type TXT
                                     [PSCustomObject]@{
                                         Domain = $d; Spf = $spf; Dmarc = $dmarc
                                         Dkim1 = $dkim1; Dkim2 = $dkim2
@@ -1918,14 +1976,29 @@ foreach ($sectionName in $Section) {
                         if ($M365Environment -ne 'commercial') {
                             $scubaConnectParams['M365Environment'] = $M365Environment
                         }
+                        if ($UseDeviceCode -or $script:isHeadlessEnv) {
+                            $scubaConnectParams['UseDeviceCode'] = $true
+                        }
+                        $scubaSuppressOutput = -not $UseDeviceCode -and -not $script:isHeadlessEnv
                         $prevConsoleOut = [Console]::Out
                         $prevConsoleError = [Console]::Error
-                        [Console]::SetOut([System.IO.TextWriter]::Null)
-                        [Console]::SetError([System.IO.TextWriter]::Null)
-                        try { & $connectServicePath @scubaConnectParams 2>$null 6>$null }
+                        if ($scubaSuppressOutput) {
+                            [Console]::SetOut([System.IO.TextWriter]::Null)
+                            [Console]::SetError([System.IO.TextWriter]::Null)
+                        }
+                        try {
+                            if ($scubaSuppressOutput) {
+                                & $connectServicePath @scubaConnectParams 2>$null 6>$null
+                            }
+                            else {
+                                & $connectServicePath @scubaConnectParams
+                            }
+                        }
                         finally {
-                            [Console]::SetOut($prevConsoleOut)
-                            [Console]::SetError($prevConsoleError)
+                            if ($scubaSuppressOutput) {
+                                [Console]::SetOut($prevConsoleOut)
+                                [Console]::SetError($prevConsoleError)
+                            }
                         }
                         $orgInfo = Get-MgOrganization -ErrorAction Stop | Select-Object -First 1
                         $initialDomain = $orgInfo.VerifiedDomains | Where-Object { $_.IsInitial -eq $true } | Select-Object -First 1
@@ -2043,7 +2116,7 @@ foreach ($sectionName in $Section) {
             $hasPermissionWarning = $false
             foreach ($w in $capturedWarnings) {
                 Write-AssessmentLog -Level WARN -Message $w.Message -Section $sectionName -Collector $collector.Label
-                if ($w.Message -match '401|403|Unauthorized|Forbidden|permission|consent') {
+                if ($w.Message -match '401|403|Unauthorized|Forbidden|permission|consent|DeviceCodeCredential authentication failed') {
                     $hasPermissionWarning = $true
                     $issues.Add([PSCustomObject]@{
                         Severity     = 'WARNING'
@@ -2099,6 +2172,18 @@ foreach ($sectionName in $Section) {
                     Section      = $sectionName
                     Collector    = $collector.Label
                     Description  = 'Prerequisite not met'
+                    ErrorMessage = $errorMessage
+                    Action       = Get-RecommendedAction -ErrorMessage $errorMessage
+                })
+            }
+            elseif ($errorMessage -match 'DeviceCodeCredential authentication failed') {
+                $status = 'Failed'
+                Write-AssessmentLog -Level ERROR -Message "Graph token refresh failed (EXO MSAL conflict)" -Section $sectionName -Collector $collector.Label -Detail $errorMessage
+                $issues.Add([PSCustomObject]@{
+                    Severity     = 'ERROR'
+                    Section      = $sectionName
+                    Collector    = $collector.Label
+                    Description  = 'Graph token refresh failed — downgrade EXO to 3.7.1'
                     ErrorMessage = $errorMessage
                     Action       = Get-RecommendedAction -ErrorMessage $errorMessage
                 })
@@ -2221,6 +2306,41 @@ if ($script:runDnsAuthentication) {
     Show-CollectorResult -Label $dnsSecConfigCollector.Label -Status $dnsSecStatus -Items $dnsSecItemCount -DurationSeconds $dnsSecDuration.TotalSeconds -ErrorMessage $dnsSecError
     Write-AssessmentLog -Level INFO -Message "Completed: $($dnsSecConfigCollector.Label) -- $dnsSecStatus, $dnsSecItemCount items" -Section 'Email' -Collector $dnsSecConfigCollector.Label
 
+    # ------------------------------------------------------------------
+    # Cross-platform DNS resolver (used by deferred DNS checks below)
+    # Uses Resolve-DnsName on Windows; falls back to dig on Linux/macOS.
+    # ------------------------------------------------------------------
+    $script:useDig = -not (Get-Command Resolve-DnsName -ErrorAction SilentlyContinue) -and (Get-Command dig -ErrorAction SilentlyContinue)
+
+    function Invoke-DnsQuery {
+        param([string]$Name, [string]$Type = 'TXT', [string]$Server)
+        if ($script:useDig) {
+            $serverArg = if ($Server) { "@$Server" } else { $null }
+            $digArgs = @('+short', '-t', $Type, $Name)
+            if ($serverArg) { $digArgs = @($serverArg) + $digArgs }
+            $raw = & dig @digArgs 2>$null
+            if ($LASTEXITCODE -ne 0 -or -not $raw) { return @() }
+            $results = @()
+            foreach ($line in $raw) {
+                $cleaned = $line.Trim('"').Trim()
+                if ($cleaned) {
+                    if ($Type -eq 'CNAME') {
+                        $results += [PSCustomObject]@{ NameHost = $cleaned.TrimEnd('.') }
+                    } else {
+                        $results += [PSCustomObject]@{ Strings = $cleaned }
+                    }
+                }
+            }
+            return $results
+        }
+        if (Get-Command Resolve-DnsName -ErrorAction SilentlyContinue) {
+            $dnsParams = @{ Name = $Name; Type = $Type; DnsOnly = $true; ErrorAction = 'SilentlyContinue' }
+            if ($Server) { $dnsParams['Server'] = $Server }
+            return @(Resolve-DnsName @dnsParams)
+        }
+        return @()
+    }
+
     # --- DNS Authentication enumeration ---
     $dnsStart = Get-Date
     $dnsCsvPath = Join-Path -Path $assessmentFolder -ChildPath "$($dnsCollector.Name).csv"
@@ -2242,7 +2362,7 @@ if ($script:runDnsAuthentication) {
             $spfDuplicates = 'No'
 
             try {
-                $txtRecords = if ($cached -and $cached.PSObject.Properties['Spf']) { @($cached.Spf) } else { @(Resolve-DnsName -Name $domainName -Type TXT -DnsOnly -ErrorAction SilentlyContinue) }
+                $txtRecords = if ($cached -and $cached.PSObject.Properties['Spf']) { @($cached.Spf) } else { @(Invoke-DnsQuery -Name $domainName -Type TXT) }
                 $spfRecords = @($txtRecords | Where-Object { $_.Strings -and ($_.Strings -join '' -match '^v=spf1') })
 
                 if ($spfRecords.Count -gt 1) {
@@ -2281,7 +2401,7 @@ if ($script:runDnsAuthentication) {
             $dmarcDuplicates = 'No'
 
             try {
-                $dmarcTxtRecords = if ($cached -and $cached.PSObject.Properties['Dmarc']) { @($cached.Dmarc) } else { @(Resolve-DnsName -Name "_dmarc.$domainName" -Type TXT -DnsOnly -ErrorAction SilentlyContinue) }
+                $dmarcTxtRecords = if ($cached -and $cached.PSObject.Properties['Dmarc']) { @($cached.Dmarc) } else { @(Invoke-DnsQuery -Name "_dmarc.$domainName" -Type TXT) }
                 $dmarcRecords = @($dmarcTxtRecords | Where-Object { $_.Strings -and ($_.Strings -join '' -match '^v=DMARC1') })
 
                 if ($dmarcRecords.Count -gt 1) {
@@ -2320,13 +2440,13 @@ if ($script:runDnsAuthentication) {
             $dkimSelector2 = 'Not configured'
 
             try {
-                $dkim1Records = if ($cached -and $cached.PSObject.Properties['Dkim1']) { $cached.Dkim1 } else { Resolve-DnsName -Name "selector1._domainkey.$domainName" -Type CNAME -DnsOnly -ErrorAction SilentlyContinue }
+                $dkim1Records = if ($cached -and $cached.PSObject.Properties['Dkim1']) { $cached.Dkim1 } else { Invoke-DnsQuery -Name "selector1._domainkey.$domainName" -Type CNAME }
                 if ($dkim1Records.NameHost) { $dkimSelector1 = $dkim1Records.NameHost }
             }
             catch { Write-Verbose "DKIM selector1 lookup failed for $domainName`: $_" }
 
             try {
-                $dkim2Records = if ($cached -and $cached.PSObject.Properties['Dkim2']) { $cached.Dkim2 } else { Resolve-DnsName -Name "selector2._domainkey.$domainName" -Type CNAME -DnsOnly -ErrorAction SilentlyContinue }
+                $dkim2Records = if ($cached -and $cached.PSObject.Properties['Dkim2']) { $cached.Dkim2 } else { Invoke-DnsQuery -Name "selector2._domainkey.$domainName" -Type CNAME }
                 if ($dkim2Records.NameHost) { $dkimSelector2 = $dkim2Records.NameHost }
             }
             catch { Write-Verbose "DKIM selector2 lookup failed for $domainName`: $_" }
@@ -2334,7 +2454,7 @@ if ($script:runDnsAuthentication) {
             # ------- MTA-STS (RFC 8461) -------
             $mtaSts = 'Not configured'
             try {
-                $mtaStsRecords = if ($cached -and $cached.PSObject.Properties['MtaSts']) { @($cached.MtaSts) } else { @(Resolve-DnsName -Name "_mta-sts.$domainName" -Type TXT -DnsOnly -ErrorAction SilentlyContinue) }
+                $mtaStsRecords = if ($cached -and $cached.PSObject.Properties['MtaSts']) { @($cached.MtaSts) } else { @(Invoke-DnsQuery -Name "_mta-sts.$domainName" -Type TXT) }
                 $mtaStsRecord = $mtaStsRecords | Where-Object { $_.Strings -and ($_.Strings -join '' -match 'v=STSv1') } | Select-Object -First 1
                 if ($mtaStsRecord) {
                     $mtaSts = $mtaStsRecord.Strings -join ''
@@ -2345,7 +2465,7 @@ if ($script:runDnsAuthentication) {
             # ------- TLS-RPT (RFC 8460) -------
             $tlsRpt = 'Not configured'
             try {
-                $tlsRptRecords = if ($cached -and $cached.PSObject.Properties['TlsRpt']) { @($cached.TlsRpt) } else { @(Resolve-DnsName -Name "_smtp._tls.$domainName" -Type TXT -DnsOnly -ErrorAction SilentlyContinue) }
+                $tlsRptRecords = if ($cached -and $cached.PSObject.Properties['TlsRpt']) { @($cached.TlsRpt) } else { @(Invoke-DnsQuery -Name "_smtp._tls.$domainName" -Type TXT) }
                 $tlsRptRecord = $tlsRptRecords | Where-Object { $_.Strings -and ($_.Strings -join '' -match '^v=TLSRPTv1') } | Select-Object -First 1
                 if ($tlsRptRecord) {
                     $tlsRpt = $tlsRptRecord.Strings -join ''
@@ -2359,7 +2479,7 @@ if ($script:runDnsAuthentication) {
                 $publicChecks = @()
                 foreach ($publicServer in @('8.8.8.8', '1.1.1.1')) {
                     try {
-                        $publicTxt = @(Resolve-DnsName -Name $domainName -Type TXT -Server $publicServer -DnsOnly -ErrorAction Stop)
+                        $publicTxt = @(Invoke-DnsQuery -Name $domainName -Type TXT -Server $publicServer)
                         $publicSpf = $publicTxt | Where-Object { $_.Strings -and ($_.Strings -join '' -match '^v=spf1') } | Select-Object -First 1
                         if ($publicSpf) { $publicChecks += $publicServer }
                     }
