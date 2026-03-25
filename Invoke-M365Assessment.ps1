@@ -2355,8 +2355,8 @@ if ($script:runDnsAuthentication) {
             $dkimStatus = 'N/A'
             $dkimDnsFound = ($dkimSelector1 -ne 'Not configured') -or ($dkimSelector2 -ne 'Not configured')
             if ($script:cachedDkimConfigs) {
-                $exoDkim = $script:cachedDkimConfigs | Where-Object { $_.Domain -eq $domainName }
-                $exoDkimEnabled = $exoDkim -and $exoDkim.Enabled
+                $exoDkim = @($script:cachedDkimConfigs | Where-Object { $_.Domain -eq $domainName })
+                $exoDkimEnabled = [bool]($exoDkim | Where-Object { $_.Enabled })
 
                 if ($dkimDnsFound -and $exoDkimEnabled) {
                     $dkimStatus = 'OK'
