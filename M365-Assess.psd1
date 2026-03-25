@@ -31,6 +31,7 @@
     FileList          = @(
         'Invoke-M365Assessment.ps1'
         'Common\Connect-Service.ps1'
+        'Common\Resolve-DnsRecord.ps1'
         'Common\Export-AssessmentReport.ps1'
         'Common\Export-ComplianceMatrix.ps1'
         'Common\Export-ComplianceOverview.ps1'
