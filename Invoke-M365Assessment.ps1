@@ -2003,7 +2003,15 @@ foreach ($sectionName in $Section) {
                     $scriptLines.Add("`$connectParams['ClientId'] = '$ClientId'")
                     $scriptLines.Add("`$connectParams['ClientSecret'] = (ConvertTo-SecureString '$plainSecret' -AsPlainText -Force)")
                 }
-                if ($UseDeviceCode)         { $scriptLines.Add('$connectParams["UseDeviceCode"] = $true') }
+                # On macOS/Linux, interactive browser auth hangs silently for Power BI.
+                # Force device code flow unless a service principal is configured.
+                if ($UseDeviceCode) {
+                    $scriptLines.Add('$connectParams["UseDeviceCode"] = $true')
+                }
+                elseif (-not $IsWindows -and -not ($ClientId -and ($CertificateThumbprint -or $ClientSecret))) {
+                    $scriptLines.Add('$connectParams["UseDeviceCode"] = $true')
+                    Write-Host "    Using device code auth (interactive browser not supported on this platform)" -ForegroundColor Yellow
+                }
                 $scriptLines.Add("try { & '$connectServicePath' @connectParams } catch { Write-Error `$_; exit 1 }")
                 $scriptLines.Add("& '$scriptPath' -OutputPath '$childCsvPath'")
 
