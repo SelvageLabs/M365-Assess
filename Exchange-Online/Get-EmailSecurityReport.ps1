@@ -7,10 +7,10 @@
     Provides a consolidated view for M365 security assessments and compliance reviews.
 
     Requires ExchangeOnlineManagement module and an active Exchange Online connection.
-    DNS checks use Resolve-DnsName which is available on Windows systems with PowerShell 5.1+.
+    DNS checks use Resolve-DnsRecord (cross-platform: Resolve-DnsName on Windows, dig on macOS/Linux).
 .PARAMETER IncludeDnsChecks
     When specified, performs SPF and DMARC DNS lookups for each accepted domain in the tenant.
-    Resolve-DnsName must be available (Windows only). Failures are handled gracefully.
+    Requires Resolve-DnsName (Windows) or dig (macOS/Linux). Failures are handled gracefully.
 .PARAMETER OutputPath
     Optional path to export results as CSV. If not specified, results are returned
     to the pipeline.
@@ -210,14 +210,15 @@ catch {
 if ($IncludeDnsChecks) {
     Write-Verbose "Performing DNS authentication checks (SPF/DMARC)..."
 
-    # Verify Resolve-DnsName is available
+    # Load cross-platform DNS resolver (Resolve-DnsName on Windows, dig on macOS/Linux)
+    $dnsHelperPath = Join-Path -Path $PSScriptRoot -ChildPath '..\Common\Resolve-DnsRecord.ps1'
     $dnsCommandAvailable = $false
-    try {
-        $null = Get-Command -Name Resolve-DnsName -ErrorAction Stop
-        $dnsCommandAvailable = $true
+    if (Test-Path -Path $dnsHelperPath) {
+        . $dnsHelperPath
+        $dnsCommandAvailable = $null -ne (Get-Command -Name Resolve-DnsRecord -ErrorAction SilentlyContinue)
     }
-    catch {
-        Write-Warning "Resolve-DnsName is not available. DNS checks require Windows PowerShell. Skipping DNS checks."
+    if (-not $dnsCommandAvailable) {
+        Write-Warning "Resolve-DnsRecord helper is not available. Skipping DNS checks."
     }
 
     if ($dnsCommandAvailable) {
@@ -237,7 +238,7 @@ if ($IncludeDnsChecks) {
             # SPF check
             $spfRecord = $null
             try {
-                $txtRecords = @(Resolve-DnsName -Name $domainName -Type TXT -ErrorAction Stop)
+                $txtRecords = @(Resolve-DnsRecord -Name $domainName -Type TXT -ErrorAction Stop)
                 $spfRecord = ($txtRecords | Where-Object {
                     $_.Strings -and ($_.Strings -join '' -match '^v=spf1')
                 } | Select-Object -First 1)
@@ -284,7 +285,7 @@ if ($IncludeDnsChecks) {
             # DMARC check
             $dmarcRecord = $null
             try {
-                $dmarcTxtRecords = @(Resolve-DnsName -Name "_dmarc.$domainName" -Type TXT -ErrorAction Stop)
+                $dmarcTxtRecords = @(Resolve-DnsRecord -Name "_dmarc.$domainName" -Type TXT -ErrorAction Stop)
                 $dmarcRecord = ($dmarcTxtRecords | Where-Object {
                     $_.Strings -and ($_.Strings -join '' -match '^v=DMARC1')
                 } | Select-Object -First 1)

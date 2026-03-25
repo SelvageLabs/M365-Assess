@@ -11,7 +11,7 @@ Describe 'Get-DnsSecurityConfig' {
 
         # Stub EXO/DNS cmdlets so Mock can find them
         function Get-AcceptedDomain { }
-        function Resolve-DnsName { }
+        function Resolve-DnsRecord { }
         function Get-DkimSigningConfig { }
 
         # Mock accepted domains with one authoritative domain
@@ -22,8 +22,8 @@ Describe 'Get-DnsSecurityConfig' {
             })
         }
 
-        # Mock DNS resolution for SPF and DMARC
-        Mock Resolve-DnsName {
+        # Mock cross-platform DNS resolution for SPF and DMARC
+        Mock Resolve-DnsRecord {
             param($Name, $Type)
             if ($Name -eq 'contoso.com' -and $Type -eq 'TXT') {
                 return @([PSCustomObject]@{
@@ -134,7 +134,7 @@ Describe 'Get-DnsSecurityConfig - Missing Records' {
 
         # Stub EXO/DNS cmdlets so Mock can find them
         function Get-AcceptedDomain { }
-        function Resolve-DnsName { }
+        function Resolve-DnsRecord { }
         function Get-DkimSigningConfig { }
 
         Mock Get-AcceptedDomain {
@@ -145,7 +145,7 @@ Describe 'Get-DnsSecurityConfig - Missing Records' {
         }
 
         # No DNS records found
-        Mock Resolve-DnsName {
+        Mock Resolve-DnsRecord {
             return $null
         }
 

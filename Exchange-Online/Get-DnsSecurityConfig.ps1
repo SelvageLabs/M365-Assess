@@ -45,6 +45,10 @@ param(
 # Stop on errors: API failures should halt this collector rather than produce partial results.
 $ErrorActionPreference = 'Stop'
 
+# Load cross-platform DNS resolver (Resolve-DnsName on Windows, dig on macOS/Linux)
+$dnsHelperPath = Join-Path -Path $PSScriptRoot -ChildPath '..\Common\Resolve-DnsRecord.ps1'
+if (Test-Path -Path $dnsHelperPath) { . $dnsHelperPath }
+
 $settings = [System.Collections.Generic.List[PSCustomObject]]::new()
 $checkIdCounter = @{}
 
@@ -147,7 +151,7 @@ else {
         $spfPresent = @()
         foreach ($domain in $authDomains) {
             $domainName = $domain.DomainName
-            $txtRecords = @(Resolve-DnsName -Name $domainName -Type TXT -DnsOnly -ErrorAction SilentlyContinue 2>$null)
+            $txtRecords = @(Resolve-DnsRecord -Name $domainName -Type TXT -ErrorAction SilentlyContinue)
             $spfRecord = $txtRecords | Where-Object { $_.Strings -and $_.Strings -match '^v=spf1' }
             if ($spfRecord) { $spfPresent += $domainName }
             else { $spfMissing += $domainName }
@@ -252,7 +256,7 @@ else {
         $dmarcStrong = @()
         foreach ($domain in $authDomains) {
             $domainName = $domain.DomainName
-            $dmarcRecords = @(Resolve-DnsName -Name "_dmarc.$domainName" -Type TXT -DnsOnly -ErrorAction SilentlyContinue 2>$null)
+            $dmarcRecords = @(Resolve-DnsRecord -Name "_dmarc.$domainName" -Type TXT -ErrorAction SilentlyContinue)
             $dmarcRecord = $dmarcRecords | Where-Object { $_.Strings -and $_.Strings -match '^v=DMARC1' }
             if (-not $dmarcRecord) {
                 $dmarcMissing += $domainName
