@@ -2017,12 +2017,24 @@ foreach ($sectionName in $Section) {
 
                 $childScriptFile = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "m365assess_pbi_$([System.IO.Path]::GetRandomFileName()).ps1"
                 $childOutputFile = [System.IO.Path]::ChangeExtension($childScriptFile, '.log')
+                $childErrFile    = [System.IO.Path]::ChangeExtension($childScriptFile, '.err')
                 Set-Content -Path $childScriptFile -Value ($scriptLines -join "`n") -Encoding UTF8
-                $childTimeoutSec = 30
+                $childTimeoutSec = if ($UseDeviceCode -or (-not $IsWindows -and -not ($ClientId -and ($CertificateThumbprint -or $ClientSecret)))) { 120 } else { 30 }
+                $childNeedsConsole = $UseDeviceCode -or (-not $IsWindows -and -not ($ClientId -and ($CertificateThumbprint -or $ClientSecret)))
                 try {
-                    $childProc = Start-Process -FilePath 'pwsh' -ArgumentList '-NoProfile', '-File', $childScriptFile `
-                        -RedirectStandardOutput $childOutputFile -RedirectStandardError ([System.IO.Path]::ChangeExtension($childScriptFile, '.err')) `
-                        -NoNewWindow -PassThru
+                    if ($childNeedsConsole) {
+                        # Device code auth: don't redirect output so the user sees the
+                        # login prompt. Use a background job with timeout instead.
+                        $childProc = Start-Process -FilePath 'pwsh' -ArgumentList '-NoProfile', '-File', $childScriptFile `
+                            -NoNewWindow -PassThru
+                    }
+                    else {
+                        # Service principal / Windows interactive: redirect output for
+                        # clean console and capture errors.
+                        $childProc = Start-Process -FilePath 'pwsh' -ArgumentList '-NoProfile', '-File', $childScriptFile `
+                            -RedirectStandardOutput $childOutputFile -RedirectStandardError $childErrFile `
+                            -NoNewWindow -PassThru
+                    }
 
                     # Poll with countdown so the user sees progress instead of a frozen screen
                     $exited = $false
@@ -2030,7 +2042,7 @@ foreach ($sectionName in $Section) {
                         $exited = $childProc.WaitForExit(5000)
                         if ($exited) { break }
                         $remaining = $childTimeoutSec - $waited - 5
-                        if ($remaining -gt 0) {
+                        if ($remaining -gt 0 -and -not $childNeedsConsole) {
                             Write-Host "    Waiting for Power BI response... (${remaining}s until timeout)" -ForegroundColor Gray
                         }
                     }
@@ -2041,17 +2053,16 @@ foreach ($sectionName in $Section) {
                         throw "Child process timed out after ${childTimeoutSec}s — Power BI connection or API is unresponsive. Verify the account has Power BI Service Administrator role. The assessment will continue without Power BI data."
                     }
 
-                    # Read captured output for warnings/errors
-                    $childStdout = if (Test-Path $childOutputFile) { Get-Content -Path $childOutputFile -Raw } else { '' }
-                    $childStderr = $childErrFile = [System.IO.Path]::ChangeExtension($childScriptFile, '.err')
-                    $childStderrContent = if (Test-Path $childErrFile) { Get-Content -Path $childErrFile -Raw } else { '' }
-
-                    if ($childStderrContent) {
-                        Write-AssessmentLog -Level WARN -Message "Child process stderr: $($childStderrContent.Trim())" -Section $sectionName -Collector $collector.Label
+                    # Read captured output for warnings/errors (only when redirected)
+                    if (-not $childNeedsConsole) {
+                        $childStderrContent = if (Test-Path $childErrFile) { Get-Content -Path $childErrFile -Raw } else { '' }
+                        if ($childStderrContent) {
+                            Write-AssessmentLog -Level WARN -Message "Child process stderr: $($childStderrContent.Trim())" -Section $sectionName -Collector $collector.Label
+                        }
                     }
 
                     if ($childProc.ExitCode -ne 0) {
-                        $errDetail = if ($childStderrContent) { $childStderrContent.Trim() } else { "Exit code $($childProc.ExitCode)" }
+                        $errDetail = if (-not $childNeedsConsole -and (Test-Path $childErrFile)) { (Get-Content -Path $childErrFile -Raw).Trim() } else { "Exit code $($childProc.ExitCode)" }
                         throw "Child process failed: $errDetail"
                     }
 
@@ -2067,7 +2078,7 @@ foreach ($sectionName in $Section) {
                 finally {
                     Remove-Item -Path $childScriptFile -ErrorAction SilentlyContinue
                     Remove-Item -Path $childOutputFile -ErrorAction SilentlyContinue
-                    Remove-Item -Path ([System.IO.Path]::ChangeExtension($childScriptFile, '.err')) -ErrorAction SilentlyContinue
+                    Remove-Item -Path $childErrFile -ErrorAction SilentlyContinue
                 }
 
                 # Skip normal in-process execution
