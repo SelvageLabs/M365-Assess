@@ -1441,31 +1441,9 @@ $failedServices = [System.Collections.Generic.HashSet[string]]::new()
 # cause silent auth failures with no useful error message.
 # ------------------------------------------------------------------
 if (-not $SkipConnection) {
-    $compatErrors   = @()
-    $compatWarnings = @()
+    $repairActions = [System.Collections.Generic.List[PSCustomObject]]::new()
 
-    # EXO 3.8.0+ ships MSAL that conflicts with Graph SDK 2.x
-    $exoModule = Get-Module -Name ExchangeOnlineManagement -ListAvailable -ErrorAction SilentlyContinue |
-        Sort-Object -Property Version -Descending | Select-Object -First 1
-    $graphModule = Get-Module -Name Microsoft.Graph.Authentication -ListAvailable -ErrorAction SilentlyContinue |
-        Sort-Object -Property Version -Descending | Select-Object -First 1
-
-    if ($exoModule -and $exoModule.Version -ge [version]'3.8.0') {
-        $compatErrors += "ExchangeOnlineManagement $($exoModule.Version) has known MSAL conflicts with Microsoft.Graph.Authentication. Downgrade to 3.7.1: Uninstall-Module ExchangeOnlineManagement -AllVersions -Force; Install-Module ExchangeOnlineManagement -RequiredVersion 3.7.1 -Scope CurrentUser"
-
-        # msalruntime.dll issue only affects EXO 3.8.0+ on Windows — the module
-        # buries the DLL in a nested folder that .NET can't find automatically
-        if ($IsWindows -or $null -eq $IsWindows) {
-            $exoNetCorePath = Join-Path -Path $exoModule.ModuleBase -ChildPath 'netCore'
-            $msalDllDirect = Join-Path -Path $exoNetCorePath -ChildPath 'msalruntime.dll'
-            $msalDllNested = Join-Path -Path $exoNetCorePath -ChildPath 'runtimes\win-x64\native\msalruntime.dll'
-            if (-not (Test-Path -Path $msalDllDirect) -and (Test-Path -Path $msalDllNested)) {
-                $compatErrors += "msalruntime.dll is missing from EXO module load path. Fix: Copy-Item '$msalDllNested' '$msalDllDirect'"
-            }
-        }
-    }
-
-    # Determine which modules the selected sections actually require
+    # Determine which modules the selected sections actually require (BEFORE checking modules)
     $needsGraph   = $false
     $needsExo     = $false
     $needsPowerBI = $false
@@ -1476,17 +1454,88 @@ if (-not $SkipConnection) {
         if ($s -eq 'PowerBI')                                               { $needsPowerBI = $true }
     }
 
-    # Required modules — fatal if missing
-    if ($needsGraph -and -not $graphModule) {
-        $compatErrors += "Microsoft.Graph.Authentication is required. Install: Install-Module Microsoft.Graph.Authentication -Scope CurrentUser"
-    }
-    if ($needsExo -and -not $exoModule) {
-        $compatErrors += "ExchangeOnlineManagement is required. Install: Install-Module ExchangeOnlineManagement -RequiredVersion 3.7.1 -Scope CurrentUser"
+    # Detect installed module versions
+    $exoModule = Get-Module -Name ExchangeOnlineManagement -ListAvailable -ErrorAction SilentlyContinue |
+        Sort-Object -Property Version -Descending | Select-Object -First 1
+    $graphModule = Get-Module -Name Microsoft.Graph.Authentication -ListAvailable -ErrorAction SilentlyContinue |
+        Sort-Object -Property Version -Descending | Select-Object -First 1
+
+    # EXO 3.8.0+ MSAL conflict — must downgrade (only if EXO is needed)
+    if ($needsExo -and $exoModule -and $exoModule.Version -ge [version]'3.8.0') {
+        $repairActions.Add([PSCustomObject]@{
+            Module          = 'ExchangeOnlineManagement'
+            Issue           = "Version $($exoModule.Version) has MSAL conflicts (need <= 3.7.1)"
+            Severity        = 'Required'
+            Tier            = 'Downgrade'
+            RequiredVersion = '3.7.1'
+            InstallCmd      = 'Uninstall-Module ExchangeOnlineManagement -AllVersions -Force; Install-Module ExchangeOnlineManagement -RequiredVersion 3.7.1 -Scope CurrentUser'
+            Description     = "ExchangeOnlineManagement $($exoModule.Version) — MSAL conflict (need <= 3.7.1)"
+        })
+
+        # msalruntime.dll — Windows only, EXO 3.8.0+
+        if ($IsWindows -or $null -eq $IsWindows) {
+            $exoNetCorePath = Join-Path -Path $exoModule.ModuleBase -ChildPath 'netCore'
+            $msalDllDirect = Join-Path -Path $exoNetCorePath -ChildPath 'msalruntime.dll'
+            $msalDllNested = Join-Path -Path $exoNetCorePath -ChildPath 'runtimes\win-x64\native\msalruntime.dll'
+            if (-not (Test-Path -Path $msalDllDirect) -and (Test-Path -Path $msalDllNested)) {
+                $repairActions.Add([PSCustomObject]@{
+                    Module          = 'ExchangeOnlineManagement'
+                    Issue           = 'msalruntime.dll missing from load path'
+                    Severity        = 'Required'
+                    Tier            = 'FileCopy'
+                    RequiredVersion = $null
+                    InstallCmd      = "Copy-Item '$msalDllNested' '$msalDllDirect'"
+                    Description     = 'msalruntime.dll — missing from EXO module load path'
+                    SourcePath      = $msalDllNested
+                    DestPath        = $msalDllDirect
+                })
+            }
+        }
     }
 
-    # Optional modules — warn and exclude the section
+    # Required modules — fatal if missing
+    if ($needsGraph -and -not $graphModule) {
+        $repairActions.Add([PSCustomObject]@{
+            Module          = 'Microsoft.Graph.Authentication'
+            Issue           = 'Not installed'
+            Severity        = 'Required'
+            Tier            = 'Install'
+            RequiredVersion = $null
+            InstallCmd      = 'Install-Module -Name Microsoft.Graph.Authentication -Scope CurrentUser -Force'
+            Description     = 'Microsoft.Graph.Authentication — not installed'
+        })
+    }
+    if ($needsExo -and -not $exoModule) {
+        $repairActions.Add([PSCustomObject]@{
+            Module          = 'ExchangeOnlineManagement'
+            Issue           = 'Not installed'
+            Severity        = 'Required'
+            Tier            = 'Install'
+            RequiredVersion = '3.7.1'
+            InstallCmd      = 'Install-Module -Name ExchangeOnlineManagement -RequiredVersion 3.7.1 -Scope CurrentUser -Force'
+            Description     = 'ExchangeOnlineManagement — not installed'
+        })
+    }
+
+    # Optional modules
     if ($needsPowerBI -and -not (Get-Module -Name MicrosoftPowerBIMgmt -ListAvailable -ErrorAction SilentlyContinue)) {
-        $compatWarnings += "MicrosoftPowerBIMgmt is not installed — PowerBI section will be skipped. Install: Install-Module MicrosoftPowerBIMgmt -Scope CurrentUser"
+        $repairActions.Add([PSCustomObject]@{
+            Module          = 'MicrosoftPowerBIMgmt'
+            Issue           = 'Not installed'
+            Severity        = 'Optional'
+            Tier            = 'Install'
+            RequiredVersion = $null
+            InstallCmd      = 'Install-Module -Name MicrosoftPowerBIMgmt -Scope CurrentUser -Force'
+            Description     = 'MicrosoftPowerBIMgmt — not installed (PowerBI will be skipped)'
+        })
+    }
+
+    # Bridge: populate old variables from new structure for existing display code
+    $compatErrors = @($repairActions | Where-Object { $_.Severity -eq 'Required' } | ForEach-Object { $_.Description })
+    $compatWarnings = @($repairActions | Where-Object { $_.Severity -eq 'Optional' } | ForEach-Object { $_.Description })
+
+    # Handle optional section exclusion (was previously inline)
+    if ($repairActions | Where-Object { $_.Module -eq 'MicrosoftPowerBIMgmt' }) {
         $Section = @($Section | Where-Object { $_ -ne 'PowerBI' })
         Write-AssessmentLog -Level WARN -Message 'MicrosoftPowerBIMgmt not installed. Excluding PowerBI section.'
     }
