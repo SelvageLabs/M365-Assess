@@ -2,6 +2,17 @@
 
 All notable changes to M365 Assess are documented here. This project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [Unreleased]
+
+### Added
+- **Interactive Module Repair** — orchestrator detects missing or incompatible modules before connecting and offers a guided two-tier repair flow (install missing modules, then EXO downgrade if needed) with automatic re-validation
+- **`-NonInteractive` parameter** — suppresses all interactive prompts for module installation, EXO downgrade, and script unblocking; required issues exit with logged fix commands, optional issues skip sections with warnings. Also triggers automatically when `[Environment]::UserInteractive` is false
+- **Blocked script detection** — detects NTFS Zone.Identifier marks on Windows (ZIP download scenario) and offers to unblock, or logs the command in non-interactive mode
+- **Section-aware module detection** — only flags modules required by the selected sections (e.g., EXO is not checked when running `-Section Identity,Licensing`)
+- **EXO version pinning** — installs and downgrades to ExchangeOnlineManagement 3.7.1 to avoid MSAL conflicts with Graph SDK 2.x
+- **msalruntime.dll auto-fix** — copies missing `msalruntime.dll` from EXO module path on Windows
+- 24 Pester tests for module repair, headless mode, and blocked script detection
+
 ## [0.9.8] - 2026-03-20
 
 ### Added

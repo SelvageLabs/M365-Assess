@@ -76,6 +76,15 @@
 .PARAMETER CisBenchmarkVersion
     CIS benchmark version to use for framework rendering. Defaults to 'v6'
     (CIS Microsoft 365 v6.0.1). Set to 'v7' when CIS v7.0 data is available.
+.PARAMETER NonInteractive
+    Suppresses all interactive prompts for module installation, EXO downgrade,
+    and script unblocking. When a required module is missing or incompatible,
+    the exact install/fix command is logged and the script exits with an error.
+    When an optional module is missing (e.g., MicrosoftPowerBIMgmt), the
+    dependent section is skipped with a warning and the assessment continues.
+    Use this switch for CI/CD pipelines, scheduled tasks, and headless
+    environments. Also triggered automatically when the session is not
+    user-interactive ([Environment]::UserInteractive is false).
 .EXAMPLE
     PS> .\Invoke-M365Assessment.ps1 -TenantId 'contoso.onmicrosoft.com'
 

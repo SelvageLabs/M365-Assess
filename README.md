@@ -31,8 +31,9 @@ Run a single command to produce CSV reports, a branded HTML assessment report, a
 git clone https://github.com/Galvnyz/M365-Assess.git
 cd M365-Assess
 
-# 2. Install required modules
-Install-Module Microsoft.Graph, ExchangeOnlineManagement -Scope CurrentUser
+# 2. Install required modules (EXO pinned to 3.7.1 — see Compatibility docs)
+Install-Module Microsoft.Graph -Scope CurrentUser
+Install-Module ExchangeOnlineManagement -RequiredVersion 3.7.1 -Scope CurrentUser
 
 # 3. Run the assessment
 .\Invoke-M365Assessment.ps1 -TenantId 'contoso.onmicrosoft.com'
@@ -138,6 +139,7 @@ During execution, the console displays real-time streaming progress for each sec
 | `-CertificateThumbprint` | string | | Certificate thumbprint for app-only auth |
 | `-UserPrincipalName` | string | | UPN for interactive auth (avoids WAM broker issues) |
 | `-UseDeviceCode` | switch | | Use device code flow for headless environments |
+| `-NonInteractive` | switch | | Skip all interactive prompts; log errors and exit on required module issues, skip sections for optional ones |
 | `-ManagedIdentity` | switch | | Use Azure managed identity auth (VMs, App Service, Functions) |
 | `-ScubaProductNames` | string[] | aad, defender, exo, powerplatform, sharepoint, teams | ScubaGear products to scan |
 | `-M365Environment` | string | `commercial` | Cloud environment: `commercial`, `gcc`, `gcchigh`, `dod` |
@@ -157,6 +159,51 @@ During execution, the console displays real-time streaming progress for each sec
 When no connection parameters are provided (`-TenantId`, `-SkipConnection`, `-ClientId`, or `-ManagedIdentity`), an interactive wizard prompts for tenant, auth method, and output folder. If `-Section` or `-OutputFolder` are provided on the command line, those wizard steps are skipped automatically.
 
 See [Authentication](AUTHENTICATION.md) for detailed auth examples and App Registration setup.
+
+## Module Helper
+
+The orchestrator detects missing or incompatible PowerShell modules **before** connecting to any service. Detection is section-aware — only modules needed by the selected sections are checked.
+
+| Module | Condition | Severity | Action |
+|--------|-----------|----------|--------|
+| Microsoft.Graph.Authentication | Not installed | Required | Install latest |
+| ExchangeOnlineManagement | Not installed | Required | Install pinned 3.7.1 |
+| ExchangeOnlineManagement | Version >= 3.8.0 | Required | Downgrade to 3.7.1 |
+| msalruntime.dll | Missing (Windows + EXO 3.8.0+) | Required | Auto-copy from module path |
+| MicrosoftPowerBIMgmt | Not installed | Optional | Skip PowerBI section |
+
+In interactive mode, the repair flow presents two tiers of prompts:
+
+1. **Tier 1 — Install missing modules** — single prompt to install all missing modules to `CurrentUser` scope
+2. **Tier 2 — EXO downgrade** — separate confirmation to uninstall EXO >= 3.8.0 and install 3.7.1 (due to the [MSAL conflict](docs/COMPATIBILITY.md))
+
+After repair, modules are re-validated. If issues remain, the exact manual commands are displayed and the script exits.
+
+### Headless / Non-Interactive Mode
+
+Add `-NonInteractive` (or run in a non-interactive session) to suppress all prompts:
+
+```powershell
+# CI/CD pipeline — exit cleanly if modules are missing
+.\Invoke-M365Assessment.ps1 -TenantId 'contoso.onmicrosoft.com' `
+    -ClientId 'app-id' -CertificateThumbprint 'thumbprint' `
+    -NonInteractive
+```
+
+**Behavior in non-interactive mode:**
+
+- **Required module issues** — each issue is logged with the exact install command, then the script exits with an error
+- **Optional module issues** — the dependent section is removed from the run and a warning is logged; the assessment continues with remaining sections
+- **Blocked scripts (ZIP download)** — the unblock command is logged and the script exits
+
+The assessment log (`_Assessment-Log_<tenant>.txt`) captures all module issue details and fix commands for operator review.
+
+### Blocked Script Detection
+
+On Windows, files extracted from a ZIP are tagged with an NTFS Zone.Identifier that blocks execution under `RemoteSigned` policy. The orchestrator detects this automatically:
+
+- **Interactive** — prompts to run `Unblock-File` on all `.ps1` files
+- **Non-interactive** — logs the command and exits
 
 ## Output Structure
 

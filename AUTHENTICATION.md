@@ -102,6 +102,25 @@ For workloads running on Azure (VMs, App Service, Azure Functions, Azure Automat
 
 Managed identity is supported for Graph and Exchange Online. Purview and Power BI do not support managed identity and will fall back to browser-based login with a warning.
 
+## Non-Interactive / Headless Mode
+
+For CI/CD pipelines, scheduled tasks, or any environment without an interactive console, add `-NonInteractive` to suppress module installation prompts and script-unblock dialogs. This is independent of the authentication method — combine it with certificate auth, managed identity, or device code flow.
+
+```powershell
+# Scheduled task with certificate auth — no prompts
+.\Invoke-M365Assessment.ps1 -TenantId 'contoso.onmicrosoft.com' `
+    -ClientId '00000000-0000-0000-0000-000000000000' `
+    -CertificateThumbprint 'ABC123DEF456' `
+    -NonInteractive
+
+# Azure VM with managed identity — no prompts
+.\Invoke-M365Assessment.ps1 -ManagedIdentity -NonInteractive
+```
+
+If required modules are missing, the script logs the exact install commands and exits with an error instead of hanging on a prompt. Optional module issues (e.g., MicrosoftPowerBIMgmt) cause the affected section to be skipped with a warning.
+
+> **Tip:** `-NonInteractive` is also activated automatically when `[Environment]::UserInteractive` is `$false`, such as in non-interactive service accounts or container environments.
+
 ## Pre-Existing Connections
 
 If you have already connected to the required services (e.g., via `Connect-MgGraph` and `Connect-ExchangeOnline`), skip the connection step entirely:

@@ -50,6 +50,10 @@ Get-Module -ListAvailable Microsoft.Graph.Authentication, ExchangeOnlineManageme
     Select-Object Name, Version
 ```
 
+## Automatic Module Repair
+
+The orchestrator's built-in module helper detects missing or incompatible modules at startup and offers to fix them interactively. In headless environments, use `-NonInteractive` to log issues with fix commands and exit cleanly instead of prompting. See the [README](../README.md#module-helper) for details.
+
 ## Known Incompatibilities
 
 | Combination | Symptom | Fix |
