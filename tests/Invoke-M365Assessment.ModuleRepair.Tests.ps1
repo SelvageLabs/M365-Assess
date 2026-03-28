@@ -110,6 +110,29 @@ Describe 'Module repair flow' {
         }
     }
 
+    Context 'Blocked scripts detection' {
+        It 'Should check for Zone.Identifier alternate data streams' {
+            $src | Should -Match 'Zone\.Identifier'
+        }
+
+        It 'Should display Blocked Scripts Detected banner' {
+            $src | Should -Match 'Blocked Scripts Detected'
+        }
+
+        It 'Should prompt to Unblock-File in interactive mode' {
+            $src | Should -Match 'Unblock-File'
+        }
+
+        It 'Should respect NonInteractive for blocked scripts path' {
+            $src | Should -Match '\$NonInteractive\s+-or\s+-not\s+\[Environment\]::UserInteractive'
+            $src | Should -Match 'Blocked scripts detected'
+        }
+
+        It 'Should only check on Windows' {
+            $src | Should -Match '\$IsWindows.*-or.*\$null -eq \$IsWindows'
+        }
+    }
+
     Context 'Re-validation' {
         It 'Should re-run module detection after repairs' {
             $src | Should -Match 'Re-validat'
