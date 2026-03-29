@@ -24,21 +24,27 @@
 
 Run a single command to produce CSV reports, a branded HTML assessment report, and an XLSX compliance matrix covering identity, email, security, devices, collaboration, and compliance baselines. **169 automated security checks** mapped across **14 compliance frameworks**.
 
-## Quick Start
+## Installation
+
+### From PSGallery (recommended)
 
 ```powershell
-# 1. Clone the repository
-git clone https://github.com/Galvnyz/M365-Assess.git
-cd M365-Assess
-
-# 2. Install required modules (EXO pinned to 3.7.1 — see Compatibility docs)
+Install-Module M365-Assess -Scope CurrentUser
 Install-Module Microsoft.Graph -Scope CurrentUser
 Install-Module ExchangeOnlineManagement -RequiredVersion 3.7.1 -Scope CurrentUser
 
-# 3. Run the assessment
-.\Invoke-M365Assessment.ps1 -TenantId 'contoso.onmicrosoft.com'
+Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com'
+```
 
-# Results land in a timestamped folder with CSV data + HTML report + XLSX compliance matrix
+### From Source
+
+```powershell
+git clone https://github.com/Galvnyz/M365-Assess.git
+cd M365-Assess
+Install-Module Microsoft.Graph -Scope CurrentUser
+Install-Module ExchangeOnlineManagement -RequiredVersion 3.7.1 -Scope CurrentUser
+
+.\Invoke-M365Assessment.ps1 -TenantId 'contoso.onmicrosoft.com'
 ```
 
 > **Downloaded the ZIP instead of cloning?** Windows marks ZIP-extracted files as "from the internet," which blocks execution under the default `RemoteSigned` policy. Unblock all scripts after extracting:
@@ -46,6 +52,8 @@ Install-Module ExchangeOnlineManagement -RequiredVersion 3.7.1 -Scope CurrentUse
 > Get-ChildItem -Path .\M365-Assess -Recurse -Filter *.ps1 | Unblock-File
 > ```
 > This is not needed when using `git clone`.
+
+Results land in a timestamped folder with CSV data + HTML report + XLSX compliance matrix.
 
 ## Prerequisites
 

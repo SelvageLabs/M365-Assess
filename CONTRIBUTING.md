@@ -75,6 +75,19 @@ Security collectors use one of two `$ErrorActionPreference` strategies:
 
 When writing new collectors, choose `Stop` if the collector's checks depend on a shared API response that must succeed, or `Continue` if checks are independent and can fail individually.
 
+## Releasing to PSGallery
+
+Releases are automated via GitHub Actions. To publish a new version:
+
+1. Update `ModuleVersion` in `M365-Assess.psd1`
+2. Add a changelog entry under `## [x.y.z] - YYYY-MM-DD` in `CHANGELOG.md`
+3. Merge to `main`, then tag: `git tag v1.0.0 && git push origin v1.0.0`
+4. The `release.yml` workflow validates, creates a GitHub Release, and publishes to PSGallery
+
+Pre-release tags (e.g., `v1.0.0-beta1`) create a GitHub Release but skip PSGallery publish. Use `workflow_dispatch` with dry-run mode to test packaging without publishing.
+
+The `PSGALLERY_API_KEY` secret must be configured in the repository's `psgallery` environment by a maintainer.
+
 ## Code of Conduct
 
 Be respectful and constructive. We're all here to make M365 security assessment easier for everyone.
