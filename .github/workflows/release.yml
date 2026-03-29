@@ -2,12 +2,59 @@ name: Release
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (skip PSGallery publish)'
+        type: boolean
+        default: true
 
 permissions:
   contents: write
 
 jobs:
+  validate:
+    name: Pre-publish Validation
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install modules
+        shell: pwsh
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+
+      - name: Validate manifest
+        shell: pwsh
+        run: |
+          $manifest = Test-ModuleManifest -Path ./M365-Assess.psd1 -ErrorAction Stop
+          Write-Host "Module: $($manifest.Name) v$($manifest.Version)" -ForegroundColor Green
+
+      - name: Verify tag matches manifest version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}".TrimStart('v')
+          $manifest = (Import-PowerShellDataFile ./M365-Assess.psd1).ModuleVersion
+          if ($tag -ne $manifest) {
+            Write-Error "Tag version ($tag) does not match manifest version ($manifest)"
+            exit 1
+          }
+          Write-Host "Version match: $tag" -ForegroundColor Green
+
+      - name: Run tests
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
   create-release:
+    needs: validate
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,3 +86,29 @@ jobs:
           body: ${{ steps.changelog.outputs.notes }}
           draft: false
           prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+
+  publish:
+    needs: [validate, create-release]
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-')
+    runs-on: windows-latest
+    environment: psgallery
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publish to PSGallery
+        if: ${{ !inputs.dry_run }}
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
+        run: |
+          Write-Host "Publishing M365-Assess to PSGallery..." -ForegroundColor Cyan
+          Publish-Module -Path . -NuGetApiKey $env:NUGET_API_KEY -Verbose
+          Write-Host "Published successfully" -ForegroundColor Green
+
+      - name: Dry run
+        if: ${{ inputs.dry_run }}
+        shell: pwsh
+        run: |
+          Write-Host "DRY RUN — skipping PSGallery publish" -ForegroundColor Yellow
+          Test-ModuleManifest -Path ./M365-Assess.psd1 | Format-List Name, Version, Description
+          Write-Host "Module would be published with the above metadata" -ForegroundColor Yellow

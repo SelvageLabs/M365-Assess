@@ -108,10 +108,12 @@
     # Private data / PSData for PowerShell Gallery
     PrivateData       = @{
         PSData = @{
-            Tags         = @('Microsoft365', 'M365', 'Security', 'Assessment', 'EntraID', 'Exchange', 'Intune', 'Defender', 'SharePoint', 'Teams', 'PowerBI', 'CIS')
+            Tags         = @('Microsoft365', 'M365', 'Security', 'Assessment', 'Compliance', 'Audit',
+                             'EntraID', 'Exchange', 'Intune', 'Defender', 'SharePoint', 'Teams',
+                             'PowerBI', 'CIS', 'NIST', 'SOC2', 'HIPAA', 'ZeroTrust', 'SecurityBaseline')
             LicenseUri   = 'https://github.com/Galvnyz/M365-Assess/blob/main/LICENSE'
             ProjectUri   = 'https://github.com/Galvnyz/M365-Assess'
-            ReleaseNotes = 'v0.9.8 - Stryker Incident Readiness: 9 new security checks ported from StrykerScan covering incident-response attack vectors'
+            ReleaseNotes = 'v0.9.8 - Stryker Incident Readiness: 9 new security checks covering incident-response attack vectors'
         }
     }
 }

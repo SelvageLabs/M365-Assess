@@ -46,7 +46,8 @@ jobs:
         run: |
           $config = New-PesterConfiguration
           $config.Run.Path = @(
-            './tests/Smoke'
+            './tests/Smoke/Script-Validation.Tests.ps1'
+            './tests/Smoke/PSGallery-Readiness.Tests.ps1'
             './tests/Consistency'
             './tests/Common/Export-AssessmentReport.Tests.ps1'
             './tests/Common/Import-ControlRegistry.Tests.ps1'
