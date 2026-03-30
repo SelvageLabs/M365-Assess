@@ -27,7 +27,7 @@ Run a single command to produce CSV reports, a branded HTML assessment report, a
 
 ## Installation
 
-### From PSGallery (recommended)
+### From PSGallery (coming soon)
 
 ```powershell
 Install-Module M365-Assess -Scope CurrentUser
@@ -37,7 +37,9 @@ Install-Module ExchangeOnlineManagement -RequiredVersion 3.7.1 -Scope CurrentUse
 Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com'
 ```
 
-### From Source
+> PSGallery publishing is planned for the v1.0.0 release. Until then, install from source.
+
+### From Source (recommended)
 
 ```powershell
 git clone https://github.com/Galvnyz/M365-Assess.git
