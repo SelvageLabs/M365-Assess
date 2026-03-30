@@ -137,6 +137,26 @@ jobs:
           name: coverage-report
           path: coverage.xml
 
+      - name: Coverage summary
+        if: always()
+        shell: pwsh
+        run: |
+          if (-not (Test-Path './coverage.xml')) {
+            Write-Host 'No coverage.xml found'
+            exit 0
+          }
+          [xml]$report = Get-Content './coverage.xml'
+          $counter = $report.report.counter | Where-Object { $_.type -eq 'LINE' }
+          if ($counter) {
+            $missed = [int]$counter.missed
+            $covered = [int]$counter.covered
+            $total = $missed + $covered
+            $pct = if ($total -gt 0) { [math]::Round(($covered / $total) * 100, 1) } else { 0 }
+            Write-Host "Line coverage: $covered / $total ($pct%)"
+            "### Code Coverage: $pct% ($covered / $total lines)" >> $env:GITHUB_STEP_SUMMARY
+          }
+
+
   sync-checkid:
     name: Sync CheckID Fallback Cache
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
