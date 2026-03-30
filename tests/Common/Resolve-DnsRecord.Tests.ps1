@@ -101,9 +101,13 @@ Describe 'Resolve-DnsRecord' {
             $script:DnsBackend = 'None'
         }
 
-        It 'Should return null' {
-            $result = Resolve-DnsRecord -Name 'test.com' -Type TXT -WarningAction SilentlyContinue
+        It 'Should return null with Continue error action' {
+            $result = Resolve-DnsRecord -Name 'test.com' -Type TXT -ErrorAction Continue -WarningAction SilentlyContinue
             $result | Should -BeNullOrEmpty
+        }
+
+        It 'Should throw with Stop error action' {
+            { Resolve-DnsRecord -Name 'test.com' -Type TXT -ErrorAction Stop } | Should -Throw -ExpectedMessage "*No DNS resolution backend*"
         }
     }
 
