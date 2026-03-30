@@ -37,21 +37,21 @@ Install-Module ImportExcel -Scope CurrentUser
 
 ## 3. Get the Module
 
-### Option A: Clone from source (recommended)
+### Option A: PSGallery (recommended)
+
+```powershell
+Install-Module M365-Assess -Scope CurrentUser
+```
+
+Dependencies (Graph SDK, etc.) are declared in the manifest and installed automatically.
+
+### Option B: Clone from source
 
 ```powershell
 git clone https://github.com/Galvnyz/M365-Assess.git
 cd M365-Assess
 Import-Module ./src/M365-Assess
 ```
-
-### Option B: PSGallery (coming soon)
-
-```powershell
-Install-Module M365-Assess -Scope CurrentUser
-```
-
-> PSGallery publishing is planned for the v1.0.0 release.
 
 > **Downloaded the ZIP?** Windows marks extracted files as blocked. Unblock them:
 > ```powershell

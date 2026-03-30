@@ -27,19 +27,16 @@ Run a single command to produce CSV reports, a branded HTML assessment report, a
 
 ## Installation
 
-### From PSGallery (coming soon)
+### From PSGallery (recommended)
 
 ```powershell
 Install-Module M365-Assess -Scope CurrentUser
-Install-Module Microsoft.Graph -Scope CurrentUser
-Install-Module ExchangeOnlineManagement -RequiredVersion 3.7.1 -Scope CurrentUser
-
 Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com'
 ```
 
-> PSGallery publishing is planned for the v1.0.0 release. Until then, install from source.
+Graph and EXO dependencies are declared in the manifest and installed automatically.
 
-### From Source (recommended)
+### From Source
 
 ```powershell
 git clone https://github.com/Galvnyz/M365-Assess.git
