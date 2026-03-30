@@ -53,7 +53,7 @@ Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com'
 
 > **Downloaded the ZIP instead of cloning?** Windows marks ZIP-extracted files as "from the internet," which blocks execution under the default `RemoteSigned` policy. Unblock all scripts after extracting:
 > ```powershell
-> Get-ChildItem -Path .\M365-Assess -Recurse -Filter *.ps1 | Unblock-File
+> Get-ChildItem -Path .\M365-Assess\src -Recurse -Filter *.ps1 | Unblock-File
 > ```
 > This is not needed when using `git clone`.
 
@@ -69,6 +69,7 @@ Results land in a timestamped folder with CSV data + HTML report + XLSX complian
 | **Microsoft.Graph** | `Install-Module Microsoft.Graph -Scope CurrentUser` |
 | **ExchangeOnlineManagement** | `Install-Module ExchangeOnlineManagement -Scope CurrentUser` |
 | **ImportExcel** *(optional)* | `Install-Module ImportExcel -Scope CurrentUser` for XLSX compliance matrix export |
+
 ### Platform Support
 
 | Platform | Status |
@@ -81,10 +82,11 @@ macOS and Linux are supported by PowerShell 7 but have not been fully tested. If
 
 ## Interactive Console
 
-Running the orchestrator with no parameters launches an interactive wizard that walks you through section selection, tenant ID, authentication method, and output folder.
+Running with no parameters launches an interactive wizard that walks you through section selection, tenant ID, authentication method, and output folder.
 
 ```powershell
-.\Invoke-M365Assessment.ps1
+Import-Module ./src/M365-Assess
+Invoke-M365Assessment
 ```
 
 During execution, the console displays real-time streaming progress for each security check with color-coded status indicators:
@@ -124,17 +126,17 @@ During execution, the console displays real-time streaming progress for each sec
 | **Intune** | Device Summary, Compliance Policies, Config Profiles | Managed devices, compliance state, configuration profiles |
 | **Security** | Secure Score, Improvement Actions, Defender Policies, Defender Security Config, DLP Policies, Stryker Incident Readiness | Microsoft Secure Score, Defender for Office 365, anti-phishing/spam/malware, Safe Links/Attachments, data loss prevention, incident readiness checks (stale admins, CA exclusions, break-glass, device wipe audit) |
 | **Collaboration** | SharePoint & OneDrive, SharePoint Security Config, Teams Access, Teams Security Config, Forms Security Config | Sharing settings, external sharing controls, sync restrictions, Teams meeting policies, third-party app restrictions, Forms phishing/data sharing settings |
-| **Hybrid** | Hybrid Sync | Azure AD Connect sync status and domain configuration |
+| **Hybrid** | Hybrid Sync | Microsoft Entra Connect sync status and domain configuration |
 | **PowerBI** | Power BI Security Config | 11 CIS 9.1.x tenant setting checks: guest access, external sharing, publish to web, sensitivity labels, service principal restrictions. Requires MicrosoftPowerBIMgmt module. |
 | **Inventory** *(opt-in)* | Mailbox, Group, Teams, SharePoint, OneDrive Inventory | Per-object M&A inventory: mailboxes, distribution lists, M365 groups, Teams, SharePoint sites, OneDrive accounts |
 | **ActiveDirectory** *(opt-in)* | AD Domain & Forest, AD DC Health, AD Replication, AD Security | Domain/forest topology, DC health via dcdiag, replication partners and lag, password policies, privileged group membership. Requires RSAT or domain controller access. |
 | **SOC2** *(opt-in)* | Security Controls, Confidentiality Controls, Audit Evidence, Readiness Checklist | SOC 2 Trust Services Criteria assessment: security and confidentiality controls, 30-day audit log evidence collection, organizational readiness checklist for non-automatable criteria (CC1-CC5, CC8-CC9) |
 ```powershell
 # Run specific sections
-.\Invoke-M365Assessment.ps1 -Section Identity,Email -TenantId 'contoso.onmicrosoft.com'
+Invoke-M365Assessment -Section Identity,Email -TenantId 'contoso.onmicrosoft.com'
 
 # Run everything including opt-in sections
-.\Invoke-M365Assessment.ps1 -Section Tenant,Identity,Licensing,Email,Intune,Security,Collaboration,PowerBI,Hybrid,Inventory,ActiveDirectory,SOC2 -TenantId 'contoso.onmicrosoft.com'
+Invoke-M365Assessment -Section Tenant,Identity,Licensing,Email,Intune,Security,Collaboration,PowerBI,Hybrid,Inventory,ActiveDirectory,SOC2 -TenantId 'contoso.onmicrosoft.com'
 ```
 
 ## Parameters
@@ -171,7 +173,7 @@ See [Authentication](AUTHENTICATION.md) for detailed auth examples and App Regis
 
 ## Module Helper
 
-The orchestrator detects missing or incompatible PowerShell modules **before** connecting to any service. Detection is section-aware — only modules needed by the selected sections are checked.
+The orchestrator detects missing or incompatible PowerShell modules **before** connecting to any service. Detection is section-aware -- only modules needed by the selected sections are checked.
 
 | Module | Condition | Severity | Action |
 |--------|-----------|----------|--------|
@@ -183,8 +185,8 @@ The orchestrator detects missing or incompatible PowerShell modules **before** c
 
 In interactive mode, the repair flow presents two tiers of prompts:
 
-1. **Tier 1 — Install missing modules** — single prompt to install all missing modules to `CurrentUser` scope
-2. **Tier 2 — EXO downgrade** — separate confirmation to uninstall EXO >= 3.8.0 and install 3.7.1 (due to the [MSAL conflict](docs/COMPATIBILITY.md))
+1. **Tier 1 -- Install missing modules** -- single prompt to install all missing modules to `CurrentUser` scope
+2. **Tier 2 -- EXO downgrade** -- separate confirmation to uninstall EXO >= 3.8.0 and install 3.7.1 (due to the [MSAL conflict](docs/COMPATIBILITY.md))
 
 After repair, modules are re-validated. If issues remain, the exact manual commands are displayed and the script exits.
 
@@ -193,17 +195,17 @@ After repair, modules are re-validated. If issues remain, the exact manual comma
 Add `-NonInteractive` (or run in a non-interactive session) to suppress all prompts:
 
 ```powershell
-# CI/CD pipeline — exit cleanly if modules are missing
-.\Invoke-M365Assessment.ps1 -TenantId 'contoso.onmicrosoft.com' `
+# CI/CD pipeline -- exit cleanly if modules are missing
+Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' `
     -ClientId 'app-id' -CertificateThumbprint 'thumbprint' `
     -NonInteractive
 ```
 
 **Behavior in non-interactive mode:**
 
-- **Required module issues** — each issue is logged with the exact install command, then the script exits with an error
-- **Optional module issues** — the dependent section is removed from the run and a warning is logged; the assessment continues with remaining sections
-- **Blocked scripts (ZIP download)** — the unblock command is logged and the script exits
+- **Required module issues** -- each issue is logged with the exact install command, then the script exits with an error
+- **Optional module issues** -- the dependent section is removed from the run and a warning is logged; the assessment continues with remaining sections
+- **Blocked scripts (ZIP download)** -- the unblock command is logged and the script exits
 
 The assessment log (`_Assessment-Log_<tenant>.txt`) captures all module issue details and fix commands for operator review.
 
@@ -211,8 +213,8 @@ The assessment log (`_Assessment-Log_<tenant>.txt`) captures all module issue de
 
 On Windows, files extracted from a ZIP are tagged with an NTFS Zone.Identifier that blocks execution under `RemoteSigned` policy. The orchestrator detects this automatically:
 
-- **Interactive** — prompts to run `Unblock-File` on all `.ps1` files
-- **Non-interactive** — logs the command and exits
+- **Interactive** -- prompts to run `Unblock-File` on all `.ps1` files
+- **Non-interactive** -- logs the command and exits
 
 ## Output Structure
 
@@ -287,7 +289,10 @@ The self-contained HTML report opens in any browser with no dependencies. Click 
 ```
 M365-Assess/
   src/M365-Assess/                  # Publishable module (ships to PSGallery)
-    Invoke-M365Assessment.ps1       # Orchestrator — main entry point
+    M365-Assess.psd1                # Module manifest
+    M365-Assess.psm1                # Module loader
+    Invoke-M365Assessment.ps1       # Orchestrator -- main entry point
+    Orchestrator/                   # Decomposed orchestrator modules (wizard, helpers, maps)
     Common/                         # Shared helpers (report, compliance, DNS)
     Entra/                          # Users, MFA, admin roles, CA, apps, licensing
     Exchange-Online/                # Mailboxes, mail flow, email security
@@ -319,15 +324,17 @@ M365-Assess/
 
 ## Individual Scripts
 
-Every collector can be run standalone outside the orchestrator:
+Collectors can be run standalone by dot-sourcing the required helpers first:
 
 ```powershell
-# Connect to the required service first
-. .\Common\Connect-Service.ps1
+# Load the module (makes helpers and Connect-Service available)
+Import-Module ./src/M365-Assess
+
+# Connect to the required service
 Connect-Service -Service Graph -Scopes 'User.Read.All','UserAuthenticationMethod.Read.All'
 
 # Run a single collector
-.\Entra\Get-MfaReport.ps1
+. ./src/M365-Assess/Entra/Get-MfaReport.ps1
 ```
 
 ### Standalone Scripts
@@ -336,25 +343,25 @@ Individual collectors and report generation can run independently of the full as
 
 | Script | Purpose |
 |--------|---------|
-| `Entra/Get-MfaReport.ps1` | MFA enrollment and capability report |
-| `Entra/Get-InactiveUsers.ps1` | Users inactive for 90+ days |
-| `Exchange-Online/Get-MailFlowReport.ps1` | Mail flow rules and connectors |
-| `Common/Export-AssessmentReport.ps1` | Regenerate HTML report from existing CSVs |
-| `Common/Export-ComplianceMatrix.ps1` | Generate XLSX compliance matrix |
+| `src/M365-Assess/Entra/Get-MfaReport.ps1` | MFA enrollment and capability report |
+| `src/M365-Assess/Entra/Get-InactiveUsers.ps1` | Users inactive for 90+ days |
+| `src/M365-Assess/Exchange-Online/Get-MailFlowReport.ps1` | Mail flow rules and connectors |
+| `src/M365-Assess/Common/Export-AssessmentReport.ps1` | Regenerate HTML report from existing CSVs |
+| `src/M365-Assess/Common/Export-ComplianceMatrix.ps1` | Generate XLSX compliance matrix |
 
 Each collector requires a Graph or Exchange Online connection first:
 
 ```powershell
-. .\Common\Connect-Service.ps1
+Import-Module ./src/M365-Assess
 Connect-Service -Service Graph -Scopes 'User.Read.All','AuditLog.Read.All'
-.\Entra\Get-InactiveUsers.ps1 -DaysInactive 90
+. ./src/M365-Assess/Entra/Get-InactiveUsers.ps1 -DaysInactive 90
 ```
 
 ## Getting Help
 
 ```powershell
-Get-Help .\Invoke-M365Assessment.ps1 -Full
-Get-Help .\Common\Export-AssessmentReport.ps1 -Examples
+Import-Module ./src/M365-Assess
+Get-Help Invoke-M365Assessment -Full
 ```
 
 ## Contributing
