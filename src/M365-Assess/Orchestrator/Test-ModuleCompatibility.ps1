@@ -96,6 +96,19 @@ function Test-ModuleCompatibility {
         })
     }
 
+    # ImportExcel -- needed for XLSX compliance matrix export
+    if (-not (Get-Module -Name ImportExcel -ListAvailable -ErrorAction SilentlyContinue)) {
+        $repairActions.Add([PSCustomObject]@{
+            Module          = 'ImportExcel'
+            Issue           = 'Not installed'
+            Severity        = 'Optional'
+            Tier            = 'Install'
+            RequiredVersion = $null
+            InstallCmd      = 'Install-Module -Name ImportExcel -Scope CurrentUser -Force'
+            Description     = 'ImportExcel -- not installed (XLSX compliance matrix will be skipped)'
+        })
+    }
+
     # --- No issues? Continue ---
     if ($repairActions.Count -eq 0) {
         Write-AssessmentLog -Level INFO -Message 'Module compatibility check passed' -Section 'Setup'
@@ -133,9 +146,17 @@ function Test-ModuleCompatibility {
             foreach ($action in $optionalIssues) {
                 if ($action.Module -eq 'MicrosoftPowerBIMgmt') {
                     $Section = @($Section | Where-Object { $_ -ne 'PowerBI' })
+                    Write-AssessmentLog -Level WARN -Message "Optional module missing: $($action.Description). Section skipped."
+                    Write-Host "    ΓÜá $($action.Description) -- section skipped" -ForegroundColor Yellow
                 }
-                Write-AssessmentLog -Level WARN -Message "Optional module missing: $($action.Description). Section skipped."
-                Write-Host "    ΓÜá $($action.Description) ΓÇö section skipped" -ForegroundColor Yellow
+                elseif ($action.Module -eq 'ImportExcel') {
+                    Write-AssessmentLog -Level WARN -Message "Optional module missing: $($action.Description). XLSX export will be skipped."
+                    Write-Host "    ΓÜá $($action.Description) -- XLSX export skipped" -ForegroundColor Yellow
+                }
+                else {
+                    Write-AssessmentLog -Level WARN -Message "Optional module missing: $($action.Description). Section skipped."
+                    Write-Host "    ΓÜá $($action.Description) -- section skipped" -ForegroundColor Yellow
+                }
             }
         }
         else {
@@ -205,12 +226,15 @@ function Test-ModuleCompatibility {
                 }
             }
 
-            # Optional modules ΓÇö skip section
+            # Optional modules -- skip section or log warning
             $optInstallActions = @($repairActions | Where-Object { $_.Tier -eq 'Install' -and $_.Severity -eq 'Optional' })
             foreach ($action in $optInstallActions) {
                 if ($action.Module -eq 'MicrosoftPowerBIMgmt') {
                     $Section = @($Section | Where-Object { $_ -ne 'PowerBI' })
                     Write-AssessmentLog -Level WARN -Message "Optional module missing: $($action.Description). Section skipped."
+                }
+                elseif ($action.Module -eq 'ImportExcel') {
+                    Write-AssessmentLog -Level WARN -Message "Optional module missing: $($action.Description). XLSX export will be skipped."
                 }
             }
 
@@ -263,6 +287,19 @@ function Test-ModuleCompatibility {
             }
 
             Write-Host '  Γ£ô All module issues resolved' -ForegroundColor Green
+
+            # Show installed module versions
+            $versionTable = @()
+            $modChecks = @('Microsoft.Graph.Authentication', 'ExchangeOnlineManagement', 'MicrosoftPowerBIMgmt', 'ImportExcel')
+            foreach ($modName in $modChecks) {
+                $mod = Get-Module -Name $modName -ListAvailable -ErrorAction SilentlyContinue |
+                    Sort-Object -Property Version -Descending | Select-Object -First 1
+                $versionTable += [PSCustomObject]@{
+                    Module  = $modName
+                    Version = if ($mod) { $mod.Version.ToString() } else { '(not installed)' }
+                }
+            }
+            $versionTable | Format-Table -AutoSize | Out-String | ForEach-Object { Write-Host $_.TrimEnd() }
             Write-Host ''
         }
     }
