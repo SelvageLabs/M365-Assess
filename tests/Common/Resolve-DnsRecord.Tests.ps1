@@ -59,6 +59,8 @@ Describe 'Resolve-DnsRecord' {
         BeforeAll {
             $script:DnsBackend = $null
             . "$PSScriptRoot/../../src/M365-Assess/Common/Resolve-DnsRecord.ps1"
+            # Define dig as a function so Pester can mock it (dig is an external binary)
+            function dig { }
             Mock Get-Command { $null } -ParameterFilter { $Name -eq 'Resolve-DnsName' }
             Mock Get-Command { [PSCustomObject]@{ Name = 'dig' } } -ParameterFilter { $Name -eq 'dig' }
         }
@@ -95,10 +97,11 @@ Describe 'Resolve-DnsRecord' {
         BeforeAll {
             $script:DnsBackend = $null
             . "$PSScriptRoot/../../src/M365-Assess/Common/Resolve-DnsRecord.ps1"
-            Mock Get-Command { $null }
+            # Force backend to None (simulates no Resolve-DnsName and no dig)
+            $script:DnsBackend = 'None'
         }
 
-        It 'Should warn and return null' {
+        It 'Should return null' {
             $result = Resolve-DnsRecord -Name 'test.com' -Type TXT -WarningAction SilentlyContinue
             $result | Should -BeNullOrEmpty
         }
