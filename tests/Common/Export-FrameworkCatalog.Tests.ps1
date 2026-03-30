@@ -1,12 +1,12 @@
 Describe 'Export-FrameworkCatalog - Scoring Engine' {
     BeforeAll {
-        . "$PSScriptRoot/../../Common/Import-FrameworkDefinitions.ps1"
-        . "$PSScriptRoot/../../Common/Export-FrameworkCatalog.ps1"
-        $frameworksPath = "$PSScriptRoot/../../controls/frameworks"
+        . "$PSScriptRoot/../../src/M365-Assess/Common/Import-FrameworkDefinitions.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Common/Export-FrameworkCatalog.ps1"
+        $frameworksPath = "$PSScriptRoot/../../src/M365-Assess/controls/frameworks"
         $allFrameworks = Import-FrameworkDefinitions -FrameworksPath $frameworksPath
         $projectRoot = "$PSScriptRoot/../.."
 
-        $regRaw = Get-Content "$projectRoot/controls/registry.json" -Raw | ConvertFrom-Json
+        $regRaw = Get-Content "$projectRoot/src/M365-Assess/controls/registry.json" -Raw | ConvertFrom-Json
         $registry = @{}
         foreach ($c in $regRaw.checks) { $registry[$c.checkId] = $c }
 

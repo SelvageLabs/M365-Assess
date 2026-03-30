@@ -1,7 +1,7 @@
 Describe 'Import-FrameworkDefinitions' {
     BeforeAll {
-        . "$PSScriptRoot/../../Common/Import-FrameworkDefinitions.ps1"
-        $frameworksPath = "$PSScriptRoot/../../controls/frameworks"
+        . "$PSScriptRoot/../../src/M365-Assess/Common/Import-FrameworkDefinitions.ps1"
+        $frameworksPath = "$PSScriptRoot/../../src/M365-Assess/controls/frameworks"
     }
 
     It 'Returns an array sorted by displayOrder' {

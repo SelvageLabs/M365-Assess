@@ -1,7 +1,7 @@
 Describe 'Import-ControlRegistry' {
     BeforeAll {
-        . "$PSScriptRoot/../../Common/Import-ControlRegistry.ps1"
-        $testRoot = "$PSScriptRoot/../../controls"
+        . "$PSScriptRoot/../../src/M365-Assess/Common/Import-ControlRegistry.ps1"
+        $testRoot = "$PSScriptRoot/../../src/M365-Assess/controls"
     }
 
     It 'Returns a hashtable keyed by CheckId' {

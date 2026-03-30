@@ -78,7 +78,7 @@ Describe 'Get-TeamsSecurityConfig' {
         }
 
         # Run the collector by dot-sourcing it
-        . "$PSScriptRoot/../../Collaboration/Get-TeamsSecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Collaboration/Get-TeamsSecurityConfig.ps1"
     }
 
     It 'Returns a non-empty settings list' {
@@ -199,7 +199,7 @@ Describe 'Get-TeamsSecurityConfig - App-Only Auth Early Exit' {
         }
 
         # Capture the output from the collector
-        $script:collectorOutput = . "$PSScriptRoot/../../Collaboration/Get-TeamsSecurityConfig.ps1"
+        $script:collectorOutput = . "$PSScriptRoot/../../src/M365-Assess/Collaboration/Get-TeamsSecurityConfig.ps1"
     }
 
     It 'Returns empty array for app-only auth' {
@@ -240,7 +240,7 @@ Describe 'Get-TeamsSecurityConfig - No Teams License' {
         }
 
         # Capture the output from the collector
-        $script:collectorOutput = . "$PSScriptRoot/../../Collaboration/Get-TeamsSecurityConfig.ps1"
+        $script:collectorOutput = . "$PSScriptRoot/../../src/M365-Assess/Collaboration/Get-TeamsSecurityConfig.ps1"
     }
 
     It 'Returns empty array when no Teams license is detected' {

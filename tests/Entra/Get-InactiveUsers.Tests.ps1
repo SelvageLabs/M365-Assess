@@ -47,7 +47,7 @@ Describe 'Get-InactiveUsers' {
         }
 
         # Run the collector
-        $result = & "$PSScriptRoot/../../Entra/Get-InactiveUsers.ps1" -DaysInactive 90
+        $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-InactiveUsers.ps1" -DaysInactive 90
     }
 
     It 'Returns inactive users when Graph returns data' {
@@ -82,11 +82,11 @@ Describe 'Get-InactiveUsers - Edge Cases' {
     Context 'when Graph returns no users' {
         BeforeAll {
             Mock Get-MgUser { return @() }
-            $result = & "$PSScriptRoot/../../Entra/Get-InactiveUsers.ps1" -DaysInactive 90
+            $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-InactiveUsers.ps1" -DaysInactive 90
         }
 
         It 'Returns empty result without error' {
-            { & "$PSScriptRoot/../../Entra/Get-InactiveUsers.ps1" -DaysInactive 90 } | Should -Not -Throw
+            { & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-InactiveUsers.ps1" -DaysInactive 90 } | Should -Not -Throw
         }
     }
 
@@ -96,7 +96,7 @@ Describe 'Get-InactiveUsers - Edge Cases' {
         }
 
         It 'Throws an error when not connected' {
-            { & "$PSScriptRoot/../../Entra/Get-InactiveUsers.ps1" -DaysInactive 90 } | Should -Throw
+            { & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-InactiveUsers.ps1" -DaysInactive 90 } | Should -Throw
         }
     }
 }

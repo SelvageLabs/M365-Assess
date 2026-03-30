@@ -48,7 +48,7 @@ Describe 'Get-TenantInfo' {
         }
 
         # Run the collector
-        $result = & "$PSScriptRoot/../../Entra/Get-TenantInfo.ps1"
+        $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-TenantInfo.ps1"
     }
 
     It 'Returns a non-empty tenant report' {
@@ -103,7 +103,7 @@ Describe 'Get-TenantInfo - Edge Cases' {
             }
             Mock Invoke-MgGraphRequest { throw 'Forbidden' }
 
-            $result = & "$PSScriptRoot/../../Entra/Get-TenantInfo.ps1"
+            $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-TenantInfo.ps1"
         }
 
         It 'Falls back to N/A for security defaults' {

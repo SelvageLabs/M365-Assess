@@ -1,13 +1,14 @@
 BeforeDiscovery {
     $repoRoot = Resolve-Path "$PSScriptRoot/../.."
-    $manifestPath = Join-Path $repoRoot 'M365-Assess.psd1'
+    $manifestPath = Join-Path $repoRoot 'src/M365-Assess/M365-Assess.psd1'
     $manifest = Import-PowerShellDataFile -Path $manifestPath
 }
 
 Describe 'PSGallery Readiness' {
     BeforeAll {
         $repoRoot = Resolve-Path "$PSScriptRoot/../.."
-        $manifestPath = Join-Path $repoRoot 'M365-Assess.psd1'
+        $moduleRoot = Join-Path $repoRoot 'src/M365-Assess'
+        $manifestPath = Join-Path $moduleRoot 'M365-Assess.psd1'
         $manifest = Import-PowerShellDataFile -Path $manifestPath
     }
 
@@ -50,7 +51,7 @@ Describe 'PSGallery Readiness' {
         }
 
         It 'RootModule file exists' {
-            $rootModulePath = Join-Path $repoRoot $manifest.RootModule
+            $rootModulePath = Join-Path $moduleRoot $manifest.RootModule
             $rootModulePath | Should -Exist
         }
 
@@ -72,7 +73,7 @@ Describe 'PSGallery Readiness' {
         It 'Every file in FileList exists on disk' {
             $missing = @()
             foreach ($file in $manifest.FileList) {
-                $fullPath = Join-Path $repoRoot $file
+                $fullPath = Join-Path $moduleRoot $file
                 if (-not (Test-Path $fullPath)) {
                     $missing += $file
                 }

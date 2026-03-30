@@ -28,7 +28,7 @@ jobs:
       - name: Validate manifest
         shell: pwsh
         run: |
-          $manifest = Test-ModuleManifest -Path ./M365-Assess.psd1 -ErrorAction Stop
+          $manifest = Test-ModuleManifest -Path ./src/M365-Assess/M365-Assess.psd1 -ErrorAction Stop
           Write-Host "Module: $($manifest.Name) v$($manifest.Version)" -ForegroundColor Green
 
       - name: Verify tag matches manifest version
@@ -36,7 +36,7 @@ jobs:
         shell: pwsh
         run: |
           $tag = "${{ github.ref_name }}".TrimStart('v')
-          $manifest = (Import-PowerShellDataFile ./M365-Assess.psd1).ModuleVersion
+          $manifest = (Import-PowerShellDataFile ./src/M365-Assess/M365-Assess.psd1).ModuleVersion
           if ($tag -ne $manifest) {
             Write-Error "Tag version ($tag) does not match manifest version ($manifest)"
             exit 1
@@ -102,7 +102,7 @@ jobs:
           NUGET_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
         run: |
           Write-Host "Publishing M365-Assess to PSGallery..." -ForegroundColor Cyan
-          Publish-Module -Path . -NuGetApiKey $env:NUGET_API_KEY -Verbose
+          Publish-Module -Path ./src/M365-Assess -NuGetApiKey $env:NUGET_API_KEY -Verbose
           Write-Host "Published successfully" -ForegroundColor Green
 
       - name: Dry run
@@ -110,5 +110,5 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "DRY RUN — skipping PSGallery publish" -ForegroundColor Yellow
-          Test-ModuleManifest -Path ./M365-Assess.psd1 | Format-List Name, Version, Description
+          Test-ModuleManifest -Path ./src/M365-Assess/M365-Assess.psd1 | Format-List Name, Version, Description
           Write-Host "Module would be published with the above metadata" -ForegroundColor Yellow

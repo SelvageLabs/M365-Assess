@@ -48,7 +48,7 @@ Describe 'Get-UserSummary' {
         }
 
         # Run the collector
-        $result = & "$PSScriptRoot/../../Entra/Get-UserSummary.ps1"
+        $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-UserSummary.ps1"
     }
 
     It 'Returns a non-empty user summary' {
@@ -84,7 +84,7 @@ Describe 'Get-UserSummary - Edge Cases' {
             Mock Invoke-MgGraphRequest {
                 return @{ value = @(); '@odata.nextLink' = $null }
             }
-            $result = & "$PSScriptRoot/../../Entra/Get-UserSummary.ps1"
+            $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-UserSummary.ps1"
         }
 
         It 'Returns summary with zero counts' {
@@ -98,7 +98,7 @@ Describe 'Get-UserSummary - Edge Cases' {
         }
 
         It 'Throws an error when not connected' {
-            { & "$PSScriptRoot/../../Entra/Get-UserSummary.ps1" } | Should -Throw
+            { & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-UserSummary.ps1" } | Should -Throw
         }
     }
 }

@@ -37,7 +37,7 @@ Describe 'Get-PasswordPolicyReport' {
         }
 
         # Run the collector
-        $result = & "$PSScriptRoot/../../Entra/Get-PasswordPolicyReport.ps1"
+        $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-PasswordPolicyReport.ps1"
     }
 
     It 'Returns a non-empty policy report' {
@@ -77,7 +77,7 @@ Describe 'Get-PasswordPolicyReport - Edge Cases' {
         }
 
         It 'Throws an error when not connected' {
-            { & "$PSScriptRoot/../../Entra/Get-PasswordPolicyReport.ps1" } | Should -Throw
+            { & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-PasswordPolicyReport.ps1" } | Should -Throw
         }
     }
 }

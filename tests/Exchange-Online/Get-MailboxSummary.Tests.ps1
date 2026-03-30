@@ -66,7 +66,7 @@ Describe 'Get-MailboxSummary' {
         }
 
         # Dot-source the collector and capture pipeline output
-        $script:results = . "$PSScriptRoot/../../Exchange-Online/Get-MailboxSummary.ps1"
+        $script:results = . "$PSScriptRoot/../../src/M365-Assess/Exchange-Online/Get-MailboxSummary.ps1"
     }
 
     It 'Returns the expected number of summary rows' {
@@ -107,7 +107,7 @@ Describe 'Get-MailboxSummary' {
 
             $caughtError = $null
             try {
-                . "$PSScriptRoot/../../Exchange-Online/Get-MailboxSummary.ps1"
+                . "$PSScriptRoot/../../src/M365-Assess/Exchange-Online/Get-MailboxSummary.ps1"
             }
             catch {
                 $caughtError = $_
@@ -129,7 +129,7 @@ Describe 'Get-MailboxSummary' {
             # empty results it still continues -- verify zero counts or error
             $output = $null
             try {
-                $output = . "$PSScriptRoot/../../Exchange-Online/Get-MailboxSummary.ps1"
+                $output = . "$PSScriptRoot/../../src/M365-Assess/Exchange-Online/Get-MailboxSummary.ps1"
             }
             catch {
                 # If it errors out, that is also acceptable

@@ -39,7 +39,7 @@ Describe 'Get-PowerBISecurityConfig' {
         }
 
         # Run the collector by dot-sourcing it
-        . "$PSScriptRoot/../../PowerBI/Get-PowerBISecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/PowerBI/Get-PowerBISecurityConfig.ps1"
     }
 
     It 'Returns a non-empty settings list' {
@@ -151,7 +151,7 @@ Describe 'Get-PowerBISecurityConfig - Edge Cases' {
                 return (@{ tenantSettings = @() } | ConvertTo-Json -Depth 5)
             }
 
-            . "$PSScriptRoot/../../PowerBI/Get-PowerBISecurityConfig.ps1"
+            . "$PSScriptRoot/../../src/M365-Assess/PowerBI/Get-PowerBISecurityConfig.ps1"
         }
 
         It 'should not throw and returns settings' {
@@ -186,7 +186,7 @@ Describe 'Get-PowerBISecurityConfig - Edge Cases' {
                 } | ConvertTo-Json -Depth 5)
             }
 
-            . "$PSScriptRoot/../../PowerBI/Get-PowerBISecurityConfig.ps1"
+            . "$PSScriptRoot/../../src/M365-Assess/PowerBI/Get-PowerBISecurityConfig.ps1"
         }
 
         It 'all checks should have Fail status when settings are insecure' {
@@ -209,7 +209,7 @@ Describe 'Get-PowerBISecurityConfig - Edge Cases' {
 
             $errorOutput = $null
             try {
-                . $PSScriptRoot/../../PowerBI/Get-PowerBISecurityConfig.ps1
+                . $PSScriptRoot/../../src/M365-Assess/PowerBI/Get-PowerBISecurityConfig.ps1
             }
             catch {
                 $errorOutput = $_.Exception.Message
@@ -239,7 +239,7 @@ Describe 'Get-PowerBISecurityConfig - Edge Cases' {
             function global:Get-PowerBIAccessToken { return @{ 'Authorization' = 'Bearer test' } }
             function global:Invoke-PowerBIRestMethod { throw '403 Forbidden' }
 
-            . $PSScriptRoot/../../PowerBI/Get-PowerBISecurityConfig.ps1
+            . $PSScriptRoot/../../src/M365-Assess/PowerBI/Get-PowerBISecurityConfig.ps1
         }
 
         It 'should produce settings with Review status' {
@@ -269,7 +269,7 @@ Describe 'Get-PowerBISecurityConfig - Edge Cases' {
             function global:Get-PowerBIAccessToken { return @{ 'Authorization' = 'Bearer test' } }
             function global:Invoke-PowerBIRestMethod { throw '404 Not Found' }
 
-            . $PSScriptRoot/../../PowerBI/Get-PowerBISecurityConfig.ps1
+            . $PSScriptRoot/../../src/M365-Assess/PowerBI/Get-PowerBISecurityConfig.ps1
         }
 
         It 'should produce settings with Review status' {

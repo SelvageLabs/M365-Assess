@@ -64,7 +64,7 @@ Describe 'Get-AdminRoleReport' {
         }
 
         # Run the collector
-        $result = & "$PSScriptRoot/../../Entra/Get-AdminRoleReport.ps1"
+        $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-AdminRoleReport.ps1"
     }
 
     It 'Returns a non-empty role report' {
@@ -102,7 +102,7 @@ Describe 'Get-AdminRoleReport - Edge Cases' {
         BeforeAll {
             Mock Get-MgDirectoryRole { return @() }
             Mock Get-MgDirectoryRoleMember { return @() }
-            $result = & "$PSScriptRoot/../../Entra/Get-AdminRoleReport.ps1"
+            $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-AdminRoleReport.ps1"
         }
 
         It 'Returns empty result without error' {
@@ -116,7 +116,7 @@ Describe 'Get-AdminRoleReport - Edge Cases' {
                 return @([PSCustomObject]@{ Id = 'empty-role'; DisplayName = 'Empty Role' })
             }
             Mock Get-MgDirectoryRoleMember { return @() }
-            $result = & "$PSScriptRoot/../../Entra/Get-AdminRoleReport.ps1"
+            $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-AdminRoleReport.ps1"
         }
 
         It 'Skips roles with no members' {

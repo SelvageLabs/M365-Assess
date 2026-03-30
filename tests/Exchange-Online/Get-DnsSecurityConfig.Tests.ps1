@@ -56,7 +56,7 @@ Describe 'Get-DnsSecurityConfig' {
         }
 
         # Run the collector by dot-sourcing it
-        . "$PSScriptRoot/../../Exchange-Online/Get-DnsSecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Exchange-Online/Get-DnsSecurityConfig.ps1"
     }
 
     It 'Returns a non-empty settings list' {
@@ -164,7 +164,7 @@ Describe 'Get-DnsSecurityConfig - Missing Records' {
             return @()
         }
 
-        . "$PSScriptRoot/../../Exchange-Online/Get-DnsSecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Exchange-Online/Get-DnsSecurityConfig.ps1"
     }
 
     It 'SPF check fails when no SPF record exists' {

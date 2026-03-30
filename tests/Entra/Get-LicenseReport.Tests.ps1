@@ -35,7 +35,7 @@ Describe 'Get-LicenseReport' {
         }
 
         # Run the collector (SKU summary mode, no -IncludeUserDetail)
-        $result = & "$PSScriptRoot/../../Entra/Get-LicenseReport.ps1"
+        $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-LicenseReport.ps1"
     }
 
     It 'Returns a non-empty license report' {
@@ -72,11 +72,11 @@ Describe 'Get-LicenseReport - Edge Cases' {
     Context 'when no SKUs are returned' {
         BeforeAll {
             Mock Get-MgSubscribedSku { return @() }
-            $result = & "$PSScriptRoot/../../Entra/Get-LicenseReport.ps1"
+            $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-LicenseReport.ps1"
         }
 
         It 'Returns empty result without error' {
-            { & "$PSScriptRoot/../../Entra/Get-LicenseReport.ps1" } | Should -Not -Throw
+            { & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-LicenseReport.ps1" } | Should -Not -Throw
         }
     }
 }

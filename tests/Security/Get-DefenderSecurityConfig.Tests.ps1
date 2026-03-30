@@ -137,7 +137,7 @@ Describe 'Get-DefenderSecurityConfig' {
         }
 
         # Run the collector by dot-sourcing it
-        . "$PSScriptRoot/../../Security/Get-DefenderSecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Security/Get-DefenderSecurityConfig.ps1"
     }
 
     It 'Returns a non-empty settings list' {
@@ -284,7 +284,7 @@ Describe 'Get-DefenderSecurityConfig - No Defender License' {
             })
         }
 
-        . "$PSScriptRoot/../../Security/Get-DefenderSecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Security/Get-DefenderSecurityConfig.ps1"
     }
 
     It 'Returns settings even without Defender license' {

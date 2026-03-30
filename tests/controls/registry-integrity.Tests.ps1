@@ -1,6 +1,6 @@
 Describe 'Control Registry Integrity' {
     BeforeAll {
-        $registryPath = "$PSScriptRoot/../../controls/registry.json"
+        $registryPath = "$PSScriptRoot/../../src/M365-Assess/controls/registry.json"
         $raw = Get-Content -Path $registryPath -Raw | ConvertFrom-Json
         $checks = $raw.checks
     }

@@ -224,10 +224,10 @@ if ($folderName -match 'Assessment_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})')
 }
 
 # ------------------------------------------------------------------
-# Load and base64-encode logo and background from Common/assets/
+# Load and base64-encode logo and background from assets/
 # Searches by pattern so any logo-*.png/jpeg or wave/bg-*.png works.
 # ------------------------------------------------------------------
-$assetsDir = Join-Path -Path $projectRoot -ChildPath 'Common\assets'
+$assetsDir = Join-Path -Path $projectRoot -ChildPath 'assets'
 
 function Get-AssetBase64 {
     param([string]$Directory, [string[]]$Patterns)

@@ -53,7 +53,7 @@ Describe 'Get-CompliancePolicyReport' {
         }
 
         # Dot-source the collector; results land in $results (script scope)
-        . "$PSScriptRoot/../../Intune/Get-CompliancePolicyReport.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-CompliancePolicyReport.ps1"
     }
 
     It 'Returns a non-empty policy list' {
@@ -138,7 +138,7 @@ Describe 'Get-CompliancePolicyReport - Unknown Platform' {
             )
         }
 
-        . "$PSScriptRoot/../../Intune/Get-CompliancePolicyReport.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-CompliancePolicyReport.ps1"
     }
 
     It 'Falls back to raw odata.type string for unrecognised platforms' {
@@ -175,7 +175,7 @@ Describe 'Get-CompliancePolicyReport - No AdditionalProperties' {
             )
         }
 
-        . "$PSScriptRoot/../../Intune/Get-CompliancePolicyReport.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-CompliancePolicyReport.ps1"
     }
 
     It 'Resolves to Unknown when AdditionalProperties is null' {
@@ -200,7 +200,7 @@ Describe 'Get-CompliancePolicyReport - No Policies Configured' {
         # Return empty array to simulate no compliance policies
         Mock Get-MgDeviceManagementDeviceCompliancePolicy { return @() }
 
-        . "$PSScriptRoot/../../Intune/Get-CompliancePolicyReport.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-CompliancePolicyReport.ps1"
     }
 
     It 'Returns an empty array when no policies are configured' {
@@ -227,7 +227,7 @@ Describe 'Get-CompliancePolicyReport - Not Connected' {
 
     It 'Does not call Get-MgDeviceManagementDeviceCompliancePolicy when not connected' {
         # Dot-source; script aborts at the connection guard with a terminating Write-Error
-        try { . "$PSScriptRoot/../../Intune/Get-CompliancePolicyReport.ps1" } catch { }
+        try { . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-CompliancePolicyReport.ps1" } catch { }
         Should -Invoke Get-MgDeviceManagementDeviceCompliancePolicy -Times 0 -Exactly
     }
 

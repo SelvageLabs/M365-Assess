@@ -45,7 +45,7 @@ Describe 'Get-DnsSecurityConfig .onmicrosoft.com DKIM handling' {
             })
         }
 
-        . "$PSScriptRoot/../../Exchange-Online/Get-DnsSecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Exchange-Online/Get-DnsSecurityConfig.ps1"
     }
 
     It 'Should pass DKIM check when EXO confirms signing for .onmicrosoft.com domain' {

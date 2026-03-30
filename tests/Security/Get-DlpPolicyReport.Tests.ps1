@@ -97,7 +97,7 @@ Describe 'Get-DlpPolicyReport' {
         }
 
         # Run the script by dot-sourcing it; capture output
-        $script:results = . "$PSScriptRoot/../../Security/Get-DlpPolicyReport.ps1"
+        $script:results = . "$PSScriptRoot/../../src/M365-Assess/Security/Get-DlpPolicyReport.ps1"
     }
 
     It 'Returns a non-empty results list' {
@@ -229,7 +229,7 @@ Describe 'Get-DlpPolicyReport - Not Connected' {
         # Wrap in try/catch to absorb the terminating error; verify no PSCustomObject was emitted.
         $captured = @()
         try {
-            $captured = @(. "$PSScriptRoot/../../Security/Get-DlpPolicyReport.ps1")
+            $captured = @(. "$PSScriptRoot/../../src/M365-Assess/Security/Get-DlpPolicyReport.ps1")
         }
         catch {
             # Expected — Write-Error throws when ErrorActionPreference is Stop
@@ -273,7 +273,7 @@ Describe 'Get-DlpPolicyReport - No Data in Tenant' {
     }
 
     It 'Still returns sensitivity labels even when policies and rules are empty' {
-        $output = . "$PSScriptRoot/../../Security/Get-DlpPolicyReport.ps1"
+        $output = . "$PSScriptRoot/../../src/M365-Assess/Security/Get-DlpPolicyReport.ps1"
         $labels = @($output | Where-Object { $_.ItemType -eq 'SensitivityLabel' })
         $labels.Count | Should -BeGreaterThan 0
     }
@@ -313,7 +313,7 @@ Describe 'Get-DlpPolicyReport - OutputPath' {
     }
 
     It 'Exports CSV when OutputPath is specified and writes confirmation message' {
-        $msg = . "$PSScriptRoot/../../Security/Get-DlpPolicyReport.ps1" -OutputPath $script:csvPath
+        $msg = . "$PSScriptRoot/../../src/M365-Assess/Security/Get-DlpPolicyReport.ps1" -OutputPath $script:csvPath
         $msg | Should -Match 'Exported'
         Test-Path $script:csvPath | Should -Be $true
         $imported = Import-Csv -Path $script:csvPath

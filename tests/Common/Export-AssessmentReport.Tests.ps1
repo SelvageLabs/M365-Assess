@@ -3,9 +3,9 @@ Describe 'Export-AssessmentReport HTML structure' {
         # Read the raw script source to verify embedded HTML/CSS/JS patterns.
         # Full execution requires a live assessment folder with CSV data, so we
         # verify the template strings are present in the script source instead.
-        $scriptPath = "$PSScriptRoot/../../Common/Export-AssessmentReport.ps1"
+        $scriptPath = "$PSScriptRoot/../../src/M365-Assess/Common/Export-AssessmentReport.ps1"
         $html = Get-Content -Path $scriptPath -Raw
-        $overviewPath = "$PSScriptRoot/../../Common/Export-ComplianceOverview.ps1"
+        $overviewPath = "$PSScriptRoot/../../src/M365-Assess/Common/Export-ComplianceOverview.ps1"
         $overviewSrc = Get-Content -Path $overviewPath -Raw
     }
 

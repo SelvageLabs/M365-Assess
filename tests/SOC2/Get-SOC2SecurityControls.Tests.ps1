@@ -135,7 +135,7 @@ Describe 'Get-SOC2SecurityControls - Full Pass Scenario' {
         }
 
         # Run the collector
-        . "$PSScriptRoot/../../SOC2/Get-SOC2SecurityControls.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/SOC2/Get-SOC2SecurityControls.ps1"
     }
 
     It 'Returns a non-empty results list' {
@@ -341,7 +341,7 @@ Describe 'Get-SOC2SecurityControls - Fail Scenario' {
             throw 'Get-AdminAuditLogConfig : The term is not recognized'
         }
 
-        . "$PSScriptRoot/../../SOC2/Get-SOC2SecurityControls.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/SOC2/Get-SOC2SecurityControls.ps1"
     }
 
     It 'Still returns 8 controls in fail scenario' {
@@ -401,7 +401,7 @@ Describe 'Get-SOC2SecurityControls - No Graph Connection' {
         }
 
         try {
-            . "$PSScriptRoot/../../SOC2/Get-SOC2SecurityControls.ps1" -ErrorAction SilentlyContinue
+            . "$PSScriptRoot/../../src/M365-Assess/SOC2/Get-SOC2SecurityControls.ps1" -ErrorAction SilentlyContinue
         }
         catch {
             # Expected — collector calls Write-Error when not connected

@@ -139,7 +139,7 @@ Describe 'Get-EntraSecurityConfig' {
         }
 
         # Run the collector by dot-sourcing it
-        . "$PSScriptRoot/../../Entra/Get-EntraSecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Entra/Get-EntraSecurityConfig.ps1"
     }
 
     It 'Returns a non-empty settings list' {
@@ -225,7 +225,7 @@ Describe 'Get-EntraSecurityConfig - Edge Cases' {
                     }
                 }
             }
-            . "$PSScriptRoot/../../Entra/Get-EntraSecurityConfig.ps1"
+            . "$PSScriptRoot/../../src/M365-Assess/Entra/Get-EntraSecurityConfig.ps1"
         }
 
         It 'should not throw' {

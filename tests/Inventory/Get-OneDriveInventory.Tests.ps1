@@ -52,7 +52,7 @@ Describe 'Get-OneDriveInventory' {
         }
 
         # Dot-source the collector and capture pipeline output
-        $script:results = . "$PSScriptRoot/../../Inventory/Get-OneDriveInventory.ps1"
+        $script:results = . "$PSScriptRoot/../../src/M365-Assess/Inventory/Get-OneDriveInventory.ps1"
     }
 
     It 'Returns results for users with OneDrive provisioned' {
@@ -93,7 +93,7 @@ Describe 'Get-OneDriveInventory' {
 
             $caughtError = $null
             try {
-                . "$PSScriptRoot/../../Inventory/Get-OneDriveInventory.ps1"
+                . "$PSScriptRoot/../../src/M365-Assess/Inventory/Get-OneDriveInventory.ps1"
             }
             catch {
                 $caughtError = $_
@@ -111,7 +111,7 @@ Describe 'Get-OneDriveInventory' {
                 return @{ value = @(); '@odata.nextLink' = $null }
             }
 
-            $output = . "$PSScriptRoot/../../Inventory/Get-OneDriveInventory.ps1"
+            $output = . "$PSScriptRoot/../../src/M365-Assess/Inventory/Get-OneDriveInventory.ps1"
             $output | Should -BeNullOrEmpty
         }
     }

@@ -36,7 +36,7 @@ This is useful for:
 
 ## Custom Branding
 
-Replace the images in `Common/assets/` with your own:
+Replace the images in `src/M365-Assess/assets/` with your own:
 
 | File | Purpose | Format | Recommended Size |
 |------|---------|--------|-----------------|

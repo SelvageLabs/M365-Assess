@@ -53,7 +53,7 @@ Describe 'Get-MfaReport' {
         }
 
         # Run the collector
-        $result = & "$PSScriptRoot/../../Entra/Get-MfaReport.ps1"
+        $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-MfaReport.ps1"
     }
 
     It 'Returns a non-empty MFA report' {
@@ -90,7 +90,7 @@ Describe 'Get-MfaReport - Edge Cases' {
     Context 'when no MFA registration details are returned' {
         BeforeAll {
             Mock Get-MgReportAuthenticationMethodUserRegistrationDetail { return @() }
-            $result = & "$PSScriptRoot/../../Entra/Get-MfaReport.ps1"
+            $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-MfaReport.ps1"
         }
 
         It 'Returns empty result without error' {

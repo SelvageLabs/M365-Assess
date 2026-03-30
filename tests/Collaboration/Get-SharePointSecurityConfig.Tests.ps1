@@ -54,7 +54,7 @@ Describe 'Get-SharePointSecurityConfig' {
         }
 
         # Run the collector by dot-sourcing it
-        . "$PSScriptRoot/../../Collaboration/Get-SharePointSecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Collaboration/Get-SharePointSecurityConfig.ps1"
     }
 
     It 'Returns a non-empty settings list' {

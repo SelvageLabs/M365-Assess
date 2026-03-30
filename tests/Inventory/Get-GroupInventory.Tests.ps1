@@ -72,7 +72,7 @@ Describe 'Get-GroupInventory' {
         }
 
         # Dot-source the collector and capture pipeline output
-        $script:results = . "$PSScriptRoot/../../Inventory/Get-GroupInventory.ps1"
+        $script:results = . "$PSScriptRoot/../../src/M365-Assess/Inventory/Get-GroupInventory.ps1"
     }
 
     It 'Returns a non-empty result list' {
@@ -122,7 +122,7 @@ Describe 'Get-GroupInventory' {
 
             $caughtError = $null
             try {
-                . "$PSScriptRoot/../../Inventory/Get-GroupInventory.ps1"
+                . "$PSScriptRoot/../../src/M365-Assess/Inventory/Get-GroupInventory.ps1"
             }
             catch {
                 $caughtError = $_
@@ -138,7 +138,7 @@ Describe 'Get-GroupInventory' {
             Mock Get-DistributionGroup { return @() }
             Mock Get-UnifiedGroup { return @() }
 
-            $output = . "$PSScriptRoot/../../Inventory/Get-GroupInventory.ps1"
+            $output = . "$PSScriptRoot/../../src/M365-Assess/Inventory/Get-GroupInventory.ps1"
             $output | Should -BeNullOrEmpty
         }
     }

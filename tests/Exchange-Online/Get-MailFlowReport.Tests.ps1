@@ -91,7 +91,7 @@ Describe 'Get-MailFlowReport' {
         }
 
         # Dot-source the collector and capture pipeline output
-        $script:results = . "$PSScriptRoot/../../Exchange-Online/Get-MailFlowReport.ps1"
+        $script:results = . "$PSScriptRoot/../../src/M365-Assess/Exchange-Online/Get-MailFlowReport.ps1"
     }
 
     It 'Returns a non-empty result list' {
@@ -139,7 +139,7 @@ Describe 'Get-MailFlowReport' {
 
             $caughtError = $null
             try {
-                . "$PSScriptRoot/../../Exchange-Online/Get-MailFlowReport.ps1"
+                . "$PSScriptRoot/../../src/M365-Assess/Exchange-Online/Get-MailFlowReport.ps1"
             }
             catch {
                 $caughtError = $_
@@ -159,7 +159,7 @@ Describe 'Get-MailFlowReport' {
             Mock Get-OutboundConnector { return @() }
             Mock Get-TransportRule { return @() }
 
-            $output = . "$PSScriptRoot/../../Exchange-Online/Get-MailFlowReport.ps1"
+            $output = . "$PSScriptRoot/../../src/M365-Assess/Exchange-Online/Get-MailFlowReport.ps1"
             $output.Count | Should -Be 1
             $output[0].ItemType | Should -Be 'Domain'
         }

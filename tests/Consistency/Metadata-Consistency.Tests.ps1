@@ -10,23 +10,24 @@
 
 BeforeAll {
     $projectRoot = Resolve-Path "$PSScriptRoot/../.."
-    $manifest    = Import-PowerShellDataFile -Path "$projectRoot/M365-Assess.psd1"
-    $registry    = Get-Content -Path "$projectRoot/controls/registry.json" -Raw | ConvertFrom-Json
-    $reportScript  = Get-Content -Path "$projectRoot/Common/Export-AssessmentReport.ps1" -Raw
-    $orchestrator  = Get-Content -Path "$projectRoot/Invoke-M365Assessment.ps1" -Raw
+    $moduleRoot  = Join-Path $projectRoot 'src/M365-Assess'
+    $manifest    = Import-PowerShellDataFile -Path "$moduleRoot/M365-Assess.psd1"
+    $registry    = Get-Content -Path "$moduleRoot/controls/registry.json" -Raw | ConvertFrom-Json
+    $reportScript  = Get-Content -Path "$moduleRoot/Common/Export-AssessmentReport.ps1" -Raw
+    $orchestrator  = Get-Content -Path "$moduleRoot/Invoke-M365Assessment.ps1" -Raw
 }
 
 Describe 'Metadata Consistency' {
 
     Context 'Manifest FileList coverage' {
         It 'Should list all production .ps1 files in FileList' {
-            $actualPs1 = Get-ChildItem -Path $projectRoot -Filter '*.ps1' -Recurse |
+            $actualPs1 = Get-ChildItem -Path $moduleRoot -Filter '*.ps1' -Recurse |
                 Where-Object {
                     $_.FullName -notmatch '[\\/](tests|docs|\.claude|\.superpowers|M365-Assessment|node_modules|assets|controls)[\\/]' -and
                     $_.Name     -notmatch '^_tmp'
                 } |
                 ForEach-Object {
-                    $_.FullName.Replace($projectRoot.Path, '').TrimStart('\', '/').Replace('/', '\')
+                    $_.FullName.Replace("$moduleRoot", '').TrimStart('\', '/').Replace('/', '\')
                 } |
                 Sort-Object
 
@@ -39,7 +40,7 @@ Describe 'Metadata Consistency' {
 
         It 'Should not list files in FileList that do not exist on disk' {
             foreach ($entry in $manifest.FileList) {
-                $fullPath = Join-Path $projectRoot.Path $entry
+                $fullPath = Join-Path $moduleRoot $entry
                 Test-Path -Path $fullPath | Should -Be $true -Because "FileList entry '$entry' does not exist on disk"
             }
         }
@@ -51,14 +52,14 @@ Describe 'Metadata Consistency' {
         }
 
         It 'Should load all framework JSONs via Import-FrameworkDefinitions' {
-            . "$projectRoot/Common/Import-FrameworkDefinitions.ps1"
-            $fws = Import-FrameworkDefinitions -FrameworksPath "$projectRoot/controls/frameworks"
+            . "$moduleRoot/Common/Import-FrameworkDefinitions.ps1"
+            $fws = Import-FrameworkDefinitions -FrameworksPath "$moduleRoot/controls/frameworks"
             $fws.Count | Should -BeGreaterOrEqual 14 -Because 'all framework JSONs should load successfully'
         }
 
         It 'Should have every framework JSON specify a frameworkId matching a registry key' {
-            . "$projectRoot/Common/Import-FrameworkDefinitions.ps1"
-            $fws = Import-FrameworkDefinitions -FrameworksPath "$projectRoot/controls/frameworks"
+            . "$moduleRoot/Common/Import-FrameworkDefinitions.ps1"
+            $fws = Import-FrameworkDefinitions -FrameworksPath "$moduleRoot/controls/frameworks"
             $regFwKeys = @($registry.checks | ForEach-Object {
                 if ($_.frameworks) { $_.frameworks.PSObject.Properties.Name }
             } | Sort-Object -Unique)

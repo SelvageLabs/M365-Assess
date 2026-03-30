@@ -57,7 +57,7 @@ Describe 'Get-MailboxInventory' {
         }
 
         # Dot-source the collector and capture pipeline output
-        $script:results = . "$PSScriptRoot/../../Inventory/Get-MailboxInventory.ps1"
+        $script:results = . "$PSScriptRoot/../../src/M365-Assess/Inventory/Get-MailboxInventory.ps1"
     }
 
     It 'Returns a non-empty result list' {
@@ -160,7 +160,7 @@ Describe 'Get-MailboxInventory' {
             # wrap to capture the terminating error without failing the test
             $caughtError = $null
             try {
-                . "$PSScriptRoot/../../Inventory/Get-MailboxInventory.ps1"
+                . "$PSScriptRoot/../../src/M365-Assess/Inventory/Get-MailboxInventory.ps1"
             }
             catch {
                 $caughtError = $_
@@ -176,7 +176,7 @@ Describe 'Get-MailboxInventory' {
             Mock Get-OrganizationConfig { return [PSCustomObject]@{ DisplayName = 'Empty' } }
             Mock Get-EXOMailbox { return @() }
 
-            $output = . "$PSScriptRoot/../../Inventory/Get-MailboxInventory.ps1"
+            $output = . "$PSScriptRoot/../../src/M365-Assess/Inventory/Get-MailboxInventory.ps1"
             $output | Should -BeNullOrEmpty
         }
     }

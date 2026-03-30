@@ -87,7 +87,7 @@ Describe 'Get-TeamsInventory' {
         }
 
         # Dot-source the collector and capture pipeline output
-        $script:results = . "$PSScriptRoot/../../Inventory/Get-TeamsInventory.ps1"
+        $script:results = . "$PSScriptRoot/../../src/M365-Assess/Inventory/Get-TeamsInventory.ps1"
     }
 
     It 'Returns a non-empty result list' {
@@ -145,7 +145,7 @@ Describe 'Get-TeamsInventory' {
 
             $caughtError = $null
             try {
-                . "$PSScriptRoot/../../Inventory/Get-TeamsInventory.ps1"
+                . "$PSScriptRoot/../../src/M365-Assess/Inventory/Get-TeamsInventory.ps1"
             }
             catch {
                 $caughtError = $_
@@ -164,7 +164,7 @@ Describe 'Get-TeamsInventory' {
                 return @{ value = @(); '@odata.nextLink' = $null }
             }
 
-            $output = . "$PSScriptRoot/../../Inventory/Get-TeamsInventory.ps1"
+            $output = . "$PSScriptRoot/../../src/M365-Assess/Inventory/Get-TeamsInventory.ps1"
             $output | Should -BeNullOrEmpty
         }
     }

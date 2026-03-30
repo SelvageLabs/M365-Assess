@@ -179,7 +179,7 @@ Describe 'Get-CASecurityConfig' {
         }
 
         # Run the collector by dot-sourcing it
-        . "$PSScriptRoot/../../Entra/Get-CASecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Entra/Get-CASecurityConfig.ps1"
     }
 
     It 'Returns a non-empty settings list' {
@@ -268,7 +268,7 @@ Describe 'Get-CASecurityConfig - No Policies' {
             return @{ value = @() }
         }
 
-        . "$PSScriptRoot/../../Entra/Get-CASecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Entra/Get-CASecurityConfig.ps1"
     }
 
     It 'Returns settings even with no policies' {
@@ -304,7 +304,7 @@ Describe 'Get-CASecurityConfig - Security Defaults Enabled' {
             return @{ value = @() }
         }
 
-        . "$PSScriptRoot/../../Entra/Get-CASecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Entra/Get-CASecurityConfig.ps1"
     }
 
     It 'Returns settings with Security Defaults enabled' {

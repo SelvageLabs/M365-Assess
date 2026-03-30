@@ -39,7 +39,7 @@ Describe 'Get-FormsSecurityConfig' {
         }
 
         # Run the collector by dot-sourcing it
-        . "$PSScriptRoot/../../Collaboration/Get-FormsSecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Collaboration/Get-FormsSecurityConfig.ps1"
     }
 
     It 'Returns a non-empty settings list' {
@@ -164,7 +164,7 @@ Describe 'Get-FormsSecurityConfig - Insecure Settings Fail' {
             }
         }
 
-        . "$PSScriptRoot/../../Collaboration/Get-FormsSecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Collaboration/Get-FormsSecurityConfig.ps1"
     }
 
     It 'External users can respond fails when enabled' {
@@ -194,7 +194,7 @@ Describe 'Get-FormsSecurityConfig - Not Connected' {
             return $null
         }
 
-        $script:collectorOutput = . "$PSScriptRoot/../../Collaboration/Get-FormsSecurityConfig.ps1"
+        $script:collectorOutput = . "$PSScriptRoot/../../src/M365-Assess/Collaboration/Get-FormsSecurityConfig.ps1"
     }
 
     It 'Returns nothing when not connected' {

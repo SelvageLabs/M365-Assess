@@ -33,7 +33,7 @@ Describe 'Get-IntuneSecurityConfig' {
         }
 
         # Run the collector by dot-sourcing it
-        . "$PSScriptRoot/../../Intune/Get-IntuneSecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-IntuneSecurityConfig.ps1"
     }
 
     It 'Returns a non-empty settings list' {
@@ -129,7 +129,7 @@ Describe 'Get-IntuneSecurityConfig - Personal Devices Allowed' {
             }
         }
 
-        . "$PSScriptRoot/../../Intune/Get-IntuneSecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-IntuneSecurityConfig.ps1"
     }
 
     It 'Non-compliant threshold check warns when threshold exceeds 30 days' {

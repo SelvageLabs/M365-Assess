@@ -39,7 +39,7 @@ Describe 'Get-AppRegistrationReport' {
         }
 
         # Run the collector
-        $result = & "$PSScriptRoot/../../Entra/Get-AppRegistrationReport.ps1"
+        $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-AppRegistrationReport.ps1"
     }
 
     It 'Returns a non-empty app report' {
@@ -84,7 +84,7 @@ Describe 'Get-AppRegistrationReport - Edge Cases' {
     Context 'when no app registrations exist' {
         BeforeAll {
             Mock Get-MgApplication { return @() }
-            $result = & "$PSScriptRoot/../../Entra/Get-AppRegistrationReport.ps1"
+            $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-AppRegistrationReport.ps1"
         }
 
         It 'Returns empty result without error' {

@@ -80,7 +80,7 @@ Describe 'Get-SharePointInventory' {
         }
 
         # Dot-source the collector and capture pipeline output
-        $script:results = . "$PSScriptRoot/../../Inventory/Get-SharePointInventory.ps1"
+        $script:results = . "$PSScriptRoot/../../src/M365-Assess/Inventory/Get-SharePointInventory.ps1"
     }
 
     It 'Returns results for non-personal sites only' {
@@ -122,7 +122,7 @@ Describe 'Get-SharePointInventory' {
 
             $caughtError = $null
             try {
-                . "$PSScriptRoot/../../Inventory/Get-SharePointInventory.ps1"
+                . "$PSScriptRoot/../../src/M365-Assess/Inventory/Get-SharePointInventory.ps1"
             }
             catch {
                 $caughtError = $_
@@ -140,7 +140,7 @@ Describe 'Get-SharePointInventory' {
                 return @{ value = @(); '@odata.nextLink' = $null }
             }
 
-            $output = . "$PSScriptRoot/../../Inventory/Get-SharePointInventory.ps1"
+            $output = . "$PSScriptRoot/../../src/M365-Assess/Inventory/Get-SharePointInventory.ps1"
             $output | Should -BeNullOrEmpty
         }
     }

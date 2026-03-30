@@ -67,7 +67,7 @@ Describe 'Get-ConditionalAccessReport' {
         }
 
         # Run the collector
-        $result = & "$PSScriptRoot/../../Entra/Get-ConditionalAccessReport.ps1"
+        $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-ConditionalAccessReport.ps1"
     }
 
     It 'Returns a non-empty policy report' {
@@ -102,7 +102,7 @@ Describe 'Get-ConditionalAccessReport - Edge Cases' {
     Context 'when no CA policies exist' {
         BeforeAll {
             Mock Get-MgIdentityConditionalAccessPolicy { return @() }
-            $result = & "$PSScriptRoot/../../Entra/Get-ConditionalAccessReport.ps1"
+            $result = & "$PSScriptRoot/../../src/M365-Assess/Entra/Get-ConditionalAccessReport.ps1"
         }
 
         It 'Returns empty result without error' {

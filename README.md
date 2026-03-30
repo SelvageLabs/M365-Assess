@@ -3,9 +3,9 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="Common/assets/m365-assess-logo-white.png" />
-  <source media="(prefers-color-scheme: light)" srcset="Common/assets/m365-assess-logo.png" />
-  <img src="Common/assets/m365-assess-logo.png" alt="M365 Assess" width="500" />
+  <source media="(prefers-color-scheme: dark)" srcset="src/M365-Assess/assets/m365-assess-logo-white.png" />
+  <source media="(prefers-color-scheme: light)" srcset="src/M365-Assess/assets/m365-assess-logo.png" />
+  <img src="src/M365-Assess/assets/m365-assess-logo.png" alt="M365 Assess" width="500" />
 </picture>
 
 ### Comprehensive M365 Security Assessment Tool
@@ -44,7 +44,8 @@ cd M365-Assess
 Install-Module Microsoft.Graph -Scope CurrentUser
 Install-Module ExchangeOnlineManagement -RequiredVersion 3.7.1 -Scope CurrentUser
 
-.\Invoke-M365Assessment.ps1 -TenantId 'contoso.onmicrosoft.com'
+Import-Module ./src/M365-Assess
+Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com'
 ```
 
 > **Downloaded the ZIP instead of cloning?** Windows marks ZIP-extracted files as "from the internet," which blocks execution under the default `RemoteSigned` policy. Unblock all scripts after extracting:
@@ -280,28 +281,24 @@ The self-contained HTML report opens in any browser with no dependencies. Click 
 
 ```
 M365-Assess/
-  Invoke-M365Assessment.ps1      # Orchestrator - main entry point
-  ActiveDirectory/                # Hybrid sync, AD domain/DC/replication/security
-  Collaboration/                  # SharePoint, OneDrive, Teams
-  Common/                         # Shared helpers
-    assets/                       # Branding assets (logo, backgrounds)
-    Connect-Service.ps1           # Service connection helper
-    Export-AssessmentReport.ps1   # HTML report generator
-    Export-ComplianceMatrix.ps1   # XLSX compliance matrix export
-    Show-CheckProgress.ps1       # Real-time progress display
-  controls/                       # Control registry and framework mappings
-    registry.json                 # Master registry (244 entries, 160 automated)
-    frameworks/                   # Per-framework mapping files
-  Entra/                          # Users, MFA, admin roles, CA, apps, licensing, security config
-  Exchange-Online/                # Mailboxes, mail flow, email security, EXO config
-  Inventory/                      # M&A inventory: mailboxes, groups, Teams, SharePoint, OneDrive
-  Intune/                         # Devices, compliance, config profiles
-  Networking/                     # Port scanning, DNS, connectivity
-  PowerBI/                        # Power BI tenant security settings (CIS 9.x)
-  Purview/                        # DLP policies, audit retention
-  Security/                       # Secure Score, Defender, DLP, Incident Readiness
-  Setup/                          # App Registration provisioning scripts
-  docs/                           # Detailed documentation
+  src/M365-Assess/                  # Publishable module (ships to PSGallery)
+    Invoke-M365Assessment.ps1       # Orchestrator — main entry point
+    Common/                         # Shared helpers (report, compliance, DNS)
+    Entra/                          # Users, MFA, admin roles, CA, apps, licensing
+    Exchange-Online/                # Mailboxes, mail flow, email security
+    Intune/                         # Devices, compliance, config profiles
+    Security/                       # Secure Score, Defender, DLP, Incident Readiness
+    Collaboration/                  # SharePoint, OneDrive, Teams
+    PowerBI/                        # Power BI tenant security (CIS 9.x)
+    Purview/                        # DLP policies, audit retention
+    ActiveDirectory/                # Hybrid sync, AD domain/DC/replication/security
+    Inventory/                      # M&A inventory
+    SOC2/                           # SOC 2 readiness assessment
+    assets/                         # Branding (logos, background) + SKU data
+    controls/                       # Control registry + 14 framework mappings
+  tests/                            # Pester test suite
+  docs/                             # Detailed documentation
+  Setup/                            # App Registration provisioning scripts
 ```
 
 ## Documentation

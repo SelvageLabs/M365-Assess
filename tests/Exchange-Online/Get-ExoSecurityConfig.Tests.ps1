@@ -141,7 +141,7 @@ Describe 'Get-ExoSecurityConfig' {
         }
 
         # Run the collector by dot-sourcing it
-        . "$PSScriptRoot/../../Exchange-Online/Get-ExoSecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Exchange-Online/Get-ExoSecurityConfig.ps1"
     }
 
     It 'Returns a non-empty settings list' {

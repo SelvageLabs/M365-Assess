@@ -81,7 +81,7 @@ Describe 'Get-EntAppSecurityConfig' {
             }
         }
 
-        . "$PSScriptRoot/../../Entra/Get-EntAppSecurityConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Entra/Get-EntAppSecurityConfig.ps1"
     }
 
     It 'Returns a non-empty settings list' {

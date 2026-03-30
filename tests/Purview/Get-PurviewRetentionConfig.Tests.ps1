@@ -38,7 +38,7 @@ Describe 'Get-PurviewRetentionConfig' {
         }
 
         # Run the collector by dot-sourcing it
-        . "$PSScriptRoot/../../Purview/Get-PurviewRetentionConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Purview/Get-PurviewRetentionConfig.ps1"
     }
 
     It 'Returns a non-empty settings list' {
@@ -131,7 +131,7 @@ Describe 'Get-PurviewRetentionConfig - No Policies' {
             return @()
         }
 
-        . "$PSScriptRoot/../../Purview/Get-PurviewRetentionConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Purview/Get-PurviewRetentionConfig.ps1"
     }
 
     It 'Retention policies check fails when none exist' {
@@ -174,7 +174,7 @@ Describe 'Get-PurviewRetentionConfig - Test Mode Policies' {
             )
         }
 
-        . "$PSScriptRoot/../../Purview/Get-PurviewRetentionConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Purview/Get-PurviewRetentionConfig.ps1"
     }
 
     It 'Enforce mode warns when policies are in simulation mode' {
@@ -195,7 +195,7 @@ Describe 'Get-PurviewRetentionConfig - Cmdlet Unavailable' {
         }
 
         # Do NOT define Get-RetentionCompliancePolicy — simulates no Purview connection
-        . "$PSScriptRoot/../../Purview/Get-PurviewRetentionConfig.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Purview/Get-PurviewRetentionConfig.ps1"
     }
 
     It 'Returns a Review status when cmdlet is unavailable' {

@@ -61,7 +61,7 @@ Describe 'Get-DefenderPolicyReport' {
         }
 
         # Run the script by dot-sourcing it; capture output
-        $script:results = . "$PSScriptRoot/../../Security/Get-DefenderPolicyReport.ps1"
+        $script:results = . "$PSScriptRoot/../../src/M365-Assess/Security/Get-DefenderPolicyReport.ps1"
     }
 
     It 'Returns a non-empty results list' {
@@ -152,7 +152,7 @@ Describe 'Get-DefenderPolicyReport - Not Connected' {
         # Wrap in try/catch to absorb the terminating error; verify no PSCustomObject was emitted.
         $captured = @()
         try {
-            $captured = @(. "$PSScriptRoot/../../Security/Get-DefenderPolicyReport.ps1")
+            $captured = @(. "$PSScriptRoot/../../src/M365-Assess/Security/Get-DefenderPolicyReport.ps1")
         }
         catch {
             # Expected — Write-Error throws when ErrorActionPreference is Stop
@@ -181,7 +181,7 @@ Describe 'Get-DefenderPolicyReport - No Defender License' {
     }
 
     It 'Writes a warning and returns nothing when no Defender license' {
-        $output = . "$PSScriptRoot/../../Security/Get-DefenderPolicyReport.ps1" -WarningAction SilentlyContinue 3>&1
+        $output = . "$PSScriptRoot/../../src/M365-Assess/Security/Get-DefenderPolicyReport.ps1" -WarningAction SilentlyContinue 3>&1
         $objects = @($output | Where-Object { $_ -is [PSCustomObject] })
         $objects.Count | Should -Be 0
     }
@@ -232,7 +232,7 @@ Describe 'Get-DefenderPolicyReport - OutputPath' {
     }
 
     It 'Exports CSV when OutputPath is specified and writes confirmation message' {
-        $msg = . "$PSScriptRoot/../../Security/Get-DefenderPolicyReport.ps1" -OutputPath $script:csvPath
+        $msg = . "$PSScriptRoot/../../src/M365-Assess/Security/Get-DefenderPolicyReport.ps1" -OutputPath $script:csvPath
         $msg | Should -Match 'Exported'
         Test-Path $script:csvPath | Should -Be $true
         $imported = Import-Csv -Path $script:csvPath

@@ -36,7 +36,7 @@ Thanks for your interest in contributing! This project often benefits from commu
 
 ### Custom Branding
 
-To use your own branding in the HTML report, replace the images in `Common/assets/`:
+To use your own branding in the HTML report, replace the images in `src/M365-Assess/assets/`:
 
 | File | Purpose | Recommended Size |
 |------|---------|-----------------|

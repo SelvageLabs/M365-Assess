@@ -94,7 +94,7 @@ Describe 'Get-EmailSecurityReport' {
         }
 
         # Dot-source the collector and capture pipeline output (no DNS checks)
-        $script:results = . "$PSScriptRoot/../../Exchange-Online/Get-EmailSecurityReport.ps1"
+        $script:results = . "$PSScriptRoot/../../src/M365-Assess/Exchange-Online/Get-EmailSecurityReport.ps1"
     }
 
     It 'Returns a non-empty result list' {
@@ -139,7 +139,7 @@ Describe 'Get-EmailSecurityReport' {
 
             $caughtError = $null
             try {
-                . "$PSScriptRoot/../../Exchange-Online/Get-EmailSecurityReport.ps1"
+                . "$PSScriptRoot/../../src/M365-Assess/Exchange-Online/Get-EmailSecurityReport.ps1"
             }
             catch {
                 $caughtError = $_
@@ -157,7 +157,7 @@ Describe 'Get-EmailSecurityReport' {
             Mock Get-MalwareFilterPolicy { return @() }
             Mock Get-DkimSigningConfig { return @() }
 
-            $output = . "$PSScriptRoot/../../Exchange-Online/Get-EmailSecurityReport.ps1"
+            $output = . "$PSScriptRoot/../../src/M365-Assess/Exchange-Online/Get-EmailSecurityReport.ps1"
             @($output).Count | Should -Be 0
         }
     }

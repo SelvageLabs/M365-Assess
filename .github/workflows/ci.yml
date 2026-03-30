@@ -30,7 +30,7 @@ jobs:
       - name: PSScriptAnalyzer
         shell: pwsh
         run: |
-          $results = Invoke-ScriptAnalyzer -Path . -Settings ./PSScriptAnalyzerSettings.psd1 -Recurse |
+          $results = Invoke-ScriptAnalyzer -Path ./src/M365-Assess -Settings ./PSScriptAnalyzerSettings.psd1 -Recurse |
             Where-Object { $_.ScriptName -notlike '*.Tests.ps1' }
           $results | Format-Table RuleName, Severity, ScriptName, Line, Message -AutoSize -Wrap
 
@@ -61,7 +61,7 @@ jobs:
       - name: Version consistency
         shell: pwsh
         run: |
-          $manifest = Import-PowerShellDataFile -Path ./M365-Assess.psd1
+          $manifest = Import-PowerShellDataFile -Path ./src/M365-Assess/M365-Assess.psd1
           $expected = $manifest.ModuleVersion
           Write-Host "Manifest version: $expected"
 
@@ -75,12 +75,12 @@ jobs:
           }
 
           # Verify runtime readers use Import-PowerShellDataFile (not hardcoded)
-          $orch = Get-Content ./Invoke-M365Assessment.ps1 -Raw
+          $orch = Get-Content ./src/M365-Assess/Invoke-M365Assessment.ps1 -Raw
           if ($orch -notmatch 'Import-PowerShellDataFile') {
             $failures += 'Invoke-M365Assessment.ps1 should read version from manifest'
           }
 
-          $report = Get-Content ./Common/Export-AssessmentReport.ps1 -Raw
+          $report = Get-Content ./src/M365-Assess/Common/Export-AssessmentReport.ps1 -Raw
           if ($report -notmatch 'Import-PowerShellDataFile') {
             $failures += 'Export-AssessmentReport.ps1 should read version from manifest'
           }
@@ -117,7 +117,7 @@ jobs:
           $config.TestResult.OutputPath = './test-results.xml'
           $config.TestResult.OutputFormat = 'NUnitXml'
           $config.CodeCoverage.Enabled = $true
-          $config.CodeCoverage.Path = @('./Invoke-M365Assessment.ps1', './Common/', './Entra/', './Exchange-Online/', './Security/', './Intune/', './Collaboration/', './PowerBI/', './Purview/', './SOC2/')
+          $config.CodeCoverage.Path = @('./src/M365-Assess/Invoke-M365Assessment.ps1', './src/M365-Assess/Common/', './src/M365-Assess/Entra/', './src/M365-Assess/Exchange-Online/', './src/M365-Assess/Security/', './src/M365-Assess/Intune/', './src/M365-Assess/Collaboration/', './src/M365-Assess/PowerBI/', './src/M365-Assess/Purview/', './src/M365-Assess/SOC2/')
           $config.CodeCoverage.OutputPath = './coverage.xml'
           $config.CodeCoverage.OutputFormat = 'JaCoCo'
           $config.Output.Verbosity = 'Detailed'
@@ -151,22 +151,22 @@ jobs:
           TAG=$(gh api repos/Galvnyz/CheckID/tags --jq '.[0].name')
           echo "Syncing from CheckID $TAG"
           BASE="https://raw.githubusercontent.com/Galvnyz/CheckID/$TAG/data"
-          curl -sL "$BASE/registry.json" -o controls/registry.json
+          curl -sL "$BASE/registry.json" -o src/M365-Assess/controls/registry.json
           for f in cis-controls-v8 cis-m365-v6 cisa-scuba cmmc essential-eight fedramp hipaa iso-27001 mitre-attack nist-800-53-r5 nist-csf pci-dss-v4 soc2-tsc stig; do
-            curl -sL "$BASE/frameworks/$f.json" -o "controls/frameworks/$f.json"
+            curl -sL "$BASE/frameworks/$f.json" -o "src/M365-Assess/controls/frameworks/$f.json"
           done
 
       - name: Check for changes
         id: diff
         run: |
-          git diff --quiet controls/ && echo "changed=false" >> "$GITHUB_OUTPUT" \
+          git diff --quiet src/M365-Assess/controls/ && echo "changed=false" >> "$GITHUB_OUTPUT" \
             || echo "changed=true" >> "$GITHUB_OUTPUT"
 
       - name: Report status
         run: |
           if [ "${{ steps.diff.outputs.changed }}" = "true" ]; then
             echo "::warning::CheckID data has updates — open a PR to sync controls/"
-            git diff --stat controls/
+            git diff --stat src/M365-Assess/controls/
           else
             echo "CheckID data is up to date"
           fi

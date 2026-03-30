@@ -66,7 +66,7 @@ Describe 'Get-MailboxPermissionReport' {
         }
 
         # Dot-source the collector and capture pipeline output
-        $script:results = . "$PSScriptRoot/../../Exchange-Online/Get-MailboxPermissionReport.ps1"
+        $script:results = . "$PSScriptRoot/../../src/M365-Assess/Exchange-Online/Get-MailboxPermissionReport.ps1"
     }
 
     It 'Returns a non-empty result list' {
@@ -117,7 +117,7 @@ Describe 'Get-MailboxPermissionReport' {
 
             $caughtError = $null
             try {
-                . "$PSScriptRoot/../../Exchange-Online/Get-MailboxPermissionReport.ps1"
+                . "$PSScriptRoot/../../src/M365-Assess/Exchange-Online/Get-MailboxPermissionReport.ps1"
             }
             catch {
                 $caughtError = $_
@@ -133,7 +133,7 @@ Describe 'Get-MailboxPermissionReport' {
             Mock Get-OrganizationConfig { return [PSCustomObject]@{ DisplayName = 'Empty' } }
             Mock Get-EXOMailbox { return @() }
 
-            $output = . "$PSScriptRoot/../../Exchange-Online/Get-MailboxPermissionReport.ps1"
+            $output = . "$PSScriptRoot/../../src/M365-Assess/Exchange-Online/Get-MailboxPermissionReport.ps1"
             # With no mailboxes, results list will be empty -- output is the empty list
             $permEntries = @($output) | Where-Object { $_.PermissionType }
             $permEntries | Should -BeNullOrEmpty

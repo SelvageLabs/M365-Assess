@@ -4,7 +4,7 @@ BeforeDiscovery {
 
 Describe 'Module repair detection' {
     BeforeAll {
-        $scriptPath = "$PSScriptRoot/../Invoke-M365Assessment.ps1"
+        $scriptPath = "$PSScriptRoot/../src/M365-Assess/Invoke-M365Assessment.ps1"
         $src = Get-Content -Path $scriptPath -Raw
     }
 
@@ -68,7 +68,7 @@ Describe 'Module repair detection' {
 
 Describe 'Module repair flow' {
     BeforeAll {
-        $scriptPath = "$PSScriptRoot/../Invoke-M365Assessment.ps1"
+        $scriptPath = "$PSScriptRoot/../src/M365-Assess/Invoke-M365Assessment.ps1"
         $src = Get-Content -Path $scriptPath -Raw
     }
 
