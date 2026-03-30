@@ -7,6 +7,8 @@ Describe 'Get-HybridSyncReport' {
         . "$PSScriptRoot/../../src/M365-Assess/Orchestrator/AssessmentHelpers.ps1"
 
         function Get-MgContext { return @{ TenantId = 'test-tenant-id' } }
+        function Get-MgOrganization { }
+        function Get-MgDomain { }
         Mock Import-Module { }
 
         Mock Get-MgOrganization {
@@ -78,6 +80,7 @@ Describe 'Get-HybridSyncReport - No Organization Data' {
         . "$PSScriptRoot/../../src/M365-Assess/Orchestrator/AssessmentHelpers.ps1"
 
         function Get-MgContext { return @{ TenantId = 'test-tenant-id' } }
+        function Get-MgOrganization { }
         Mock Import-Module { }
         Mock Get-MgOrganization { throw 'Failed to retrieve organization details' }
         Mock Write-Error { }
