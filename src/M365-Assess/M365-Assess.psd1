@@ -20,8 +20,13 @@
     # and we need a ceiling (< 3.8.0). The orchestrator handles EXO gating at runtime.
     RequiredModules   = @(
         @{ ModuleName = 'Microsoft.Graph.Authentication';               ModuleVersion = '2.25.0' }
+        @{ ModuleName = 'Microsoft.Graph.Applications';                 ModuleVersion = '2.25.0' }
+        @{ ModuleName = 'Microsoft.Graph.DeviceManagement';             ModuleVersion = '2.25.0' }
         @{ ModuleName = 'Microsoft.Graph.Identity.DirectoryManagement'; ModuleVersion = '2.25.0' }
         @{ ModuleName = 'Microsoft.Graph.Identity.SignIns';             ModuleVersion = '2.25.0' }
+        @{ ModuleName = 'Microsoft.Graph.Reports';                      ModuleVersion = '2.25.0' }
+        @{ ModuleName = 'Microsoft.Graph.Security';                     ModuleVersion = '2.25.0' }
+        @{ ModuleName = 'Microsoft.Graph.Users';                        ModuleVersion = '2.25.0' }
     )
 
     # Functions to export from this module
