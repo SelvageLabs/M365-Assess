@@ -4,8 +4,9 @@ BeforeDiscovery {
 
 Describe 'Module repair detection' {
     BeforeAll {
-        $scriptPath = "$PSScriptRoot/../src/M365-Assess/Invoke-M365Assessment.ps1"
-        $src = Get-Content -Path $scriptPath -Raw
+        $moduleDir = "$PSScriptRoot/../src/M365-Assess"
+        $src = (Get-ChildItem "$moduleDir/Orchestrator/*.ps1", "$moduleDir/Invoke-M365Assessment.ps1" |
+            ForEach-Object { Get-Content $_.FullName -Raw }) -join "`n"
     }
 
     Context 'Repair action structure' {
@@ -68,8 +69,9 @@ Describe 'Module repair detection' {
 
 Describe 'Module repair flow' {
     BeforeAll {
-        $scriptPath = "$PSScriptRoot/../src/M365-Assess/Invoke-M365Assessment.ps1"
-        $src = Get-Content -Path $scriptPath -Raw
+        $moduleDir = "$PSScriptRoot/../src/M365-Assess"
+        $src = (Get-ChildItem "$moduleDir/Orchestrator/*.ps1", "$moduleDir/Invoke-M365Assessment.ps1" |
+            ForEach-Object { Get-Content $_.FullName -Raw }) -join "`n"
     }
 
     Context 'Presentation' {

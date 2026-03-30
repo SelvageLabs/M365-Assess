@@ -14,7 +14,10 @@ BeforeAll {
     $manifest    = Import-PowerShellDataFile -Path "$moduleRoot/M365-Assess.psd1"
     $registry    = Get-Content -Path "$moduleRoot/controls/registry.json" -Raw | ConvertFrom-Json
     $reportScript  = Get-Content -Path "$moduleRoot/Common/Export-AssessmentReport.ps1" -Raw
-    $orchestrator  = Get-Content -Path "$moduleRoot/Invoke-M365Assessment.ps1" -Raw
+    $orchestrator  = @(
+        Get-Content -Path "$moduleRoot/Invoke-M365Assessment.ps1" -Raw
+        Get-ChildItem -Path "$moduleRoot/Orchestrator/*.ps1" | ForEach-Object { Get-Content $_.FullName -Raw }
+    ) -join "`n"
 }
 
 Describe 'Metadata Consistency' {

@@ -15,9 +15,9 @@ claudeignore
 docs/superpowers/
 .playwright-mcp/
 
-# Assessment output
+# Assessment output (runtime output directories, not the source module)
 M365-Assessment/
-M365-Assess/
+/M365-Assess/
 CIS/
 SCF/
 SecFrame/
