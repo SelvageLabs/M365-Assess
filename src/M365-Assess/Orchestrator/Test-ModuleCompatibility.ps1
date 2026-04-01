@@ -83,16 +83,16 @@ function Test-ModuleCompatibility {
         })
     }
 
-    # Optional modules
+    # Recommended modules -- core assessment features, default-install
     if ($needsPowerBI -and -not (Get-Module -Name MicrosoftPowerBIMgmt -ListAvailable -ErrorAction SilentlyContinue)) {
         $repairActions.Add([PSCustomObject]@{
             Module          = 'MicrosoftPowerBIMgmt'
             Issue           = 'Not installed'
-            Severity        = 'Optional'
+            Severity        = 'Recommended'
             Tier            = 'Install'
             RequiredVersion = $null
             InstallCmd      = 'Install-Module -Name MicrosoftPowerBIMgmt -Scope CurrentUser -Force'
-            Description     = 'MicrosoftPowerBIMgmt ΓÇö not installed (PowerBI will be skipped)'
+            Description     = 'MicrosoftPowerBIMgmt -- enables Power BI security checks'
         })
     }
 
@@ -101,11 +101,11 @@ function Test-ModuleCompatibility {
         $repairActions.Add([PSCustomObject]@{
             Module          = 'ImportExcel'
             Issue           = 'Not installed'
-            Severity        = 'Optional'
+            Severity        = 'Recommended'
             Tier            = 'Install'
             RequiredVersion = $null
             InstallCmd      = 'Install-Module -Name ImportExcel -Scope CurrentUser -Force'
-            Description     = 'ImportExcel -- not installed (XLSX compliance matrix will be skipped)'
+            Description     = 'ImportExcel -- enables XLSX compliance matrix export'
         })
     }
 
@@ -130,7 +130,7 @@ function Test-ModuleCompatibility {
         Write-Host ''
 
         $requiredIssues = @($repairActions | Where-Object { $_.Severity -eq 'Required' })
-        $optionalIssues = @($repairActions | Where-Object { $_.Severity -eq 'Optional' })
+        $recommendedIssues = @($repairActions | Where-Object { $_.Severity -eq 'Recommended' })
 
         if ($NonInteractive -or -not [Environment]::UserInteractive) {
             # --- Headless: log and exit/skip ---
@@ -143,21 +143,30 @@ function Test-ModuleCompatibility {
                 Write-Error "Required modules are missing or incompatible. See assessment log for install commands."
                 return
             }
-            foreach ($action in $optionalIssues) {
-                if ($action.Module -eq 'MicrosoftPowerBIMgmt') {
-                    $Section = @($Section | Where-Object { $_ -ne 'PowerBI' })
-                    Write-AssessmentLog -Level WARN -Message "Optional module missing: $($action.Description). Section skipped."
-                    Write-Host "    ΓÜá $($action.Description) -- section skipped" -ForegroundColor Yellow
-                }
-                elseif ($action.Module -eq 'ImportExcel') {
-                    Write-AssessmentLog -Level WARN -Message "Optional module missing: $($action.Description). XLSX export will be skipped."
-                    Write-Host "    ΓÜá $($action.Description) -- XLSX export skipped" -ForegroundColor Yellow
-                }
-                else {
-                    Write-AssessmentLog -Level WARN -Message "Optional module missing: $($action.Description). Section skipped."
-                    Write-Host "    ΓÜá $($action.Description) -- section skipped" -ForegroundColor Yellow
-                }
-            }
+            # Auto-install recommended modules in NonInteractive mode
+            foreach ($action in $recommendedIssues) {
+                try {
+                    Write-Host "    Installing $($action.Module)..." -ForegroundColor Cyan
+                    $installParams = @{
+                        Name        = $action.Module
+                        Scope       = 'CurrentUser'
+                        Force       = $true
+                        ErrorAction = 'Stop'
+                    }
+                    if ($action.RequiredVersion) {
+                        $installParams['RequiredVersion'] = $action.RequiredVersion
+                    }
+                    Install-Module @installParams
+                    Write-AssessmentLog -Level INFO -Message "Auto-installed recommended module: $($action.Module)"
+                    Write-Host "    $([char]0x2714) $($action.Module) installed" -ForegroundColor Green
+                }
+                catch {
+                    Write-AssessmentLog -Level WARN -Message "Failed to auto-install $($action.Module): $_"
+                    if ($action.Module -eq 'MicrosoftPowerBIMgmt') {
+                        $Section = @($Section | Where-Object { $_ -ne 'PowerBI' })
+                    }
+                }
+            }
         }
         else {
             # --- Interactive: offer repairs ---
@@ -226,13 +235,13 @@ function Test-ModuleCompatibility {
                 }
             }
 
-            # Optional modules -- offer to install or skip
-            $optInstallActions = @($repairActions | Where-Object { $_.Tier -eq 'Install' -and $_.Severity -eq 'Optional' })
-            if ($optInstallActions.Count -gt 0) {
-                $skippedNames = ($optInstallActions | ForEach-Object { $_.Module }) -join ', '
-                $response = Read-Host "  Install optional modules? ($skippedNames) [y/N]"
-                if ($response -match '^[Yy]$') {
-                    foreach ($action in $optInstallActions) {
+            # Recommended modules -- prompt individually with [Y/n] default
+            $recInstallActions = @($repairActions | Where-Object { $_.Tier -eq 'Install' -and $_.Severity -eq 'Recommended' })
+            if ($recInstallActions.Count -gt 0) {
+                $skippedNames = ($recInstallActions | ForEach-Object { $_.Module }) -join ', '
+                $response = Read-Host "  Install recommended modules? ($skippedNames) [Y/n]"
+                if ($response -match '^[Yy]?$') {
+                    foreach ($action in $recInstallActions) {
                         try {
                             Write-Host "    Installing $($action.Module)..." -ForegroundColor Cyan
                             $installParams = @{
@@ -254,13 +263,13 @@ function Test-ModuleCompatibility {
                 }
                 else {
                     # User declined -- skip affected sections/features
-                    foreach ($action in $optInstallActions) {
+                    foreach ($action in $recInstallActions) {
                         if ($action.Module -eq 'MicrosoftPowerBIMgmt') {
                             $Section = @($Section | Where-Object { $_ -ne 'PowerBI' })
-                            Write-AssessmentLog -Level WARN -Message "Optional module missing: $($action.Description). Section skipped."
+                            Write-AssessmentLog -Level WARN -Message "Recommended module declined: $($action.Description). Section skipped."
                         }
                         elseif ($action.Module -eq 'ImportExcel') {
-                            Write-AssessmentLog -Level WARN -Message "Optional module missing: $($action.Description). XLSX export will be skipped."
+                            Write-AssessmentLog -Level WARN -Message "Recommended module declined: $($action.Description). XLSX export will be skipped."
                         }
                     }
                 }

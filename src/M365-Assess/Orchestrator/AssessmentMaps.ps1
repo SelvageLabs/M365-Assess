@@ -79,6 +79,7 @@ $collectorMap = [ordered]@{
         @{ Name = '10-Mail-Flow';        Script = 'Exchange-Online\Get-MailFlowReport.ps1';       Label = 'Mail Flow' }
         @{ Name = '11-EXO-Email-Policies';   Script = 'Exchange-Online\Get-EmailSecurityReport.ps1';  Label = 'EXO Email Policies' }
         @{ Name = '11b-EXO-Security-Config'; Script = 'Exchange-Online\Get-ExoSecurityConfig.ps1'; Label = 'EXO Security Config' }
+        @{ Name = '11c-Mailbox-Permissions'; Script = 'Exchange-Online\Get-MailboxPermissionReport.ps1'; Label = 'Mailbox Permissions' }
         # DNS Security Config is deferred — runs after all sections using prefetched DNS cache
     )
     'Intune' = @(

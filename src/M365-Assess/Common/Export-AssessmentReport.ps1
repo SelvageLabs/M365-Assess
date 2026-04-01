@@ -536,9 +536,10 @@ foreach ($sectionName in $sections) {
             '09-Mailbox-Summary.csv'           = 0
             '11b-EXO-Security-Config.csv'      = 1
             '11-EXO-Email-Policies.csv'        = 2
-            '10-Mail-Flow.csv'                 = 3
-            '12-DNS-Email-Authentication.csv'  = 4
-            '12b-DNS-Security-Config.csv'      = 5
+            '11c-Mailbox-Permissions.csv'      = 3
+            '10-Mail-Flow.csv'                 = 4
+            '12-DNS-Email-Authentication.csv'  = 5
+            '12b-DNS-Security-Config.csv'      = 6
         }
         $sectionCollectors = @($sectionCollectors | Sort-Object -Property @{
             Expression = { if ($emailOrder.ContainsKey($_.FileName)) { $emailOrder[$_.FileName] } else { 99 } }

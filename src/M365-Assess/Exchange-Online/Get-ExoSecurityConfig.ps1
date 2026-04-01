@@ -630,6 +630,44 @@ catch {
 }
 
 # ------------------------------------------------------------------
+# 14. Hidden User Mailboxes (potential compromise indicator)
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking for hidden user mailboxes..."
+    $hiddenMailboxes = @(Get-EXOMailbox -RecipientTypeDetails UserMailbox -ResultSize Unlimited -Filter "HiddenFromAddressListsEnabled -eq 'True'" -Properties DisplayName, PrimarySmtpAddress -ErrorAction Stop)
+
+    if ($hiddenMailboxes.Count -eq 0) {
+        $settingParams = @{
+            Category         = 'Mailbox Security'
+            Setting          = 'Hidden User Mailboxes'
+            CurrentValue     = 'No user mailboxes hidden from GAL'
+            RecommendedValue = 'No user mailboxes hidden from address lists'
+            Status           = 'Pass'
+            CheckId          = 'EXO-HIDDEN-001'
+            Remediation      = 'No action needed.'
+        }
+        Add-Setting @settingParams
+    }
+    else {
+        $upnList = ($hiddenMailboxes | Select-Object -First 5 | ForEach-Object { $_.PrimarySmtpAddress }) -join ', '
+        $suffix = if ($hiddenMailboxes.Count -gt 5) { " (+$($hiddenMailboxes.Count - 5) more)" } else { '' }
+        $settingParams = @{
+            Category         = 'Mailbox Security'
+            Setting          = 'Hidden User Mailboxes'
+            CurrentValue     = "$($hiddenMailboxes.Count) user mailboxes hidden from GAL: $upnList$suffix"
+            RecommendedValue = 'No user mailboxes hidden from address lists'
+            Status           = 'Review'
+            CheckId          = 'EXO-HIDDEN-001'
+            Remediation      = 'Investigate hidden user mailboxes. Mailboxes hidden from the Global Address List may indicate a compromised account. Review: Get-Mailbox -Filter "HiddenFromAddressListsEnabled -eq $true -and RecipientTypeDetails -eq UserMailbox"'
+        }
+        Add-Setting @settingParams
+    }
+}
+catch {
+    Write-Warning "Could not check hidden mailboxes: $_"
+}
+
+# ------------------------------------------------------------------
 # Output
 # ------------------------------------------------------------------
 $report = @($settings)

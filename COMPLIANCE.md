@@ -56,7 +56,7 @@ The assessment suite includes **191 automated security checks** across 15 securi
 
 ## Control Registry
 
-Framework mappings are defined in `controls/registry.json`, which contains **275 control entries** (191 automated, 194 active, 81 manual-only). Each entry specifies the check ID, description, and mappings to all applicable frameworks.
+Framework mappings are defined in `controls/registry.json`, which contains **276 control entries** (192 automated, 276 active, 84 manual-only). Each entry specifies the check ID, description, and mappings to all applicable frameworks.
 
 To view or edit mappings:
 

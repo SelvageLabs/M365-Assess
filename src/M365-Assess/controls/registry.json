@@ -10114,6 +10114,42 @@
       }
     },
     {
+      "checkId": "EXO-HIDDEN-001",
+      "name": "Ensure no user mailboxes are hidden from the Global Address List",
+      "category": "HIDDEN",
+      "collector": "ExchangeOnline",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "DE.AE-01",
+          "title": "A baseline of network operations and expected data flows for users and systems is established and managed"
+        },
+        "nist-800-53": {
+          "controlId": "AU-6;SI-4",
+          "title": "Audit Review, Analysis, and Reporting; Information System Monitoring",
+          "profiles": [
+            "Moderate",
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.8.15;A.8.16",
+          "title": "Logging; Monitoring activities"
+        },
+        "soc2": {
+          "controlId": "CC7.2",
+          "evidenceType": "config-export",
+          "title": "System Monitoring"
+        },
+        "mitre-attack": {
+          "controlId": "T1564;T1564.008"
+        }
+      }
+    },
+    {
       "checkId": "SPO-AUTH-001",
       "name": "Ensure modern authentication for SharePoint applications is required",
       "category": "AUTH",
