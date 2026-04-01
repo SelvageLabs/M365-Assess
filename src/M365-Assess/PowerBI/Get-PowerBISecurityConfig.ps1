@@ -44,37 +44,32 @@ catch {
     return
 }
 
-$settings = [System.Collections.Generic.List[PSCustomObject]]::new()
-$checkIdCounter = @{}
+# Load shared security-config helpers
+$_scriptDir = if ($MyInvocation.MyCommand.Path) { Split-Path -Parent $MyInvocation.MyCommand.Path } else { $PSScriptRoot }
+. (Join-Path -Path $_scriptDir -ChildPath '..\Common\SecurityConfigHelper.ps1')
+
+$ctx = Initialize-SecurityConfig
+$settings = $ctx.Settings
+$checkIdCounter = $ctx.CheckIdCounter
 
 function Add-Setting {
     param(
-        [string]$Category,
-        [string]$Setting,
-        [string]$CurrentValue,
-        [string]$RecommendedValue,
-        [string]$Status,
-        [string]$CheckId = '',
-        [string]$Remediation = ''
+        [string]$Category, [string]$Setting, [string]$CurrentValue,
+        [string]$RecommendedValue, [string]$Status,
+        [string]$CheckId = '', [string]$Remediation = ''
     )
-    $subCheckId = $CheckId
-    if ($CheckId) {
-        if (-not $checkIdCounter.ContainsKey($CheckId)) { $checkIdCounter[$CheckId] = 0 }
-        $checkIdCounter[$CheckId]++
-        $subCheckId = "$CheckId.$($checkIdCounter[$CheckId])"
-    }
-    $settings.Add([PSCustomObject]@{
+    $p = @{
+        Settings         = $settings
+        CheckIdCounter   = $checkIdCounter
         Category         = $Category
         Setting          = $Setting
         CurrentValue     = $CurrentValue
         RecommendedValue = $RecommendedValue
         Status           = $Status
-        CheckId          = $subCheckId
+        CheckId          = $CheckId
         Remediation      = $Remediation
-    })
-    if ($CheckId -and (Get-Command -Name Update-CheckProgress -ErrorAction SilentlyContinue)) {
-        Update-CheckProgress -CheckId $subCheckId -Setting $Setting -Status $Status
     }
+    Add-SecuritySetting @p
 }
 
 # ─── Retrieve all tenant settings ────────────────────────────────
@@ -262,13 +257,4 @@ $settingParams = @{
 Add-Setting @settingParams
 
 # ─── Output ──────────────────────────────────────────────────────
-$report = @($settings)
-Write-Verbose "Collected $($report.Count) Power BI security configuration settings"
-
-if ($OutputPath) {
-    $report | Export-Csv -Path $OutputPath -NoTypeInformation -Encoding UTF8
-    Write-Output "Exported Power BI security config ($($report.Count) settings) to $OutputPath"
-}
-else {
-    Write-Output $report
-}
+Export-SecurityConfigReport -Settings $settings -OutputPath $OutputPath -ServiceLabel 'Power BI'
