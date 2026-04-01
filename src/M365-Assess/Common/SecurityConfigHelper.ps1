@@ -1,0 +1,158 @@
+<#
+.SYNOPSIS
+    Shared helpers for security-config collectors.
+.DESCRIPTION
+    Provides the standard Add-SecuritySetting and Export-SecurityConfigReport
+    functions used by all security-config collectors (EXO, Entra, Defender,
+    SharePoint, Teams, Intune, Forms, Compliance, DNS). Centralizes the output
+    contract, CheckId sub-numbering, progress tracking, and CSV export logic
+    that was previously duplicated in each collector.
+
+    Dot-source this file at the top of each security-config collector:
+        . "$PSScriptRoot\..\Common\SecurityConfigHelper.ps1"
+.NOTES
+    Author: Daren9m
+#>
+
+function Initialize-SecurityConfig {
+    <#
+    .SYNOPSIS
+        Creates the standard settings collection and CheckId counter for a security-config collector.
+    .OUTPUTS
+        Hashtable with Settings (List[PSCustomObject]) and CheckIdCounter (hashtable).
+    .EXAMPLE
+        $ctx = Initialize-SecurityConfig
+        $settings = $ctx.Settings
+        $checkIdCounter = $ctx.CheckIdCounter
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param()
+
+    @{
+        Settings       = [System.Collections.Generic.List[PSCustomObject]]::new()
+        CheckIdCounter = @{}
+    }
+}
+
+function Add-SecuritySetting {
+    <#
+    .SYNOPSIS
+        Adds a security configuration finding to the collector's settings list.
+    .DESCRIPTION
+        Standard output contract for all security-config collectors. Handles
+        CheckId sub-numbering (e.g., EXO-AUTH-001 becomes EXO-AUTH-001.1,
+        EXO-AUTH-001.2) and invokes real-time progress tracking when available.
+    .PARAMETER Settings
+        The List[PSCustomObject] collection to add the finding to.
+    .PARAMETER CheckIdCounter
+        Hashtable tracking sub-number counts per base CheckId.
+    .PARAMETER Category
+        Logical grouping for the setting (e.g., 'Authentication', 'External Sharing').
+    .PARAMETER Setting
+        Human-readable name of the setting being checked.
+    .PARAMETER CurrentValue
+        The actual value found in the tenant.
+    .PARAMETER RecommendedValue
+        The expected/recommended value per the benchmark.
+    .PARAMETER Status
+        Assessment result: Pass, Fail, Warning, Review, or Info.
+    .PARAMETER CheckId
+        Registry check identifier (e.g., 'EXO-AUTH-001'). Sub-numbered automatically.
+    .PARAMETER Remediation
+        Guidance for fixing a non-passing result.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        [System.Collections.Generic.List[PSCustomObject]]$Settings,
+
+        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        [hashtable]$CheckIdCounter,
+
+        [Parameter(Mandatory)]
+        [string]$Category,
+
+        [Parameter(Mandatory)]
+        [string]$Setting,
+
+        [Parameter(Mandatory)]
+        [string]$CurrentValue,
+
+        [Parameter(Mandatory)]
+        [string]$RecommendedValue,
+
+        [Parameter(Mandatory)]
+        [ValidateSet('Pass', 'Fail', 'Warning', 'Review', 'Info', 'Unknown')]
+        [string]$Status,
+
+        [Parameter()]
+        [string]$CheckId = '',
+
+        [Parameter()]
+        [string]$Remediation = ''
+    )
+
+    # Auto-generate sub-numbered CheckId for individual setting traceability
+    $subCheckId = $CheckId
+    if ($CheckId) {
+        if (-not $CheckIdCounter.ContainsKey($CheckId)) { $CheckIdCounter[$CheckId] = 0 }
+        $CheckIdCounter[$CheckId]++
+        $subCheckId = "$CheckId.$($CheckIdCounter[$CheckId])"
+    }
+
+    $Settings.Add([PSCustomObject]@{
+        Category         = $Category
+        Setting          = $Setting
+        CurrentValue     = $CurrentValue
+        RecommendedValue = $RecommendedValue
+        Status           = $Status
+        CheckId          = $subCheckId
+        Remediation      = $Remediation
+    })
+
+    # Invoke real-time progress tracking if available (set up by Show-CheckProgress.ps1)
+    if ($CheckId -and (Get-Command -Name Update-CheckProgress -ErrorAction SilentlyContinue)) {
+        Update-CheckProgress -CheckId $subCheckId -Setting $Setting -Status $Status
+    }
+}
+
+function Export-SecurityConfigReport {
+    <#
+    .SYNOPSIS
+        Exports security-config settings to CSV or pipeline.
+    .DESCRIPTION
+        Standard output handler for all security-config collectors. Writes to
+        CSV when OutputPath is provided, otherwise returns objects to the pipeline.
+    .PARAMETER Settings
+        The collected settings list.
+    .PARAMETER OutputPath
+        Optional CSV file path. If omitted, objects are written to the pipeline.
+    .PARAMETER ServiceLabel
+        Display name for log messages (e.g., 'Exchange Online', 'Entra ID').
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [object[]]$Settings,
+
+        [Parameter()]
+        [string]$OutputPath,
+
+        [Parameter(Mandatory)]
+        [string]$ServiceLabel
+    )
+
+    $report = @($Settings)
+    Write-Verbose "Collected $($report.Count) $ServiceLabel security configuration settings"
+
+    if ($OutputPath) {
+        $report | Export-Csv -Path $OutputPath -NoTypeInformation -Encoding UTF8
+        Write-Output "Exported $ServiceLabel security config ($($report.Count) settings) to $OutputPath"
+    }
+    else {
+        Write-Output $report
+    }
+}
