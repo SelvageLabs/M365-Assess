@@ -3,7 +3,7 @@
     # Generated: 2026-03-08
 
     RootModule        = 'M365-Assess.psm1'
-    ModuleVersion     = '1.0.1'
+    ModuleVersion     = '1.2.0'
     GUID              = 'f7e3b2a1-4c5d-6e8f-9a0b-1c2d3e4f5a6b'
     Author            = 'Galvnyz'
     CompanyName       = 'Community'
@@ -181,7 +181,7 @@
                              'PowerBI', 'CIS', 'NIST', 'SOC2', 'HIPAA', 'ZeroTrust', 'SecurityBaseline')
             LicenseUri   = 'https://github.com/Galvnyz/M365-Assess/blob/main/LICENSE'
             ProjectUri   = 'https://github.com/Galvnyz/M365-Assess'
-            ReleaseNotes = 'v1.0.1 - Fix false failures for tenants with Standard/Strict preset security policies enabled in Defender for Office 365'
+            ReleaseNotes = 'v1.2.0 - Paginated report navigation, decomposed collectors, inline callouts, admin MFA strength classification, service-area charts'
         }
     }
 }

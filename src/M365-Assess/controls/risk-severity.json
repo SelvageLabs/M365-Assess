@@ -44,6 +44,7 @@
     "ENTRA-ADMIN-001": "High",
     "ENTRA-ADMIN-002": "High",
     "ENTRA-ADMIN-003": "High",
+    "ENTRA-ADMIN-004": "Critical",
     "ENTRA-APPREG-001": "Medium",
     "ENTRA-APPS-001": "Medium",
     "ENTRA-AUTHMETHOD-001": "Critical",

@@ -33,6 +33,44 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+function Get-MfaMethodStrength {
+    <#
+    .SYNOPSIS
+        Classifies the strongest MFA method from a list of registered methods.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter()]
+        [string[]]$Methods
+    )
+
+    $phishingResistant = @(
+        'fido2'
+        'windowsHelloForBusiness'
+        'x509CertificateMultiFactor'
+        'passKeyDeviceBound'
+        'passKeyDeviceBoundAuthenticator'
+    )
+    $standard = @(
+        'microsoftAuthenticatorPush'
+        'microsoftAuthenticatorPasswordless'
+        'softwareOneTimePasscode'
+    )
+    $weak = @(
+        'mobilePhone'
+        'alternateMobilePhone'
+        'voiceAlternateMobile'
+        'email'
+    )
+
+    if (-not $Methods -or $Methods.Count -eq 0) { return 'None' }
+    if ($Methods | Where-Object { $_ -in $phishingResistant }) { return 'Phishing-Resistant' }
+    if ($Methods | Where-Object { $_ -in $standard }) { return 'Standard' }
+    if ($Methods | Where-Object { $_ -in $weak }) { return 'Weak' }
+    return 'Unknown'
+}
+
 # Verify Graph connection
 if (-not (Assert-GraphConnection)) { return }
 
@@ -75,6 +113,7 @@ $report = foreach ($detail in $allDetails) {
         IsSsprCapable         = $detail.IsSsprCapable
         MethodsRegistered     = $methodsRegistered
         DefaultMfaMethod      = $detail.DefaultMfaMethod
+        MfaStrength           = (Get-MfaMethodStrength -Methods @($detail.MethodsRegistered))
         IsAdmin               = $detail.IsAdmin
     }
 }

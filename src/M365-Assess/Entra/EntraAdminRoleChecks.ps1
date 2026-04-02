@@ -522,3 +522,87 @@ try {
 catch {
     Write-Warning "Could not check emergency access accounts: $_"
 }
+
+# ------------------------------------------------------------------
+# 33. Admin MFA Method Strength (phishing-resistant required)
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking admin MFA method strength..."
+    $gaRoleTemplateId = '62e90394-69f5-4237-9190-012177145e10'
+    $graphParams = @{
+        Method      = 'GET'
+        Uri         = "/v1.0/directoryRoles/roleTemplateId=$gaRoleTemplateId/members?`$select=id,displayName,userPrincipalName"
+        ErrorAction = 'Stop'
+    }
+    $adminMembers = Invoke-MgGraphRequest @graphParams
+    $adminList = if ($adminMembers -and $adminMembers['value']) { @($adminMembers['value']) } else { @() }
+
+    if ($adminList.Count -gt 0) {
+        $graphParams = @{
+            Method      = 'GET'
+            Uri         = '/beta/reports/authenticationMethods/userRegistrationDetails'
+            ErrorAction = 'Stop'
+        }
+        $mfaDetails = Invoke-MgGraphRequest @graphParams
+        $mfaList = if ($mfaDetails -and $mfaDetails['value']) { @($mfaDetails['value']) } else { @() }
+
+        $phishingResistantMethods = @(
+            'fido2'
+            'windowsHelloForBusiness'
+            'x509CertificateMultiFactor'
+            'passKeyDeviceBound'
+            'passKeyDeviceBoundAuthenticator'
+        )
+
+        $adminIds = @($adminList | ForEach-Object { $_['id'] })
+        $adminMfa = @($mfaList | Where-Object { $_['id'] -in $adminIds })
+
+        $adminsWithoutPhishRes = @($adminMfa | Where-Object {
+            $methods = @($_['methodsRegistered'])
+            -not ($methods | Where-Object { $_ -in $phishingResistantMethods })
+        })
+        $adminsNoMfa = @($adminMfa | Where-Object { -not $_['isMfaRegistered'] })
+
+        if ($adminsNoMfa.Count -gt 0) {
+            $names = ($adminsNoMfa | ForEach-Object { $_['userDisplayName'] }) -join ', '
+            $settingParams = @{
+                Category         = 'Admin Accounts'
+                Setting          = 'Admin MFA Method Strength'
+                CurrentValue     = "$($adminsNoMfa.Count) admin(s) without MFA: $names"
+                RecommendedValue = 'All admins use phishing-resistant MFA'
+                Status           = 'Fail'
+                CheckId          = 'ENTRA-ADMIN-004'
+                Remediation      = 'Enroll all Global Administrators in phishing-resistant MFA (FIDO2, Windows Hello for Business, or certificate-based). Entra admin center > Protection > Authentication methods > Policies.'
+            }
+            Add-Setting @settingParams
+        }
+        elseif ($adminsWithoutPhishRes.Count -gt 0) {
+            $names = ($adminsWithoutPhishRes | ForEach-Object { $_['userDisplayName'] }) -join ', '
+            $settingParams = @{
+                Category         = 'Admin Accounts'
+                Setting          = 'Admin MFA Method Strength'
+                CurrentValue     = "$($adminsWithoutPhishRes.Count) admin(s) without phishing-resistant MFA: $names"
+                RecommendedValue = 'All admins use phishing-resistant MFA'
+                Status           = 'Warning'
+                CheckId          = 'ENTRA-ADMIN-004'
+                Remediation      = 'Upgrade admin MFA to phishing-resistant methods (FIDO2, Windows Hello for Business, or certificate-based). Standard MFA (push/TOTP) is vulnerable to adversary-in-the-middle attacks. Entra admin center > Protection > Authentication methods > Policies.'
+            }
+            Add-Setting @settingParams
+        }
+        else {
+            $settingParams = @{
+                Category         = 'Admin Accounts'
+                Setting          = 'Admin MFA Method Strength'
+                CurrentValue     = "All $($adminMfa.Count) admin(s) have phishing-resistant MFA"
+                RecommendedValue = 'All admins use phishing-resistant MFA'
+                Status           = 'Pass'
+                CheckId          = 'ENTRA-ADMIN-004'
+                Remediation      = 'No action needed.'
+            }
+            Add-Setting @settingParams
+        }
+    }
+}
+catch {
+    Write-Warning "Could not check admin MFA method strength: $_"
+}

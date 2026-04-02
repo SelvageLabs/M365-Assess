@@ -4,9 +4,10 @@ All notable changes to M365 Assess are documented here. This project uses [Conve
 
 ## [Unreleased]
 
-## [1.2.0] - 2026-04-01
+## [1.2.0] - 2026-04-02
 
 ### Added
+- **Admin MFA strength classification** -- MFA Report now includes `MfaStrength` column (Phishing-Resistant/Standard/Weak/None) and new ENTRA-ADMIN-004 security check flags Global Administrators lacking phishing-resistant MFA methods. (#318)
 - **Paginated report navigation** -- sidebar nav with section list, status badges, hash routing, browser back/forward, keyboard arrows, "Show All" toggle, and mobile hamburger menu. Report sections are now focused pages instead of one long scroll. (#288, #303)
 - **Compact hero banner** -- dark branded banner with cropped logo replaces full-screen cover page on screen. Full cover preserved for print/PDF only. (#306)
 - **Service-area breakdown chart** -- SVG stacked bar chart in executive summary showing pass/fail/warning/review per service area. Uses CSS variables for dark mode. (#276, #293)

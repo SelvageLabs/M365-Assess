@@ -206,6 +206,47 @@
       }
     },
     {
+      "checkId": "ENTRA-ADMIN-004",
+      "name": "Ensure all Global Administrators use phishing-resistant MFA",
+      "category": "ADMIN",
+      "collector": "Entra",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {
+        "nist-csf": {
+          "controlId": "PR.AA-01;PR.AA-03",
+          "title": "Identities and credentials for authorized users are managed; Users, devices, and other assets are authenticated commensurate with the risk of the transaction"
+        },
+        "nist-800-53": {
+          "controlId": "IA-2(6);IA-2(8)",
+          "title": "Access to Accounts -- Resistance to Replay; Access to Accounts -- Resistance to Replay",
+          "profiles": [
+            "High"
+          ]
+        },
+        "iso-27001": {
+          "controlId": "A.8.5",
+          "title": "Secure authentication"
+        },
+        "pci-dss": {
+          "controlId": "8.4.2;8.4.3"
+        },
+        "cmmc": {
+          "controlId": "3.5.3"
+        },
+        "soc2": {
+          "controlId": "CC6.1;CC6.6",
+          "evidenceType": "config-export",
+          "title": "Logical Access Security Software, Infrastructure, and Architectures; Security Measures Against Threats Outside System Boundaries"
+        },
+        "mitre-attack": {
+          "controlId": "T1556;T1111;T1621"
+        }
+      }
+    },
+    {
       "checkId": "MANUAL-CIS-1-1-2",
       "name": "Ensure two emergency access accounts have been defined",
       "category": "",
