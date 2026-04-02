@@ -423,6 +423,65 @@ $html = @"
             line-height: 1.6;
         }
 
+        /* Accordion callout (Email protocols) */
+        .callout-accordion {
+            flex: 1 1 100%;
+            border-radius: 6px;
+            border: 1px solid var(--m365a-border);
+            background: var(--m365a-card-bg);
+            overflow: hidden;
+        }
+        .callout-accordion-title {
+            padding: 10px 14px;
+            font-weight: 600;
+            font-size: 9.5pt;
+            color: var(--m365a-dark);
+            border-bottom: 1px solid var(--m365a-border);
+        }
+        .accordion-item {
+            border-bottom: 1px solid var(--m365a-border);
+        }
+        .accordion-item:last-of-type { border-bottom: none; }
+        .accordion-item summary {
+            padding: 8px 14px;
+            font-weight: 600;
+            font-size: 9pt;
+            color: var(--m365a-accent);
+            cursor: pointer;
+            list-style: none;
+        }
+        .accordion-item summary::-webkit-details-marker { display: none; }
+        .accordion-item summary::before {
+            content: '\25B6  ';
+            font-size: 7pt;
+            transition: transform 0.2s;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        .accordion-item[open] > summary::before { transform: rotate(90deg); }
+        .accordion-item-body {
+            padding: 0 14px 10px 28px;
+            font-size: 9pt;
+            color: var(--m365a-medium-gray);
+            line-height: 1.6;
+        }
+        .accordion-item-body code {
+            background: var(--m365a-border);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 8.5pt;
+        }
+        .accordion-item-body a { color: var(--m365a-accent); text-decoration: none; }
+        .accordion-item-body a:hover { text-decoration: underline; }
+        .accordion-resources {
+            padding: 8px 14px;
+            font-size: 8.5pt;
+            color: var(--m365a-medium-gray);
+            border-top: 1px solid var(--m365a-border);
+        }
+        .accordion-resources a { color: var(--m365a-accent); text-decoration: none; }
+        .accordion-resources a:hover { text-decoration: underline; }
+
         /* ----------------------------------------------------------
            Executive Summary Hero
            ---------------------------------------------------------- */
@@ -568,6 +627,8 @@ $html = @"
             border: none;
             padding: 0;
         }
+        .chart-nav-link { cursor: pointer; }
+        .chart-nav-link:hover text:first-child { text-decoration: underline; fill: var(--m365a-accent); }
 
         /* ----------------------------------------------------------
            Tenant Organization Card
@@ -1938,6 +1999,14 @@ $html = @"
             background: var(--m365a-hover-bg);
             font-weight: 600;
         }
+        .nav-icon {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            opacity: 0.7;
+            vertical-align: -2px;
+        }
+        .nav-item.active .nav-icon { opacity: 1; }
         .nav-badge {
             margin-left: auto;
             font-size: 8pt;
@@ -2193,8 +2262,29 @@ $accentCss
             <ul class="nav-list" id="navList">
 "@
 
+# Fluent UI-inspired inline SVG icons for sidebar navigation (MIT licensed paths)
+$navIcons = @{
+    'overview'            = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2.5L2 9h3v7h4v-4h2v4h4V9h3L10 2.5z"/></svg>'
+    'identity'            = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a3 3 0 100 6 3 3 0 000-6zM4 14c0-2 4-3 6-3s6 1 6 3v2H4v-2z"/></svg>'
+    'licensing'           = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M7 10a3 3 0 116 0 3 3 0 01-6 0zm3-1.5a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM12 10h5v2h-2v3h-2v-3h-1v-2z"/></svg>'
+    'email'               = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M2 5l8 5 8-5v10H2V5zm2 1.5V14h12V6.5l-6 3.75L4 6.5z"/></svg>'
+    'intune'              = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M7 2h6a1 1 0 011 1v14a1 1 0 01-1 1H7a1 1 0 01-1-1V3a1 1 0 011-1zm1 2v10h4V4H8zm2 11a1 1 0 100 2 1 1 0 000-2z"/></svg>'
+    'security'            = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1L3 4v5c0 4.5 3 8.7 7 9.6 4-.9 7-5.1 7-9.6V4l-7-3zm0 2.2l5 2.1v3.7c0 3.5-2.2 6.7-5 7.5-2.8-.8-5-4-5-7.5V5.3l5-2.1z"/></svg>'
+    'collaboration'       = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M6 5a2 2 0 110 4 2 2 0 010-4zm8 0a2 2 0 110 4 2 2 0 010-4zM2 13c0-1.5 3-2.5 4-2.5s4 1 4 2.5V15H2v-2zm8 0c0-1.5 3-2.5 4-2.5s4 1 4 2.5V15h-8v-2z"/></svg>'
+    'hybrid'              = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M14.5 3L17 5.5 14.5 8V6A4.5 4.5 0 0110 14.5v2A6.5 6.5 0 0014.5 4V3zM5.5 17L3 14.5 5.5 12v2A4.5 4.5 0 0110 5.5v-2A6.5 6.5 0 005.5 16v1z"/></svg>'
+    'inventory'           = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4c0-1.1 2.7-2 6-2s6 .9 6 2v2c0 1.1-2.7 2-6 2S4 7.1 4 6V4zm0 5c1.4.8 3.6 1 6 1s4.6-.2 6-1v2c0 1.1-2.7 2-6 2S4 12.1 4 11V9zm0 5c1.4.8 3.6 1 6 1s4.6-.2 6-1v2c0 1.1-2.7 2-6 2S4 17.1 4 16v-2z"/></svg>'
+    'soc2'                = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a4 4 0 00-4 4v2H5a1 1 0 00-1 1v8a1 1 0 001 1h10a1 1 0 001-1V9a1 1 0 00-1-1h-1V6a4 4 0 00-4-4zm-2 4a2 2 0 114 0v2H8V6z"/></svg>'
+    'powerbi'             = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M3 17V8h3v9H3zm5 0V3h3v14H8zm5 0V6h3v11h-3z"/></svg>'
+    'activedirectory'     = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M6 2h5l5 5v11H6V2zm4 1v4h4l-4-4z"/></svg>'
+    'compliance overview' = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M4 2h12a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V4a2 2 0 012-2zm5 12l6-6-1.4-1.4L9 11.2 6.4 8.6 5 10l4 4z"/></svg>'
+    'framework catalogs'  = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M4 3h5v14H4V3zm7 0h5v14h-5V3zM3 2v16h14V2H3z"/></svg>'
+    'technical issues'    = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2L1 18h18L10 2zm0 4l6 10H4l6-10zm-1 4v3h2v-3H9zm0 4v2h2v-2H9z"/></svg>'
+    'appendix'            = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M6 2h5l5 5v11H6V2zm4 1v4h4l-4-4z"/></svg>'
+}
+
 # Build sidebar nav items -- Overview combines cover + exec summary + org profile
-$html += "                <li class='nav-item active' data-page='overview'><a href='#overview'>Overview</a></li>`n"
+$navIconOverview = $navIcons['overview']
+$html += "                <li class='nav-item active' data-page='overview'><a href='#overview'>$navIconOverview Overview</a></li>`n"
 foreach ($navSection in $sections) {
     # Tenant is merged into Overview page -- skip separate nav entry
     if ($navSection -eq 'Tenant') { continue }
@@ -2214,7 +2304,9 @@ foreach ($navSection in $sections) {
             $navBadge = "<span class='nav-badge nav-badge-pass'>&#10003;</span>"
         }
     }
-    $html += "                <li class='nav-item' data-page='$navPageId'><a href='#$navPageId'>$navLabel$navBadge</a></li>`n"
+    $navIconKey = $navSection.ToLower()
+    $navIconSvg = if ($navIcons.ContainsKey($navIconKey)) { $navIcons[$navIconKey] } else { '' }
+    $html += "                <li class='nav-item' data-page='$navPageId'><a href='#$navPageId'>$navIconSvg $navLabel$navBadge</a></li>`n"
 }
 
 # Separator before extra sections
@@ -2223,16 +2315,20 @@ if ($hasExtraSections) {
     $html += "                <li class='nav-separator' role='separator'></li>`n"
 }
 if ($complianceHtml) {
-    $html += "                <li class='nav-item' data-page='compliance-overview'><a href='#compliance-overview'>Compliance Overview</a></li>`n"
+    $navIconCompliance = $navIcons['compliance overview']
+    $html += "                <li class='nav-item' data-page='compliance-overview'><a href='#compliance-overview'>$navIconCompliance Compliance Overview</a></li>`n"
 }
 if ($catalogHtml) {
-    $html += "                <li class='nav-item' data-page='framework-catalogs'><a href='#framework-catalogs'>Framework Catalogs</a></li>`n"
+    $navIconCatalogs = $navIcons['framework catalogs']
+    $html += "                <li class='nav-item' data-page='framework-catalogs'><a href='#framework-catalogs'>$navIconCatalogs Framework Catalogs</a></li>`n"
 }
 if ($issues.Count -gt 0) {
-    $html += "                <li class='nav-item' data-page='issues'><a href='#issues'>Technical Issues</a></li>`n"
+    $navIconIssues = $navIcons['technical issues']
+    $html += "                <li class='nav-item' data-page='issues'><a href='#issues'>$navIconIssues Technical Issues</a></li>`n"
 }
 if ($allCisFindings.Count -gt 0) {
-    $html += "                <li class='nav-item' data-page='appendix-checks-run'><a href='#appendix-checks-run'>Appendix</a></li>`n"
+    $navIconAppendix = $navIcons['appendix']
+    $html += "                <li class='nav-item' data-page='appendix-checks-run'><a href='#appendix-checks-run'>$navIconAppendix Appendix</a></li>`n"
 }
 
 $html += @"
@@ -2618,6 +2714,21 @@ $html += @"
                 e.preventDefault();
                 if (idx > 0) navigateTo(pageIds[idx - 1]);
             }
+        });
+
+        // Chart bar navigation -- click a service-area row to navigate to its section
+        document.querySelectorAll('[data-nav]').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var target = el.getAttribute('data-nav');
+                if (target) navigateTo(target);
+            });
+            el.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    var target = el.getAttribute('data-nav');
+                    if (target) navigateTo(target);
+                }
+            });
         });
 
         // Initialize: show the correct page on load
