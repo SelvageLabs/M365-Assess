@@ -1956,7 +1956,8 @@ $html = @"
             background: var(--m365a-card-bg);
             z-index: 1;
         }
-        .nav-title { font-weight: 600; font-size: 11pt; flex-grow: 1; color: var(--m365a-text); }
+        .nav-title { font-weight: 600; font-size: 11pt; flex-grow: 1; color: var(--m365a-text); text-decoration: none; }
+        .nav-title:hover { color: var(--m365a-accent); }
         .nav-toggle {
             display: none;
             background: var(--m365a-card-bg);
@@ -2272,7 +2273,7 @@ $accentCss
     <div class="report-layout" id="reportLayout">
         <nav class="report-nav" id="reportNav" role="navigation" aria-label="Report sections">
             <div class="nav-header">
-                <span class="nav-title">Sections</span>
+                <a href="https://github.com/Galvnyz/M365-Assess" target="_blank" rel="noopener" class="nav-title">M365 Assess</a>
                 <button class="nav-show-all" id="navShowAll" title="Toggle between paginated and scrollable view">Show All</button>
                 <button class="nav-theme-btn" id="navThemeToggle" aria-label="Toggle dark mode" title="Toggle light/dark mode">
                     <span class="nav-theme-light">&#9788;</span>
