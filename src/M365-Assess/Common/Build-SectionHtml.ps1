@@ -32,6 +32,74 @@ $sectionDescriptions = @{
     'SOC2'          = 'SOC 2 readiness assessment covering <strong>Security</strong> and <strong>Confidentiality</strong> trust principles plus a Common Criteria (CC1–CC9) organizational readiness checklist. Evaluates M365 controls against AICPA SOC 2 requirements, collects audit log evidence, and identifies non-technical governance controls required by auditors. <em>This tool assists with SOC 2 readiness &mdash; it does not constitute a SOC 2 audit or certification.</em>'
 }
 
+$sectionCallouts = @{
+    'Identity'      = @(
+        @{
+            Type  = 'info'
+            Title = 'Why MFA Matters'
+            Body  = 'Multi-factor authentication blocks 99.9% of account compromise attacks. Any account without MFA is a significant risk, especially admin accounts.'
+        }
+        @{
+            Type  = 'warning'
+            Title = 'Global Admin Count'
+            Body  = 'Microsoft recommends 2-4 Global Administrators. Having too many increases the attack surface; having only 1 creates a single point of failure.'
+        }
+        @{
+            Type  = 'tip'
+            Title = 'Conditional Access vs Security Defaults'
+            Body  = 'Security Defaults provide a basic level of protection for all users. Conditional Access policies offer granular control and are recommended for organizations with Microsoft Entra ID P1 or P2 licenses.'
+        }
+    )
+    'Email'         = @(
+        @{
+            Type  = 'info'
+            Title = 'DMARC, DKIM &amp; SPF'
+            Body  = 'These three DNS records work together to prevent email spoofing. SPF validates sending servers, DKIM ensures message integrity, and DMARC tells receivers what to do with failures.'
+        }
+        @{
+            Type  = 'warning'
+            Title = 'Anti-spam Allowed Domains'
+            Body  = 'Allowing entire domains to bypass spam filtering is dangerous. Attackers frequently spoof allowed domains to deliver phishing emails.'
+        }
+        @{
+            Type  = 'tip'
+            Title = 'Mailbox Delegation Auditing'
+            Body  = 'Mailboxes with Send-As, Send-on-Behalf, or Full Access permissions should be reviewed regularly. Excessive delegation is a common vector for internal data exfiltration.'
+        }
+    )
+    'Security'      = @(
+        @{
+            Type  = 'info'
+            Title = 'Preset Security Policies'
+            Body  = "Microsoft's Standard and Strict preset security policies provide a baseline for anti-phishing, anti-spam, anti-malware, Safe Links, and Safe Attachments. Using presets ensures consistent protection aligned with Microsoft recommendations."
+        }
+        @{
+            Type  = 'warning'
+            Title = 'DLP Policy Coverage'
+            Body  = 'Data Loss Prevention rules prevent sensitive data (PII, financial records, health information) from leaving the organization. Organizations without DLP policies have no automated protection against accidental or malicious data leakage.'
+        }
+    )
+    'Collaboration' = @(
+        @{
+            Type  = 'warning'
+            Title = 'External Sharing'
+            Body  = "Anonymous sharing links allow anyone with the link to access content without authentication. Review all anonymous links and consider restricting to 'Existing guests' or 'Only people in your organization'."
+        }
+        @{
+            Type  = 'info'
+            Title = 'Teams Guest Access'
+            Body  = 'Guest access in Teams allows external users to participate in channels, chats, and meetings. Ensure guest access policies align with your organization data classification and compliance requirements.'
+        }
+    )
+}
+
+# Map callout type to HTML entity icon
+$calloutIcons = @{
+    'info'    = '&#9432;'
+    'warning' = '&#9888;'
+    'tip'     = '&#128161;'
+}
+
 foreach ($sectionName in $sections) {
     $sectionCollectors = @($summary | Where-Object { $_.Section -eq $sectionName })
     $dnsSubsectionRendered = $false
@@ -165,6 +233,26 @@ foreach ($sectionName in $sections) {
     $sectionDesc = $sectionDescriptions[$sectionName]
     if ($sectionDesc) {
         $null = $sectionHtml.AppendLine("<p class='section-description'>$sectionDesc</p>")
+    }
+
+    # Inline explanation callouts — collapsible context boxes
+    $callouts = $sectionCallouts[$sectionName]
+    if ($callouts) {
+        $null = $sectionHtml.AppendLine("<div class='callout-group'>")
+        foreach ($callout in $callouts) {
+            $calloutType = $callout.Type
+            $calloutTitle = $callout.Title
+            $calloutBody = $callout.Body
+            $icon = $calloutIcons[$calloutType]
+            if (-not $icon) { $icon = '&#9432;' }
+            $null = $sectionHtml.AppendLine("<div class='callout callout-$calloutType'>")
+            $null = $sectionHtml.AppendLine("<details>")
+            $null = $sectionHtml.AppendLine("<summary class='callout-title'><span class='callout-icon'>$icon</span> $calloutTitle</summary>")
+            $null = $sectionHtml.AppendLine("<div class='callout-body'>$calloutBody</div>")
+            $null = $sectionHtml.AppendLine("</details>")
+            $null = $sectionHtml.AppendLine("</div>")
+        }
+        $null = $sectionHtml.AppendLine("</div>")
     }
 
     # Collector status — compact chip grid
@@ -1258,6 +1346,30 @@ foreach ($c in $summary) {
             RiskSeverity = if ($entry) { $entry.riskSeverity } else { 'Medium' }
             Frameworks   = $fwHash
         })
+    }
+}
+
+# ------------------------------------------------------------------
+# Compute per-section status counts for the service-area breakdown chart
+# ------------------------------------------------------------------
+$sectionStatusCounts = @{}
+if ($allCisFindings.Count -gt 0) {
+    $grouped = $allCisFindings | Group-Object -Property Section
+    foreach ($group in $grouped) {
+        $passCount = @($group.Group | Where-Object { $_.Status -eq 'Pass' }).Count
+        $failCount = @($group.Group | Where-Object { $_.Status -eq 'Fail' }).Count
+        $warnCount = @($group.Group | Where-Object { $_.Status -eq 'Warning' }).Count
+        $reviewCount = @($group.Group | Where-Object { $_.Status -eq 'Review' }).Count
+        $totalCount = $passCount + $failCount + $warnCount + $reviewCount
+        if ($totalCount -gt 0) {
+            $sectionStatusCounts[$group.Name] = @{
+                Pass    = $passCount
+                Fail    = $failCount
+                Warning = $warnCount
+                Review  = $reviewCount
+                Total   = $totalCount
+            }
+        }
     }
 }
 

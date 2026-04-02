@@ -328,6 +328,50 @@ $html = @"
         }
 
         /* ----------------------------------------------------------
+           Inline Explanation Callouts
+           ---------------------------------------------------------- */
+        .callout-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 0 0 16px 0;
+        }
+        .callout {
+            flex: 1 1 280px;
+            max-width: 480px;
+            border-radius: 6px;
+            border: 1px solid var(--m365a-border);
+            border-left: 4px solid var(--m365a-accent);
+            background: var(--m365a-card-bg);
+        }
+        .callout-info { border-left-color: var(--m365a-info); }
+        .callout-warning { border-left-color: var(--m365a-warning); }
+        .callout-tip { border-left-color: var(--m365a-success); }
+        .callout-title {
+            padding: 10px 14px;
+            font-weight: 600;
+            font-size: 9.5pt;
+            cursor: pointer;
+            color: var(--m365a-dark);
+            list-style: none;
+        }
+        .callout-title::-webkit-details-marker { display: none; }
+        .callout-title::before {
+            content: '\25B6  ';
+            font-size: 8pt;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+        details[open] > .callout-title::before { transform: rotate(90deg); }
+        .callout-icon { margin-right: 6px; }
+        .callout-body {
+            padding: 0 14px 12px;
+            font-size: 9pt;
+            color: var(--m365a-medium-gray);
+            line-height: 1.6;
+        }
+
+        /* ----------------------------------------------------------
            Executive Summary Hero
            ---------------------------------------------------------- */
         .exec-hero {
@@ -452,6 +496,25 @@ $html = @"
             background: var(--m365a-info-bg);
             border-left: 3px solid var(--m365a-accent);
             color: var(--m365a-dark);
+        }
+
+        /* ----------------------------------------------------------
+           Service Area Breakdown Chart
+           ---------------------------------------------------------- */
+        .service-area-chart {
+            margin: 20px 0;
+            padding: 20px;
+            background: var(--m365a-card-bg);
+            border: 1px solid var(--m365a-border);
+            border-radius: 8px;
+        }
+        .service-area-chart h3 {
+            margin: 0 0 16px 0;
+            font-size: 12pt;
+            font-weight: 600;
+            color: var(--m365a-dark);
+            border: none;
+            padding: 0;
         }
 
         /* ----------------------------------------------------------
@@ -1821,6 +1884,7 @@ $html = @"
             .id-donut-stack { page-break-inside: auto; }
             .exec-hero { page-break-inside: avoid; page-break-after: always; grid-template-columns: 1fr auto 1fr; }
             .exec-hero-center { border-left: none; border-right: none; padding: 0 10px; }
+            .service-area-chart { page-break-inside: avoid; border-color: #ccc; }
             .tenant-card { page-break-inside: avoid; }
             .tenant-facts { grid-template-columns: repeat(3, 1fr); }
             .tenant-meta { font-size: 8pt; }
@@ -1851,6 +1915,13 @@ $html = @"
             .matrix-controls { display: none; }
             .matrix-table tr { display: table-row !important; }
             .fw-col { display: table-cell !important; }
+
+            /* --- Callouts: expand and simplify for print --- */
+            .callout { border-left-width: 3px; page-break-inside: avoid; }
+            .callout details[open] > .callout-title,
+            .callout .callout-title { pointer-events: none; }
+            .callout .callout-title::before { content: ''; }
+            .callout .callout-body { display: block !important; }
 
             /* --- Fix 8: Hide hover effects in print --- */
             .email-metric-card:hover,
@@ -1978,6 +2049,34 @@ if (-not $SkipExecutiveSummary) {
             </div>
         </div>
 "@
+
+    # Service-area breakdown chart (only if we have per-section status data)
+    if ($sectionStatusCounts -and $sectionStatusCounts.Count -gt 0) {
+        $chartRows = [System.Collections.Generic.List[hashtable]]::new()
+        foreach ($s in $sections) {
+            if ($sectionStatusCounts.ContainsKey($s)) {
+                $counts = $sectionStatusCounts[$s]
+                $chartRows.Add(@{
+                    Label   = $s
+                    Pass    = $counts.Pass
+                    Fail    = $counts.Fail
+                    Warning = $counts.Warning
+                    Review  = $counts.Review
+                    Total   = $counts.Total
+                })
+            }
+        }
+        if ($chartRows.Count -gt 0) {
+            $serviceAreaChartSvg = Get-SvgStackedBar -Rows @($chartRows)
+            $html += @"
+
+        <div class="service-area-chart" id="service-area-chart">
+            <h3>Service Area Breakdown</h3>
+            $serviceAreaChartSvg
+        </div>
+"@
+        }
+    }
 
     if ($issues.Count -gt 0) {
         $html += @"
