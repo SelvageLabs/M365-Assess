@@ -328,6 +328,50 @@ $html = @"
         }
 
         /* ----------------------------------------------------------
+           Inline Explanation Callouts
+           ---------------------------------------------------------- */
+        .callout-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 0 0 16px 0;
+        }
+        .callout {
+            flex: 1 1 280px;
+            max-width: 480px;
+            border-radius: 6px;
+            border: 1px solid var(--m365a-border);
+            border-left: 4px solid var(--m365a-accent);
+            background: var(--m365a-card-bg);
+        }
+        .callout-info { border-left-color: var(--m365a-info); }
+        .callout-warning { border-left-color: var(--m365a-warning); }
+        .callout-tip { border-left-color: var(--m365a-success); }
+        .callout-title {
+            padding: 10px 14px;
+            font-weight: 600;
+            font-size: 9.5pt;
+            cursor: pointer;
+            color: var(--m365a-dark);
+            list-style: none;
+        }
+        .callout-title::-webkit-details-marker { display: none; }
+        .callout-title::before {
+            content: '\25B6  ';
+            font-size: 8pt;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+        details[open] > .callout-title::before { transform: rotate(90deg); }
+        .callout-icon { margin-right: 6px; }
+        .callout-body {
+            padding: 0 14px 12px;
+            font-size: 9pt;
+            color: var(--m365a-medium-gray);
+            line-height: 1.6;
+        }
+
+        /* ----------------------------------------------------------
            Executive Summary Hero
            ---------------------------------------------------------- */
         .exec-hero {
@@ -1863,6 +1907,13 @@ $html = @"
             .matrix-controls { display: none; }
             .matrix-table tr { display: table-row !important; }
             .fw-col { display: table-cell !important; }
+
+            /* --- Callouts: expand and simplify for print --- */
+            .callout { border-left-width: 3px; page-break-inside: avoid; }
+            .callout details[open] > .callout-title,
+            .callout .callout-title { pointer-events: none; }
+            .callout .callout-title::before { content: ''; }
+            .callout .callout-body { display: block !important; }
 
             /* --- Fix 8: Hide hover effects in print --- */
             .email-metric-card:hover,
