@@ -2484,7 +2484,7 @@ if (-not $SkipExecutiveSummary) {
                 </div>
                 <div class="exec-hero-metric">
                     <div class="exec-hero-metric-value">$($allFrameworks.Count)</div>
-                    <div class="exec-hero-metric-label">Frameworks</div>
+                    <div class="exec-hero-metric-label">Security Frameworks</div>
                 </div>
             </div>
         </div>
