@@ -1349,6 +1349,30 @@ foreach ($c in $summary) {
     }
 }
 
+# ------------------------------------------------------------------
+# Compute per-section status counts for the service-area breakdown chart
+# ------------------------------------------------------------------
+$sectionStatusCounts = @{}
+if ($allCisFindings.Count -gt 0) {
+    $grouped = $allCisFindings | Group-Object -Property Section
+    foreach ($group in $grouped) {
+        $passCount = @($group.Group | Where-Object { $_.Status -eq 'Pass' }).Count
+        $failCount = @($group.Group | Where-Object { $_.Status -eq 'Fail' }).Count
+        $warnCount = @($group.Group | Where-Object { $_.Status -eq 'Warning' }).Count
+        $reviewCount = @($group.Group | Where-Object { $_.Status -eq 'Review' }).Count
+        $totalCount = $passCount + $failCount + $warnCount + $reviewCount
+        if ($totalCount -gt 0) {
+            $sectionStatusCounts[$group.Name] = @{
+                Pass    = $passCount
+                Fail    = $failCount
+                Warning = $warnCount
+                Review  = $reviewCount
+                Total   = $totalCount
+            }
+        }
+    }
+}
+
 if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0 -and -not $SkipComplianceOverview) {
     . (Join-Path -Path $PSScriptRoot -ChildPath 'Export-ComplianceOverview.ps1')
     $complianceHtml = Export-ComplianceOverview -Findings @($allCisFindings) -ControlRegistry $controlRegistry -Frameworks $allFrameworks -FrameworkFilter $FrameworkFilter -Sections @($summary | Select-Object -ExpandProperty Section -ErrorAction SilentlyContinue | Where-Object { $_ } | Sort-Object -Unique)

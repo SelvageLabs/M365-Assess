@@ -499,6 +499,25 @@ $html = @"
         }
 
         /* ----------------------------------------------------------
+           Service Area Breakdown Chart
+           ---------------------------------------------------------- */
+        .service-area-chart {
+            margin: 20px 0;
+            padding: 20px;
+            background: var(--m365a-card-bg);
+            border: 1px solid var(--m365a-border);
+            border-radius: 8px;
+        }
+        .service-area-chart h3 {
+            margin: 0 0 16px 0;
+            font-size: 12pt;
+            font-weight: 600;
+            color: var(--m365a-dark);
+            border: none;
+            padding: 0;
+        }
+
+        /* ----------------------------------------------------------
            Tenant Organization Card
            ---------------------------------------------------------- */
         .tenant-card {
@@ -1857,6 +1876,7 @@ $html = @"
             .id-donut-stack { page-break-inside: auto; }
             .exec-hero { page-break-inside: avoid; page-break-after: always; grid-template-columns: 1fr auto 1fr; }
             .exec-hero-center { border-left: none; border-right: none; padding: 0 10px; }
+            .service-area-chart { page-break-inside: avoid; border-color: #ccc; }
             .tenant-card { page-break-inside: avoid; }
             .tenant-facts { grid-template-columns: repeat(3, 1fr); }
             .tenant-meta { font-size: 8pt; }
@@ -2021,6 +2041,34 @@ if (-not $SkipExecutiveSummary) {
             </div>
         </div>
 "@
+
+    # Service-area breakdown chart (only if we have per-section status data)
+    if ($sectionStatusCounts -and $sectionStatusCounts.Count -gt 0) {
+        $chartRows = [System.Collections.Generic.List[hashtable]]::new()
+        foreach ($s in $sections) {
+            if ($sectionStatusCounts.ContainsKey($s)) {
+                $counts = $sectionStatusCounts[$s]
+                $chartRows.Add(@{
+                    Label   = $s
+                    Pass    = $counts.Pass
+                    Fail    = $counts.Fail
+                    Warning = $counts.Warning
+                    Review  = $counts.Review
+                    Total   = $counts.Total
+                })
+            }
+        }
+        if ($chartRows.Count -gt 0) {
+            $serviceAreaChartSvg = Get-SvgStackedBar -Rows @($chartRows)
+            $html += @"
+
+        <div class="service-area-chart" id="service-area-chart">
+            <h3>Service Area Breakdown</h3>
+            $serviceAreaChartSvg
+        </div>
+"@
+        }
+    }
 
     if ($issues.Count -gt 0) {
         $html += @"

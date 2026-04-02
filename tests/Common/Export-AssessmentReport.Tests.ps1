@@ -258,4 +258,41 @@ Describe 'Export-AssessmentReport HTML structure' {
             $html | Should -Match '@media print[\s\S]*?\.copy-btn[\s\S]*?display:\s*none'
         }
     }
+
+    Context 'Service area breakdown chart' {
+        It 'Should include service-area-chart CSS class in stylesheet' {
+            $html | Should -Match '\.service-area-chart'
+        }
+
+        It 'Should include service-area-chart h3 styling' {
+            $html | Should -Match '\.service-area-chart h3'
+        }
+
+        It 'Should include Get-SvgStackedBar function in ReportHelpers' {
+            $html | Should -Match 'function Get-SvgStackedBar'
+        }
+
+        It 'Should compute sectionStatusCounts from allCisFindings' {
+            $html | Should -Match '\$sectionStatusCounts'
+        }
+
+        It 'Should group findings by Section for status counts' {
+            $html | Should -Match 'Group-Object -Property Section'
+        }
+
+        It 'Should render service-area-chart div when data exists' {
+            $html | Should -Match "id=""service-area-chart"""
+        }
+
+        It 'Should include print CSS for service-area-chart' {
+            $html | Should -Match '\.service-area-chart \{ page-break-inside: avoid'
+        }
+
+        It 'Should use CSS variables for SVG fill colors in stacked bar' {
+            $html | Should -Match "var\(--m365a-success\)"
+            $html | Should -Match "var\(--m365a-danger\)"
+            $html | Should -Match "var\(--m365a-warning\)"
+            $html | Should -Match "var\(--m365a-review\)"
+        }
+    }
 }

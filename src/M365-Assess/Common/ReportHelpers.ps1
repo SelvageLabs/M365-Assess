@@ -147,6 +147,129 @@ function Get-SvgHorizontalBar {
     return $barHtml
 }
 
+function Get-SvgStackedBar {
+    <#
+    .SYNOPSIS
+        Generates an SVG stacked horizontal bar chart with one row per service area.
+    .DESCRIPTION
+        Renders a multi-row SVG chart where each row is a horizontal stacked bar
+        showing Pass/Fail/Warning/Review counts for a service area. Uses CSS
+        variables for fill colors to support light and dark mode.
+    .PARAMETER Rows
+        Array of hashtables with keys: Label, Pass, Fail, Warning, Review, Total.
+    .PARAMETER Width
+        SVG width in pixels.
+    .PARAMETER BarHeight
+        Height of each bar in pixels.
+    .PARAMETER Gap
+        Vertical gap between rows in pixels.
+    .PARAMETER LabelWidth
+        Width reserved for row labels in pixels.
+    .EXAMPLE
+        Get-SvgStackedBar -Rows @(@{Label='Identity'; Pass=45; Fail=3; Warning=5; Review=2; Total=55})
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)]
+        [array]$Rows,
+        [int]$Width = 600,
+        [int]$BarHeight = 22,
+        [int]$Gap = 6,
+        [int]$LabelWidth = 110
+    )
+
+    $legendHeight = 28
+    $topPadding = 4
+    $totalHeight = $topPadding + ($Rows.Count * ($BarHeight + $Gap)) - $Gap + $legendHeight + 8
+    $barWidth = $Width - $LabelWidth - 50  # reserve space for count label on right
+
+    $svg = "<svg xmlns='http://www.w3.org/2000/svg' width='$Width' height='$totalHeight' viewBox='0 0 $Width $totalHeight' role='img' aria-label='Service area breakdown chart'>"
+
+    # Legend at top
+    $legendY = $topPadding
+    $legendItems = @(
+        @{ Label = 'Pass'; Color = 'var(--m365a-success)' },
+        @{ Label = 'Fail'; Color = 'var(--m365a-danger)' },
+        @{ Label = 'Warning'; Color = 'var(--m365a-warning)' },
+        @{ Label = 'Review'; Color = 'var(--m365a-review)' }
+    )
+    $legendX = $LabelWidth
+    foreach ($item in $legendItems) {
+        $svg += "<rect x='$legendX' y='$legendY' width='10' height='10' rx='2' fill='$($item.Color)'/>"
+        $textX = $legendX + 14
+        $svg += "<text x='$textX' y='$($legendY + 9)' font-family='Inter, sans-serif' font-size='9' fill='var(--m365a-medium-gray)'>$($item.Label)</text>"
+        $legendX += 70
+    }
+
+    $barStartY = $topPadding + $legendHeight
+
+    foreach ($row in $Rows) {
+        $rowIndex = [array]::IndexOf($Rows, $row)
+        $y = $barStartY + ($rowIndex * ($BarHeight + $Gap))
+        $textY = $y + [math]::Round($BarHeight / 2, 0) + 4
+
+        # Row label
+        $svg += "<text x='$($LabelWidth - 8)' y='$textY' font-family='Inter, sans-serif' font-size='10' fill='var(--m365a-text)' text-anchor='end'>$($row.Label)</text>"
+
+        $total = [int]$row.Total
+        if ($total -eq 0) {
+            # Empty bar track
+            $svg += "<rect x='$LabelWidth' y='$y' width='$barWidth' height='$BarHeight' rx='4' fill='var(--m365a-border)' opacity='0.3'/>"
+            continue
+        }
+
+        # Background track
+        $svg += "<rect x='$LabelWidth' y='$y' width='$barWidth' height='$BarHeight' rx='4' fill='var(--m365a-border)' opacity='0.15'/>"
+
+        # Stacked segments: Pass, Fail, Warning, Review
+        $segments = @(
+            @{ Count = [int]$row.Pass; Color = 'var(--m365a-success)'; Name = 'Pass' },
+            @{ Count = [int]$row.Fail; Color = 'var(--m365a-danger)'; Name = 'Fail' },
+            @{ Count = [int]$row.Warning; Color = 'var(--m365a-warning)'; Name = 'Warning' },
+            @{ Count = [int]$row.Review; Color = 'var(--m365a-review)'; Name = 'Review' }
+        )
+
+        $xOffset = $LabelWidth
+        $isFirst = $true
+        $isLast = $false
+        $visibleSegs = @($segments | Where-Object { $_.Count -gt 0 })
+        $segIndex = 0
+
+        foreach ($seg in $visibleSegs) {
+            $segWidth = [math]::Round(($seg.Count / $total) * $barWidth, 1)
+            if ($segWidth -lt 1) { $segWidth = 1 }
+            $segIndex++
+            $isLast = ($segIndex -eq $visibleSegs.Count)
+
+            # Use clip-path for rounded corners on first/last segments
+            if ($isFirst -and $isLast) {
+                $svg += "<rect x='$xOffset' y='$y' width='$segWidth' height='$BarHeight' rx='4' fill='$($seg.Color)'>"
+            } elseif ($isFirst) {
+                $clipId = "clip-first-$rowIndex"
+                $svg += "<clipPath id='$clipId'><rect x='$xOffset' y='$y' width='$($segWidth + 4)' height='$BarHeight' rx='4'/></clipPath>"
+                $svg += "<rect x='$xOffset' y='$y' width='$segWidth' height='$BarHeight' fill='$($seg.Color)' clip-path='url(#$clipId)'>"
+            } elseif ($isLast) {
+                $clipId = "clip-last-$rowIndex"
+                $svg += "<clipPath id='$clipId'><rect x='$($xOffset - 4)' y='$y' width='$($segWidth + 4)' height='$BarHeight' rx='4'/></clipPath>"
+                $svg += "<rect x='$xOffset' y='$y' width='$segWidth' height='$BarHeight' fill='$($seg.Color)' clip-path='url(#$clipId)'>"
+            } else {
+                $svg += "<rect x='$xOffset' y='$y' width='$segWidth' height='$BarHeight' fill='$($seg.Color)'>"
+            }
+            $svg += "<title>$($seg.Name): $($seg.Count)</title></rect>"
+            $xOffset += $segWidth
+            $isFirst = $false
+        }
+
+        # Total count label on right
+        $countX = $LabelWidth + $barWidth + 6
+        $svg += "<text x='$countX' y='$textY' font-family='Inter, sans-serif' font-size='10' fill='var(--m365a-medium-gray)'>$total</text>"
+    }
+
+    $svg += "</svg>"
+    return $svg
+}
+
 # ------------------------------------------------------------------
 # Smart sorting helper -- prioritize actionable rows
 # ------------------------------------------------------------------
