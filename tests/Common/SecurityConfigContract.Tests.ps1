@@ -1,9 +1,8 @@
 BeforeDiscovery {
     # Discover all security-config collector scripts that should follow the contract
     $collectorRoot = Join-Path $PSScriptRoot '../../src/M365-Assess'
-    # Exclude Get-EntraSecurityConfig.ps1 (#256) and Get-DefenderSecurityConfig.ps1 (#257)
-    # which will migrate during their v1.2.0 decomposition
-    $deferredCollectors = @('Get-DefenderSecurityConfig.ps1')
+    # All collectors now migrated to SecurityConfigHelper contract (#256, #257)
+    $deferredCollectors = @()
     $script:CollectorFiles = Get-ChildItem -Path $collectorRoot -Recurse -Filter 'Get-*SecurityConfig.ps1' |
         Where-Object { $_.FullName -notlike '*node_modules*' -and $_.Name -notin $deferredCollectors }
 

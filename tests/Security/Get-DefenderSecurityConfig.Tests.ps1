@@ -136,7 +136,7 @@ Describe 'Get-DefenderSecurityConfig' {
             )
         }
 
-        # Run the collector by dot-sourcing it
+        # Run the collector by dot-sourcing it (orchestrator + all companion files)
         . "$PSScriptRoot/../../src/M365-Assess/Orchestrator/AssessmentHelpers.ps1"
         . "$PSScriptRoot/../../src/M365-Assess/Security/Get-DefenderSecurityConfig.ps1"
     }
