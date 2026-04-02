@@ -369,8 +369,6 @@ foreach ($sectionName in $sections) {
                 $guestMfa         = [Math]::Max(0, $withMfa - $mfaRegistered)
             }
             $disabledClass = if ($disabledUsers -gt 0) { 'danger' } else { 'success' }
-            $mfaCapableNotEnrolled = $mfaNotRegistered - $mfaNotCapable
-            $mfaNotRegClass = if ($mfaCapableNotEnrolled -le 0) { 'success' } elseif ($mfaCapableNotEnrolled -le 5) { 'warning' } else { 'danger' }
             $adminNoMfaClass = if ($adminNoMfa -gt 0) { 'danger' } else { 'success' }
             $ssprNotRegClass = if ($ssprNotRegistered -gt 0) { 'warning' } else { 'success' }
 
@@ -406,6 +404,8 @@ foreach ($sectionName in $sections) {
             $mfaCapable = @($mfaRawData | Where-Object { $_.IsMfaCapable -eq 'True' }).Count
             $mfaNotCapable = $mfaTotal - $mfaCapable
             $mfaNotCapableClass = if ($mfaNotCapable -gt 0) { 'warning' } else { '' }
+            $mfaCapableNotEnrolled = $mfaNotRegistered - $mfaNotCapable
+            $mfaNotRegClass = if ($mfaCapableNotEnrolled -le 0) { 'success' } elseif ($mfaCapableNotEnrolled -le 5) { 'warning' } else { 'danger' }
             $ssprCapable = @($mfaRawData | Where-Object { $_.IsSsprCapable -eq 'True' }).Count
             $ssprNotCapable = $mfaTotal - $ssprCapable
             $guestNoMfa = [Math]::Max(0, $guestUsers - $guestMfa)
