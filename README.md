@@ -138,6 +138,7 @@ During execution, the console displays real-time streaming progress for each sec
 | **Inventory** *(opt-in)* | Mailbox, Group, Teams, SharePoint, OneDrive Inventory | Per-object M&A inventory: mailboxes, distribution lists, M365 groups, Teams, SharePoint sites, OneDrive accounts |
 | **ActiveDirectory** *(opt-in)* | AD Domain & Forest, AD DC Health, AD Replication, AD Security | Domain/forest topology, DC health via dcdiag, replication partners and lag, password policies, privileged group membership. Requires RSAT or domain controller access. |
 | **SOC2** *(opt-in)* | Security Controls, Confidentiality Controls, Audit Evidence, Readiness Checklist | SOC 2 Trust Services Criteria assessment: security and confidentiality controls, 30-day audit log evidence collection, organizational readiness checklist for non-automatable criteria (CC1-CC5, CC8-CC9) |
+| **ValueOpportunity** *(preview)* | License Utilization, Feature Adoption, Feature Readiness | **In development.** Analyzes license utilization and feature adoption to identify features your tenant pays for but does not use. Produces an adoption roadmap with quick wins. [Share feedback](https://github.com/Galvnyz/M365-Assess/issues). |
 ```powershell
 # Run specific sections
 Invoke-M365Assessment -Section Identity,Email -TenantId 'contoso.onmicrosoft.com'
