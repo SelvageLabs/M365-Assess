@@ -701,8 +701,8 @@ try {
 
     foreach ($sp in $regularApps) {
         $hasExpired = $false
-        foreach ($pwd in @($sp['passwordCredentials'])) {
-            if ($pwd -and $pwd['endDateTime'] -and [datetime]$pwd['endDateTime'] -lt $now) { $hasExpired = $true; break }
+        foreach ($passCred in @($sp['passwordCredentials'])) {
+            if ($passCred -and $passCred['endDateTime'] -and [datetime]$passCred['endDateTime'] -lt $now) { $hasExpired = $true; break }
         }
         if (-not $hasExpired) {
             foreach ($key in @($sp['keyCredentials'])) {
@@ -760,7 +760,7 @@ try {
     $secretPermanentRole = @()
 
     foreach ($sp in $regularApps) {
-        $hasSecret = $_['passwordCredentials'] -and @($sp['passwordCredentials']).Count -gt 0
+        $hasSecret = $sp['passwordCredentials'] -and @($sp['passwordCredentials']).Count -gt 0
         if (-not $hasSecret) { continue }
 
         if ($spRoleAssignments.ContainsKey($sp['id'])) {
