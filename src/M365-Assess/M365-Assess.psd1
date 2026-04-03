@@ -70,6 +70,7 @@
         'Common\SecurityConfigHelper.ps1'
         'Common\Connect-Service.ps1'
         'Common\Resolve-DnsRecord.ps1'
+        'Common\Resolve-TenantLicenses.ps1'
         'Common\Export-AssessmentReport.ps1'
         'Common\ReportHelpers.ps1'
         'Common\Build-SectionHtml.ps1'
