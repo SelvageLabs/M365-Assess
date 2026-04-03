@@ -1,29 +1,71 @@
-<#
-.SYNOPSIS
-    Collects license assignment and utilization data across the tenant.
-.DESCRIPTION
-    Queries assigned vs. available license counts for each SKU and cross-references
-    active usage signals to identify unused or underutilized seat allocations.
-    Results are stored in the assessment security-config store for use by the
-    Analyze-ValueOpportunity engine.
+function Get-LicenseUtilization {
+    <#
+    .SYNOPSIS
+        Cross-references tenant licenses against the feature map.
+    .DESCRIPTION
+        For each feature in sku-feature-map.json, checks if the tenant has any
+        of the required service plans. Returns per-feature license status.
+    .PARAMETER TenantLicenses
+        Hashtable from Resolve-TenantLicenses with ActiveServicePlans HashSet.
+    .PARAMETER FeatureMap
+        Parsed sku-feature-map.json object.
+    .PARAMETER OutputPath
+        Optional CSV output path.
+    .EXAMPLE
+        Get-LicenseUtilization -TenantLicenses $licenses -FeatureMap $featureMap
+        Returns one PSCustomObject per feature with IsLicensed status.
+    #>
+    [CmdletBinding()]
+    [OutputType([PSCustomObject[]])]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$TenantLicenses,
 
-    Requires: Graph (Organization.Read.All)
-.PARAMETER SecurityConfig
-    The assessment security-config hashtable produced by Initialize-SecurityConfig.
-.PARAMETER AdoptionAccumulator
-    Optional hashtable accumulating adoption signals from preceding collectors.
-.EXAMPLE
-    PS> .\ValueOpportunity\Get-LicenseUtilization.ps1 -SecurityConfig $config
-    Collects license utilization for the connected tenant.
-#>
-[CmdletBinding()]
-param(
-    [Parameter(Mandatory)]
-    [hashtable]$SecurityConfig,
+        [Parameter(Mandatory)]
+        $FeatureMap,
 
-    [Parameter()]
-    [hashtable]$AdoptionAccumulator
-)
+        [Parameter()]
+        [string]$OutputPath
+    )
 
-# Implementation provided by Task 4 (Get-LicenseUtilization collector)
-Write-Verbose 'Get-LicenseUtilization: collector not yet implemented.'
+    $categories = @{}
+    foreach ($cat in $FeatureMap.categories) {
+        $categories[$cat.id] = $cat.name
+    }
+
+    $results = foreach ($feature in $FeatureMap.features) {
+        $isLicensed = $false
+        $sourceSkus = @()
+
+        foreach ($plan in $feature.requiredServicePlans) {
+            # "STANDARD" is a sentinel meaning "available in any M365 tenant"
+            if ($plan -eq 'STANDARD') {
+                $isLicensed = $true
+                $sourceSkus += 'E3 Baseline'
+                continue
+            }
+            if ($TenantLicenses.ActiveServicePlans.Contains($plan)) {
+                $isLicensed = $true
+                $sourceSkus += $plan
+            }
+        }
+
+        [PSCustomObject]@{
+            FeatureId   = $feature.featureId
+            FeatureName = $feature.name
+            Category    = $categories[$feature.category]
+            IsLicensed  = $isLicensed
+            SourcePlans = ($sourceSkus -join ', ')
+            EffortTier  = $feature.effortTier
+            LearnUrl    = $feature.learnUrl
+        }
+    }
+
+    if ($OutputPath) {
+        $results | Export-Csv -Path $OutputPath -NoTypeInformation -Encoding UTF8
+        Write-Output "Exported license utilization ($($results.Count) features) to $OutputPath"
+    }
+    else {
+        Write-Output $results
+    }
+}
