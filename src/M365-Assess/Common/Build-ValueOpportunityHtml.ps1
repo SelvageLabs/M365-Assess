@@ -9,7 +9,7 @@ function Build-ValueOpportunityHtml {
         StringBuilder for efficient string building and follows existing report
         HTML conventions.
     .PARAMETER Analysis
-        Hashtable from Analyze-ValueOpportunity containing OverallAdoptionPct,
+        Hashtable from Measure-ValueOpportunity containing OverallAdoptionPct,
         LicensedFeatureCount, AdoptedFeatureCount, PartialFeatureCount, GapCount,
         CategoryBreakdown, Roadmap, GapMatrix, and NotLicensedFeatures.
     .EXAMPLE

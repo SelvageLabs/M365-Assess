@@ -150,7 +150,7 @@
         'ValueOpportunity\Get-LicenseUtilization.ps1'
         'ValueOpportunity\Get-FeatureAdoption.ps1'
         'ValueOpportunity\Get-FeatureReadiness.ps1'
-        'ValueOpportunity\Analyze-ValueOpportunity.ps1'
+        'ValueOpportunity\Measure-ValueOpportunity.ps1'
         'Networking\Test-PortConnectivity.ps1'
         'Windows\Get-InstalledSoftware.ps1'
         'controls\role-tiers.json'

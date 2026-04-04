@@ -326,7 +326,7 @@ $featureMapPath = Join-Path -Path $projectRoot -ChildPath 'controls' -Additional
 if ((Test-Path -Path $voLicensePath) -and (Test-Path -Path $voAdoptionPath) -and (Test-Path -Path $voReadinessPath) -and (Test-Path -Path $featureMapPath)) {
     try {
         . (Join-Path -Path $PSScriptRoot -ChildPath 'Build-ValueOpportunityHtml.ps1')
-        . (Join-Path -Path $projectRoot -ChildPath 'ValueOpportunity' -AdditionalChildPath 'Analyze-ValueOpportunity.ps1')
+        . (Join-Path -Path $projectRoot -ChildPath 'ValueOpportunity' -AdditionalChildPath 'Measure-ValueOpportunity.ps1')
 
         $featureMap = Get-Content -Path $featureMapPath -Raw | ConvertFrom-Json
         $voLicense = Import-Csv -Path $voLicensePath
@@ -338,7 +338,7 @@ if ((Test-Path -Path $voLicensePath) -and (Test-Path -Path $voAdoptionPath) -and
             $row.IsLicensed = $row.IsLicensed -eq 'True'
         }
 
-        $voAnalysis = Analyze-ValueOpportunity -LicenseUtilization $voLicense -FeatureAdoption $voAdoption -FeatureReadiness $voReadiness -FeatureMap $featureMap
+        $voAnalysis = Measure-ValueOpportunity -LicenseUtilization $voLicense -FeatureAdoption $voAdoption -FeatureReadiness $voReadiness -FeatureMap $featureMap
         $valueOpportunityHtml = Build-ValueOpportunityHtml -Analysis $voAnalysis
     }
     catch {
