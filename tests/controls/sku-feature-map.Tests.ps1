@@ -58,4 +58,15 @@ Describe 'SKU Feature Map Schema' {
             $f.requiredServicePlans | Should -Not -Contain 'STANDARD' -Because "$($f.featureId) should use a real service plan ID, not the STANDARD sentinel"
         }
     }
+
+    It 'Should reference CheckIds that exist in registry.json' {
+        $registryPath = Join-Path $PSScriptRoot '../../src/M365-Assess/controls/registry.json'
+        $registry = Get-Content $registryPath -Raw | ConvertFrom-Json
+        $registryIds = @($registry.checks | ForEach-Object { $_.checkId })
+        foreach ($f in $map.features) {
+            foreach ($checkId in $f.checkIds) {
+                $registryIds | Should -Contain $checkId -Because "$($f.featureId) references CheckId '$checkId' which must exist in registry.json"
+            }
+        }
+    }
 }
