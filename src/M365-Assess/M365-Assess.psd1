@@ -3,7 +3,7 @@
     # Generated: 2026-03-08
 
     RootModule        = 'M365-Assess.psm1'
-    ModuleVersion     = '1.5.0'
+    ModuleVersion     = '1.6.0'
     GUID              = 'f7e3b2a1-4c5d-6e8f-9a0b-1c2d3e4f5a6b'
     Author            = 'Galvnyz'
     CompanyName       = 'Community'
@@ -188,7 +188,7 @@
                              'PowerBI', 'CIS', 'NIST', 'SOC2', 'HIPAA', 'ZeroTrust', 'SecurityBaseline')
             LicenseUri   = 'https://github.com/Galvnyz/M365-Assess/blob/main/LICENSE'
             ProjectUri   = 'https://github.com/Galvnyz/M365-Assess'
-            ReleaseNotes = 'v1.5.0 - Competitive feature parity: license-aware check gating, QuickScan mode, Security Defaults gap analysis, Fluent UI icons, tabbed email explainers, app security cluster'
+            ReleaseNotes = 'v1.6.0 - Stabilization: accurate license detection, Value Opportunity tests, report CSS polish, consent function permissions'
         }
     }
 }
