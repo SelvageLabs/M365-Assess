@@ -39,16 +39,19 @@ Describe 'Get-LicenseUtilization' {
         $pim.IsLicensed | Should -Be $false
     }
 
-    It 'Should mark STANDARD (E3 baseline) features as always licensed' {
+    It 'Should mark features as licensed when tenant has the required service plan' {
         $mockLicenses = @{
-            ActiveServicePlans = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            ActiveServicePlans = [System.Collections.Generic.HashSet[string]]::new(
+                [string[]]@('AAD_PREMIUM'),
+                [System.StringComparer]::OrdinalIgnoreCase
+            )
             SkuPartNumbers = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
         }
 
         $results = Get-LicenseUtilization -TenantLicenses $mockLicenses -FeatureMap $script:featureMap
-        # Find a feature that uses STANDARD plan (E3 baseline)
-        $baseline = $results | Where-Object { $_.SourcePlans -match 'E3 Baseline' } | Select-Object -First 1
-        $baseline.IsLicensed | Should -Be $true
+        # Find a feature that requires AAD_PREMIUM
+        $aadPremiumFeature = $results | Where-Object { $_.SourcePlans -match 'AAD_PREMIUM' } | Select-Object -First 1
+        $aadPremiumFeature.IsLicensed | Should -Be $true
     }
 
     It 'Should return one row per feature' {

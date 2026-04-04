@@ -45,11 +45,6 @@ function Get-LicenseUtilization {
         $sourceSkus = @()
 
         foreach ($plan in $feature.requiredServicePlans) {
-            if ($plan -eq 'STANDARD') {
-                $isLicensed = $true
-                $sourceSkus += 'E3 Baseline'
-                continue
-            }
             if ($TenantLicenses.ActiveServicePlans.Contains($plan)) {
                 $isLicensed = $true
                 $sourceSkus += $plan
