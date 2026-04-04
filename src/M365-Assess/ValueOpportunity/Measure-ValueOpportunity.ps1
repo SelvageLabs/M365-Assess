@@ -1,4 +1,4 @@
-function Analyze-ValueOpportunity {
+function Measure-ValueOpportunity {
     <#
     .SYNOPSIS
         Merges license utilization, feature adoption, and readiness into a unified analysis.

@@ -1,8 +1,8 @@
 BeforeAll {
-    . "$PSScriptRoot/../../src/M365-Assess/ValueOpportunity/Analyze-ValueOpportunity.ps1"
+    . "$PSScriptRoot/../../src/M365-Assess/ValueOpportunity/Measure-ValueOpportunity.ps1"
 }
 
-Describe 'Analyze-ValueOpportunity' {
+Describe 'Measure-ValueOpportunity' {
     BeforeAll {
         $script:mockFeatureMap = @{
             categories = @(
@@ -37,14 +37,14 @@ Describe 'Analyze-ValueOpportunity' {
     }
 
     It 'Should calculate overall adoption percentage from licensed features' {
-        $result = Analyze-ValueOpportunity -LicenseUtilization $script:mockLicense -FeatureAdoption $script:mockAdoption -FeatureReadiness $script:mockReadiness -FeatureMap $script:mockFeatureMap
+        $result = Measure-ValueOpportunity -LicenseUtilization $script:mockLicense -FeatureAdoption $script:mockAdoption -FeatureReadiness $script:mockReadiness -FeatureMap $script:mockFeatureMap
         # 3 licensed features: f1 (Adopted), f2 (NotAdopted), f4 (Partial)
         # 2 of 3 are adopted/partial = 67%
         $result.OverallAdoptionPct | Should -Be 67
     }
 
     It 'Should count licensed and adopted features' {
-        $result = Analyze-ValueOpportunity -LicenseUtilization $script:mockLicense -FeatureAdoption $script:mockAdoption -FeatureReadiness $script:mockReadiness -FeatureMap $script:mockFeatureMap
+        $result = Measure-ValueOpportunity -LicenseUtilization $script:mockLicense -FeatureAdoption $script:mockAdoption -FeatureReadiness $script:mockReadiness -FeatureMap $script:mockFeatureMap
         $result.LicensedFeatureCount | Should -Be 3
         $result.AdoptedFeatureCount | Should -Be 1
         $result.PartialFeatureCount | Should -Be 1
@@ -52,7 +52,7 @@ Describe 'Analyze-ValueOpportunity' {
     }
 
     It 'Should produce category breakdown' {
-        $result = Analyze-ValueOpportunity -LicenseUtilization $script:mockLicense -FeatureAdoption $script:mockAdoption -FeatureReadiness $script:mockReadiness -FeatureMap $script:mockFeatureMap
+        $result = Measure-ValueOpportunity -LicenseUtilization $script:mockLicense -FeatureAdoption $script:mockAdoption -FeatureReadiness $script:mockReadiness -FeatureMap $script:mockFeatureMap
         $result.CategoryBreakdown.Count | Should -Be 2
         $idCat = $result.CategoryBreakdown | Where-Object { $_.Category -eq 'Identity & Access' }
         $idCat.Licensed | Should -Be 2
@@ -60,14 +60,14 @@ Describe 'Analyze-ValueOpportunity' {
     }
 
     It 'Should produce roadmap with only licensed not-adopted features' {
-        $result = Analyze-ValueOpportunity -LicenseUtilization $script:mockLicense -FeatureAdoption $script:mockAdoption -FeatureReadiness $script:mockReadiness -FeatureMap $script:mockFeatureMap
+        $result = Measure-ValueOpportunity -LicenseUtilization $script:mockLicense -FeatureAdoption $script:mockAdoption -FeatureReadiness $script:mockReadiness -FeatureMap $script:mockFeatureMap
         # f2 is licensed + NotAdopted + Medium effort
         $result.Roadmap['Medium'].Count | Should -Be 1
         $result.Roadmap['Medium'][0].FeatureId | Should -Be 'f2'
     }
 
     It 'Should list not-licensed features separately' {
-        $result = Analyze-ValueOpportunity -LicenseUtilization $script:mockLicense -FeatureAdoption $script:mockAdoption -FeatureReadiness $script:mockReadiness -FeatureMap $script:mockFeatureMap
+        $result = Measure-ValueOpportunity -LicenseUtilization $script:mockLicense -FeatureAdoption $script:mockAdoption -FeatureReadiness $script:mockReadiness -FeatureMap $script:mockFeatureMap
         $result.NotLicensedFeatures.Count | Should -Be 1
         $result.NotLicensedFeatures[0].FeatureId | Should -Be 'f3'
     }
@@ -85,7 +85,7 @@ Describe 'Analyze-ValueOpportunity' {
             [PSCustomObject]@{ FeatureId = 'f3'; FeatureName = 'F3'; Category = 'Email Security'; AdoptionState = 'NotLicensed'; AdoptionScore = 0 }
             [PSCustomObject]@{ FeatureId = 'f4'; FeatureName = 'F4'; Category = 'Email Security'; AdoptionState = 'NotLicensed'; AdoptionScore = 0 }
         )
-        $result = Analyze-ValueOpportunity -LicenseUtilization $emptyLicense -FeatureAdoption $allNotLicensed -FeatureReadiness $script:mockReadiness -FeatureMap $script:mockFeatureMap
+        $result = Measure-ValueOpportunity -LicenseUtilization $emptyLicense -FeatureAdoption $allNotLicensed -FeatureReadiness $script:mockReadiness -FeatureMap $script:mockFeatureMap
         $result.OverallAdoptionPct | Should -Be 0
         $result.LicensedFeatureCount | Should -Be 0
     }
