@@ -2129,6 +2129,8 @@ $html = @"
         .nav-badge-fail { background: var(--m365a-danger-bg); color: var(--m365a-danger-text); }
         .nav-badge-warn { background: var(--m365a-warning-bg); color: var(--m365a-warning-text); }
         .nav-badge-info { background: var(--m365a-info-bg); color: var(--m365a-info-text); }
+        .nav-badge-neutral { background: var(--m365a-neutral-bg); color: var(--m365a-neutral); }
+        .nav-badge-skip { background: var(--m365a-light-gray); color: var(--m365a-medium-gray); font-weight: 400; font-style: italic; }
         .nav-separator {
             height: 1px;
             background: var(--m365a-border);
@@ -2508,6 +2510,7 @@ foreach ($navSection in $sections) {
     $navLabel = [System.Web.HttpUtility]::HtmlEncode($navSection)
     $navBadge = ''
     if ($sectionStatusCounts.ContainsKey($navSection)) {
+        # Section has security findings -- show status badge
         $navCounts = $sectionStatusCounts[$navSection]
         if ($navCounts.Fail -gt 0) {
             $navBadge = "<span class='nav-badge nav-badge-fail'>$($navCounts.Fail)</span>"
@@ -2517,6 +2520,23 @@ foreach ($navSection in $sections) {
         }
         elseif ($navCounts.Pass -gt 0) {
             $navBadge = "<span class='nav-badge nav-badge-pass'>&#10003;</span>"
+        }
+    }
+    else {
+        # No security findings -- use collector summary for context
+        $sectionCollectors = @($summary | Where-Object { $_.Section -eq $navSection })
+        if ($sectionCollectors.Count -gt 0) {
+            $skippedAll = ($sectionCollectors | Where-Object { $_.Status -eq 'Skipped' }).Count -eq $sectionCollectors.Count
+            if ($skippedAll) {
+                $navBadge = "<span class='nav-badge nav-badge-skip'>skip</span>"
+            }
+            else {
+                $totalItems = ($sectionCollectors | Where-Object { $_.Status -eq 'Complete' } |
+                    ForEach-Object { [int]$_.Items } | Measure-Object -Sum).Sum
+                if ($totalItems -gt 0) {
+                    $navBadge = "<span class='nav-badge nav-badge-neutral'>$totalItems</span>"
+                }
+            }
         }
     }
     $navIconKey = $navSection.ToLower()
