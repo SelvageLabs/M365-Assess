@@ -2542,6 +2542,20 @@ foreach ($navSection in $sections) {
             if ($skippedAll) {
                 $navBadge = "<span class='nav-badge nav-badge-skip'>skip</span>"
             }
+            elseif ($navSection -eq 'Hybrid') {
+                # Hybrid: show sync status instead of item count
+                $hybridCsv = Get-ChildItem -Path $AssessmentFolder -Filter '23-Hybrid-Sync.csv' -ErrorAction SilentlyContinue
+                if ($hybridCsv) {
+                    $hybridData = Import-Csv -Path $hybridCsv.FullName -ErrorAction SilentlyContinue | Select-Object -First 1
+                    $syncEnabled = $hybridData.OnPremisesSyncEnabled -eq 'True' -or $hybridData.DirSyncConfigured -eq 'True'
+                    if ($syncEnabled) {
+                        $navBadge = "<span class='nav-badge nav-badge-info'>On</span>"
+                    }
+                    else {
+                        $navBadge = "<span class='nav-badge nav-badge-neutral'>Off</span>"
+                    }
+                }
+            }
             else {
                 $totalItems = ($sectionCollectors | Where-Object { $_.Status -eq 'Complete' } |
                     ForEach-Object { [int]$_.Items } | Measure-Object -Sum).Sum
