@@ -114,7 +114,10 @@ function Initialize-CheckProgress {
                         }
                     }
                     if (-not $hasAny) {
-                        $licenseSkipped[$_.checkId] = @($requiredPlans)
+                        $licenseSkipped[$_.checkId] = @{
+                            Name           = $_.name
+                            RequiredPlans  = @($requiredPlans)
+                        }
                         return $false
                     }
                 }
@@ -190,7 +193,13 @@ function Initialize-CheckProgress {
         Write-Host "    $([char]0x25B8) $label — $count checks" -ForegroundColor DarkGray
     }
     if ($licenseSkipped.Count -gt 0) {
-        Write-Host "  $($licenseSkipped.Count) checks skipped (tenant licensing)" -ForegroundColor DarkYellow
+        Write-Host "  $($licenseSkipped.Count) checks skipped (tenant lacks required license):" -ForegroundColor DarkYellow
+        foreach ($skipEntry in $licenseSkipped.GetEnumerator()) {
+            $skipInfo = $skipEntry.Value
+            $planList = $skipInfo.RequiredPlans -join ' or '
+            Write-Host "    $([char]0x25B8) $($skipEntry.Key): $($skipInfo.Name)" -ForegroundColor DarkYellow
+            Write-Host "      Requires: $planList" -ForegroundColor DarkGray
+        }
     }
     Write-Host ''
 
