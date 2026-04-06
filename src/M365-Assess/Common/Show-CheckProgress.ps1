@@ -62,6 +62,9 @@ function Initialize-CheckProgress {
     .PARAMETER SeverityFilter
         Array of severity levels to include (e.g., @('Critical','High') for QuickScan).
         If empty or null, all severities are included.
+    .PARAMETER Silent
+        Initialize state without printing the summary to the console.
+        Used for the initial pre-connection setup when license data is not yet available.
     #>
     [CmdletBinding()]
     param(
@@ -75,7 +78,10 @@ function Initialize-CheckProgress {
         [hashtable]$TenantLicenses,
 
         [Parameter()]
-        [string[]]$SeverityFilter
+        [string[]]$SeverityFilter,
+
+        [Parameter()]
+        [switch]$Silent
     )
 
     # Build ordered list of automated checks for active sections
@@ -155,6 +161,8 @@ function Initialize-CheckProgress {
     }
 
     $global:CheckProgressState = $state
+
+    if ($Silent) { return }
 
     if ($totalChecks -eq 0) {
         Write-Host ''
