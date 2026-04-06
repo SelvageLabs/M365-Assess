@@ -402,6 +402,7 @@ $html = @"
         }
         .section-ctrl-btn:hover { color: var(--m365a-accent); border-color: var(--m365a-accent); }
         .section-description a { color: var(--m365a-accent); }
+        .callout-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 12px 0; }
         .callout {
             flex: 1 1 280px;
             max-width: 480px;
@@ -1468,7 +1469,7 @@ $html = @"
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
-            margin: 8px 0 18px 0;
+            margin: 4px 0 10px 0;
         }
 
         .collector-chip {
@@ -1481,7 +1482,7 @@ $html = @"
             background: var(--m365a-light-gray);
             border: 1px solid var(--m365a-border);
             line-height: 1.3;
-            max-width: 340px;
+            max-width: 480px;
         }
 
         .chip-dot {
@@ -1513,7 +1514,7 @@ $html = @"
         .chip-note {
             font-size: 7.5pt;
             color: var(--m365a-danger);
-            max-width: 140px;
+            max-width: 280px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -1521,7 +1522,7 @@ $html = @"
             transition: max-width 0.2s ease, white-space 0.2s ease;
         }
         .chip-note.expanded {
-            max-width: 600px;
+            max-width: none;
             white-space: normal;
             word-break: break-word;
         }
@@ -2410,6 +2411,7 @@ $html = @"
             .status-filter { display: none; }
             .section-filter { display: none; }
             .matrix-controls { display: none; }
+            .callout-row { display: block; }
             .matrix-table tr { display: table-row !important; }
             .fw-col { display: table-cell !important; }
 
@@ -2552,6 +2554,23 @@ $html += @"
         <main class="content" id="main-content" role="main">
 "@
 
+# Persistent branded banner -- visible on every page in paginated mode
+if (-not $SkipCoverPage) {
+    $html += @"
+
+        <!-- Persistent branded banner (screen, all pages) -->
+        <div class="hero-banner">
+            <div class="hero-banner-left">
+                $(if ($logoBase64) { "<img src='data:$logoMime;base64,$logoBase64' alt='Logo' class='hero-banner-logo'/>" } else { '' })
+                <div class="hero-banner-text">
+                    <div class="hero-banner-title">M365 Assessment Report</div>
+                    <div class="hero-banner-meta">$(ConvertTo-HtmlSafe -Text $TenantName) &middot; $assessmentDate &middot; v$assessmentVersion</div>
+                </div>
+            </div>
+        </div>
+"@
+}
+
 # Overview page: cover + exec summary + org profile combined
 $html += @"
 
@@ -2566,20 +2585,9 @@ if ($QuickScan) {
 }
 
 if (-not $SkipCoverPage) {
-    # Compact hero banner for screen; full cover page rendered in print CSS only
+    # Full cover page (print only, hidden on screen)
     $html += @"
 
-        <!-- Compact branded banner (screen) -->
-        <div class="hero-banner">
-            <div class="hero-banner-left">
-                $(if ($logoBase64) { "<img src='data:$logoMime;base64,$logoBase64' alt='Logo' class='hero-banner-logo'/>" } else { '' })
-                <div class="hero-banner-text">
-                    <div class="hero-banner-title">M365 Assessment Report</div>
-                    <div class="hero-banner-meta">$(ConvertTo-HtmlSafe -Text $TenantName) &middot; $assessmentDate &middot; v$assessmentVersion</div>
-                </div>
-            </div>
-        </div>
-        <!-- Full cover page (print only, hidden on screen) -->
         <header class="cover-page cover-print-only">
             $logoImgTag
             <div class="cover-title">M365 Environment</div>
