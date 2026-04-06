@@ -569,9 +569,10 @@ if ($WhatIf) {
     # Sections and their services
     Write-Host '  Sections:' -ForegroundColor Cyan
     foreach ($s in $Section) {
-        $services = if ($sectionServiceMap.ContainsKey($s)) { $sectionServiceMap[$s] -join ', ' } else { '(none)' }
+        $services = if ($sectionServiceMap.ContainsKey($s) -and $sectionServiceMap[$s].Count -gt 0) { $sectionServiceMap[$s] -join ', ' } else { '(none)' }
         $collectorCount = if ($collectorMap.Contains($s)) { $collectorMap[$s].Count } else { 0 }
-        Write-Host "    $([char]0x25B8) $s — $collectorCount collectors — services: $services" -ForegroundColor DarkGray
+        $collectorNoun = if ($collectorCount -eq 1) { 'collector' } else { 'collectors' }
+        Write-Host "    $([char]0x25B8) $s — $collectorCount $collectorNoun — services: $services" -ForegroundColor DarkGray
     }
     Write-Host ''
 
@@ -588,10 +589,15 @@ if ($WhatIf) {
     if ($global:CheckProgressState) {
         $totalChecks = $global:CheckProgressState.Total
         $collectorCounts = $global:CheckProgressState.CollectorCounts
-        Write-Host "  Security checks: $totalChecks queued" -ForegroundColor Cyan
+        $labelMap = $global:CheckProgressState.LabelMap
+        $checkNoun = if ($totalChecks -eq 1) { 'check' } else { 'checks' }
+        Write-Host "  Security checks: $totalChecks $checkNoun queued" -ForegroundColor Cyan
         if ($collectorCounts) {
-            foreach ($cn in $collectorCounts.Keys) {
-                Write-Host "    $([char]0x25B8) $cn — $($collectorCounts[$cn]) checks" -ForegroundColor DarkGray
+            # Sort by count descending for quick visual scan
+            $sorted = $collectorCounts.GetEnumerator() | Sort-Object -Property Value -Descending
+            foreach ($entry in $sorted) {
+                $label = if ($labelMap -and $labelMap.ContainsKey($entry.Key)) { $labelMap[$entry.Key] } else { $entry.Key }
+                Write-Host "    $([char]0x25B8) $label — $($entry.Value) checks" -ForegroundColor DarkGray
             }
         }
         Write-Host ''
