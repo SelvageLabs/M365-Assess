@@ -504,18 +504,15 @@ if (Test-Path -Path $progressHelper) {
         $controlsDir = Join-Path -Path $projectRoot -ChildPath 'controls'
         $progressRegistry = Import-ControlRegistry -ControlsPath $controlsDir
         if ($progressRegistry.Count -gt 1) {
-            # Resolve tenant licenses for check gating
-            $licenseHelper = Join-Path -Path $projectRoot -ChildPath 'Common\Resolve-TenantLicenses.ps1'
-            $tenantLicenses = $null
-            if (Test-Path -Path $licenseHelper) {
-                . $licenseHelper
-                $tenantLicenses = Resolve-TenantLicenses
-            }
+            # When connections are active, initialize progress silently --
+            # the console summary is deferred until Connect-RequiredService
+            # resolves tenant licenses after the first Graph connection.
+            # When connections are skipped, print immediately (no licenses to resolve).
             $progressParams = @{
                 ControlRegistry = $progressRegistry
                 ActiveSections  = $Section
             }
-            if ($tenantLicenses) { $progressParams['TenantLicenses'] = $tenantLicenses }
+            if (-not $SkipConnection) { $progressParams['Silent'] = $true }
             if ($QuickScan) { $progressParams['SeverityFilter'] = @('Critical', 'High') }
             Initialize-CheckProgress @progressParams
         }
@@ -983,6 +980,33 @@ if (Test-Path -Path $reportScriptPath) {
     }
     catch {
         Write-AssessmentLog -Level WARN -Message "HTML report generation failed: $($_.Exception.Message)"
+    }
+}
+
+# ------------------------------------------------------------------
+# Disconnect services
+# ------------------------------------------------------------------
+if (-not $SkipConnection) {
+    foreach ($svc in @($connectedServices)) {
+        try {
+            switch ($svc) {
+                'Graph' {
+                    Disconnect-MgGraph -ErrorAction SilentlyContinue | Out-Null
+                    Write-AssessmentLog -Level INFO -Message "Disconnected from Microsoft Graph."
+                }
+                'ExchangeOnline' {
+                    Disconnect-ExchangeOnline -Confirm:$false -ErrorAction SilentlyContinue
+                    Write-AssessmentLog -Level INFO -Message "Disconnected from Exchange Online."
+                }
+                'Purview' {
+                    Disconnect-ExchangeOnline -Confirm:$false -ErrorAction SilentlyContinue
+                    Write-AssessmentLog -Level INFO -Message "Disconnected from Purview."
+                }
+            }
+        }
+        catch {
+            Write-AssessmentLog -Level WARN -Message "Failed to disconnect $svc`: $($_.Exception.Message)"
+        }
     }
 }
 

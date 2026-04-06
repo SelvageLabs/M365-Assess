@@ -95,6 +95,33 @@ function Connect-RequiredService {
                 }
             }
 
+            # Resolve tenant licenses for check gating (first Graph connection only)
+            if ($svc -eq 'Graph' -and -not $script:tenantLicensesResolved) {
+                $script:tenantLicensesResolved = $true
+                try {
+                    $licenseHelper = Join-Path -Path $projectRoot -ChildPath 'Common\Resolve-TenantLicenses.ps1'
+                    if (Test-Path -Path $licenseHelper) {
+                        . $licenseHelper
+                        $tenantLicenses = Resolve-TenantLicenses
+                        if ($tenantLicenses -and $tenantLicenses.ActiveServicePlans.Count -gt 0) {
+                            # Re-initialize progress with license data for accurate check gating
+                            if (Get-Command -Name Initialize-CheckProgress -ErrorAction SilentlyContinue) {
+                                $reInitParams = @{
+                                    ControlRegistry = $progressRegistry
+                                    ActiveSections  = $Section
+                                    TenantLicenses  = $tenantLicenses
+                                }
+                                if ($QuickScan) { $reInitParams['SeverityFilter'] = @('Critical', 'High') }
+                                Initialize-CheckProgress @reInitParams
+                            }
+                        }
+                    }
+                }
+                catch {
+                    Write-AssessmentLog -Level WARN -Message "Could not resolve tenant licenses: $($_.Exception.Message). License gating disabled." -Section $SectionName
+                }
+            }
+
             # After first Graph connection, capture connected tenant domain for
             # later use (e.g. report headers, logging).
             if ($svc -eq 'Graph' -and -not $script:resolvedTenantDomain) {
