@@ -151,8 +151,9 @@ function Invoke-FrameworkScoring {
     $groups = @($groups | Sort-Object -Property { Get-GroupSortKey -Key $_.Key })
 
     # Build summary
-    $totalMapped = ($mappedFindings | ForEach-Object { $_.Finding.CheckId } | Select-Object -Unique).Count
-    $totalPassed = ($mappedFindings | Where-Object { $_.Finding.Status -eq 'Pass' } |
+    $scoredFindings = @($mappedFindings | Where-Object { $_.Finding.Status -ne 'Info' })
+    $totalMapped = ($scoredFindings | ForEach-Object { $_.Finding.CheckId } | Select-Object -Unique).Count
+    $totalPassed = ($scoredFindings | Where-Object { $_.Finding.Status -eq 'Pass' } |
         ForEach-Object { $_.Finding.CheckId } | Select-Object -Unique).Count
     $passRate = if ($totalMapped -gt 0) { [math]::Round($totalPassed / $totalMapped, 2) } else { 0 }
     # Deduplicate covered controls across all groups by unique framework controlId
@@ -221,7 +222,7 @@ function ConvertTo-CatalogInlineHtml {
     if ($summary.TotalControls -gt 0) {
         $null = $html.AppendLine("<span class='catalog-stat'><strong>Coverage:</strong> $coveredCount of $($summary.TotalControls) controls</span>")
     }
-    $null = $html.AppendLine("<span class='catalog-stat'><strong>Findings:</strong> $($summary.MappedControls) assessed</span>")
+    $null = $html.AppendLine("<span class='catalog-stat'><strong>Checks:</strong> $($summary.MappedControls) assessed</span>")
     $null = $html.AppendLine("<span class='catalog-stat'><strong>Scoring:</strong> $($Framework.scoringMethod)</span>")
     $null = $html.AppendLine("</div>")
     if ($summary.TotalControls -gt 0) {
@@ -232,7 +233,7 @@ function ConvertTo-CatalogInlineHtml {
 
     # Group breakdown table
     $null = $html.AppendLine("<table class='catalog-groups'><thead><tr>")
-    $null = $html.AppendLine("<th>Group</th><th>Label</th><th>Coverage</th><th>Findings</th><th>Passed</th><th>Failed</th><th>Other</th><th>Pass Rate</th>")
+    $null = $html.AppendLine("<th>Group</th><th>Label</th><th>Coverage</th><th>Checks</th><th>Passed</th><th>Failed</th><th>Warning</th><th>Review</th><th>Pass Rate</th>")
     $null = $html.AppendLine("</tr></thead><tbody>")
 
     foreach ($group in $groups) {
@@ -247,7 +248,8 @@ function ConvertTo-CatalogInlineHtml {
         $null = $html.AppendLine("<td>$($group.Mapped)</td>")
         $null = $html.AppendLine("<td>$($group.Passed)</td>")
         $null = $html.AppendLine("<td>$($group.Failed)</td>")
-        $null = $html.AppendLine("<td>$($group.Other)</td>")
+        $null = $html.AppendLine("<td>$($group.Warning)</td>")
+        $null = $html.AppendLine("<td>$($group.Review)</td>")
         $passDisplay = if ($group.Mapped -gt 0) { "$grpPassRate%" } else { '&mdash;' }
         $badgeCss = switch ($grpClass) { 'success' { 'badge-success' } 'warning' { 'badge-warning' } 'danger' { 'badge-failed' } default { 'badge-neutral' } }
         $null = $html.AppendLine("<td><span class='badge $badgeCss'>$passDisplay</span></td>")
@@ -258,7 +260,7 @@ function ConvertTo-CatalogInlineHtml {
 
     # Findings detail table (collapsible)
     $null = $html.AppendLine("<details class='catalog-findings-detail'>")
-    $null = $html.AppendLine("<summary><strong>Detailed Findings ($($summary.MappedControls) mapped)</strong></summary>")
+    $null = $html.AppendLine("<summary><strong>Detailed Checks ($($summary.MappedControls) mapped)</strong></summary>")
     $null = $html.AppendLine("<table class='cis-table catalog-findings'><thead><tr>")
     $null = $html.AppendLine("<th>Status</th><th>Check ID</th><th>Setting</th><th>Control ID</th><th>Severity</th>")
     $null = $html.AppendLine("</tr></thead><tbody>")
@@ -338,7 +340,7 @@ function ConvertTo-CatalogStandaloneHtml {
     if ($summary.TotalControls -gt 0) {
         $null = $body.AppendLine("<span class='catalog-stat'><strong>Coverage:</strong> $coveredCount of $($summary.TotalControls) controls</span>")
     }
-    $null = $body.AppendLine("<span class='catalog-stat'><strong>Findings:</strong> $($summary.MappedControls) assessed</span>")
+    $null = $body.AppendLine("<span class='catalog-stat'><strong>Checks:</strong> $($summary.MappedControls) assessed</span>")
     $null = $body.AppendLine("</div>")
     if ($summary.TotalControls -gt 0) {
         $null = $body.AppendLine("<div class='coverage-bar'><div class='coverage-fill' style='width: $coveragePct%'></div></div>")
@@ -349,7 +351,7 @@ function ConvertTo-CatalogStandaloneHtml {
     # Group breakdown table
     $null = $body.AppendLine("<h2>Group Breakdown</h2>")
     $null = $body.AppendLine("<table class='catalog-groups'><thead><tr>")
-    $null = $body.AppendLine("<th>Group</th><th>Label</th><th>Coverage</th><th>Findings</th><th>Passed</th><th>Failed</th><th>Other</th><th>Pass Rate</th>")
+    $null = $body.AppendLine("<th>Group</th><th>Label</th><th>Coverage</th><th>Checks</th><th>Passed</th><th>Failed</th><th>Warning</th><th>Review</th><th>Pass Rate</th>")
     $null = $body.AppendLine("</tr></thead><tbody>")
 
     foreach ($group in $groups) {
@@ -364,7 +366,8 @@ function ConvertTo-CatalogStandaloneHtml {
         $null = $body.AppendLine("<td>$($group.Mapped)</td>")
         $null = $body.AppendLine("<td>$($group.Passed)</td>")
         $null = $body.AppendLine("<td>$($group.Failed)</td>")
-        $null = $body.AppendLine("<td>$($group.Other)</td>")
+        $null = $body.AppendLine("<td>$($group.Warning)</td>")
+        $null = $body.AppendLine("<td>$($group.Review)</td>")
         $passDisplay = if ($group.Mapped -gt 0) { "$grpPassRate%" } else { '&mdash;' }
         $badgeCss = switch ($grpClass) { 'success' { 'badge-success' } 'warning' { 'badge-warning' } 'danger' { 'badge-failed' } default { 'badge-neutral' } }
         $null = $body.AppendLine("<td><span class='badge $badgeCss'>$passDisplay</span></td>")
@@ -374,7 +377,7 @@ function ConvertTo-CatalogStandaloneHtml {
 
     # Findings detail table
     if ($MappedFindings.Count -gt 0) {
-        $null = $body.AppendLine("<h2>Detailed Findings ($($summary.MappedControls) mapped)</h2>")
+        $null = $body.AppendLine("<h2>Detailed Checks ($($summary.MappedControls) mapped)</h2>")
         $null = $body.AppendLine("<table class='cis-table catalog-findings'><thead><tr>")
         $null = $body.AppendLine("<th>Status</th><th>Check ID</th><th>Setting</th><th>Control ID</th><th>Severity</th>")
         $null = $body.AppendLine("</tr></thead><tbody>")
@@ -593,26 +596,33 @@ function New-ScoringGroup {
         [int]$Covered = -1
     )
 
-    $unique = @($GroupFindings | Select-Object -Property CheckId -Unique)
+    $scored = @($GroupFindings | Where-Object { $_.Status -ne 'Info' } |
+        Select-Object -Property CheckId -Unique)
     $passed = @($GroupFindings | Where-Object { $_.Status -eq 'Pass' } |
         Select-Object -Property CheckId -Unique)
     $failed = @($GroupFindings | Where-Object { $_.Status -eq 'Fail' } |
         Select-Object -Property CheckId -Unique)
-    $other = $unique.Count - $passed.Count - $failed.Count
+    $warning = @($GroupFindings | Where-Object { $_.Status -eq 'Warning' } |
+        Select-Object -Property CheckId -Unique)
+    $review = @($GroupFindings | Where-Object { $_.Status -eq 'Review' } |
+        Select-Object -Property CheckId -Unique)
+    $other = $scored.Count - $passed.Count - $failed.Count - $warning.Count - $review.Count
     if ($other -lt 0) { $other = 0 }
 
     # Covered = unique framework controls with findings (if tracked by scorer)
     # Falls back to Mapped when scorer doesn't track coverage
-    $coveredCount = if ($Covered -ge 0) { $Covered } else { $unique.Count }
+    $coveredCount = if ($Covered -ge 0) { $Covered } else { $scored.Count }
 
     @{
         Key      = $Key
         Label    = $Label
         Total    = $Total
-        Mapped   = $unique.Count
+        Mapped   = $scored.Count
         Covered  = $coveredCount
         Passed   = $passed.Count
         Failed   = $failed.Count
+        Warning  = $warning.Count
+        Review   = $review.Count
         Other    = $other
         Findings = @($GroupFindings)
     }
