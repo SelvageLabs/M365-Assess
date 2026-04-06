@@ -62,6 +62,9 @@ function Initialize-CheckProgress {
     .PARAMETER SeverityFilter
         Array of severity levels to include (e.g., @('Critical','High') for QuickScan).
         If empty or null, all severities are included.
+    .PARAMETER Silent
+        Initialize state without printing the summary to the console.
+        Used for the initial pre-connection setup when license data is not yet available.
     #>
     [CmdletBinding()]
     param(
@@ -75,7 +78,10 @@ function Initialize-CheckProgress {
         [hashtable]$TenantLicenses,
 
         [Parameter()]
-        [string[]]$SeverityFilter
+        [string[]]$SeverityFilter,
+
+        [Parameter()]
+        [switch]$Silent
     )
 
     # Build ordered list of automated checks for active sections
@@ -108,7 +114,10 @@ function Initialize-CheckProgress {
                         }
                     }
                     if (-not $hasAny) {
-                        $licenseSkipped[$_.checkId] = @($requiredPlans)
+                        $licenseSkipped[$_.checkId] = @{
+                            Name           = $_.name
+                            RequiredPlans  = @($requiredPlans)
+                        }
                         return $false
                     }
                 }
@@ -156,6 +165,8 @@ function Initialize-CheckProgress {
 
     $global:CheckProgressState = $state
 
+    if ($Silent) { return }
+
     if ($totalChecks -eq 0) {
         Write-Host ''
         Write-Host '  No automated security checks queued for the selected sections.' -ForegroundColor DarkGray
@@ -182,7 +193,13 @@ function Initialize-CheckProgress {
         Write-Host "    $([char]0x25B8) $label — $count checks" -ForegroundColor DarkGray
     }
     if ($licenseSkipped.Count -gt 0) {
-        Write-Host "  $($licenseSkipped.Count) checks skipped (tenant licensing)" -ForegroundColor DarkYellow
+        Write-Host "  $($licenseSkipped.Count) checks skipped (tenant lacks required license):" -ForegroundColor DarkYellow
+        foreach ($skipEntry in $licenseSkipped.GetEnumerator()) {
+            $skipInfo = $skipEntry.Value
+            $planList = $skipInfo.RequiredPlans -join ' or '
+            Write-Host "    $([char]0x25B8) $($skipEntry.Key): $($skipInfo.Name)" -ForegroundColor DarkYellow
+            Write-Host "      Requires: $planList" -ForegroundColor DarkGray
+        }
     }
     Write-Host ''
 
