@@ -2056,9 +2056,9 @@ $html = @"
             background: var(--m365a-card-bg);
             z-index: 1;
         }
-        .nav-title { font-weight: 600; font-size: 11pt; flex-grow: 1; color: var(--m365a-text); text-decoration: none; display: flex; align-items: baseline; gap: 6px; }
+        .nav-title { font-weight: 600; font-size: 11pt; flex-grow: 1; color: var(--m365a-text); text-decoration: none; }
         .nav-title:hover { color: var(--m365a-accent); }
-        .nav-subtitle { font-size: 7pt; font-weight: 400; color: var(--m365a-medium-gray); text-transform: uppercase; letter-spacing: 0.5px; }
+        .nav-subtitle { display: block; font-size: 7pt; font-weight: 400; color: var(--m365a-medium-gray); text-transform: uppercase; letter-spacing: 0.5px; line-height: 1; margin-top: 1px; }
         .nav-toggle {
             display: none;
             background: var(--m365a-card-bg);
