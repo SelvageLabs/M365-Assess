@@ -7830,6 +7830,122 @@
       "supersededBy": "CA-DEVICECODE-001"
     },
     {
+      "checkId": "CA-REPORTONLY-001",
+      "name": "Conditional Access policies in report-only mode",
+      "category": "REPORTONLY",
+      "collector": "CAEvaluator",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "requiredServicePlans": []
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "CM-3",
+          "title": "Configuration Change Control",
+          "profiles": ["Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.IP-01",
+          "title": "Configuration management processes are established"
+        },
+        "iso-27001": {
+          "controlId": "A.8.9",
+          "title": "Configuration management"
+        },
+        "cis-controls-v8": {
+          "controlId": "4.1",
+          "title": "Establish and Maintain a Secure Configuration Process",
+          "profiles": ["IG1", "IG2", "IG3"]
+        },
+        "soc2": {
+          "controlId": "CC8.1"
+        },
+        "mitre-attack": {
+          "controlId": "T1562.001"
+        }
+      }
+    },
+    {
+      "checkId": "CA-NAMEDLOC-001",
+      "name": "Trusted IP-based named locations susceptible to spoofing",
+      "category": "NAMEDLOC",
+      "collector": "CAEvaluator",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "requiredServicePlans": []
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "SC-7",
+          "title": "Boundary Protection",
+          "profiles": ["Low", "Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AC-05",
+          "title": "Network integrity is protected"
+        },
+        "iso-27001": {
+          "controlId": "A.8.20",
+          "title": "Networks security"
+        },
+        "pci-dss": {
+          "controlId": "1.3",
+          "title": "Network access to and from the cardholder data environment is restricted"
+        },
+        "cis-controls-v8": {
+          "controlId": "12.1",
+          "title": "Ensure Network Infrastructure is Up-to-Date",
+          "profiles": ["IG1", "IG2", "IG3"]
+        },
+        "soc2": {
+          "controlId": "CC6.1"
+        },
+        "mitre-attack": {
+          "controlId": "T1090;T1090.002"
+        }
+      }
+    },
+    {
+      "checkId": "CA-SESSION-001",
+      "name": "Persistent browser sessions allowed without device compliance",
+      "category": "SESSION",
+      "collector": "CAEvaluator",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "requiredServicePlans": []
+      },
+      "frameworks": {
+        "nist-800-53": {
+          "controlId": "AC-12",
+          "title": "Session Termination",
+          "profiles": ["Moderate", "High"]
+        },
+        "nist-csf": {
+          "controlId": "PR.AC-04",
+          "title": "Access permissions and authorizations are managed"
+        },
+        "iso-27001": {
+          "controlId": "A.8.11",
+          "title": "Data masking"
+        },
+        "pci-dss": {
+          "controlId": "8.2",
+          "title": "Multi-factor authentication (MFA) is implemented"
+        },
+        "cis-controls-v8": {
+          "controlId": "6.3",
+          "title": "Require MFA for Externally-Exposed Applications",
+          "profiles": ["IG1", "IG2", "IG3"]
+        },
+        "soc2": {
+          "controlId": "CC6.1"
+        },
+        "mitre-attack": {
+          "controlId": "T1550.001"
+        }
+      }
+    },
+    {
       "checkId": "ENTRA-AUTHMETHOD-003",
       "name": "Ensure Microsoft Authenticator is configured to protect against MFA fatigue",
       "category": "AUTHMETHOD",

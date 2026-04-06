@@ -686,6 +686,242 @@ catch {
 }
 
 # ------------------------------------------------------------------
+# 13. Report-Only Policies (stale auditing)
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking CA: Report-only policies..."
+    $reportOnlyPolicies = @($allPolicies | Where-Object { $_['state'] -eq 'enabledForReportingButNotEnforced' })
+
+    if ($reportOnlyPolicies.Count -eq 0) {
+        $settingParams = @{
+            Category         = 'Conditional Access'
+            Setting          = 'Report-Only Policies'
+            CurrentValue     = 'None'
+            RecommendedValue = 'Review and promote or remove'
+            Status           = 'Pass'
+            CheckId          = 'CA-REPORTONLY-001'
+            Remediation      = 'No action needed.'
+        }
+        Add-Setting @settingParams
+    }
+    else {
+        $names = ($reportOnlyPolicies | ForEach-Object { $_['displayName'] }) -join '; '
+        $settingParams = @{
+            Category         = 'Conditional Access'
+            Setting          = 'Report-Only Policies'
+            CurrentValue     = "$($reportOnlyPolicies.Count) policies in report-only: $names"
+            RecommendedValue = 'Review and promote or remove'
+            Status           = 'Warning'
+            CheckId          = 'CA-REPORTONLY-001'
+            Remediation      = 'Review report-only policies and either enable enforcement or remove if no longer needed. Entra admin center > Protection > Conditional Access.'
+        }
+        Add-Setting @settingParams
+    }
+}
+catch {
+    Write-Warning "Could not check CA report-only policies: $_"
+}
+
+# ------------------------------------------------------------------
+# 14. Named Locations Risk (IP-based trusted locations)
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking CA: Named location risk..."
+    $namedLocResponse = Invoke-MgGraphRequest -Method GET -Uri '/v1.0/identity/conditionalAccess/namedLocations' -ErrorAction Stop
+    $namedLocations = if ($namedLocResponse -and $namedLocResponse['value']) { @($namedLocResponse['value']) } else { @() }
+    $ipLocations = @($namedLocations | Where-Object {
+        $_['@odata.type'] -eq '#microsoft.graph.ipNamedLocation' -and $_['isTrusted'] -eq $true
+    })
+
+    if ($ipLocations.Count -eq 0) {
+        $settingParams = @{
+            Category         = 'Conditional Access'
+            Setting          = 'Trusted IP Named Locations'
+            CurrentValue     = 'None configured'
+            RecommendedValue = 'Use country-based or compliant network locations'
+            Status           = 'Pass'
+            CheckId          = 'CA-NAMEDLOC-001'
+            Remediation      = 'No action needed.'
+        }
+        Add-Setting @settingParams
+    }
+    else {
+        $names = ($ipLocations | ForEach-Object { $_['displayName'] }) -join '; '
+        $settingParams = @{
+            Category         = 'Conditional Access'
+            Setting          = 'Trusted IP Named Locations'
+            CurrentValue     = "$($ipLocations.Count) trusted IP locations: $names"
+            RecommendedValue = 'Prefer compliant network or country-based locations'
+            Status           = 'Review'
+            CheckId          = 'CA-NAMEDLOC-001'
+            Remediation      = 'IP-based trusted locations can be spoofed via VPN or proxy. Consider Global Secure Access compliant network checks or country-based locations for stronger assurance. Entra admin center > Protection > Conditional Access > Named locations.'
+        }
+        Add-Setting @settingParams
+    }
+}
+catch {
+    Write-Warning "Could not check CA named locations: $_"
+}
+
+# ------------------------------------------------------------------
+# 15. Persistent Browser Session Without Device Compliance
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking CA: Persistent browser sessions..."
+    $persistentBrowserPolicies = @($enabledPolicies | Where-Object {
+        $sessionControls = $_['sessionControls']
+        $persistentBrowser = if ($sessionControls) { $sessionControls['persistentBrowser'] } else { $null }
+        $persistentBrowser -and $persistentBrowser['mode'] -eq 'always' -and $persistentBrowser['isEnabled'] -eq $true
+    })
+
+    # Check if any of those also require device compliance
+    $persistentWithoutDevice = @($persistentBrowserPolicies | Where-Object {
+        $grantControls = $_['grantControls']['builtInControls']
+        -not ($grantControls -contains 'compliantDevice' -or $grantControls -contains 'domainJoinedDevice')
+    })
+
+    if ($persistentWithoutDevice.Count -eq 0) {
+        $settingParams = @{
+            Category         = 'Conditional Access'
+            Setting          = 'Persistent Browser Without Device Compliance'
+            CurrentValue     = 'None'
+            RecommendedValue = 'No persistent sessions without device compliance'
+            Status           = 'Pass'
+            CheckId          = 'CA-SESSION-001'
+            Remediation      = 'No action needed.'
+        }
+        Add-Setting @settingParams
+    }
+    else {
+        $names = ($persistentWithoutDevice | ForEach-Object { $_['displayName'] }) -join '; '
+        $settingParams = @{
+            Category         = 'Conditional Access'
+            Setting          = 'Persistent Browser Without Device Compliance'
+            CurrentValue     = "$($persistentWithoutDevice.Count) policies allow persistent sessions without device compliance: $names"
+            RecommendedValue = 'No persistent sessions without device compliance'
+            Status           = 'Warning'
+            CheckId          = 'CA-SESSION-001'
+            Remediation      = 'Persistent browser sessions on unmanaged devices increase the risk of session hijacking. Require device compliance or remove persistent browser grants. Entra admin center > Protection > Conditional Access.'
+        }
+        Add-Setting @settingParams
+    }
+}
+catch {
+    Write-Warning "Could not check CA persistent browser sessions: $_"
+}
+
+# ------------------------------------------------------------------
+# 16. Combined Sign-in Risk + User Risk Anti-Pattern
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking CA: Risk policy anti-pattern..."
+    $combinedRiskPolicies = @($enabledPolicies | Where-Object {
+        $conditions = $_['conditions']
+        $signInRisk = $conditions['signInRiskLevels']
+        $userRisk = $conditions['userRiskLevels']
+        ($signInRisk -and $signInRisk.Count -gt 0) -and ($userRisk -and $userRisk.Count -gt 0)
+    })
+
+    if ($combinedRiskPolicies.Count -eq 0) {
+        $settingParams = @{
+            Category         = 'Conditional Access'
+            Setting          = 'Combined Risk Policy Anti-Pattern'
+            CurrentValue     = 'None'
+            RecommendedValue = 'Separate sign-in risk and user risk into distinct policies'
+            Status           = 'Pass'
+            CheckId          = 'CA-RISKPOLICY-001'
+            Remediation      = 'No action needed.'
+        }
+        Add-Setting @settingParams
+    }
+    else {
+        $names = ($combinedRiskPolicies | ForEach-Object { $_['displayName'] }) -join '; '
+        $settingParams = @{
+            Category         = 'Conditional Access'
+            Setting          = 'Combined Risk Policy Anti-Pattern'
+            CurrentValue     = "$($combinedRiskPolicies.Count) policies combine both risk types: $names"
+            RecommendedValue = 'Separate sign-in risk and user risk into distinct policies'
+            Status           = 'Warning'
+            CheckId          = 'CA-RISKPOLICY-001'
+            Remediation      = 'Combining sign-in risk and user risk in one CA policy creates an AND condition -- both must be true to trigger. Microsoft recommends separate policies for each risk type. Entra admin center > Protection > Conditional Access.'
+        }
+        Add-Setting @settingParams
+    }
+}
+catch {
+    Write-Warning "Could not check CA risk policy anti-pattern: $_"
+}
+
+# ------------------------------------------------------------------
+# 17. Directory Role Coverage Gaps
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Checking CA: Role coverage gaps..."
+    # Get active role assignments to find which Tier-0 roles are actually in use
+    $roleAssignments = Invoke-MgGraphRequest -Method GET -Uri '/v1.0/roleManagement/directory/roleAssignments?$top=999' -ErrorAction Stop
+    $activeRoleIds = @($roleAssignments['value'] | ForEach-Object { $_['roleDefinitionId'] } | Sort-Object -Unique)
+
+    # Find CA policies that target specific directory roles (not "All users")
+    $roleTargetingPolicies = @($enabledPolicies | Where-Object {
+        $includeRoles = $_['conditions']['users']['includeRoles']
+        $includeRoles -and $includeRoles.Count -gt 0
+    })
+
+    if ($roleTargetingPolicies.Count -eq 0) {
+        $settingParams = @{
+            Category         = 'Conditional Access'
+            Setting          = 'Tier-0 Role Coverage in CA Policies'
+            CurrentValue     = 'No role-targeted CA policies found'
+            RecommendedValue = 'Target active privileged roles'
+            Status           = 'Review'
+            CheckId          = 'CA-ROLECOVERAGE-001'
+            Remediation      = 'Consider creating CA policies that specifically target privileged directory roles with stricter controls (phishing-resistant MFA, compliant devices).'
+        }
+        Add-Setting @settingParams
+    }
+    else {
+        # Collect all roles covered by CA policies
+        $coveredRoles = [System.Collections.Generic.HashSet[string]]::new()
+        foreach ($p in $roleTargetingPolicies) {
+            foreach ($r in $p['conditions']['users']['includeRoles']) {
+                [void]$coveredRoles.Add($r)
+            }
+        }
+        # Find active Tier-0 roles not covered by any CA policy
+        $tier0Roles = @($adminRoleIds | Where-Object { $_ -in $activeRoleIds })
+        $uncoveredRoles = @($tier0Roles | Where-Object { -not $coveredRoles.Contains($_) })
+
+        if ($uncoveredRoles.Count -eq 0) {
+            $settingParams = @{
+                Category         = 'Conditional Access'
+                Setting          = 'Tier-0 Role Coverage in CA Policies'
+                CurrentValue     = "All $($tier0Roles.Count) active Tier-0 roles covered"
+                RecommendedValue = 'All active privileged roles covered'
+                Status           = 'Pass'
+                CheckId          = 'CA-ROLECOVERAGE-001'
+                Remediation      = 'No action needed.'
+            }
+            Add-Setting @settingParams
+        }
+        else {
+            $settingParams = @{
+                Category         = 'Conditional Access'
+                Setting          = 'Tier-0 Role Coverage in CA Policies'
+                CurrentValue     = "$($uncoveredRoles.Count) of $($tier0Roles.Count) active Tier-0 roles not targeted by any CA policy"
+                RecommendedValue = 'All active privileged roles covered'
+                Status           = 'Warning'
+                CheckId          = 'CA-ROLECOVERAGE-001'
+                Remediation      = 'Add the uncovered role IDs to existing admin-targeted CA policies. Entra admin center > Protection > Conditional Access > Select policy > Users > Include roles.'
+            }
+            Add-Setting @settingParams
+        }
+    }
+}
+catch {
+    Write-Warning "Could not check CA role coverage: $_"
+}
+
+# ------------------------------------------------------------------
 # Output
 # ------------------------------------------------------------------
 Export-SecurityConfigReport -Settings $settings -OutputPath $OutputPath -ServiceLabel 'Conditional Access'

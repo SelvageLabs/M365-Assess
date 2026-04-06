@@ -277,10 +277,18 @@ Describe 'Get-CASecurityConfig - No Policies' {
         $settings.Count | Should -BeGreaterThan 0
     }
 
-    It 'All checks should Fail when no policies exist and SD is off' {
+    It 'All checks should Fail or Pass-by-absence when no policies exist and SD is off' {
+        # Checks that correctly Pass when no policies exist (absence is the desired state)
+        $passOnAbsence = @('Report-Only Policies', 'Persistent Browser Without Device Compliance',
+            'Combined Risk Policy Anti-Pattern', 'Trusted IP Named Locations',
+            'Tier-0 Role Coverage in CA Policies')
         foreach ($s in $settings) {
-            $s.Status | Should -Be 'Fail' `
-                -Because "Setting '$($s.Setting)' should fail with no CA policies and SD off"
+            if ($s.Setting -in $passOnAbsence) {
+                $s.Status | Should -BeIn @('Pass', 'Review') -Because "Setting '$($s.Setting)' should pass or review when no problematic policies exist"
+            }
+            else {
+                $s.Status | Should -Be 'Fail' -Because "Setting '$($s.Setting)' should fail with no CA policies and SD off"
+            }
         }
     }
 
