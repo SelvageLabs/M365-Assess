@@ -244,7 +244,8 @@ if (-not (Get-Command -Name Show-InteractiveWizard -ErrorAction SilentlyContinue
 $launchWizard = -not $PSBoundParameters.ContainsKey('TenantId') -and
                 -not $PSBoundParameters.ContainsKey('SkipConnection') -and
                 -not $PSBoundParameters.ContainsKey('ClientId') -and
-                -not $PSBoundParameters.ContainsKey('ManagedIdentity')
+                -not $PSBoundParameters.ContainsKey('ManagedIdentity') -and
+                -not $PSBoundParameters.ContainsKey('ConnectionProfile')
 
 if ($launchWizard -and [Environment]::UserInteractive) {
     try {
