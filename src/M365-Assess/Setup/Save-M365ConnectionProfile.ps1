@@ -80,17 +80,17 @@ function Save-M365ConnectionProfile {
     }
 
     # Build profile entry
-    $profile = @{
+    $profileEntry = @{
         tenantId       = $TenantId
         authMethod     = $AuthMethod
         environment    = $M365Environment
         saved          = (Get-Date -Format 'yyyy-MM-dd')
         lastUsed       = $null
     }
-    if ($ClientId) { $profile['clientId'] = $ClientId }
-    if ($CertificateThumbprint) { $profile['thumbprint'] = $CertificateThumbprint }
-    if ($UserPrincipalName) { $profile['upn'] = $UserPrincipalName }
-    if ($AppName) { $profile['appName'] = $AppName }
+    if ($ClientId) { $profileEntry['clientId'] = $ClientId }
+    if ($CertificateThumbprint) { $profileEntry['thumbprint'] = $CertificateThumbprint }
+    if ($UserPrincipalName) { $profileEntry['upn'] = $UserPrincipalName }
+    if ($AppName) { $profileEntry['appName'] = $AppName }
 
     # Migrate legacy format: old format keyed by TenantId, new format keyed by ProfileName
     # under a 'profiles' key. Support both for backward compat.
@@ -98,7 +98,7 @@ function Save-M365ConnectionProfile {
         $config['profiles'] = @{}
     }
 
-    $config['profiles'][$ProfileName] = $profile
+    $config['profiles'][$ProfileName] = $profileEntry
 
     # Write back
     $config | ConvertTo-Json -Depth 5 | Set-Content -Path $configPath -Encoding UTF8

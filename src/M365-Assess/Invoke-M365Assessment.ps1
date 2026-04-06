@@ -347,7 +347,7 @@ if ($ConnectionProfile) {
                         $config | ConvertTo-Json -Depth 5 | Set-Content -Path $configPath -Encoding UTF8
                     }
                 }
-                catch { }
+                catch { Write-Verbose "Could not update lastUsed timestamp: $_" }
             }
 
             Write-Host ''
