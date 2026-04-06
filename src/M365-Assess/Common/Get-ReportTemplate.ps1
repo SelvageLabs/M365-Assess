@@ -1783,15 +1783,16 @@ $html = @"
         .fw-csf   { background: #fef3c7; color: #92400e; }
         .fw-iso   { background: #ecfdf5; color: #065f46; }
         .fw-stig  { background: #f3e8ff; color: #6b21a8; }
+        .fw-entra-stig { background: #eef2ff; color: #3730a3; }
         .fw-pci   { background: #fef2f2; color: #991b1b; }
         .fw-cmmc  { background: #f0fdfa; color: #134e4a; }
         .fw-hipaa { background: #fdf2f8; color: #9d174d; }
         .fw-scuba { background: #fff7ed; color: #9a3412; }
         .fw-soc2  { background: #eff6ff; color: #1e3a5f; }
         .fw-fedramp { background: #fef3c7; color: #78350f; }
-        .fw-essential8 { background: #ecfdf5; color: #14532d; }
+        .fw-essential8, .fw-e8 { background: #fef9c3; color: #713f12; }
         .fw-mitre { background: #fef2f2; color: #7f1d1d; }
-        .fw-cisv8 { background: #e0f2fe; color: #0c4a6e; }
+        .fw-cisv8, .fw-cis-ctrl { background: #e0f2fe; color: #0c4a6e; }
         .fw-default { background: #e2e8f0; color: #334155; }
         .fw-profile-tag { display: inline-block; padding: 0 3px; margin-left: 2px; border-radius: 2px; font-size: 0.68em; background: rgba(0,0,0,0.06); color: inherit; vertical-align: middle; }
         .fw-unmapped { color: var(--m365a-border); font-size: 0.85em; }
@@ -1937,15 +1938,16 @@ $html = @"
         body.dark-theme .fw-csf    { background: #78350F; color: #FCD34D; }
         body.dark-theme .fw-iso    { background: #064E3B; color: #6EE7B7; }
         body.dark-theme .fw-stig   { background: #3B0764; color: #C4B5FD; }
+        body.dark-theme .fw-entra-stig { background: #312E81; color: #A5B4FC; }
         body.dark-theme .fw-pci    { background: #7F1D1D; color: #FCA5A5; }
         body.dark-theme .fw-cmmc   { background: #134E4A; color: #5EEAD4; }
         body.dark-theme .fw-hipaa  { background: #831843; color: #F9A8D4; }
         body.dark-theme .fw-scuba  { background: #7C2D12; color: #FDBA74; }
         body.dark-theme .fw-soc2   { background: #1E3A5F; color: #60A5FA; }
         body.dark-theme .fw-fedramp { background: #78350F; color: #FCD34D; }
-        body.dark-theme .fw-essential8 { background: #064E3B; color: #6EE7B7; }
+        body.dark-theme .fw-essential8, body.dark-theme .fw-e8 { background: #422006; color: #FDE68A; }
         body.dark-theme .fw-mitre { background: #7F1D1D; color: #FCA5A5; }
-        body.dark-theme .fw-cisv8 { background: #0C4A6E; color: #7DD3FC; }
+        body.dark-theme .fw-cisv8, body.dark-theme .fw-cis-ctrl { background: #0C4A6E; color: #7DD3FC; }
         body.dark-theme .fw-default { background: #334155; color: #CBD5E1; }
         body.dark-theme .fw-profile-tag { background: rgba(255,255,255,0.1); }
 
@@ -2127,6 +2129,8 @@ $html = @"
         .nav-badge-fail { background: var(--m365a-danger-bg); color: var(--m365a-danger-text); }
         .nav-badge-warn { background: var(--m365a-warning-bg); color: var(--m365a-warning-text); }
         .nav-badge-info { background: var(--m365a-info-bg); color: var(--m365a-info-text); }
+        .nav-badge-neutral { background: var(--m365a-neutral-bg); color: var(--m365a-neutral); }
+        .nav-badge-skip { background: var(--m365a-light-gray); color: var(--m365a-medium-gray); font-weight: 400; font-style: italic; }
         .nav-separator {
             height: 1px;
             background: var(--m365a-border);
@@ -2506,6 +2510,7 @@ foreach ($navSection in $sections) {
     $navLabel = [System.Web.HttpUtility]::HtmlEncode($navSection)
     $navBadge = ''
     if ($sectionStatusCounts.ContainsKey($navSection)) {
+        # Section has security findings -- show status badge
         $navCounts = $sectionStatusCounts[$navSection]
         if ($navCounts.Fail -gt 0) {
             $navBadge = "<span class='nav-badge nav-badge-fail'>$($navCounts.Fail)</span>"
@@ -2515,6 +2520,23 @@ foreach ($navSection in $sections) {
         }
         elseif ($navCounts.Pass -gt 0) {
             $navBadge = "<span class='nav-badge nav-badge-pass'>&#10003;</span>"
+        }
+    }
+    else {
+        # No security findings -- use collector summary for context
+        $sectionCollectors = @($summary | Where-Object { $_.Section -eq $navSection })
+        if ($sectionCollectors.Count -gt 0) {
+            $skippedAll = ($sectionCollectors | Where-Object { $_.Status -eq 'Skipped' }).Count -eq $sectionCollectors.Count
+            if ($skippedAll) {
+                $navBadge = "<span class='nav-badge nav-badge-skip'>skip</span>"
+            }
+            else {
+                $totalItems = ($sectionCollectors | Where-Object { $_.Status -eq 'Complete' } |
+                    ForEach-Object { [int]$_.Items } | Measure-Object -Sum).Sum
+                if ($totalItems -gt 0) {
+                    $navBadge = "<span class='nav-badge nav-badge-neutral'>$totalItems</span>"
+                }
+            }
         }
     }
     $navIconKey = $navSection.ToLower()
