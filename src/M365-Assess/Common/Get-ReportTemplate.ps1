@@ -2675,7 +2675,7 @@ if (-not $SkipCoverPage) {
 if ($QuickScan) {
     $html += @"
 
-        <div class="quickscan-banner">Quick Scan Mode &mdash; showing Critical and High severity findings only</div>
+        <div class="quickscan-banner">Quick Scan Mode &mdash; fast, low-permission triage focused on Critical and High severity findings</div>
 "@
 }
 
