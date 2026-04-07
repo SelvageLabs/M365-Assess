@@ -176,6 +176,7 @@
         'controls\frameworks\pci-dss-v4.json'
         'controls\frameworks\soc2-tsc.json'
         'controls\frameworks\stig.json'
+        'controls\frameworks\entra-id-stig.json'
         'Setup\Grant-M365AssessConsent.ps1'
         'Setup\Save-M365ConnectionProfile.ps1'
         'Setup\Get-M365ConnectionProfile.ps1'
@@ -192,6 +193,7 @@
             Tags         = @('Microsoft365', 'M365', 'Security', 'Assessment', 'Compliance', 'Audit',
                              'EntraID', 'Exchange', 'Intune', 'Defender', 'SharePoint', 'Teams',
                              'PowerBI', 'CIS', 'NIST', 'SOC2', 'HIPAA', 'ZeroTrust', 'SecurityBaseline')
+            IconUri      = 'https://raw.githubusercontent.com/Galvnyz/M365-Assess/main/src/M365-Assess/assets/m365-assess-logo.png'
             LicenseUri   = 'https://github.com/Galvnyz/M365-Assess/blob/main/LICENSE'
             ProjectUri   = 'https://github.com/Galvnyz/M365-Assess'
             ReleaseNotes = 'v1.9.0 - Fix .onmicrosoft.com false-positive DNS failures; QuickScan now auto-applies triage report format (no cover page, exec summary, or compliance matrix)'
