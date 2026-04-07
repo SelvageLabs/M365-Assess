@@ -394,3 +394,42 @@ Describe 'Export-AssessmentReport HTML structure' {
         }
     }
 }
+
+Describe 'QuickScan triage report auto-apply' {
+    BeforeAll {
+        $orchestratorSrc = Get-Content -Path "$PSScriptRoot/../../src/M365-Assess/Invoke-M365Assessment.ps1" -Raw
+        $templateSrc = Get-Content -Path "$PSScriptRoot/../../src/M365-Assess/Common/Get-ReportTemplate.ps1" -Raw
+    }
+
+    Context 'Orchestrator auto-applies skip flags for QuickScan' {
+        It 'Should contain the QuickScan auto-apply block' {
+            $orchestratorSrc | Should -Match 'if \(\$QuickScan\)[\s\S]*?SkipCoverPage'
+        }
+
+        It 'Should guard SkipCoverPage with PSBoundParameters check' {
+            $orchestratorSrc | Should -Match "PSBoundParameters\.ContainsKey\('SkipCoverPage'\)"
+        }
+
+        It 'Should guard SkipExecutiveSummary with PSBoundParameters check' {
+            $orchestratorSrc | Should -Match "PSBoundParameters\.ContainsKey\('SkipExecutiveSummary'\)"
+        }
+
+        It 'Should guard SkipComplianceOverview with PSBoundParameters check' {
+            $orchestratorSrc | Should -Match "PSBoundParameters\.ContainsKey\('SkipComplianceOverview'\)"
+        }
+
+        It 'Should document triage report behaviour in QuickScan parameter help' {
+            $orchestratorSrc | Should -Match 'compact.*triage|triage.*report|omits.*cover|cover page.*omit'
+        }
+    }
+
+    Context 'Report template has compact scan-header banner' {
+        It 'Should include scan-header CSS class for compact triage display' {
+            $templateSrc | Should -Match '\.scan-header'
+        }
+
+        It 'Should render scan-header when QuickScan is active' {
+            $templateSrc | Should -Match 'if \(\$QuickScan\)'
+        }
+    }
+}

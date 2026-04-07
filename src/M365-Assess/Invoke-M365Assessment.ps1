@@ -76,7 +76,11 @@
 .PARAMETER QuickScan
     Run only Critical and High severity checks. Useful for CI/CD pipelines
     and daily monitoring. Collectors with no qualifying checks are skipped
-    entirely. The report shows a "Quick Scan Mode" banner.
+    entirely. The report shows a "Quick Scan Mode" banner and automatically
+    omits the cover page, executive summary, and compliance overview to
+    produce a compact, action-focused triage report. Override any of these
+    individually with -SkipCoverPage:$false, -SkipExecutiveSummary:$false,
+    or -SkipComplianceOverview:$false.
 .PARAMETER DryRun
     Show a dry-run preview of what the assessment would do (sections,
     services, Graph scopes, check counts) without connecting or collecting
@@ -1123,6 +1127,13 @@ Write-AssessmentLog -Level INFO -Message "Assessment complete. Duration: $($over
 $reportScriptPath = Join-Path -Path $projectRoot -ChildPath 'Common\Export-AssessmentReport.ps1'
 if (Test-Path -Path $reportScriptPath) {
     try {
+        # QuickScan: default to compact triage report unless the user explicitly overrode each flag
+        if ($QuickScan) {
+            if (-not $PSBoundParameters.ContainsKey('SkipCoverPage'))          { $SkipCoverPage = $true }
+            if (-not $PSBoundParameters.ContainsKey('SkipExecutiveSummary'))   { $SkipExecutiveSummary = $true }
+            if (-not $PSBoundParameters.ContainsKey('SkipComplianceOverview')) { $SkipComplianceOverview = $true }
+        }
+
         $reportParams = @{
             AssessmentFolder = $assessmentFolder
         }
