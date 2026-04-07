@@ -648,23 +648,27 @@ foreach ($sectionName in $sections) {
                 $null = $sectionHtml.AppendLine("<div class='email-dash-col'>")
                 $null = $sectionHtml.AppendLine("<div class='email-dash-heading'>Email Authentication <span class='source-badge source-dns'>Live DNS Check</span></div>")
 
-                # DNS stat cards — compact 2-column grid for column context
-                $null = $sectionHtml.AppendLine("<div class='dns-stats-col'>")
-                $null = $sectionHtml.AppendLine("<div class='dns-stat $spfClass'><div class='dns-stat-value'>$spfConfigured / $totalDomains</div><div class='dns-stat-label'>SPF</div></div>")
-                $dmarcDetail = if ($dmarcMonitoring -gt 0) { "<div class='dns-stat-detail'>$dmarcMonitoring monitoring</div>" } else { '' }
-                $null = $sectionHtml.AppendLine("<div class='dns-stat $dmarcClass'><div class='dns-stat-value'>$dmarcEnforced / $totalDomains</div><div class='dns-stat-label'>DMARC Enforced</div>$dmarcDetail</div>")
-                $null = $sectionHtml.AppendLine("<div class='dns-stat $dkimClass'><div class='dns-stat-value'>$dkimConfigured / $totalDomains</div><div class='dns-stat-label'>DKIM</div></div>")
+                # DNS stat cards — 2-column grid: left=core auth (SPF/DKIM/DMARC), right=transport/infra (PublicDNS/MTA-STS/TLS-RPT)
                 $dkimMismatchCount = 0
                 if ($dnsColumns -contains 'DKIMStatus') {
                     $dkimMismatchCount = @($dnsData | Where-Object { $_.DKIMStatus -match '^Mismatch' }).Count
                 }
-                if ($dkimMismatchCount -gt 0) {
-                    $null = $sectionHtml.AppendLine("<div class='dns-stat danger'><div class='dns-stat-value'>$dkimMismatchCount</div><div class='dns-stat-label'>DKIM Mismatch</div></div>")
-                }
-                $null = $sectionHtml.AppendLine("<div class='dns-stat $mtaStsClass'><div class='dns-stat-value'>$mtaStsConfigured / $totalDomains</div><div class='dns-stat-label'>MTA-STS</div></div>")
-                $null = $sectionHtml.AppendLine("<div class='dns-stat $tlsRptClass'><div class='dns-stat-value'>$tlsRptConfigured / $totalDomains</div><div class='dns-stat-label'>TLS-RPT</div></div>")
+                $dmarcDetail = if ($dmarcMonitoring -gt 0) { "<div class='dns-stat-detail'>$dmarcMonitoring monitoring</div>" } else { '' }
+
+                $null = $sectionHtml.AppendLine("<div class='dns-stats-col'>")
+                # Row 1
+                $null = $sectionHtml.AppendLine("<div class='dns-stat $spfClass'><div class='dns-stat-value'>$spfConfigured / $totalDomains</div><div class='dns-stat-label'>SPF</div></div>")
                 if ($dnsColumns -contains 'PublicDNSConfirm') {
                     $null = $sectionHtml.AppendLine("<div class='dns-stat $publicClass'><div class='dns-stat-value'>$publicConfirmed / $totalDomains</div><div class='dns-stat-label'>Public DNS</div></div>")
+                }
+                # Row 2
+                $null = $sectionHtml.AppendLine("<div class='dns-stat $dkimClass'><div class='dns-stat-value'>$dkimConfigured / $totalDomains</div><div class='dns-stat-label'>DKIM</div></div>")
+                $null = $sectionHtml.AppendLine("<div class='dns-stat $mtaStsClass'><div class='dns-stat-value'>$mtaStsConfigured / $totalDomains</div><div class='dns-stat-label'>MTA-STS</div></div>")
+                # Row 3
+                $null = $sectionHtml.AppendLine("<div class='dns-stat $dmarcClass'><div class='dns-stat-value'>$dmarcEnforced / $totalDomains</div><div class='dns-stat-label'>DMARC Enforced</div>$dmarcDetail</div>")
+                $null = $sectionHtml.AppendLine("<div class='dns-stat $tlsRptClass'><div class='dns-stat-value'>$tlsRptConfigured / $totalDomains</div><div class='dns-stat-label'>TLS-RPT</div></div>")
+                if ($dkimMismatchCount -gt 0) {
+                    $null = $sectionHtml.AppendLine("<div class='dns-stat danger'><div class='dns-stat-value'>$dkimMismatchCount</div><div class='dns-stat-label'>DKIM Mismatch</div></div>")
                 }
                 $null = $sectionHtml.AppendLine("</div>")
 
