@@ -124,10 +124,23 @@ Describe 'Build-RemediationPlanHtml' {
             $result | Should -Match "details class='collector-detail'"
         }
 
-        It 'should include the compact viewport and expand button' {
+        It 'should use table-wrapper for the compact findings table' {
             $result = Build-RemediationPlanHtml -Findings $script:testFindings -IsQuickScan $false
-            $result | Should -Match 'rem-table-viewport'
-            $result | Should -Match 'rem-show-more'
+            $result | Should -Match 'remediation-table-wrapper'
+            $result | Should -Not -Match 'rem-table-viewport'
+            $result | Should -Not -Match 'rem-show-more'
+        }
+
+        It 'should render a column picker bar with all expected columns' {
+            $result = Build-RemediationPlanHtml -Findings $script:testFindings -IsQuickScan $false
+            $result | Should -Match 'col-picker-bar'
+            $result | Should -Match "data-col-key='Severity'"
+            $result | Should -Match "data-col-key='CheckId'"
+        }
+
+        It 'should render Check ID column hidden by default' {
+            $result = Build-RemediationPlanHtml -Findings $script:testFindings -IsQuickScan $false
+            $result | Should -Match "data-col-default='hidden'"
         }
     }
 

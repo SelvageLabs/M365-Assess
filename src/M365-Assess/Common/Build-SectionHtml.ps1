@@ -1241,13 +1241,30 @@ foreach ($sectionName in $sections) {
             $null = $sectionHtml.AppendLine("</div>")
         }
 
+        # Column visibility picker (security config tables only)
+        $hiddenByDefault = @('CheckId', 'Category', 'RecommendedValue')
+        if ($isSecurityConfig) {
+            $null = $sectionHtml.AppendLine("<div class='col-picker-bar'>")
+            $null = $sectionHtml.AppendLine("<button type='button' class='col-picker-toggle'>Columns &#9662;</button>")
+            $null = $sectionHtml.AppendLine("<div class='col-picker-panel' hidden>")
+            foreach ($col in $columns) {
+                $displayCol    = Format-ColumnHeader -Name $col
+                $isColHidden   = $hiddenByDefault -contains $col
+                $defaultAttr   = if ($isColHidden) { " data-col-default='hidden'" } else { '' }
+                $checkedAttr   = if ($isColHidden) { '' } else { ' checked' }
+                $null = $sectionHtml.AppendLine("<label class='col-picker-item'><input type='checkbox' data-col-key='$col'$defaultAttr$checkedAttr> $(ConvertTo-HtmlSafe -Text $displayCol)</label>")
+            }
+            $null = $sectionHtml.AppendLine("</div></div>")
+        }
+
         $null = $sectionHtml.AppendLine("<div class='table-wrapper'>")
         $null = $sectionHtml.AppendLine("<table class='data-table'>")
         $null = $sectionHtml.AppendLine("<caption class='sr-only'>$($collector.Label) assessment results</caption>")
         $null = $sectionHtml.AppendLine("<thead><tr>")
         foreach ($col in $columns) {
             $displayCol = Format-ColumnHeader -Name $col
-            $null = $sectionHtml.AppendLine("<th scope='col'>$(ConvertTo-HtmlSafe -Text $displayCol)</th>")
+            $initStyle  = if ($isSecurityConfig -and ($hiddenByDefault -contains $col)) { " style='display:none'" } else { '' }
+            $null = $sectionHtml.AppendLine("<th scope='col' data-col-key='$col'$initStyle>$(ConvertTo-HtmlSafe -Text $displayCol)</th>")
         }
         $null = $sectionHtml.AppendLine("</tr></thead>")
         $null = $sectionHtml.AppendLine("<tbody>")
@@ -1288,6 +1305,9 @@ foreach ($sectionName in $sections) {
                 if ($val.Length -gt 200) {
                     $val = $val.Substring(0, 197) + '...'
                 }
+                # Column-key attribute and initial hidden state for column picker
+                $colKeyAttr = " data-col-key='$col'"
+                $initStyle  = if ($isSecurityConfig -and ($hiddenByDefault -contains $col)) { " style='display:none'" } else { '' }
                 # Security config Status column — add badge styling
                 if ($isSecurityConfig -and $col -eq 'Status') {
                     $badgeClass = switch ($val) {
@@ -1312,17 +1332,17 @@ foreach ($sectionName in $sections) {
                     elseif ($val -match 'EXO Confirmed') {
                         $cellCss = " class='dkim-exo-confirmed'"
                     }
-                    $null = $sectionHtml.AppendLine("<td$cellCss>$val</td>")
+                    $null = $sectionHtml.AppendLine("<td$cellCss$colKeyAttr$initStyle>$val</td>")
                     continue
                 }
                 # Remediation column — add copy-to-clipboard button for PowerShell commands
                 if ($col -eq 'Remediation' -and $row.Remediation -match '^(Set|Get|New|Remove|Update|Enable|Disable|Add|Connect|Grant|Revoke|Install|Uninstall|Import|Export)-') {
                     $rawRemediation = ConvertTo-HtmlSafe -Text "$($row.Remediation)"
                     if ($rawRemediation.Length -gt 200) { $rawRemediation = $rawRemediation.Substring(0, 197) + '...' }
-                    $null = $sectionHtml.AppendLine("<td class='remediation-cell'><span class='remediation-text'>$rawRemediation</span><button type='button' class='copy-btn' title='Copy command' aria-label='Copy remediation command' onclick='copyRemediation(this)'>&#128203;</button></td>")
+                    $null = $sectionHtml.AppendLine("<td class='remediation-cell'$colKeyAttr$initStyle><span class='remediation-text'>$rawRemediation</span><button type='button' class='copy-btn' title='Copy command' aria-label='Copy remediation command' onclick='copyRemediation(this)'>&#128203;</button></td>")
                     continue
                 }
-                $null = $sectionHtml.AppendLine("<td>$val</td>")
+                $null = $sectionHtml.AppendLine("<td$colKeyAttr$initStyle>$val</td>")
             }
             $null = $sectionHtml.AppendLine("</tr>")
         }
@@ -1687,10 +1707,29 @@ function Build-RemediationPlanHtml {
     $null = $html.AppendLine("<details class='collector-detail' id='remTableDetail' open>")
     $null = $html.AppendLine("<summary><h3>Action Items</h3><span class='row-count' id='remMatchCount'>($totalCount $findingWord)</span></summary>")
 
-    # Height-limited viewport (compact by default, expandable)
-    $null = $html.AppendLine("<div class='rem-table-viewport' id='remTableViewport'>")
+    # Column picker for remediation table
+    $null = $html.AppendLine("<div class='col-picker-bar'>")
+    $null = $html.AppendLine("<button type='button' class='col-picker-toggle'>Columns &#9662;</button>")
+    $null = $html.AppendLine("<div class='col-picker-panel' hidden>")
+    $null = $html.AppendLine("<label class='col-picker-item'><input type='checkbox' data-col-key='Severity' checked> Severity</label>")
+    $null = $html.AppendLine("<label class='col-picker-item'><input type='checkbox' data-col-key='Section' checked> Section</label>")
+    $null = $html.AppendLine("<label class='col-picker-item'><input type='checkbox' data-col-key='Check' checked> Check</label>")
+    $null = $html.AppendLine("<label class='col-picker-item'><input type='checkbox' data-col-key='CheckId' data-col-default='hidden'> Check ID</label>")
+    $null = $html.AppendLine("<label class='col-picker-item'><input type='checkbox' data-col-key='CurrentState' checked> Current State</label>")
+    $null = $html.AppendLine("<label class='col-picker-item'><input type='checkbox' data-col-key='Remediation' checked> Remediation</label>")
+    $null = $html.AppendLine("</div></div>")
+
+    # Table wrapper — compact by default; initPageTableExpand injects ▼ Expand button when needed
+    $null = $html.AppendLine("<div class='table-wrapper remediation-table-wrapper'>")
     $null = $html.AppendLine("<table class='data-table remediation-table' id='remediationTable'>")
-    $null = $html.AppendLine("<thead><tr><th scope='col'>Severity</th><th scope='col'>Section</th><th scope='col'>Check</th><th scope='col'>Current State</th><th scope='col'>Remediation</th></tr></thead><tbody>")
+    $null = $html.AppendLine("<thead><tr>")
+    $null = $html.AppendLine("<th scope='col' data-col-key='Severity'>Severity</th>")
+    $null = $html.AppendLine("<th scope='col' data-col-key='Section'>Section</th>")
+    $null = $html.AppendLine("<th scope='col' data-col-key='Check'>Check</th>")
+    $null = $html.AppendLine("<th scope='col' data-col-key='CheckId' style='display:none'>Check ID</th>")
+    $null = $html.AppendLine("<th scope='col' data-col-key='CurrentState'>Current State</th>")
+    $null = $html.AppendLine("<th scope='col' data-col-key='Remediation'>Remediation</th>")
+    $null = $html.AppendLine("</tr></thead><tbody>")
 
     foreach ($finding in $sorted) {
         $sev = if ($finding.RiskSeverity) { $finding.RiskSeverity } else { 'Low' }
@@ -1706,25 +1745,24 @@ function Build-RemediationPlanHtml {
             'Medium'   { 'badge-review' }
             default    { 'badge-neutral' }
         }
-        $sectionEncoded = ConvertTo-HtmlSafe -Text $finding.Section
-        $checkEncoded   = ConvertTo-HtmlSafe -Text $finding.Setting
-        $currentEncoded = ConvertTo-HtmlSafe -Text $finding.CurrentValue
-        $remEncoded     = ConvertTo-HtmlSafe -Text $(if ($finding.Remediation) { $finding.Remediation } else { '' })
+        $sectionEncoded  = ConvertTo-HtmlSafe -Text $finding.Section
+        $checkEncoded    = ConvertTo-HtmlSafe -Text $finding.Setting
+        $checkIdEncoded  = ConvertTo-HtmlSafe -Text $(if ($finding.CheckId) { $finding.CheckId } else { '' })
+        $currentEncoded  = ConvertTo-HtmlSafe -Text $finding.CurrentValue
+        $remEncoded      = ConvertTo-HtmlSafe -Text $(if ($finding.Remediation) { $finding.Remediation } else { '' })
 
         $null = $html.AppendLine("<tr class='$sevClass' data-severity='$sev' data-section='$sectionEncoded'>")
-        $null = $html.AppendLine("<td><span class='badge $badgeClass'>$(ConvertTo-HtmlSafe -Text $sev)</span></td>")
-        $null = $html.AppendLine("<td>$sectionEncoded</td><td>$checkEncoded</td><td>$currentEncoded</td>")
-        $null = $html.AppendLine("<td><span class='rem-text'>$remEncoded</span><button class='copy-btn' onclick='copyRemediation(this)' title='Copy to clipboard'>&#128203;</button></td>")
+        $null = $html.AppendLine("<td data-col-key='Severity'><span class='badge $badgeClass'>$(ConvertTo-HtmlSafe -Text $sev)</span></td>")
+        $null = $html.AppendLine("<td data-col-key='Section'>$sectionEncoded</td>")
+        $null = $html.AppendLine("<td data-col-key='Check'>$checkEncoded</td>")
+        $null = $html.AppendLine("<td data-col-key='CheckId' style='display:none'>$checkIdEncoded</td>")
+        $null = $html.AppendLine("<td data-col-key='CurrentState'>$currentEncoded</td>")
+        $null = $html.AppendLine("<td data-col-key='Remediation'><span class='rem-text'>$remEncoded</span><button class='copy-btn' onclick='copyRemediation(this)' title='Copy to clipboard'>&#128203;</button></td>")
         $null = $html.AppendLine("</tr>")
     }
 
     $null = $html.AppendLine("</tbody></table>")
-    $null = $html.AppendLine("<div class='rem-viewport-fade' id='remViewportFade'></div>")
-    $null = $html.AppendLine("</div>") # rem-table-viewport
-
-    $null = $html.AppendLine("<div class='rem-show-more' id='remShowMore'>")
-    $null = $html.AppendLine("<button type='button' class='rem-show-more-btn' id='remShowMoreBtn' onclick='expandRemTable(this)'>&#9660; Show all $totalCount findings</button>")
-    $null = $html.AppendLine("</div>")
+    $null = $html.AppendLine("</div>") # table-wrapper
     $null = $html.AppendLine("<p id='remNoResults' class='no-results' style='display:none'>No findings match the current filter selection.</p>")
 
     $null = $html.AppendLine("</details>") # collector-detail

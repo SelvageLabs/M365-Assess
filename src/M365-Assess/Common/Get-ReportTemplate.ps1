@@ -2437,6 +2437,8 @@ $html = @"
             .fw-selector { display: none; }
             .status-filter { display: none; }
             .section-filter { display: none; }
+            .col-picker-bar { display: none; }
+            .table-expand-btn { display: none; }
             .matrix-controls { display: none; }
             .callout-row { display: block; }
             .matrix-table tr { display: table-row !important; }
@@ -2505,16 +2507,16 @@ $html = @"
         .remediation-table tr.remediation-row-high td:first-child     { border-left: 4px solid var(--m365a-warning); }
         .remediation-table tr.remediation-row-medium td:first-child   { border-left: 4px solid var(--m365a-info); }
         .remediation-table tr.remediation-row-low td:first-child      { border-left: 4px solid var(--m365a-neutral); }
-        /* Compact viewport with gradient fade */
-        .rem-table-viewport { max-height: 380px; overflow-y: auto; overflow-x: auto; position: relative; }
-        .rem-table-viewport.expanded { max-height: none; }
-        .rem-viewport-fade { position: sticky; bottom: 0; left: 0; right: 0; height: 56px; background: linear-gradient(to bottom, transparent, var(--m365a-card-bg)); pointer-events: none; margin-top: -56px; }
-        .rem-table-viewport.expanded .rem-viewport-fade { display: none; }
-        /* Show-more button */
-        .rem-show-more { text-align: center; padding: 6px 0 2px; }
-        .rem-show-more-btn { padding: 5px 18px; border: 1px solid var(--m365a-border); border-radius: 4px; background: var(--m365a-card-bg); color: var(--m365a-medium-gray); cursor: pointer; font-size: 0.82em; transition: background 0.15s, color 0.15s; }
-        .rem-show-more-btn:hover { background: var(--m365a-hover-bg); color: var(--m365a-text); }
+        /* Remediation table — taller compact view than the standard 260px */
+        .remediation-table-wrapper { max-height: 380px; }
         .remediation-empty { font-size: 0.875rem; color: var(--m365a-medium-gray); padding: 1rem 0; }
+        /* Column picker */
+        .col-picker-bar { position: relative; display: inline-block; margin-bottom: 6px; }
+        .col-picker-toggle { padding: 4px 10px; border: 1px solid var(--m365a-border); border-radius: 4px; background: var(--m365a-card-bg); color: var(--m365a-medium-gray); cursor: pointer; font-size: 0.82em; }
+        .col-picker-toggle:hover { background: var(--m365a-hover-bg); color: var(--m365a-text); }
+        .col-picker-panel { position: absolute; top: 100%; left: 0; z-index: 10; min-width: 160px; padding: 8px; background: var(--m365a-card-bg); border: 1px solid var(--m365a-border); border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .col-picker-item { display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 0.85em; cursor: pointer; white-space: nowrap; }
+        .col-picker-item input { cursor: pointer; }
     </style>
 $accentCss
 </head>
@@ -3124,10 +3126,10 @@ $html += @"
             });
         });
 
-        // Inject expand buttons into tables in a page once it becomes visible.
-        // Must run after page-active is applied so scrollHeight reflects real layout.
+        // Inject expand buttons and initialise column pickers for tables in a page
+        // once it becomes visible. Must run after page-active is applied so
+        // scrollHeight reflects real layout.
         function initPageTableExpand(page) {
-            // Universal expand for all collector-detail table-wrappers
             page.querySelectorAll('.collector-detail .table-wrapper:not([data-expand-init])').forEach(function(wrapper) {
                 wrapper.setAttribute('data-expand-init', '1');
                 if (wrapper.scrollHeight <= wrapper.clientHeight) { return; }
@@ -3143,14 +3145,50 @@ $html += @"
                 });
                 wrapper.parentNode.insertBefore(btn, wrapper.nextSibling);
             });
-            // Remediation viewport: hide show-more button only when table fits
-            var vp   = page.querySelector('#remTableViewport');
-            var sm   = page.querySelector('#remShowMore');
-            var fade = page.querySelector('#remViewportFade');
-            if (vp && sm && vp.scrollHeight <= vp.clientHeight) {
-                sm.style.display = 'none';
-                if (fade) { fade.style.display = 'none'; }
-            }
+            initColPickers(page);
+        }
+
+        function toggleColumn(table, colKey, visible) {
+            table.querySelectorAll('[data-col-key="' + colKey + '"]').forEach(function(el) {
+                el.style.display = visible ? '' : 'none';
+            });
+        }
+
+        function initColPickers(page) {
+            page.querySelectorAll('.col-picker-bar').forEach(function(bar) {
+                if (bar.getAttribute('data-picker-init')) { return; }
+                bar.setAttribute('data-picker-init', '1');
+                var detail = bar.closest('.collector-detail');
+                var table  = detail ? detail.querySelector('.data-table') : null;
+                if (!table) { return; }
+                if (!table.id) { table.id = 'tbl-' + Math.random().toString(36).slice(2, 8); }
+                var storageKey = 'cols-' + table.id;
+                var saved = JSON.parse(sessionStorage.getItem(storageKey) || '[]');
+                bar.querySelectorAll('.col-picker-item input').forEach(function(cb) {
+                    var colKey       = cb.getAttribute('data-col-key');
+                    var defaultHide  = cb.getAttribute('data-col-default') === 'hidden';
+                    var isHidden     = saved.length ? saved.indexOf(colKey) > -1 : defaultHide;
+                    cb.checked = !isHidden;
+                    toggleColumn(table, colKey, !isHidden);
+                    cb.addEventListener('change', function() {
+                        toggleColumn(table, colKey, cb.checked);
+                        var hidden = Array.from(bar.querySelectorAll('.col-picker-item input:not(:checked)'))
+                            .map(function(c) { return c.getAttribute('data-col-key'); });
+                        sessionStorage.setItem(storageKey, JSON.stringify(hidden));
+                    });
+                });
+                var toggle = bar.querySelector('.col-picker-toggle');
+                var panel  = bar.querySelector('.col-picker-panel');
+                if (toggle && panel) {
+                    toggle.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        panel.hidden = !panel.hidden;
+                    });
+                    document.addEventListener('click', function() {
+                        if (!panel.hidden) { panel.hidden = true; }
+                    });
+                }
+            });
         }
 
         // Initialize: show the correct page on load
@@ -3594,22 +3632,6 @@ $html += @"
         filterRemediationTable();
     }
 
-    function expandRemTable(btn) {
-        var vp   = document.getElementById('remTableViewport');
-        var fade = document.getElementById('remViewportFade');
-        if (!vp) { return; }
-        if (vp.classList.contains('expanded')) {
-            vp.classList.remove('expanded');
-            if (fade) { fade.style.display = ''; }
-            var countEl = document.getElementById('remMatchCount');
-            var n = countEl ? parseInt(countEl.textContent.replace(/\D/g, ''), 10) || 0 : 0;
-            btn.textContent = '\u25BC Show all ' + n + ' findings';
-        } else {
-            vp.classList.add('expanded');
-            if (fade) { fade.style.display = 'none'; }
-            btn.textContent = '\u25B2 Collapse table';
-        }
-    }
 
     </script>
 </body>
