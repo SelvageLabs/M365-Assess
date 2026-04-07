@@ -1736,12 +1736,15 @@ $html = @"
             font-size: 9pt;
         }
 
-        /* Scrollable data tables — max ~25 rows visible */
+        /* Scrollable data tables — compact by default, expandable on demand */
         .collector-detail .table-wrapper {
-            max-height: 800px;
+            max-height: 260px;
             overflow-y: auto;
             overflow-x: auto;
         }
+        .collector-detail .table-wrapper.expanded { max-height: none; }
+        .table-expand-btn { display: block; width: 100%; padding: 5px 0; border: 1px solid var(--m365a-border); border-top: none; border-radius: 0 0 4px 4px; background: var(--m365a-card-bg); color: var(--m365a-medium-gray); cursor: pointer; font-size: 0.82em; text-align: center; transition: background 0.15s, color 0.15s; }
+        .table-expand-btn:hover { background: var(--m365a-hover-bg); color: var(--m365a-text); }
 
         .collector-detail .data-table thead th {
             position: sticky;
@@ -3585,6 +3588,23 @@ $html += @"
             sm.style.display   = 'none';
             if (fade) { fade.style.display = 'none'; }
         }
+    }());
+
+    (function initTableExpand() {
+        document.querySelectorAll('.collector-detail .table-wrapper').forEach(function(wrapper) {
+            if (wrapper.scrollHeight <= wrapper.clientHeight) { return; }
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'table-expand-btn';
+            btn.textContent = '\u25BC Expand table';
+            btn.addEventListener('click', function() {
+                wrapper.classList.toggle('expanded');
+                btn.textContent = wrapper.classList.contains('expanded')
+                    ? '\u25B2 Collapse table'
+                    : '\u25BC Expand table';
+            });
+            wrapper.parentNode.insertBefore(btn, wrapper.nextSibling);
+        });
     }());
     </script>
 </body>
