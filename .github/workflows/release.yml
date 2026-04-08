@@ -90,10 +90,29 @@ jobs:
   publish:
     needs: [validate, create-release]
     if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-')
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     environment: psgallery
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install image optimizer
+        run: sudo apt-get install -y oxipng
+
+      - name: Compress PNG assets
+        run: |
+          oxipng --opt 3 --strip all src/M365-Assess/assets/*.png
+          echo "PNG sizes after optimization:"
+          du -sh src/M365-Assess/assets/*.png
+
+      - name: Minify JSON data files
+        run: |
+          python3 -c "
+          import json, glob
+          for p in glob.glob('src/M365-Assess/controls/**/*.json', recursive=True):
+              with open(p) as f: data = json.load(f)
+              with open(p, 'w') as f: json.dump(data, f, separators=(',',':'))
+          print('JSON files minified')
+          "
 
       - name: Publish to PSGallery
         if: ${{ !inputs.dry_run }}
