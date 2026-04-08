@@ -521,7 +521,7 @@ foreach ($sectionName in $sections) {
 
         # Also pre-load DNS Authentication data
         $dnsCsvPath = Join-Path -Path $AssessmentFolder -ChildPath '12-DNS-Email-Authentication.csv'
-        $dnsData = if (Test-Path $dnsCsvPath) { @(Import-Csv $dnsCsvPath) } else { @() }
+        $dnsData = if (Test-Path $dnsCsvPath) { @(Import-Csv $dnsCsvPath | Where-Object { $_.Domain -notmatch '\.onmicrosoft\.com$' }) } else { @() }
         $hasDns = $dnsData.Count -gt 0
 
         if ($hasMailbox -or $hasExo -or $hasPolicies -or $hasDns) {
@@ -648,23 +648,27 @@ foreach ($sectionName in $sections) {
                 $null = $sectionHtml.AppendLine("<div class='email-dash-col'>")
                 $null = $sectionHtml.AppendLine("<div class='email-dash-heading'>Email Authentication <span class='source-badge source-dns'>Live DNS Check</span></div>")
 
-                # DNS stat cards — compact 2-column grid for column context
-                $null = $sectionHtml.AppendLine("<div class='dns-stats-col'>")
-                $null = $sectionHtml.AppendLine("<div class='dns-stat $spfClass'><div class='dns-stat-value'>$spfConfigured / $totalDomains</div><div class='dns-stat-label'>SPF</div></div>")
-                $dmarcDetail = if ($dmarcMonitoring -gt 0) { "<div class='dns-stat-detail'>$dmarcMonitoring monitoring</div>" } else { '' }
-                $null = $sectionHtml.AppendLine("<div class='dns-stat $dmarcClass'><div class='dns-stat-value'>$dmarcEnforced / $totalDomains</div><div class='dns-stat-label'>DMARC Enforced</div>$dmarcDetail</div>")
-                $null = $sectionHtml.AppendLine("<div class='dns-stat $dkimClass'><div class='dns-stat-value'>$dkimConfigured / $totalDomains</div><div class='dns-stat-label'>DKIM</div></div>")
+                # DNS stat cards — 2-column grid: left=core auth (SPF/DKIM/DMARC), right=transport/infra (PublicDNS/MTA-STS/TLS-RPT)
                 $dkimMismatchCount = 0
                 if ($dnsColumns -contains 'DKIMStatus') {
                     $dkimMismatchCount = @($dnsData | Where-Object { $_.DKIMStatus -match '^Mismatch' }).Count
                 }
-                if ($dkimMismatchCount -gt 0) {
-                    $null = $sectionHtml.AppendLine("<div class='dns-stat danger'><div class='dns-stat-value'>$dkimMismatchCount</div><div class='dns-stat-label'>DKIM Mismatch</div></div>")
-                }
-                $null = $sectionHtml.AppendLine("<div class='dns-stat $mtaStsClass'><div class='dns-stat-value'>$mtaStsConfigured / $totalDomains</div><div class='dns-stat-label'>MTA-STS</div></div>")
-                $null = $sectionHtml.AppendLine("<div class='dns-stat $tlsRptClass'><div class='dns-stat-value'>$tlsRptConfigured / $totalDomains</div><div class='dns-stat-label'>TLS-RPT</div></div>")
+                $dmarcDetail = if ($dmarcMonitoring -gt 0) { "<div class='dns-stat-detail'>$dmarcMonitoring monitoring</div>" } else { '' }
+
+                $null = $sectionHtml.AppendLine("<div class='dns-stats-col'>")
+                # Row 1
+                $null = $sectionHtml.AppendLine("<div class='dns-stat $spfClass'><div class='dns-stat-value'>$spfConfigured / $totalDomains</div><div class='dns-stat-label'>SPF</div></div>")
                 if ($dnsColumns -contains 'PublicDNSConfirm') {
                     $null = $sectionHtml.AppendLine("<div class='dns-stat $publicClass'><div class='dns-stat-value'>$publicConfirmed / $totalDomains</div><div class='dns-stat-label'>Public DNS</div></div>")
+                }
+                # Row 2
+                $null = $sectionHtml.AppendLine("<div class='dns-stat $dkimClass'><div class='dns-stat-value'>$dkimConfigured / $totalDomains</div><div class='dns-stat-label'>DKIM</div></div>")
+                $null = $sectionHtml.AppendLine("<div class='dns-stat $mtaStsClass'><div class='dns-stat-value'>$mtaStsConfigured / $totalDomains</div><div class='dns-stat-label'>MTA-STS</div></div>")
+                # Row 3
+                $null = $sectionHtml.AppendLine("<div class='dns-stat $dmarcClass'><div class='dns-stat-value'>$dmarcEnforced / $totalDomains</div><div class='dns-stat-label'>DMARC Enforced</div>$dmarcDetail</div>")
+                $null = $sectionHtml.AppendLine("<div class='dns-stat $tlsRptClass'><div class='dns-stat-value'>$tlsRptConfigured / $totalDomains</div><div class='dns-stat-label'>TLS-RPT</div></div>")
+                if ($dkimMismatchCount -gt 0) {
+                    $null = $sectionHtml.AppendLine("<div class='dns-stat danger'><div class='dns-stat-value'>$dkimMismatchCount</div><div class='dns-stat-label'>DKIM Mismatch</div></div>")
                 }
                 $null = $sectionHtml.AppendLine("</div>")
 
@@ -1241,13 +1245,30 @@ foreach ($sectionName in $sections) {
             $null = $sectionHtml.AppendLine("</div>")
         }
 
+        # Column visibility picker (security config tables only)
+        $hiddenByDefault = @('CheckId', 'Category', 'RecommendedValue')
+        if ($isSecurityConfig) {
+            $null = $sectionHtml.AppendLine("<div class='col-picker-bar'>")
+            $null = $sectionHtml.AppendLine("<button type='button' class='col-picker-toggle'>Columns &#9662;</button>")
+            $null = $sectionHtml.AppendLine("<div class='col-picker-panel' hidden>")
+            foreach ($col in $columns) {
+                $displayCol    = Format-ColumnHeader -Name $col
+                $isColHidden   = $hiddenByDefault -contains $col
+                $defaultAttr   = if ($isColHidden) { " data-col-default='hidden'" } else { '' }
+                $checkedAttr   = if ($isColHidden) { '' } else { ' checked' }
+                $null = $sectionHtml.AppendLine("<label class='col-picker-item'><input type='checkbox' data-col-key='$col'$defaultAttr$checkedAttr> $(ConvertTo-HtmlSafe -Text $displayCol)</label>")
+            }
+            $null = $sectionHtml.AppendLine("</div></div>")
+        }
+
         $null = $sectionHtml.AppendLine("<div class='table-wrapper'>")
         $null = $sectionHtml.AppendLine("<table class='data-table'>")
         $null = $sectionHtml.AppendLine("<caption class='sr-only'>$($collector.Label) assessment results</caption>")
         $null = $sectionHtml.AppendLine("<thead><tr>")
         foreach ($col in $columns) {
             $displayCol = Format-ColumnHeader -Name $col
-            $null = $sectionHtml.AppendLine("<th scope='col'>$(ConvertTo-HtmlSafe -Text $displayCol)</th>")
+            $initStyle  = if ($isSecurityConfig -and ($hiddenByDefault -contains $col)) { " style='display:none'" } else { '' }
+            $null = $sectionHtml.AppendLine("<th scope='col' data-col-key='$col'$initStyle>$(ConvertTo-HtmlSafe -Text $displayCol)</th>")
         }
         $null = $sectionHtml.AppendLine("</tr></thead>")
         $null = $sectionHtml.AppendLine("<tbody>")
@@ -1288,6 +1309,9 @@ foreach ($sectionName in $sections) {
                 if ($val.Length -gt 200) {
                     $val = $val.Substring(0, 197) + '...'
                 }
+                # Column-key attribute and initial hidden state for column picker
+                $colKeyAttr = " data-col-key='$col'"
+                $initStyle  = if ($isSecurityConfig -and ($hiddenByDefault -contains $col)) { " style='display:none'" } else { '' }
                 # Security config Status column — add badge styling
                 if ($isSecurityConfig -and $col -eq 'Status') {
                     $badgeClass = switch ($val) {
@@ -1312,17 +1336,17 @@ foreach ($sectionName in $sections) {
                     elseif ($val -match 'EXO Confirmed') {
                         $cellCss = " class='dkim-exo-confirmed'"
                     }
-                    $null = $sectionHtml.AppendLine("<td$cellCss>$val</td>")
+                    $null = $sectionHtml.AppendLine("<td$cellCss$colKeyAttr$initStyle>$val</td>")
                     continue
                 }
                 # Remediation column — add copy-to-clipboard button for PowerShell commands
                 if ($col -eq 'Remediation' -and $row.Remediation -match '^(Set|Get|New|Remove|Update|Enable|Disable|Add|Connect|Grant|Revoke|Install|Uninstall|Import|Export)-') {
                     $rawRemediation = ConvertTo-HtmlSafe -Text "$($row.Remediation)"
                     if ($rawRemediation.Length -gt 200) { $rawRemediation = $rawRemediation.Substring(0, 197) + '...' }
-                    $null = $sectionHtml.AppendLine("<td class='remediation-cell'><span class='remediation-text'>$rawRemediation</span><button type='button' class='copy-btn' title='Copy command' aria-label='Copy remediation command' onclick='copyRemediation(this)'>&#128203;</button></td>")
+                    $null = $sectionHtml.AppendLine("<td class='remediation-cell'$colKeyAttr$initStyle><span class='remediation-text'>$rawRemediation</span><button type='button' class='copy-btn' title='Copy command' aria-label='Copy remediation command' onclick='copyRemediation(this)'>&#128203;</button></td>")
                     continue
                 }
-                $null = $sectionHtml.AppendLine("<td>$val</td>")
+                $null = $sectionHtml.AppendLine("<td$colKeyAttr$initStyle>$val</td>")
             }
             $null = $sectionHtml.AppendLine("</tr>")
         }
@@ -1582,3 +1606,171 @@ if ($allCisFindings.Count -gt 0) {
 }
 $null = $tocHtml.AppendLine("</ol>")
 $null = $tocHtml.AppendLine("</nav>")
+
+function Build-RemediationPlanHtml {
+    <#
+    .SYNOPSIS
+        Builds the Remediation Action Plan HTML page for the assessment report.
+    .DESCRIPTION
+        Filters all CIS findings to Fail and Warning status, sorts by risk severity
+        (Critical -> High -> Medium -> Low), and renders a collapsible prioritized
+        action table with chip filters, dynamic cross-dimension counts, and a
+        compact-by-default scrollable viewport with expand/collapse control.
+    .PARAMETER Findings
+        All CIS findings from the assessment ($allCisFindings).
+    .PARAMETER IsQuickScan
+        Unused -- reserved for future use; no note is rendered in the page.
+    .EXAMPLE
+        $remediationPlanHtml = Build-RemediationPlanHtml -Findings $allCisFindings -IsQuickScan:$QuickScan
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter()]
+        [PSCustomObject[]]$Findings = @(),
+
+        [Parameter()]
+        [bool]$IsQuickScan = $false
+    )
+
+    $actionable = @($Findings | Where-Object { $_.Status -in @('Fail', 'Warning') })
+
+    if ($actionable.Count -eq 0) {
+        return @"
+<details class='section' id='remediation-plan-section' open>
+<summary><h2>Remediation Action Plan</h2></summary>
+<div class='remediation-empty'><p>No actionable findings &mdash; all checks passed or were not applicable.</p></div>
+</details>
+"@
+    }
+
+    # Sort: severity priority order, then Section, then CheckId
+    $severityOrder = @{ 'Critical' = 0; 'High' = 1; 'Medium' = 2; 'Low' = 3; 'Info' = 4 }
+    $sorted = $actionable | Sort-Object -Property @(
+        @{ Expression = { if ($severityOrder.ContainsKey($_.RiskSeverity)) { $severityOrder[$_.RiskSeverity] } else { 99 } } }
+        @{ Expression = { $_.Section } }
+        @{ Expression = { $_.CheckId } }
+    )
+
+    $critCount = @($sorted | Where-Object { $_.RiskSeverity -eq 'Critical' }).Count
+    $highCount  = @($sorted | Where-Object { $_.RiskSeverity -eq 'High' }).Count
+    $medCount   = @($sorted | Where-Object { $_.RiskSeverity -eq 'Medium' }).Count
+    $lowCount   = @($sorted | Where-Object { $_.RiskSeverity -eq 'Low' }).Count
+    $totalCount = $sorted.Count
+
+    $uniqueSections = @($sorted | Select-Object -ExpandProperty Section -ErrorAction SilentlyContinue | Where-Object { $_ } | Sort-Object -Unique)
+
+    $html = [System.Text.StringBuilder]::new()
+
+    # Outer collapsible section -- matches existing details.section pattern
+    $null = $html.AppendLine("<details class='section' id='remediation-plan-section' open>")
+    $null = $html.AppendLine("<summary><h2>Remediation Action Plan</h2></summary>")
+
+    # Stat tiles
+    $null = $html.AppendLine("<div class='remediation-stats'>")
+    foreach ($sevEntry in @( @('Critical',$critCount,'critical'), @('High',$highCount,'high'), @('Medium',$medCount,'medium'), @('Low',$lowCount,'low') )) {
+        if ($sevEntry[1] -gt 0) {
+            $null = $html.AppendLine("<div class='remediation-stat remediation-stat-$($sevEntry[2])'><span class='stat-num'>$($sevEntry[1])</span><span class='stat-label'>$($sevEntry[0])</span></div>")
+        }
+    }
+    $null = $html.AppendLine("</div>")
+
+    # ---- Severity chip filter row ----
+    $null = $html.AppendLine("<div class='remediation-chip-bar'>")
+    $null = $html.AppendLine("<div class='rem-chip-section' id='remSeveritySection'>")
+    $null = $html.AppendLine("<span class='rem-filter-label'>Severity:</span>")
+    $null = $html.AppendLine("<div class='rem-chip-group' id='remSeverityChips'>")
+    foreach ($sevEntry in @( @('Critical',$critCount), @('High',$highCount), @('Medium',$medCount), @('Low',$lowCount) )) {
+        $sevName = $sevEntry[0]; $sevCnt = $sevEntry[1]
+        if ($sevCnt -gt 0) {
+            $null = $html.AppendLine("<label class='fw-checkbox active rem-sev-chip' data-severity='$sevName' onclick='toggleRemChip(this); return false;'><input type='checkbox' checked hidden>$sevName <span class='rem-chip-count'>$sevCnt</span></label>")
+        }
+    }
+    $null = $html.AppendLine("</div>")
+    $null = $html.AppendLine("<span class='fw-selector-actions'><button type='button' class='fw-action-btn rem-chips-all' onclick='setAllRemChips(this)'>All</button><button type='button' class='fw-action-btn rem-chips-none' onclick='setAllRemChips(this)'>None</button></span>")
+    $null = $html.AppendLine("</div>")
+
+    # ---- Section chip filter row ----
+    if ($uniqueSections.Count -gt 0) {
+        $null = $html.AppendLine("<div class='rem-chip-section' id='remSectionSection'>")
+        $null = $html.AppendLine("<span class='rem-filter-label'>Section:</span>")
+        $null = $html.AppendLine("<div class='rem-chip-group' id='remSectionChips'>")
+        foreach ($sec in $uniqueSections) {
+            $secEncoded = ConvertTo-HtmlSafe -Text $sec
+            $secCnt = @($sorted | Where-Object { $_.Section -eq $sec }).Count
+            $null = $html.AppendLine("<label class='fw-checkbox active rem-sec-chip' data-section='$secEncoded' onclick='toggleRemChip(this); return false;'><input type='checkbox' checked hidden>$secEncoded <span class='rem-chip-count'>$secCnt</span></label>")
+        }
+        $null = $html.AppendLine("</div>")
+        $null = $html.AppendLine("<span class='fw-selector-actions'><button type='button' class='fw-action-btn rem-chips-all' onclick='setAllRemChips(this)'>All</button><button type='button' class='fw-action-btn rem-chips-none' onclick='setAllRemChips(this)'>None</button></span>")
+        $null = $html.AppendLine("</div>")
+    }
+    $null = $html.AppendLine("</div>") # remediation-chip-bar
+
+    # ---- Collapsible table via collector-detail pattern ----
+    $findingWord = if ($totalCount -eq 1) { 'finding' } else { 'findings' }
+    $null = $html.AppendLine("<details class='collector-detail' id='remTableDetail' open>")
+    $null = $html.AppendLine("<summary><h3>Action Items</h3><span class='row-count' id='remMatchCount'>($totalCount $findingWord)</span></summary>")
+
+    # Column picker for remediation table
+    $null = $html.AppendLine("<div class='col-picker-bar'>")
+    $null = $html.AppendLine("<button type='button' class='col-picker-toggle'>Columns &#9662;</button>")
+    $null = $html.AppendLine("<div class='col-picker-panel' hidden>")
+    $null = $html.AppendLine("<label class='col-picker-item'><input type='checkbox' data-col-key='Severity' checked> Severity</label>")
+    $null = $html.AppendLine("<label class='col-picker-item'><input type='checkbox' data-col-key='Section' checked> Section</label>")
+    $null = $html.AppendLine("<label class='col-picker-item'><input type='checkbox' data-col-key='Check' checked> Check</label>")
+    $null = $html.AppendLine("<label class='col-picker-item'><input type='checkbox' data-col-key='CheckId' data-col-default='hidden'> Check ID</label>")
+    $null = $html.AppendLine("<label class='col-picker-item'><input type='checkbox' data-col-key='CurrentState' checked> Current State</label>")
+    $null = $html.AppendLine("<label class='col-picker-item'><input type='checkbox' data-col-key='Remediation' checked> Remediation</label>")
+    $null = $html.AppendLine("</div></div>")
+
+    # Table wrapper — compact by default; initPageTableExpand injects ▼ Expand button when needed
+    $null = $html.AppendLine("<div class='table-wrapper remediation-table-wrapper'>")
+    $null = $html.AppendLine("<table class='data-table remediation-table' id='remediationTable'>")
+    $null = $html.AppendLine("<thead><tr>")
+    $null = $html.AppendLine("<th scope='col' data-col-key='Severity'>Severity</th>")
+    $null = $html.AppendLine("<th scope='col' data-col-key='Section'>Section</th>")
+    $null = $html.AppendLine("<th scope='col' data-col-key='Check'>Check</th>")
+    $null = $html.AppendLine("<th scope='col' data-col-key='CheckId' style='display:none'>Check ID</th>")
+    $null = $html.AppendLine("<th scope='col' data-col-key='CurrentState'>Current State</th>")
+    $null = $html.AppendLine("<th scope='col' data-col-key='Remediation'>Remediation</th>")
+    $null = $html.AppendLine("</tr></thead><tbody>")
+
+    foreach ($finding in $sorted) {
+        $sev = if ($finding.RiskSeverity) { $finding.RiskSeverity } else { 'Low' }
+        $sevClass = switch ($sev) {
+            'Critical' { 'remediation-row-critical' }
+            'High'     { 'remediation-row-high' }
+            'Medium'   { 'remediation-row-medium' }
+            default    { 'remediation-row-low' }
+        }
+        $badgeClass = switch ($sev) {
+            'Critical' { 'badge-fail' }
+            'High'     { 'badge-warning' }
+            'Medium'   { 'badge-review' }
+            default    { 'badge-neutral' }
+        }
+        $sectionEncoded  = ConvertTo-HtmlSafe -Text $finding.Section
+        $checkEncoded    = ConvertTo-HtmlSafe -Text $finding.Setting
+        $checkIdEncoded  = ConvertTo-HtmlSafe -Text $(if ($finding.CheckId) { $finding.CheckId } else { '' })
+        $currentEncoded  = ConvertTo-HtmlSafe -Text $finding.CurrentValue
+        $remEncoded      = ConvertTo-HtmlSafe -Text $(if ($finding.Remediation) { $finding.Remediation } else { '' })
+
+        $null = $html.AppendLine("<tr class='$sevClass' data-severity='$sev' data-section='$sectionEncoded'>")
+        $null = $html.AppendLine("<td data-col-key='Severity'><span class='badge $badgeClass'>$(ConvertTo-HtmlSafe -Text $sev)</span></td>")
+        $null = $html.AppendLine("<td data-col-key='Section'>$sectionEncoded</td>")
+        $null = $html.AppendLine("<td data-col-key='Check'>$checkEncoded</td>")
+        $null = $html.AppendLine("<td data-col-key='CheckId' style='display:none'>$checkIdEncoded</td>")
+        $null = $html.AppendLine("<td data-col-key='CurrentState'>$currentEncoded</td>")
+        $null = $html.AppendLine("<td data-col-key='Remediation'><span class='rem-text'>$remEncoded</span><button class='copy-btn' onclick='copyRemediation(this)' title='Copy to clipboard'>&#128203;</button></td>")
+        $null = $html.AppendLine("</tr>")
+    }
+
+    $null = $html.AppendLine("</tbody></table>")
+    $null = $html.AppendLine("</div>") # table-wrapper
+    $null = $html.AppendLine("<p id='remNoResults' class='no-results' style='display:none'>No findings match the current filter selection.</p>")
+
+    $null = $html.AppendLine("</details>") # collector-detail
+    $null = $html.AppendLine("</details>") # section
+
+    return $html.ToString()
+}

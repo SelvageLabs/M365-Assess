@@ -352,6 +352,9 @@ if ((Test-Path -Path $voLicensePath) -and (Test-Path -Path $voAdoptionPath) -and
 # Build section HTML: data tables, dashboards, compliance, TOC, issues
 . (Join-Path -Path $PSScriptRoot -ChildPath 'Build-SectionHtml.ps1')
 
+# Build remediation plan page (requires $allCisFindings set by Build-SectionHtml.ps1)
+$remediationPlanHtml = Build-RemediationPlanHtml -Findings $allCisFindings -IsQuickScan:$QuickScan
+
 # Assemble full HTML template: CSS, cover page, executive summary, JS
 . (Join-Path -Path $PSScriptRoot -ChildPath 'Get-ReportTemplate.ps1')
 
