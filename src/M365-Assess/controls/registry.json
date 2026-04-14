@@ -43578,8 +43578,12 @@
         "minimum": "E3"
       },
       "frameworks": {
-        "nist-800-53": { "controlId": "SC-28;AC-3" },
-        "soc2": { "controlId": "CC6.1" }
+        "nist-800-53": {
+          "controlId": "SC-28;AC-3"
+        },
+        "soc2": {
+          "controlId": "CC6.1"
+        }
       }
     },
     {
@@ -43592,8 +43596,12 @@
         "minimum": "E5"
       },
       "frameworks": {
-        "nist-800-53": { "controlId": "SC-28;AC-3" },
-        "soc2": { "controlId": "CC6.1;CC6.7" }
+        "nist-800-53": {
+          "controlId": "SC-28;AC-3"
+        },
+        "soc2": {
+          "controlId": "CC6.1;CC6.7"
+        }
       }
     },
     {
@@ -43606,9 +43614,101 @@
         "minimum": "E5"
       },
       "frameworks": {
-        "nist-800-53": { "controlId": "AU-2;SI-4" },
-        "soc2": { "controlId": "CC7.2" }
+        "nist-800-53": {
+          "controlId": "AU-2;SI-4"
+        },
+        "soc2": {
+          "controlId": "CC7.2"
+        }
       }
+    },
+    {
+      "checkId": "CA-NAMEDLOC-001",
+      "name": "Trusted IP-based named locations susceptible to spoofing",
+      "category": "NAMEDLOC",
+      "collector": "CAEvaluator",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {}
+    },
+    {
+      "checkId": "CA-REPORTONLY-001",
+      "name": "Conditional Access policies in report-only mode",
+      "category": "REPORTONLY",
+      "collector": "CAEvaluator",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {}
+    },
+    {
+      "checkId": "CA-SESSION-001",
+      "name": "Persistent browser sessions allowed without device compliance",
+      "category": "SESSION",
+      "collector": "CAEvaluator",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {}
+    },
+    {
+      "checkId": "SPO-ACCESS-001",
+      "name": "Conditional Access policy coverage for SharePoint",
+      "category": "ACCESS",
+      "collector": "SharePoint",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {}
+    },
+    {
+      "checkId": "SPO-ACCESS-002",
+      "name": "Unmanaged device sync restriction for SharePoint",
+      "category": "ACCESS",
+      "collector": "SharePoint",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {}
+    },
+    {
+      "checkId": "SPO-SITE-001",
+      "name": "Site sharing level within tenant policy",
+      "category": "SITE",
+      "collector": "SharePoint",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {}
+    },
+    {
+      "checkId": "SPO-SITE-002",
+      "name": "Sensitive sites have restricted external sharing",
+      "category": "SITE",
+      "collector": "SharePoint",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {}
+    },
+    {
+      "checkId": "SPO-VERSIONING-001",
+      "name": "Version history configuration for SharePoint",
+      "category": "VERSIONING",
+      "collector": "SharePoint",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {}
     }
   ]
 }
