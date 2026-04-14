@@ -357,3 +357,158 @@ Describe 'Get-CASecurityConfig - Security Defaults Enabled' {
         Remove-Item Function:\Update-CheckProgress -ErrorAction SilentlyContinue
     }
 }
+
+Describe 'Get-CASecurityConfig - CA-REPORTONLY-001 Warning path' {
+    BeforeAll {
+        function global:Update-CheckProgress {
+            param($CheckId, $Setting, $Status)
+        }
+
+        function Get-MgContext { return @{ TenantId = 'test-tenant-id' } }
+
+        # One report-only policy present; security defaults off
+        Mock Invoke-MgGraphRequest {
+            param($Method, $Uri)
+            if ($Uri -like '*identitySecurityDefaultsEnforcementPolicy*') {
+                return @{ isEnabled = $false }
+            }
+            if ($Uri -like '*namedLocations*') {
+                return @{ value = @() }
+            }
+            return @{
+                value = @(
+                    @{
+                        id              = 'ca-ro-1'
+                        displayName     = 'Audit Only Policy'
+                        state           = 'enabledForReportingButNotEnforced'
+                        conditions      = @{ users = @{ includeUsers = @('All') }; clientAppTypes = @('browser') }
+                        grantControls   = @{ builtInControls = @('mfa') }
+                        sessionControls = @{}
+                    }
+                )
+            }
+        }
+
+        . "$PSScriptRoot/../../src/M365-Assess/Orchestrator/AssessmentHelpers.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Entra/Get-CASecurityConfig.ps1"
+    }
+
+    It 'CA-REPORTONLY-001 returns Warning when report-only policies exist' {
+        $check = $settings | Where-Object { $_.Setting -eq 'Report-Only Policies' }
+        $check | Should -Not -BeNullOrEmpty -Because 'Report-Only Policies setting should always be emitted'
+        $check.Status | Should -Be 'Warning'
+    }
+
+    It 'CA-REPORTONLY-001 Warning CurrentValue includes policy count and name' {
+        $check = $settings | Where-Object { $_.Setting -eq 'Report-Only Policies' }
+        $check.CurrentValue | Should -Match '1'
+        $check.CurrentValue | Should -Match 'Audit Only Policy'
+    }
+
+    AfterAll {
+        Remove-Item Function:\Update-CheckProgress -ErrorAction SilentlyContinue
+    }
+}
+
+Describe 'Get-CASecurityConfig - CA-NAMEDLOC-001 Review path' {
+    BeforeAll {
+        function global:Update-CheckProgress {
+            param($CheckId, $Setting, $Status)
+        }
+
+        function Get-MgContext { return @{ TenantId = 'test-tenant-id' } }
+
+        # Trusted IP-based named location present; no CA policies so other checks pass trivially
+        Mock Invoke-MgGraphRequest {
+            param($Method, $Uri)
+            if ($Uri -like '*identitySecurityDefaultsEnforcementPolicy*') {
+                return @{ isEnabled = $false }
+            }
+            if ($Uri -like '*namedLocations*') {
+                return @{
+                    value = @(
+                        @{
+                            '@odata.type' = '#microsoft.graph.ipNamedLocation'
+                            id            = 'loc-1'
+                            displayName   = 'Corporate HQ'
+                            isTrusted     = $true
+                            ipRanges      = @(@{ cidrAddress = '203.0.113.0/24' })
+                        }
+                    )
+                }
+            }
+            return @{ value = @() }
+        }
+
+        . "$PSScriptRoot/../../src/M365-Assess/Orchestrator/AssessmentHelpers.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Entra/Get-CASecurityConfig.ps1"
+    }
+
+    It 'CA-NAMEDLOC-001 returns Review when trusted IP locations exist' {
+        $check = $settings | Where-Object { $_.Setting -eq 'Trusted IP Named Locations' }
+        $check | Should -Not -BeNullOrEmpty -Because 'Trusted IP Named Locations setting should always be emitted'
+        $check.Status | Should -Be 'Review'
+    }
+
+    It 'CA-NAMEDLOC-001 Review CurrentValue includes location name' {
+        $check = $settings | Where-Object { $_.Setting -eq 'Trusted IP Named Locations' }
+        $check.CurrentValue | Should -Match 'Corporate HQ'
+    }
+
+    AfterAll {
+        Remove-Item Function:\Update-CheckProgress -ErrorAction SilentlyContinue
+    }
+}
+
+Describe 'Get-CASecurityConfig - CA-SESSION-001 Warning path' {
+    BeforeAll {
+        function global:Update-CheckProgress {
+            param($CheckId, $Setting, $Status)
+        }
+
+        function Get-MgContext { return @{ TenantId = 'test-tenant-id' } }
+
+        # One enabled policy with persistent browser=always without device compliance
+        Mock Invoke-MgGraphRequest {
+            param($Method, $Uri)
+            if ($Uri -like '*identitySecurityDefaultsEnforcementPolicy*') {
+                return @{ isEnabled = $false }
+            }
+            if ($Uri -like '*namedLocations*') {
+                return @{ value = @() }
+            }
+            return @{
+                value = @(
+                    @{
+                        id              = 'ca-sess-1'
+                        displayName     = 'Persistent Session Policy'
+                        state           = 'enabled'
+                        conditions      = @{ users = @{ includeUsers = @('All') }; clientAppTypes = @('browser') }
+                        grantControls   = @{ builtInControls = @('mfa') }
+                        sessionControls = @{
+                            persistentBrowser = @{ mode = 'always'; isEnabled = $true }
+                        }
+                    }
+                )
+            }
+        }
+
+        . "$PSScriptRoot/../../src/M365-Assess/Orchestrator/AssessmentHelpers.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Entra/Get-CASecurityConfig.ps1"
+    }
+
+    It 'CA-SESSION-001 returns Warning when persistent browser sessions exist without device compliance' {
+        $check = $settings | Where-Object { $_.Setting -eq 'Persistent Browser Without Device Compliance' }
+        $check | Should -Not -BeNullOrEmpty -Because 'Persistent Browser setting should always be emitted'
+        $check.Status | Should -Be 'Warning'
+    }
+
+    It 'CA-SESSION-001 Warning CurrentValue includes policy name' {
+        $check = $settings | Where-Object { $_.Setting -eq 'Persistent Browser Without Device Compliance' }
+        $check.CurrentValue | Should -Match 'Persistent Session Policy'
+    }
+
+    AfterAll {
+        Remove-Item Function:\Update-CheckProgress -ErrorAction SilentlyContinue
+    }
+}
