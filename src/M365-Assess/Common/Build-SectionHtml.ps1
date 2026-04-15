@@ -1684,7 +1684,8 @@ function Build-RemediationPlanHtml {
     # Section bar chart
     if ($uniqueSections.Count -gt 0) {
         $sectionsSorted = $uniqueSections | ForEach-Object {
-            [PSCustomObject]@{ Name = $_; Count = @($sorted | Where-Object { $_.Section -eq $_ }).Count }
+            $sectionName = $_
+            [PSCustomObject]@{ Name = $sectionName; Count = @($sorted | Where-Object { $_.Section -eq $sectionName }).Count }
         } | Sort-Object -Property Count -Descending
         $maxSectionCount = ($sectionsSorted | Measure-Object -Property Count -Maximum).Maximum
         $null = $html.AppendLine("<div class='remediation-section-chart'>")

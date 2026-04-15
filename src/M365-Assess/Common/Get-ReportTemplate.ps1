@@ -2538,7 +2538,7 @@ $html = @"
         /* Header row: severity tiles + section bar chart */
         .remediation-header-row { display: flex; align-items: flex-start; gap: 1.5rem; flex-wrap: wrap; }
         .remediation-header-row .remediation-stats { margin-bottom: 0; flex-shrink: 0; }
-        .remediation-section-chart { flex: 1; min-width: 200px; padding: 0.75rem 1rem; background: var(--m365a-light-gray); border: 1px solid var(--m365a-border); border-radius: 8px; align-self: center; }
+        .remediation-section-chart { flex: 1; min-width: 200px; padding: 0.5rem 0 0.5rem 1.5rem; border-left: 1px solid var(--m365a-border); align-self: center; }
         .section-chart-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; color: var(--m365a-medium-gray); margin-bottom: 0.6rem; }
         .section-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
         .section-bar-row:last-child { margin-bottom: 0; }
