@@ -333,7 +333,7 @@ catch {
         # Tenant has no configured directory settings — normal for tenants that have never
         # customized Entra password protection. Add a single Info item so the check appears
         # in the report rather than silently disappearing.
-        Add-Setting @{
+        $settingParams = @{
             Category         = 'Password Management'
             Setting          = 'Custom Banned Password Protection'
             CurrentValue     = 'Directory settings not configured (using Entra defaults)'
@@ -342,6 +342,7 @@ catch {
             CheckId          = 'ENTRA-PASSWORD-002'
             Remediation      = 'Entra admin center > Protection > Authentication methods > Password protection. Configure a custom banned password list and smart lockout threshold.'
         }
+        Add-Setting @settingParams
     }
     else {
         Write-Warning "Could not check password protection: $_"
