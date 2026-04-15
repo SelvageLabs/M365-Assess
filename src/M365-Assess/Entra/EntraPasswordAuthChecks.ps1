@@ -388,8 +388,10 @@ try {
         if ($authenticator) {
             $featureSettings = $authenticator['featureSettings']
             if ($null -ne $featureSettings) {
-                $numberMatch = $featureSettings['numberMatchingRequiredState']['state']
-                $appInfo = $featureSettings['displayAppInformationRequiredState']['state']
+                $numberMatchState = $featureSettings['numberMatchingRequiredState']
+                $appInfoState = $featureSettings['displayAppInformationRequiredState']
+                $numberMatch = if ($numberMatchState) { $numberMatchState['state'] } else { 'not configured' }
+                $appInfo = if ($appInfoState) { $appInfoState['state'] } else { 'not configured' }
 
                 $fatiguePassed = ($numberMatch -eq 'enabled') -and ($appInfo -eq 'enabled')
                 $settingParams = @{
@@ -531,11 +533,21 @@ try {
     $orgInfo = Invoke-MgGraphRequest @graphParams
 
     $orgValue = if ($orgInfo -and $orgInfo['value']) { @($orgInfo['value']) } else { @() }
-    if ($orgValue -and $orgValue.Count -gt 0) {
-        $org = $orgValue[0]
-        if ($null -eq $org) {
-            throw "Organization data returned null element — cannot evaluate hybrid sync state"
+    $org = if ($orgValue.Count -gt 0) { $orgValue[0] } else { $null }
+
+    if ($null -eq $org) {
+        $settingParams = @{
+            Category         = 'Hybrid Identity'
+            Setting          = 'Password Hash Sync'
+            CurrentValue     = 'Organization data not available'
+            RecommendedValue = 'Enabled (if hybrid)'
+            Status           = 'Review'
+            CheckId          = 'ENTRA-HYBRID-001'
+            Remediation      = 'Verify Password Hash Sync status in Azure AD Connect. Entra admin center > Identity > Hybrid management > Azure AD Connect.'
         }
+        Add-Setting @settingParams
+    }
+    else {
         $onPremSync = $org['onPremisesSyncEnabled']
 
         if ($null -eq $onPremSync -or $onPremSync -eq $false) {
@@ -579,18 +591,6 @@ try {
                 Add-Setting @settingParams
             }
         }
-    }
-    else {
-        $settingParams = @{
-            Category         = 'Hybrid Identity'
-            Setting          = 'Password Hash Sync'
-            CurrentValue     = 'Organization data not available'
-            RecommendedValue = 'Enabled (if hybrid)'
-            Status           = 'Review'
-            CheckId          = 'ENTRA-HYBRID-001'
-            Remediation      = 'Verify Password Hash Sync status in Azure AD Connect. Entra admin center > Identity > Hybrid management > Azure AD Connect.'
-        }
-        Add-Setting @settingParams
     }
 }
 catch {
