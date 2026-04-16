@@ -218,6 +218,12 @@ param(
     [switch]$DryRun,
 
     [Parameter()]
+    [string]$SaveBaseline = '',
+
+    [Parameter()]
+    [string]$CompareBaseline = '',
+
+    [Parameter()]
     [ArgumentCompleter({
         param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
         $root = Split-Path -Parent $PSCommandPath
@@ -1133,6 +1139,50 @@ if ($issues.Count -gt 0) {
 Write-AssessmentLog -Level INFO -Message "Assessment complete. Duration: $($overallDuration.ToString('mm\:ss')). Summary CSV: $summaryCsvPath"
 
 # ------------------------------------------------------------------
+# Baseline: save and/or compare
+# ------------------------------------------------------------------
+$driftReport         = @()
+$driftBaselineLabel  = ''
+$driftBaselineTimestamp = ''
+
+if ($SaveBaseline) {
+    Write-AssessmentLog -Level INFO -Message "Saving baseline '$SaveBaseline'..."
+    $savedBaselineDir = Export-AssessmentBaseline `
+        -AssessmentFolder $assessmentFolder `
+        -OutputFolder $OutputFolder `
+        -Label $SaveBaseline `
+        -TenantId $TenantId `
+        -Sections @($sections | ForEach-Object { $_ }) `
+        -Version $script:AssessmentVersion
+    Write-AssessmentLog -Level INFO -Message "Baseline saved: $savedBaselineDir"
+}
+
+if ($CompareBaseline) {
+    $safeLabel  = $CompareBaseline -replace '[^\w\-]', '_'
+    $safeTenant = $TenantId -replace '[^\w\.\-]', '_'
+    $baselineFolder = Join-Path -Path $OutputFolder -ChildPath "Baselines\${safeLabel}_${safeTenant}"
+    if (Test-Path -Path $baselineFolder -PathType Container) {
+        Write-AssessmentLog -Level INFO -Message "Comparing against baseline '$CompareBaseline'..."
+        $driftReport = Compare-AssessmentBaseline `
+            -AssessmentFolder $assessmentFolder `
+            -BaselineFolder $baselineFolder
+        $driftBaselineLabel = $CompareBaseline
+        $metaPath = Join-Path -Path $baselineFolder -ChildPath '_baseline-metadata.json'
+        if (Test-Path -Path $metaPath) {
+            try {
+                $meta = Get-Content -Path $metaPath -Raw | ConvertFrom-Json
+                $driftBaselineTimestamp = $meta.timestamp
+            }
+            catch { Write-Verbose "Drift: could not read baseline metadata: $_" }
+        }
+        Write-AssessmentLog -Level INFO -Message "Drift analysis: $($driftReport.Count) changes detected vs baseline '$CompareBaseline'"
+    }
+    else {
+        Write-Warning "Baseline '$CompareBaseline' not found at '$baselineFolder'. Skipping drift analysis."
+    }
+}
+
+# ------------------------------------------------------------------
 # Generate HTML report
 # ------------------------------------------------------------------
 $reportScriptPath = Join-Path -Path $projectRoot -ChildPath 'Common\Export-AssessmentReport.ps1'
@@ -1160,6 +1210,11 @@ if (Test-Path -Path $reportScriptPath) {
         if ($CustomBranding) { $reportParams['CustomBranding'] = $CustomBranding }
         if ($FrameworkExport) { $reportParams['FrameworkExport'] = $FrameworkExport }
         if ($QuickScan) { $reportParams['QuickScan'] = $true }
+        if ($driftReport.Count -gt 0 -or $driftBaselineLabel) {
+            $reportParams['DriftReport']            = $driftReport
+            $reportParams['DriftBaselineLabel']     = $driftBaselineLabel
+            $reportParams['DriftBaselineTimestamp'] = $driftBaselineTimestamp
+        }
         $reportParams['CisFrameworkId'] = "cis-m365-$CisBenchmarkVersion"
 
         $reportOutput = & $reportScriptPath @reportParams

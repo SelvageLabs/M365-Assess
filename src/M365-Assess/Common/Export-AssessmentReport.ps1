@@ -114,7 +114,17 @@ param(
     [switch]$OpenReport,
 
     [Parameter()]
-    [switch]$QuickScan
+    [switch]$QuickScan,
+
+    [Parameter()]
+    [AllowEmptyCollection()]
+    [PSCustomObject[]]$DriftReport = @(),
+
+    [Parameter()]
+    [string]$DriftBaselineLabel = '',
+
+    [Parameter()]
+    [string]$DriftBaselineTimestamp = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -354,6 +364,16 @@ if ((Test-Path -Path $voLicensePath) -and (Test-Path -Path $voAdoptionPath) -and
 
 # Build remediation plan page (requires $allCisFindings set by Build-SectionHtml.ps1)
 $remediationPlanHtml = Build-RemediationPlanHtml -Findings $allCisFindings -IsQuickScan:$QuickScan
+
+# Build drift analysis page (if a baseline comparison was run)
+$driftHtml = ''
+if ($DriftBaselineLabel) {
+    . (Join-Path -Path $PSScriptRoot -ChildPath 'Build-DriftHtml.ps1')
+    $driftHtml = Build-DriftHtml `
+        -DriftReport $DriftReport `
+        -BaselineLabel $DriftBaselineLabel `
+        -BaselineTimestamp $DriftBaselineTimestamp
+}
 
 # Assemble full HTML template: CSS, cover page, executive summary, JS
 . (Join-Path -Path $PSScriptRoot -ChildPath 'Get-ReportTemplate.ps1')

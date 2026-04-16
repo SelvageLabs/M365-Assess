@@ -1772,6 +1772,35 @@ $html = @"
         .copy-btn.copied { opacity: 1; }
         .impact-rationale { display: block; margin-top: 5px; font-size: 0.80em; color: var(--m365a-dark); opacity: 0.65; font-style: italic; line-height: 1.4; }
 
+        /* Drift Analysis */
+        .drift-header { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
+        .drift-baseline-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .drift-label-badge { background: var(--m365a-primary); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: 600; }
+        .drift-timestamp { font-size: 0.82em; color: var(--m365a-medium-gray); }
+        .drift-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+        .drift-stat { display: flex; flex-direction: column; align-items: center; padding: 8px 14px; border-radius: 8px; min-width: 72px; }
+        .drift-stat .stat-num { font-size: 1.4em; font-weight: 700; line-height: 1; }
+        .drift-stat .stat-label { font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+        .drift-stat-regressed { background: var(--m365a-danger-bg); color: var(--m365a-danger); }
+        .drift-stat-improved  { background: var(--m365a-success-bg); color: var(--m365a-success); }
+        .drift-stat-modified  { background: var(--m365a-warning-bg); color: var(--m365a-warning); }
+        .drift-stat-new       { background: var(--m365a-info-bg); color: var(--m365a-info); }
+        .drift-stat-removed   { background: var(--m365a-neutral-bg); color: var(--m365a-neutral); }
+        .drift-chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.78em; font-weight: 600; white-space: nowrap; }
+        .drift-chip-regressed { background: var(--m365a-danger-bg); color: var(--m365a-danger); }
+        .drift-chip-improved  { background: var(--m365a-success-bg); color: var(--m365a-success); }
+        .drift-chip-modified  { background: var(--m365a-warning-bg); color: var(--m365a-warning); }
+        .drift-chip-new       { background: var(--m365a-info-bg); color: var(--m365a-info); }
+        .drift-chip-removed   { background: var(--m365a-neutral-bg); color: var(--m365a-neutral); }
+        .drift-row-regressed td { background: var(--m365a-danger-bg); }
+        .drift-row-improved  td { background: var(--m365a-success-bg); }
+        .drift-row-modified  td { background: var(--m365a-warning-bg); }
+        .drift-row-new       td { background: var(--m365a-info-bg); }
+        .drift-row-removed   td { background: var(--m365a-neutral-bg); opacity: 0.8; }
+        .drift-value { font-family: monospace; font-size: 0.85em; word-break: break-all; }
+        .drift-empty { color: var(--m365a-medium-gray); }
+        .drift-no-changes { padding: 24px; background: var(--m365a-success-bg); border-radius: 8px; border-left: 4px solid var(--m365a-success); }
+
         .cis-row-pass { border-left: 3px solid var(--m365a-success); background-color: var(--m365a-success-bg); }
         .cis-row-fail { border-left: 3px solid var(--m365a-danger); background-color: var(--m365a-danger-bg); }
         .cis-row-warning { border-left: 3px solid var(--m365a-warning); background-color: var(--m365a-warning-bg); }
@@ -2709,6 +2738,10 @@ if ($issues.Count -gt 0) {
     $navIconIssues = $navIcons['technical issues']
     $html += "                <li class='nav-item' data-page='issues'><a href='#issues'>$navIconIssues Technical Issues</a></li>`n"
 }
+if ($driftHtml) {
+    $navIconDrift = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a.75.75 0 0 1 .75.75v.59l1.22-1.22a.75.75 0 1 1 1.06 1.06L11.56 4.65A5.25 5.25 0 0 1 15.25 9.5a.75.75 0 0 1-1.5 0A3.75 3.75 0 0 0 10 5.75a3.75 3.75 0 0 0-3.75 3.75c0 1.82 1.3 3.34 3.02 3.68l-.77-.77a.75.75 0 1 1 1.06-1.06l2 2a.75.75 0 0 1 0 1.06l-2 2a.75.75 0 1 1-1.06-1.06l.71-.71A5.25 5.25 0 0 1 4.75 9.5 5.25 5.25 0 0 1 10 4.25V2.75A.75.75 0 0 1 10 2Z"/></svg>'
+    $html += "                <li class='nav-item' data-page='drift-analysis'><a href='#drift-analysis'>$navIconDrift Drift Analysis</a></li>`n"
+}
 if ($allCisFindings.Count -gt 0) {
     $navIconAppendix = $navIcons['appendix']
     $html += "                <li class='nav-item' data-page='appendix-checks-run'><a href='#appendix-checks-run'>$navIconAppendix Appendix</a></li>`n"
@@ -2944,6 +2977,10 @@ if ($checksRunHtml.Length -gt 0) {
         $($checksRunHtml.ToString())
         </div>
 "@
+}
+
+if ($driftHtml) {
+    $html += "`n        $driftHtml"
 }
 
 $html += @"
