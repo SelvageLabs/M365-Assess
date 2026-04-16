@@ -5742,6 +5742,10 @@
         },
         "pci-dss": {
           "controlId": "8.2.8"
+        },
+        "soc2": {
+          "controlId": "CC6.1",
+          "title": "Logical and Physical Access Controls \u2014 Authentication"
         }
       },
       "impactRating": {
@@ -38545,6 +38549,10 @@
             "Moderate",
             "High"
           ]
+        },
+        "soc2": {
+          "controlId": "CC5",
+          "title": "Control Activities \u2014 Security Policies and Procedures"
         }
       },
       "impactRating": {
