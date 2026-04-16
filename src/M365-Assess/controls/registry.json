@@ -43709,6 +43709,17 @@
         "minimum": "E3"
       },
       "frameworks": {}
+    },
+    {
+      "checkId": "DNS-MX-001",
+      "name": "Ensure MX records exist and point to Exchange Online for all email domains",
+      "category": "MX",
+      "collector": "DNS",
+      "hasAutomatedCheck": true,
+      "licensing": {
+        "minimum": "E3"
+      },
+      "frameworks": {}
     }
   ]
 }

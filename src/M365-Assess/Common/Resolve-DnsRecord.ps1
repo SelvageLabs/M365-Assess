@@ -33,7 +33,7 @@ function Resolve-DnsRecord {
         [string]$Name,
 
         [Parameter(Mandatory)]
-        [ValidateSet('TXT', 'CNAME')]
+        [ValidateSet('TXT', 'CNAME', 'MX')]
         [string]$Type,
 
         [string]$Server,
@@ -116,6 +116,21 @@ function Resolve-DnsRecord {
                         Name     = $Name
                         Type     = 'CNAME'
                         NameHost = $target
+                    }
+                }
+                'MX' {
+                    # dig +short MX returns lines like:
+                    #   10 contoso-com.mail.protection.outlook.com.
+                    foreach ($line in $lines) {
+                        $parts = ($line.Trim()) -split '\s+', 2
+                        if ($parts.Count -eq 2) {
+                            [PSCustomObject]@{
+                                Name         = $Name
+                                Type         = 'MX'
+                                Preference   = [int]$parts[0]
+                                NameExchange = $parts[1].TrimEnd('.')
+                            }
+                        }
                     }
                 }
             }

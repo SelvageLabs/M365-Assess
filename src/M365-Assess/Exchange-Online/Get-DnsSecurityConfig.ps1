@@ -301,6 +301,76 @@ else {
         Write-Warning "Could not check DMARC records: $_"
     }
 
+    # ------------------------------------------------------------------
+    # 4. MX Records (DNS-MX-001)
+    # ------------------------------------------------------------------
+    try {
+        Write-Verbose "Checking MX records..."
+        $mxPass    = @()
+        $mxWarning = @()
+        $mxFail    = @()
+
+        foreach ($domain in $authDomains) {
+            $domainName = $domain.DomainName
+            $mxRecords  = @(Resolve-DnsRecord -Name $domainName -Type MX -ErrorAction SilentlyContinue)
+
+            if (-not $mxRecords -or $mxRecords.Count -eq 0) {
+                $mxFail += $domainName
+            }
+            else {
+                $pointsToExo = $mxRecords | Where-Object { $_.NameExchange -like '*.mail.protection.outlook.com' }
+                if ($pointsToExo) { $mxPass += $domainName }
+                else { $mxWarning += "$domainName ($($mxRecords[0].NameExchange))" }
+            }
+        }
+
+        $total = $authDomains.Count
+        if ($mxFail.Count -eq 0 -and $mxWarning.Count -eq 0) {
+            $settingParams = @{
+                Category         = 'DNS Authentication'
+                Setting          = 'MX Records'
+                CurrentValue     = "$($mxPass.Count)/$total domains route to Exchange Online"
+                RecommendedValue = 'MX pointing to *.mail.protection.outlook.com for all domains'
+                Status           = 'Pass'
+                CheckId          = 'DNS-MX-001'
+                Remediation      = 'No action needed.'
+            }
+            Add-Setting @settingParams
+        }
+        elseif ($mxFail.Count -gt 0) {
+            $details = @()
+            if ($mxPass.Count -gt 0)    { $details += "$($mxPass.Count) EXO" }
+            if ($mxWarning.Count -gt 0) { $details += "$($mxWarning.Count) third-party" }
+            if ($mxFail.Count -gt 0)    { $details += "missing: $($mxFail -join ', ')" }
+            $settingParams = @{
+                Category         = 'DNS Authentication'
+                Setting          = 'MX Records'
+                CurrentValue     = "$($mxPass.Count)/$total to EXO -- $($details -join '; ')"
+                RecommendedValue = 'MX pointing to *.mail.protection.outlook.com for all domains'
+                Status           = 'Fail'
+                CheckId          = 'DNS-MX-001'
+                Remediation      = "Add MX records for: $($mxFail -join ', '). Required value: <domain>-com.mail.protection.outlook.com"
+            }
+            Add-Setting @settingParams
+        }
+        else {
+            # All domains have MX but some point to third-party relays (Proofpoint, Mimecast, etc.)
+            $settingParams = @{
+                Category         = 'DNS Authentication'
+                Setting          = 'MX Records'
+                CurrentValue     = "$($mxPass.Count)/$total to EXO; third-party relay: $($mxWarning -join '; ')"
+                RecommendedValue = 'MX pointing to *.mail.protection.outlook.com for all domains'
+                Status           = 'Warning'
+                CheckId          = 'DNS-MX-001'
+                Remediation      = 'Verify third-party relay is intentional (e.g. Proofpoint, Mimecast). If not, update MX to <domain>-com.mail.protection.outlook.com.'
+            }
+            Add-Setting @settingParams
+        }
+    }
+    catch {
+        Write-Warning "Could not check MX records: $_"
+    }
+
     $ErrorActionPreference = 'Stop'
 }
 
