@@ -118,7 +118,7 @@ Describe 'Resolve-DnsRecord' {
         }
 
         It 'Should reject invalid record types' {
-            { Resolve-DnsRecord -Name 'test.com' -Type 'MX' } | Should -Throw
+            { Resolve-DnsRecord -Name 'test.com' -Type 'A' } | Should -Throw
         }
 
         It 'Should require Name parameter' {

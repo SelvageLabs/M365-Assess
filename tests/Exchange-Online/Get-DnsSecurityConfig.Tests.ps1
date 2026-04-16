@@ -22,7 +22,7 @@ Describe 'Get-DnsSecurityConfig' {
             })
         }
 
-        # Mock cross-platform DNS resolution for SPF and DMARC
+        # Mock cross-platform DNS resolution for SPF, DMARC, and MX
         Mock Resolve-DnsRecord {
             param($Name, $Type)
             if ($Name -eq 'contoso.com' -and $Type -eq 'TXT') {
@@ -33,6 +33,12 @@ Describe 'Get-DnsSecurityConfig' {
             if ($Name -eq '_dmarc.contoso.com' -and $Type -eq 'TXT') {
                 return @([PSCustomObject]@{
                     Strings = @('v=DMARC1; p=reject; rua=mailto:dmarc@contoso.com')
+                })
+            }
+            if ($Name -eq 'contoso.com' -and $Type -eq 'MX') {
+                return @([PSCustomObject]@{
+                    NameExchange = 'contoso-com.mail.protection.outlook.com'
+                    Preference   = 10
                 })
             }
             return $null
@@ -118,8 +124,15 @@ Describe 'Get-DnsSecurityConfig' {
         $check.Status | Should -Be 'Pass'
     }
 
-    It 'Produces exactly 3 settings (SPF, DKIM, DMARC)' {
-        $settings.Count | Should -Be 3
+    It 'MX check passes when MX points to Exchange Online' {
+        $check = $settings | Where-Object { $_.Setting -eq 'MX Records' }
+        $check | Should -Not -BeNullOrEmpty
+        $check.Status | Should -Be 'Pass'
+        $check.CurrentValue | Should -Match 'Exchange Online'
+    }
+
+    It 'Produces exactly 4 settings (SPF, DKIM, DMARC, MX)' {
+        $settings.Count | Should -Be 4
     }
 
     AfterAll {
@@ -185,6 +198,72 @@ Describe 'Get-DnsSecurityConfig - Missing Records' {
         $check = $settings | Where-Object { $_.Setting -eq 'DMARC Records' }
         $check | Should -Not -BeNullOrEmpty
         $check.Status | Should -Be 'Fail'
+    }
+
+    It 'MX check fails when no MX record exists' {
+        $check = $settings | Where-Object { $_.Setting -eq 'MX Records' }
+        $check | Should -Not -BeNullOrEmpty
+        $check.Status | Should -Be 'Fail'
+    }
+
+    AfterAll {
+        Remove-Item Function:\Update-CheckProgress -ErrorAction SilentlyContinue
+    }
+}
+
+Describe 'Get-DnsSecurityConfig - Third-party MX relay' {
+    BeforeAll {
+        function global:Update-CheckProgress { param($CheckId, $Setting, $Status) }
+        function Get-AcceptedDomain { }
+        function Resolve-DnsRecord { }
+        function Get-DkimSigningConfig { }
+
+        Mock Get-AcceptedDomain {
+            return @([PSCustomObject]@{
+                DomainName = 'fabrikam.com'
+                DomainType = 'Authoritative'
+            })
+        }
+
+        Mock Resolve-DnsRecord {
+            param($Name, $Type)
+            if ($Name -eq 'fabrikam.com' -and $Type -eq 'TXT') {
+                return @([PSCustomObject]@{ Strings = @('v=spf1 include:spf.protection.outlook.com -all') })
+            }
+            if ($Name -eq '_dmarc.fabrikam.com' -and $Type -eq 'TXT') {
+                return @([PSCustomObject]@{ Strings = @('v=DMARC1; p=reject;') })
+            }
+            if ($Name -eq 'fabrikam.com' -and $Type -eq 'MX') {
+                # MX points to Proofpoint, not Exchange Online
+                return @([PSCustomObject]@{
+                    NameExchange = 'fabrikam.com.pphosted.com'
+                    Preference   = 10
+                })
+            }
+            return $null
+        }
+
+        Mock Get-Command {
+            param($Name, $ErrorAction)
+            if ($Name -eq 'Update-CheckProgress') {
+                return [PSCustomObject]@{ Name = 'Update-CheckProgress' }
+            }
+            return $null
+        }
+
+        Mock Get-DkimSigningConfig {
+            return @([PSCustomObject]@{ Domain = 'fabrikam.com'; Enabled = $true })
+        }
+
+        . "$PSScriptRoot/../../src/M365-Assess/Orchestrator/AssessmentHelpers.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Exchange-Online/Get-DnsSecurityConfig.ps1"
+    }
+
+    It 'MX check warns when MX points to a third-party relay' {
+        $check = $settings | Where-Object { $_.Setting -eq 'MX Records' }
+        $check | Should -Not -BeNullOrEmpty
+        $check.Status | Should -Be 'Warning'
+        $check.CurrentValue | Should -Match 'pphosted'
     }
 
     AfterAll {
