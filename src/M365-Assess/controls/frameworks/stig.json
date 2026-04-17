@@ -11,15 +11,15 @@
     "method": "severity-coverage",
     "categories": {
       "CAT-I": {
-        "label": "CAT I — High",
+        "label": "CAT I â€” High",
         "description": "Vulnerabilities that allow an attacker to directly gain privileged access or bypass security"
       },
       "CAT-II": {
-        "label": "CAT II — Medium",
+        "label": "CAT II â€” Medium",
         "description": "Vulnerabilities that provide information or capability that could lead to compromise"
       },
       "CAT-III": {
-        "label": "CAT III — Low",
+        "label": "CAT III â€” Low",
         "description": "Vulnerabilities that degrade security measures or provide limited exposure"
       }
     }

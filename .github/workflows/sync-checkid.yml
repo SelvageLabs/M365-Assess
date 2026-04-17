@@ -35,6 +35,33 @@ jobs:
             curl -sL "$BASE/frameworks/$f.json" -o "src/M365-Assess/controls/frameworks/$f.json"
           done
 
+      - name: Normalize encoding in downloaded files
+        run: |
+          python3 - <<'EOF'
+          import os, glob
+
+          # Some CheckID releases ship framework JSONs with Windows-1252 bytes.
+          # Replace known offenders with their UTF-8 equivalents before committing.
+          cp1252_fixes = {
+              bytes([0x97]): '\u2014'.encode('utf-8'),  # em dash
+              bytes([0x96]): '\u2013'.encode('utf-8'),  # en dash
+              bytes([0xa7]): '\u00a7'.encode('utf-8'),  # section sign
+              bytes([0xa9]): '\u00a9'.encode('utf-8'),  # copyright
+              bytes([0xae]): '\u00ae'.encode('utf-8'),  # registered
+          }
+
+          files = glob.glob('src/M365-Assess/controls/frameworks/*.json')
+          files.append('src/M365-Assess/controls/registry.json')
+          for path in files:
+              raw = open(path, 'rb').read()
+              fixed = raw
+              for bad, good in cp1252_fixes.items():
+                  fixed = fixed.replace(bad, good)
+              if fixed != raw:
+                  open(path, 'wb').write(fixed)
+                  print(f'Encoding fixed: {path}')
+          EOF
+
       - name: Merge local extension checks
         run: |
           python3 - <<'EOF'
