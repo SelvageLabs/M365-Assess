@@ -43,6 +43,16 @@ if ($authPolicy) {
     }
     catch {
         Write-Warning "Could not check user consent policy: $_"
+        $settingParams = @{
+            CheckId          = 'ENTRA-CONSENT-001'
+            Category         = 'Application Consent'
+            Setting          = 'User Consent for Applications'
+            CurrentValue     = "Error: $($_.Exception.Message)"
+            RecommendedValue = 'Do not allow user consent'
+            Status           = 'Skipped'
+            Remediation      = 'Check Graph API permissions and retry.'
+        }
+        Add-Setting @settingParams
     }
 
     # 4. Users Can Register Applications
@@ -62,6 +72,16 @@ if ($authPolicy) {
     }
     catch {
         Write-Warning "Could not check app registration policy: $_"
+        $settingParams = @{
+            CheckId          = 'ENTRA-APPREG-001'
+            Category         = 'Application Consent'
+            Setting          = 'Users Can Register Applications'
+            CurrentValue     = "Error: $($_.Exception.Message)"
+            RecommendedValue = 'False'
+            Status           = 'Skipped'
+            Remediation      = 'Check Graph API permissions and retry.'
+        }
+        Add-Setting @settingParams
     }
 
     # 5. Users Can Create Security Groups
@@ -80,6 +100,16 @@ if ($authPolicy) {
     }
     catch {
         Write-Warning "Could not check group creation policy: $_"
+        $settingParams = @{
+            CheckId          = 'ENTRA-GROUP-001'
+            Category         = 'Directory Settings'
+            Setting          = 'Users Can Create Security Groups'
+            CurrentValue     = "Error: $($_.Exception.Message)"
+            RecommendedValue = 'False'
+            Status           = 'Skipped'
+            Remediation      = 'Check Graph API permissions and retry.'
+        }
+        Add-Setting @settingParams
     }
 
     # 5b. Restrict Non-Admin Tenant Creation (CIS 5.1.2.3)
@@ -98,6 +128,16 @@ if ($authPolicy) {
     }
     catch {
         Write-Warning "Could not check tenant creation policy: $_"
+        $settingParams = @{
+            CheckId          = 'ENTRA-TENANT-001'
+            Category         = 'Directory Settings'
+            Setting          = 'Non-Admin Tenant Creation Restricted'
+            CurrentValue     = "Error: $($_.Exception.Message)"
+            RecommendedValue = 'False'
+            Status           = 'Skipped'
+            Remediation      = 'Check Graph API permissions and retry.'
+        }
+        Add-Setting @settingParams
     }
 }
 
@@ -127,6 +167,16 @@ try {
 }
 catch {
     Write-Warning "Could not check admin consent workflow: $_"
+    $settingParams = @{
+        CheckId          = 'ENTRA-CONSENT-002'
+        Category         = 'Application Consent'
+        Setting          = 'Admin Consent Workflow Enabled'
+        CurrentValue     = "Error: $($_.Exception.Message)"
+        RecommendedValue = 'True'
+        Status           = 'Skipped'
+        Remediation      = 'Check Graph API permissions and retry.'
+    }
+    Add-Setting @settingParams
 }
 
 # ------------------------------------------------------------------
@@ -159,6 +209,16 @@ try {
 }
 catch {
     Write-Warning "Could not check verified publisher consent restriction: $_"
+    $settingParams = @{
+        CheckId          = 'ENTRA-CONSENT-003'
+        Category         = 'Application Consent'
+        Setting          = 'User Consent Requires Verified Publisher'
+        CurrentValue     = "Error: $($_.Exception.Message)"
+        RecommendedValue = 'User consent restricted to verified publishers or fully blocked'
+        Status           = 'Skipped'
+        Remediation      = 'Check Graph API permissions and retry.'
+    }
+    Add-Setting @settingParams
 }
 
 # ------------------------------------------------------------------
@@ -187,6 +247,16 @@ try {
 }
 catch {
     Write-Warning "Could not check tenant-wide consent grants: $_"
+    $settingParams = @{
+        CheckId          = 'ENTRA-CONSENT-004'
+        Category         = 'Application Consent'
+        Setting          = 'Tenant-Wide Admin Consent Grants'
+        CurrentValue     = "Error: $($_.Exception.Message)"
+        RecommendedValue = 'Review and minimize tenant-wide admin consent grants'
+        Status           = 'Skipped'
+        Remediation      = 'Check Graph API permissions and retry.'
+    }
+    Add-Setting @settingParams
 }
 
 # ------------------------------------------------------------------
@@ -245,6 +315,26 @@ if ($authPolicy) {
     }
     catch {
         Write-Warning "Could not check external collaboration: $_"
+        $settingParams = @{
+            CheckId          = 'ENTRA-GUEST-002'
+            Category         = 'External Collaboration'
+            Setting          = 'Guest Invitation Policy'
+            CurrentValue     = "Error: $($_.Exception.Message)"
+            RecommendedValue = 'Admins and guest inviters only'
+            Status           = 'Skipped'
+            Remediation      = 'Check Graph API permissions and retry.'
+        }
+        Add-Setting @settingParams
+        $settingParams = @{
+            CheckId          = 'ENTRA-GUEST-001'
+            Category         = 'External Collaboration'
+            Setting          = 'Guest User Access Restriction'
+            CurrentValue     = "Error: $($_.Exception.Message)"
+            RecommendedValue = 'Restricted access'
+            Status           = 'Skipped'
+            Remediation      = 'Check Graph API permissions and retry.'
+        }
+        Add-Setting @settingParams
     }
 }
 
@@ -273,6 +363,16 @@ try {
 }
 catch {
     Write-Warning "Could not count guest users: $_"
+    $settingParams = @{
+        CheckId          = 'ENTRA-GUEST-003'
+        Category         = 'External Collaboration'
+        Setting          = 'Guest User Count'
+        CurrentValue     = "Error: $($_.Exception.Message)"
+        RecommendedValue = 'Review periodically'
+        Status           = 'Skipped'
+        Remediation      = 'Check Graph API permissions and retry.'
+    }
+    Add-Setting @settingParams
 }
 
 # ------------------------------------------------------------------
@@ -306,6 +406,16 @@ try {
 }
 catch {
     Write-Warning "Could not check LinkedIn account connections: $_"
+    $settingParams = @{
+        CheckId          = 'ENTRA-LINKEDIN-001'
+        Category         = 'Directory Settings'
+        Setting          = 'LinkedIn Account Connections'
+        CurrentValue     = "Error: $($_.Exception.Message)"
+        RecommendedValue = 'Disabled'
+        Status           = 'Skipped'
+        Remediation      = 'Check Graph API permissions and retry.'
+    }
+    Add-Setting @settingParams
 }
 
 # ------------------------------------------------------------------
@@ -368,6 +478,16 @@ if ($authPolicy) {
     }
     catch {
         Write-Warning "Could not check third-party app restrictions: $_"
+        $settingParams = @{
+            CheckId          = 'ENTRA-APPS-001'
+            Category         = 'Application Consent'
+            Setting          = 'Third-party Integrated Apps Restricted'
+            CurrentValue     = "Error: $($_.Exception.Message)"
+            RecommendedValue = 'Restricted'
+            Status           = 'Skipped'
+            Remediation      = 'Check Graph API permissions and retry.'
+        }
+        Add-Setting @settingParams
     }
 }
 
@@ -407,6 +527,16 @@ try {
 }
 catch {
     Write-Warning "Could not check guest invitation restrictions: $_"
+    $settingParams = @{
+        CheckId          = 'ENTRA-GUEST-004'
+        Category         = 'External Collaboration'
+        Setting          = 'Guest Invitation Domain Restrictions'
+        CurrentValue     = "Error: $($_.Exception.Message)"
+        RecommendedValue = 'Restricted to allowed domains only'
+        Status           = 'Skipped'
+        Remediation      = 'Check Graph API permissions and retry.'
+    }
+    Add-Setting @settingParams
 }
 
 # ------------------------------------------------------------------
@@ -453,6 +583,16 @@ try {
 }
 catch {
     Write-Warning "Could not check dynamic guest groups: $_"
+    $settingParams = @{
+        CheckId          = 'ENTRA-GROUP-002'
+        Category         = 'External Collaboration'
+        Setting          = 'Dynamic Group for Guest Users'
+        CurrentValue     = "Error: $($_.Exception.Message)"
+        RecommendedValue = 'At least 1 dynamic group for guests'
+        Status           = 'Skipped'
+        Remediation      = 'Check Graph API permissions and retry.'
+    }
+    Add-Setting @settingParams
 }
 
 # ------------------------------------------------------------------
@@ -515,6 +655,16 @@ try {
 }
 catch {
     Write-Warning "Could not check public group owners: $_"
+    $settingParams = @{
+        CheckId          = 'ENTRA-GROUP-003'
+        Category         = 'Group Management'
+        Setting          = 'Public Groups Have Owners'
+        CurrentValue     = "Error: $($_.Exception.Message)"
+        RecommendedValue = 'All public groups have assigned owners'
+        Status           = 'Skipped'
+        Remediation      = 'Check Graph API permissions and retry.'
+    }
+    Add-Setting @settingParams
 }
 
 # ------------------------------------------------------------------
@@ -546,6 +696,16 @@ try {
 }
 catch {
     Write-Warning "Could not check user app consent: $_"
+    $settingParams = @{
+        CheckId          = 'ENTRA-ORGSETTING-001'
+        Category         = 'Organization Settings'
+        Setting          = 'Org-Level App Consent Restriction'
+        CurrentValue     = "Error: $($_.Exception.Message)"
+        RecommendedValue = 'Do not allow user consent'
+        Status           = 'Skipped'
+        Remediation      = 'Check Graph API permissions and retry.'
+    }
+    Add-Setting @settingParams
 }
 
 # ------------------------------------------------------------------
