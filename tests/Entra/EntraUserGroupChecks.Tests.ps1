@@ -134,7 +134,7 @@ Describe 'EntraUserGroupChecks' {
     }
 
     It 'All Status values are valid' {
-        $validStatuses = @('Pass', 'Fail', 'Warning', 'Review', 'Info', 'N/A')
+        $validStatuses = @('Pass', 'Fail', 'Warning', 'Review', 'Info', 'N/A', 'Skipped')
         foreach ($s in $settings) {
             $s.Status | Should -BeIn $validStatuses `
                 -Because "Setting '$($s.Setting)' has status '$($s.Status)'"
@@ -321,6 +321,125 @@ Describe 'EntraUserGroupChecks - Insecure Settings' {
         $check = $settings | Where-Object { $_.Setting -eq 'LinkedIn Account Connections' }
         $check | Should -Not -BeNullOrEmpty
         $check.Status | Should -Be 'Fail'
+    }
+
+    AfterAll {
+        Remove-Item Function:\Update-CheckProgress -ErrorAction SilentlyContinue
+        Remove-Item Function:\Get-MgContext -ErrorAction SilentlyContinue
+        Remove-Item Function:\Add-Setting -ErrorAction SilentlyContinue
+    }
+}
+
+Describe 'EntraUserGroupChecks - Skipped fallback on API error' {
+    BeforeAll {
+        function global:Update-CheckProgress {
+            param($CheckId, $Setting, $Status)
+        }
+
+        function global:Get-MgContext {
+            return @{ TenantId = 'test-tenant-id' }
+        }
+
+        Mock Import-Module { }
+
+        # Every Graph call throws to simulate throttle/auth failures
+        Mock Invoke-MgGraphRequest {
+            throw 'Simulated Graph API error'
+        }
+
+        . "$PSScriptRoot/../../src/M365-Assess/Orchestrator/AssessmentHelpers.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Common/SecurityConfigHelper.ps1"
+
+        $ctx            = Initialize-SecurityConfig
+        $settings       = $ctx.Settings
+        $checkIdCounter = $ctx.CheckIdCounter
+
+        function Add-Setting {
+            param([string]$Category, [string]$Setting, [string]$CurrentValue,
+                  [string]$RecommendedValue, [string]$Status,
+                  [string]$CheckId = '', [string]$Remediation = '')
+            Add-SecuritySetting -Settings $settings -CheckIdCounter $checkIdCounter `
+                -Category $Category -Setting $Setting -CurrentValue $CurrentValue `
+                -RecommendedValue $RecommendedValue -Status $Status `
+                -CheckId $CheckId -Remediation $Remediation
+        }
+
+        $authPolicy = $null
+        $context    = @{ TenantId = 'test-tenant-id' }
+
+        . "$PSScriptRoot/../../src/M365-Assess/Entra/EntraUserGroupChecks.ps1"
+    }
+
+    It 'should not throw when all Graph calls fail' {
+        $settings | Should -Not -BeNullOrEmpty
+    }
+
+    It 'should emit a Skipped result for ENTRA-CONSENT-002 when admin consent API fails' {
+        $check = $settings | Where-Object { $_.Setting -eq 'Admin Consent Workflow Enabled' }
+        $check | Should -Not -BeNullOrEmpty
+        $check.Status | Should -Be 'Skipped'
+    }
+
+    It 'should emit a Skipped result for ENTRA-CONSENT-003 when verified publisher check fails' {
+        $check = $settings | Where-Object { $_.Setting -eq 'User Consent Requires Verified Publisher' }
+        $check | Should -Not -BeNullOrEmpty
+        $check.Status | Should -Be 'Skipped'
+    }
+
+    It 'should emit a Skipped result for ENTRA-CONSENT-004 when tenant-wide consent grants fail' {
+        $check = $settings | Where-Object { $_.Setting -eq 'Tenant-Wide Admin Consent Grants' }
+        $check | Should -Not -BeNullOrEmpty
+        $check.Status | Should -Be 'Skipped'
+    }
+
+    It 'should emit a Skipped result for ENTRA-GUEST-003 when guest count fails' {
+        $check = $settings | Where-Object { $_.Setting -eq 'Guest User Count' }
+        $check | Should -Not -BeNullOrEmpty
+        $check.Status | Should -Be 'Skipped'
+    }
+
+    It 'should emit a Skipped result for ENTRA-LINKEDIN-001 when LinkedIn API fails' {
+        $check = $settings | Where-Object { $_.Setting -eq 'LinkedIn Account Connections' }
+        $check | Should -Not -BeNullOrEmpty
+        $check.Status | Should -Be 'Skipped'
+    }
+
+    It 'should emit a Skipped result for ENTRA-GUEST-004 when cross-tenant policy fails' {
+        $check = $settings | Where-Object { $_.Setting -eq 'Guest Invitation Domain Restrictions' }
+        $check | Should -Not -BeNullOrEmpty
+        $check.Status | Should -Be 'Skipped'
+    }
+
+    It 'should emit a Skipped result for ENTRA-GROUP-002 when dynamic group query fails' {
+        $check = $settings | Where-Object { $_.Setting -eq 'Dynamic Group for Guest Users' }
+        $check | Should -Not -BeNullOrEmpty
+        $check.Status | Should -Be 'Skipped'
+    }
+
+    It 'should emit a Skipped result for ENTRA-GROUP-003 when group owners query fails' {
+        $check = $settings | Where-Object { $_.Setting -eq 'Public Groups Have Owners' }
+        $check | Should -Not -BeNullOrEmpty
+        $check.Status | Should -Be 'Skipped'
+    }
+
+    It 'should emit a Skipped result for ENTRA-ORGSETTING-001 when app consent policy fails' {
+        $check = $settings | Where-Object { $_.Setting -eq 'Org-Level App Consent Restriction' }
+        $check | Should -Not -BeNullOrEmpty
+        $check.Status | Should -Be 'Skipped'
+    }
+
+    It 'should include the error message in CurrentValue for skipped checks' {
+        $skipped = @($settings | Where-Object { $_.Status -eq 'Skipped' })
+        $skipped.Count | Should -BeGreaterThan 0
+        foreach ($s in $skipped) {
+            $s.CurrentValue | Should -Match 'Error:'
+        }
+    }
+
+    It 'should still emit Review result for ENTRA-PERUSER-001 even when API call fails' {
+        $check = $settings | Where-Object { $_.Setting -eq 'Per-user MFA (Legacy)' }
+        $check | Should -Not -BeNullOrEmpty
+        $check.Status | Should -Be 'Review'
     }
 
     AfterAll {

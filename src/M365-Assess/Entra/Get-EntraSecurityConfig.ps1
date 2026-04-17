@@ -56,7 +56,7 @@ function Add-Setting {
     param(
         [string]$Category, [string]$Setting, [string]$CurrentValue,
         [string]$RecommendedValue,
-        [ValidateSet('Pass', 'Fail', 'Warning', 'Review', 'Info', 'Unknown')]
+        [ValidateSet('Pass', 'Fail', 'Warning', 'Review', 'Info', 'Skipped', 'Unknown')]
         [string]$Status,
         [string]$CheckId = '', [string]$Remediation = ''
     )
