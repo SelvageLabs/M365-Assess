@@ -86,7 +86,19 @@ function Test-GraphPermissions {
         $scopeList = ($affectedSections[$section] | Sort-Object) -join ', '
         Write-Host "      ${section}: $scopeList" -ForegroundColor Yellow
     }
-    Write-Host '    Tip: re-run consent or update app registration to include these scopes' -ForegroundColor DarkGray
+    if ($context.AuthType -eq 'AppOnly') {
+        Write-Host "    To fix: add the missing permission(s) to your app registration, then grant admin consent." -ForegroundColor DarkGray
+        Write-Host "    Entra ID > App registrations > [your app] > API permissions >" -ForegroundColor DarkGray
+        Write-Host "      Add a permission > Microsoft Graph > Application permissions" -ForegroundColor DarkGray
+        Write-Host "    Then click 'Grant admin consent for [tenant]' and re-run." -ForegroundColor DarkGray
+    }
+    else {
+        $scopeArg = ($missingScopes | Sort-Object) -join ','
+        Write-Host "    To fix: close this session and re-run the assessment. When the browser opens," -ForegroundColor DarkGray
+        Write-Host "    sign in as a Global Admin and click 'Accept' to grant the missing permission(s)." -ForegroundColor DarkGray
+        Write-Host "    If consent was already granted by an admin, run in a new PowerShell session:" -ForegroundColor DarkGray
+        Write-Host "      Disconnect-MgGraph; Connect-MgGraph -Scopes '$scopeArg'" -ForegroundColor Cyan
+    }
     Write-Host ''
 
     Write-AssessmentLog -Level WARN -Message "Missing Graph scopes: $($missingScopes -join ', ')" -Section 'Setup'
