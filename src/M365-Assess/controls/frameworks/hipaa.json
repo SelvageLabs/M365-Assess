@@ -10,23 +10,23 @@
   "scoring": {
     "method": "criteria-coverage",
     "criteria": {
-      "§164.308": {
+      "�§164.308": {
         "label": "Administrative Safeguards",
         "description": "Security management, access management, training, and contingency planning"
       },
-      "§164.310": {
+      "�§164.310": {
         "label": "Physical Safeguards",
         "description": "Facility access controls, workstation use, and device/media controls"
       },
-      "§164.312": {
+      "�§164.312": {
         "label": "Technical Safeguards",
         "description": "Access control, audit controls, integrity, transmission security"
       },
-      "§164.314": {
+      "�§164.314": {
         "label": "Organizational Requirements",
         "description": "Business associate contracts and group health plan requirements"
       },
-      "§164.316": {
+      "�§164.316": {
         "label": "Policies and Procedures",
         "description": "Documentation requirements and record retention"
       }
