@@ -150,6 +150,66 @@ function Invoke-FrameworkScoring {
     # Scoring data key order maps: numeric (1,2,3), alpha-numeric (L1,L2,ML1,ML2), Roman (CAT-I,CAT-II)
     $groups = @($groups | Sort-Object -Property { Get-GroupSortKey -Key $_.Key })
 
+    # Append stub rows for controls in the framework definition that have no results
+    # Controls array is stored under extraData (loaded via Import-FrameworkDefinitions)
+    # or directly on the framework object (passed as PSCustomObject or hashtable with 'controls' key)
+    $fwControls = $null
+    if ($Framework -is [hashtable]) {
+        if ($Framework.ContainsKey('extraData') -and $Framework.extraData -is [hashtable] -and
+            $Framework.extraData.ContainsKey('controls') -and $Framework.extraData['controls']) {
+            $fwControls = $Framework.extraData['controls']
+        }
+        elseif ($Framework.ContainsKey('controls') -and $Framework.controls) {
+            $fwControls = $Framework.controls
+        }
+    }
+    elseif ($Framework.PSObject.Properties.Name -contains 'controls' -and $Framework.controls) {
+        $fwControls = $Framework.controls
+    }
+
+    if ($fwControls -and @($fwControls).Count -gt 0) {
+        $coveredIds = [System.Collections.Generic.HashSet[string]]::new(
+            [System.StringComparer]::OrdinalIgnoreCase
+        )
+        # Add controlIds tracked by group objects (if any)
+        foreach ($grp in $groups) {
+            if ($grp.ControlId) { [void]$coveredIds.Add($grp.ControlId) }
+        }
+        # Also include controlIds from mappedFindings for accurate covered detection
+        foreach ($mf in $mappedFindings) {
+            if ($mf.ControlId) {
+                foreach ($cid in ($mf.ControlId -split ';')) {
+                    [void]$coveredIds.Add($cid.Trim())
+                }
+            }
+        }
+        foreach ($ctrl in @($fwControls)) {
+            $cid = if ($ctrl -is [hashtable]) { $ctrl['controlId'] } else { $ctrl.controlId }
+            if (-not $cid) { continue }
+            if ($coveredIds.Contains($cid)) { continue }
+            $ctrlTitle  = if ($ctrl -is [hashtable]) { $ctrl['title']  } else { $ctrl.title  }
+            $ctrlDomain = if ($ctrl -is [hashtable]) { $ctrl['domain'] } else { $ctrl.domain }
+            $ctrlLevel  = if ($ctrl -is [hashtable]) { $ctrl['level']  } else { $ctrl.level  }
+            $groups += @{
+                ControlId = $cid
+                Label     = if ($ctrlTitle)  { $ctrlTitle }  else { '' }
+                Domain    = if ($ctrlDomain) { $ctrlDomain } else { '' }
+                Level     = if ($ctrlLevel)  { $ctrlLevel }  else { '' }
+                IsGap     = $true
+                Key       = $cid
+                Total     = 0
+                Mapped    = 0
+                Covered   = 0
+                Passed    = 0
+                Failed    = 0
+                Warning   = 0
+                Review    = 0
+                Other     = 0
+                Findings  = @()
+            }
+        }
+    }
+
     # Build summary
     $scoredFindings = @($mappedFindings | Where-Object { $_.Finding.Status -ne 'Info' })
     $totalMapped = ($scoredFindings | ForEach-Object { $_.Finding.CheckId } | Select-Object -Unique).Count

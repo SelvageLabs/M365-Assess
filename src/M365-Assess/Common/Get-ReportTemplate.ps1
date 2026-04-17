@@ -2628,6 +2628,9 @@ $html = @"
         /* CSV export button — in control bar, accent color */
         .csv-export-btn { padding: 4px 10px; border: 1px solid var(--m365a-accent); border-radius: 4px; background: var(--m365a-card-bg); color: var(--m365a-accent); cursor: pointer; font-size: 0.82em; font-weight: 500; white-space: nowrap; }
         .csv-export-btn:hover { background: var(--m365a-accent); color: #fff; }
+        /* Framework Catalog — gap rows for uncovered controls */
+        .fw-catalog-gap-row { opacity: 0.55; font-style: italic; }
+        .fw-catalog-gap-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.78em; background: var(--m365a-hover-bg); color: var(--m365a-medium-gray); border: 1px solid var(--m365a-border); white-space: nowrap; }
         /* Intune Overview — category coverage grid */
         .intune-category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; padding: 12px 0 4px; }
         .intune-cat-card { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 8px; background: var(--m365a-card-bg); border: 1px solid var(--m365a-border); border-left: 3px solid var(--m365a-border); }
