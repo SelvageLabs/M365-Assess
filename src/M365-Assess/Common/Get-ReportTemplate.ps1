@@ -2738,10 +2738,6 @@ if ($complianceHtml) {
     $navIconCompliance = $navIcons['compliance overview']
     $html += "                <li class='nav-item' data-page='compliance-overview'><a href='#compliance-overview'>$navIconCompliance Compliance Overview</a></li>`n"
 }
-if ($intuneOverviewHtml) {
-    $navIconIntune = '<svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M7 2a1 1 0 0 0-1 1v1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V3a1 1 0 0 0-1-1H7Zm0 2h6v1H7V4ZM4 8h12v8H4V8Zm2 2v2h2v-2H6Zm4 0v2h2v-2h-2Zm4 0v2h2v-2h-2Z"/></svg>'
-    $html += "                <li class='nav-item' data-page='intune-overview'><a href='#intune-overview'>$navIconIntune Intune Overview</a></li>`n"
-}
 if ($catalogHtml) {
     $navIconCatalogs = $navIcons['framework catalogs']
     $html += "                <li class='nav-item' data-page='framework-catalogs'><a href='#framework-catalogs'>$navIconCatalogs Framework Catalogs</a></li>`n"
@@ -2953,17 +2949,6 @@ if ($complianceHtml) {
         <a id="compliance-overview"></a>
         <h1>Compliance Overview</h1>
         $complianceHtml
-        </div>
-"@
-}
-
-if ($intuneOverviewHtml) {
-    $html += @"
-
-        <div class="report-page" data-page="intune-overview" id="intune-overview">
-        <a id="intune-overview-anchor"></a>
-        <h1>Intune Overview</h1>
-        $intuneOverviewHtml
         </div>
 "@
 }

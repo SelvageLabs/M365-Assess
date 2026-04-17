@@ -366,6 +366,13 @@ foreach ($sectionName in $sections) {
     }
 
     # ------------------------------------------------------------------
+    # Intune Dashboard — placeholder replaced after $allCisFindings is built
+    # ------------------------------------------------------------------
+    if ($sectionName -eq 'Intune') {
+        $null = $sectionHtml.AppendLine('<!-- INTUNE-OVERVIEW-PLACEHOLDER -->')
+    }
+
+    # ------------------------------------------------------------------
     # Identity Dashboard — combined overview panel
     # ------------------------------------------------------------------
     if ($sectionName -eq 'Identity') {
@@ -1458,6 +1465,20 @@ foreach ($c in $summary) {
         })
     }
 }
+
+# ------------------------------------------------------------------
+# Intune Dashboard — replace placeholder now that $allCisFindings is populated
+# ------------------------------------------------------------------
+$intuneOverviewInsert = ''
+$intuneFindings4Overview = @($allCisFindings | Where-Object { $_.CheckId -like 'INTUNE-*' })
+if ($intuneFindings4Overview.Count -gt 0) {
+    if (-not (Get-Command -Name Build-IntuneOverviewHtml -ErrorAction SilentlyContinue)) {
+        . (Join-Path -Path $PSScriptRoot -ChildPath 'Build-IntuneOverviewHtml.ps1')
+    }
+    $intuneOverviewInsert = Build-IntuneOverviewHtml -Findings $intuneFindings4Overview -AssessmentFolder $AssessmentFolder
+}
+$sectionHtmlStr = $sectionHtml.ToString().Replace('<!-- INTUNE-OVERVIEW-PLACEHOLDER -->', $intuneOverviewInsert)
+$sectionHtml = [System.Text.StringBuilder]::new($sectionHtmlStr)
 
 # ------------------------------------------------------------------
 # Compute per-section status counts for the service-area breakdown chart
