@@ -144,8 +144,10 @@ function Export-ComplianceOverview {
         if ($isProfileBased -and $fw.profiles) {
             # Profile-based card (CIS, NIST) -- pass rate as primary, coverage bar as secondary
             $profileFindings = @($Findings | Where-Object { $_.Frameworks -and $_.Frameworks.ContainsKey($fwId) })
-            $profilePass = @($profileFindings | Where-Object { $_.Status -eq 'Pass' }).Count
-            $profileScored = @($profileFindings | Where-Object { $_.Status -ne 'Info' }).Count
+            $profilePass = ($profileFindings | Where-Object { $_.Status -eq 'Pass' } |
+                ForEach-Object { $_.CheckId -replace '\.\d+$', '' } | Sort-Object -Unique).Count
+            $profileScored = ($profileFindings | Where-Object { $_.Status -ne 'Info' } |
+                ForEach-Object { $_.CheckId -replace '\.\d+$', '' } | Sort-Object -Unique).Count
             $profileScore = if ($profileScored -gt 0) { [math]::Round(($profilePass / $profileScored) * 100, 1) } else { 0 }
             $scoreDisplay = if ($profileScored -gt 0) { "$profileScore%" } else { 'N/A' }
             $scoreClass = if ($profileScored -eq 0) { '' } elseif ($profileScore -ge 80) { 'success' } elseif ($profileScore -ge 60) { 'warning' } else { 'danger' }
@@ -187,8 +189,10 @@ function Export-ComplianceOverview {
                 if ($fwData.controlId) { $fwData.controlId -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' } }
             } | Sort-Object -Unique)
             $mappedCount = $mappedControls.Count
-            $mappedPass = @($mappedFindings | Where-Object { $_.Status -eq 'Pass' }).Count
-            $mappedTotal = @($mappedFindings | Where-Object { $_.Status -ne 'Info' }).Count
+            $mappedPass = ($mappedFindings | Where-Object { $_.Status -eq 'Pass' } |
+                ForEach-Object { $_.CheckId -replace '\.\d+$', '' } | Sort-Object -Unique).Count
+            $mappedTotal = ($mappedFindings | Where-Object { $_.Status -ne 'Info' } |
+                ForEach-Object { $_.CheckId -replace '\.\d+$', '' } | Sort-Object -Unique).Count
             $passRate = if ($mappedTotal -gt 0) { [math]::Round(($mappedPass / $mappedTotal) * 100, 1) } else { 0 }
             $passDisplay = if ($mappedTotal -gt 0) { "$passRate%" } else { 'N/A' }
             $passClass = if ($mappedTotal -eq 0) { '' } elseif ($passRate -ge 80) { 'success' } elseif ($passRate -ge 60) { 'warning' } else { 'danger' }

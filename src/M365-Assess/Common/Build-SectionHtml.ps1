@@ -268,6 +268,7 @@ foreach ($sectionName in $sections) {
     }
 
     $sectionId = ($sectionName -replace '[^a-zA-Z0-9]', '-').ToLower()
+    $sectionPageStart = $sectionHtml.Length
     $null = $sectionHtml.AppendLine("<div class='report-page' data-page='section-$sectionId'>")
     $null = $sectionHtml.AppendLine("<details class='section' id='section-$sectionId' open>")
     $null = $sectionHtml.AppendLine("<summary><h2>$([System.Web.HttpUtility]::HtmlEncode($sectionName))</h2></summary>")
@@ -846,6 +847,24 @@ foreach ($sectionName in $sections) {
             $null = $sectionHtml.AppendLine("<div class='email-dashboard'>")
             $null = $sectionHtml.AppendLine("<div class='email-dash-top'>")
 
+            # Helper: build status badge HTML from CSS class
+            $collabBadge = {
+                param($cls)
+                switch ($cls) {
+                    'success' { "<span class='badge badge-success'>Pass</span>" }
+                    'warning' { "<span class='badge badge-warning'>Warning</span>" }
+                    'danger'  { "<span class='badge badge-failed'>Fail</span>" }
+                    default   { "<span class='badge badge-neutral'>Unknown</span>" }
+                }
+            }
+
+            # Helper: build a collab tile
+            $collabTile = {
+                param($cls, $icon, $value, $label, $tooltip)
+                $badge = & $collabBadge $cls
+                "<div class='email-metric-card id-metric-$cls' title='$(ConvertTo-HtmlSafe -Text $tooltip)'><div class='email-metric-icon'>$icon</div><div class='email-metric-body'><div class='email-metric-value'>$(ConvertTo-HtmlSafe -Text $value)</div><div class='email-metric-label'>$label</div>$badge</div></div>"
+            }
+
             # --- Left column: SharePoint & Teams settings as icon metric cards ---
             $null = $sectionHtml.AppendLine("<div class='email-dash-col'>")
             $null = $sectionHtml.AppendLine("<div class='email-dash-heading'>Collaboration Settings</div>")
@@ -854,6 +873,8 @@ foreach ($sectionName in $sections) {
             if ($spoData.Count -gt 0) {
                 $spo = $spoData[0]
                 $spoProps = @($spo.PSObject.Properties.Name)
+
+                $null = $sectionHtml.AppendLine("<div class='collab-group-header'>SharePoint &amp; OneDrive</div>")
 
                 # Sharing Capability
                 $sharingCap = if ($spoProps -contains 'SharingCapability') { $spo.SharingCapability } else { 'Unknown' }
@@ -871,7 +892,7 @@ foreach ($sectionName in $sections) {
                     'ExternalUserAndGuestSharing'      { 'danger' }
                     default { '' }
                 }
-                $null = $sectionHtml.AppendLine("<div class='email-metric-card id-metric-$sharingClass'><div class='email-metric-icon'>&#128279;</div><div class='email-metric-body'><div class='email-metric-value'>$(ConvertTo-HtmlSafe -Text $sharingDisplay)</div><div class='email-metric-label'>External Sharing</div></div></div>")
+                $null = $sectionHtml.AppendLine((& $collabTile $sharingClass '&#128279;' $sharingDisplay 'External Sharing' 'External Sharing — Recommended: Disabled or Existing Guests only'))
 
                 # Domain Restriction
                 $domainRestrict = if ($spoProps -contains 'SharingDomainRestrictionMode') { $spo.SharingDomainRestrictionMode } else { 'Unknown' }
@@ -882,43 +903,44 @@ foreach ($sectionName in $sections) {
                     'None'       { 'None' }
                     default      { $domainRestrict }
                 }
-                $null = $sectionHtml.AppendLine("<div class='email-metric-card id-metric-$drClass'><div class='email-metric-icon'>&#127760;</div><div class='email-metric-body'><div class='email-metric-value'>$(ConvertTo-HtmlSafe -Text $drDisplay)</div><div class='email-metric-label'>Domain Restriction</div></div></div>")
+                $null = $sectionHtml.AppendLine((& $collabTile $drClass '&#127760;' $drDisplay 'Domain Restriction' 'Domain Restriction — Recommended: Allow List or Block List configured'))
 
                 # Resharing
                 $resharing = if ($spoProps -contains 'IsResharingByExternalUsersEnabled') { $spo.IsResharingByExternalUsersEnabled } else { 'Unknown' }
                 $reshareClass = if ($resharing -eq 'False') { 'success' } else { 'danger' }
-                $reshareIcon = if ($resharing -eq 'False') { '&#128683;' } else { '&#9888;' }
-                $null = $sectionHtml.AppendLine("<div class='email-metric-card id-metric-$reshareClass'><div class='email-metric-icon'>$reshareIcon</div><div class='email-metric-body'><div class='email-metric-value'>$(ConvertTo-HtmlSafe -Text $resharing)</div><div class='email-metric-label'>External Resharing</div></div></div>")
+                $null = $sectionHtml.AppendLine((& $collabTile $reshareClass '&#128279;' $resharing 'External Resharing' 'External Resharing — Recommended: False (guests cannot reshare)'))
 
                 # Sync Client Restriction
                 $syncRestrict = if ($spoProps -contains 'IsUnmanagedSyncClientRestricted') { $spo.IsUnmanagedSyncClientRestricted } else { 'Unknown' }
                 $syncClass = if ($syncRestrict -eq 'True') { 'success' } else { 'warning' }
-                $null = $sectionHtml.AppendLine("<div class='email-metric-card id-metric-$syncClass'><div class='email-metric-icon'>&#128260;</div><div class='email-metric-body'><div class='email-metric-value'>$(ConvertTo-HtmlSafe -Text $syncRestrict)</div><div class='email-metric-label'>Unmanaged Sync Blocked</div></div></div>")
+                $null = $sectionHtml.AppendLine((& $collabTile $syncClass '&#128260;' $syncRestrict 'Unmanaged Sync Blocked' 'Unmanaged Sync — Recommended: True (restrict unmanaged devices)'))
             }
 
             if ($teamAccData.Count -gt 0) {
                 $team = $teamAccData[0]
                 $tProps = @($team.PSObject.Properties.Name)
 
+                $null = $sectionHtml.AppendLine("<div class='collab-group-header'>Microsoft Teams</div>")
+
                 # Guest Access
                 $guestAccess = if ($tProps -contains 'AllowGuestAccess') { $team.AllowGuestAccess } else { 'Unknown' }
                 $guestClass = if ($guestAccess -eq 'False') { 'success' } else { 'warning' }
-                $null = $sectionHtml.AppendLine("<div class='email-metric-card id-metric-$guestClass'><div class='email-metric-icon'>&#128101;</div><div class='email-metric-body'><div class='email-metric-value'>$(ConvertTo-HtmlSafe -Text $guestAccess)</div><div class='email-metric-label'>Teams Guest Access</div></div></div>")
+                $null = $sectionHtml.AppendLine((& $collabTile $guestClass '&#128101;' $guestAccess 'Guest Access' 'Guest Access — Recommended: False or controlled via CA policy'))
 
                 # Third Party Apps
                 $thirdParty = if ($tProps -contains 'AllowThirdPartyApps') { $team.AllowThirdPartyApps } else { 'Unknown' }
                 $tpClass = if ($thirdParty -eq 'False') { 'success' } else { 'warning' }
-                $null = $sectionHtml.AppendLine("<div class='email-metric-card id-metric-$tpClass'><div class='email-metric-icon'>&#128268;</div><div class='email-metric-body'><div class='email-metric-value'>$(ConvertTo-HtmlSafe -Text $thirdParty)</div><div class='email-metric-label'>Third-Party Apps</div></div></div>")
+                $null = $sectionHtml.AppendLine((& $collabTile $tpClass '&#128268;' $thirdParty 'Third-Party Apps' 'Third-Party Apps — Recommended: False (restrict external app access)'))
 
                 # Side Loading
                 $sideLoad = if ($tProps -contains 'AllowSideLoading') { $team.AllowSideLoading } else { 'Unknown' }
                 $slClass = if ($sideLoad -eq 'False') { 'success' } else { 'danger' }
-                $null = $sectionHtml.AppendLine("<div class='email-metric-card id-metric-$slClass'><div class='email-metric-icon'>&#128230;</div><div class='email-metric-body'><div class='email-metric-value'>$(ConvertTo-HtmlSafe -Text $sideLoad)</div><div class='email-metric-label'>Side Loading</div></div></div>")
+                $null = $sectionHtml.AppendLine((& $collabTile $slClass '&#128230;' $sideLoad 'App Sideloading' 'App Sideloading — Recommended: False (prevent unapproved app installs)'))
 
                 # Resource-Specific Consent
                 $rscConsent = if ($tProps -contains 'IsUserPersonalScopeResourceSpecificConsentEnabled') { $team.IsUserPersonalScopeResourceSpecificConsentEnabled } else { 'Unknown' }
                 $rscClass = if ($rscConsent -eq 'False') { 'success' } else { 'warning' }
-                $null = $sectionHtml.AppendLine("<div class='email-metric-card id-metric-$rscClass'><div class='email-metric-icon'>&#128273;</div><div class='email-metric-body'><div class='email-metric-value'>$(ConvertTo-HtmlSafe -Text $rscConsent)</div><div class='email-metric-label'>Resource Consent</div></div></div>")
+                $null = $sectionHtml.AppendLine((& $collabTile $rscClass '&#128273;' $rscConsent 'Resource Consent' 'Resource-Specific Consent — Recommended: False (control app data access)'))
             }
 
             $null = $sectionHtml.AppendLine("</div>") # end email-metrics-grid
@@ -1389,6 +1411,15 @@ foreach ($sectionName in $sections) {
 
     $null = $sectionHtml.AppendLine("</details>")
     $null = $sectionHtml.AppendLine("</div>") # close report-page wrapper
+
+    # Single-table sections: remove height constraint so table fills viewport
+    $sectionChunk = $sectionHtml.ToString().Substring($sectionPageStart)
+    $tableWrapperCount = ([regex]::Matches($sectionChunk, "class='table-wrapper'")).Count
+    if ($tableWrapperCount -eq 1) {
+        $null = $sectionHtml.Replace(
+            "<div class='report-page' data-page='section-$sectionId'>",
+            "<div class='report-page' data-page='section-$sectionId' data-solo-table='true'>")
+    }
 }
 
 # ------------------------------------------------------------------

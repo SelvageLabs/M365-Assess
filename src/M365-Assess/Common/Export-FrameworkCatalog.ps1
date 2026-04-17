@@ -197,6 +197,22 @@ function ConvertTo-CatalogInlineHtml {
     $summary = $ScoredResult.Summary
     $groups = $ScoredResult.Groups
 
+    $scoringMethodLabels = @{
+        'profile-compliance'     = 'Profile Compliance'
+        'control-coverage'       = 'Control Coverage'
+        'maturity-level'         = 'Maturity Level'
+        'severity-coverage'      = 'Severity Coverage'
+        'function-coverage'      = 'Function Coverage'
+        'technique-coverage'     = 'Technique Coverage'
+        'requirement-compliance' = 'Requirement Compliance'
+        'criteria-coverage'      = 'Criteria Coverage'
+        'policy-compliance'      = 'Policy Compliance'
+    }
+    $scoringLabel = if ($scoringMethodLabels.ContainsKey($Framework.scoringMethod)) {
+        $scoringMethodLabels[$Framework.scoringMethod]
+    }
+    else { $Framework.scoringMethod }
+
     $html = [System.Text.StringBuilder]::new(4096)
 
     # Outer collapsible section
@@ -218,12 +234,12 @@ function ConvertTo-CatalogInlineHtml {
 
     $null = $html.AppendLine("<div class='catalog-summary'>")
     $null = $html.AppendLine("<div class='catalog-stats'>")
-    $null = $html.AppendLine("<span class='catalog-stat'><strong>Pass Rate:</strong> <span class='badge badge-$passClass'>$passRatePct%</span></span>")
+    $null = $html.AppendLine("<span class='catalog-stat'><strong>Pass Rate:</strong> <span class='badge badge-$passClass' title='Percentage of assessed checks that returned Pass'>$passRatePct%</span></span>")
     if ($summary.TotalControls -gt 0) {
-        $null = $html.AppendLine("<span class='catalog-stat'><strong>Coverage:</strong> $coveredCount of $($summary.TotalControls) controls</span>")
+        $null = $html.AppendLine("<span class='catalog-stat' title='Distinct framework controls with at least one mapped check'><strong>Coverage:</strong> $coveredCount of $($summary.TotalControls) controls</span>")
     }
-    $null = $html.AppendLine("<span class='catalog-stat'><strong>Automated Checks:</strong> $($summary.MappedControls) assessed</span>")
-    $null = $html.AppendLine("<span class='catalog-stat'><strong>Scoring:</strong> $($Framework.scoringMethod)</span>")
+    $null = $html.AppendLine("<span class='catalog-stat' title='Automated checks mapped to this framework'><strong>Checks Assessed:</strong> $($summary.MappedControls)</span>")
+    $null = $html.AppendLine("<span class='catalog-stat catalog-scoring' title='Scoring method: $scoringLabel'>&#9432; $scoringLabel</span>")
     $null = $html.AppendLine("</div>")
     if ($summary.TotalControls -gt 0) {
         $null = $html.AppendLine("<div class='coverage-bar'><div class='coverage-fill' style='width: $coveragePct%'></div></div>")
@@ -320,6 +336,22 @@ function ConvertTo-CatalogStandaloneHtml {
     $groups = $ScoredResult.Groups
     $assessmentDate = Get-Date -Format 'yyyy-MM-dd HH:mm'
 
+    $scoringMethodLabels = @{
+        'profile-compliance'     = 'Profile Compliance'
+        'control-coverage'       = 'Control Coverage'
+        'maturity-level'         = 'Maturity Level'
+        'severity-coverage'      = 'Severity Coverage'
+        'function-coverage'      = 'Function Coverage'
+        'technique-coverage'     = 'Technique Coverage'
+        'requirement-compliance' = 'Requirement Compliance'
+        'criteria-coverage'      = 'Criteria Coverage'
+        'policy-compliance'      = 'Policy Compliance'
+    }
+    $scoringLabel = if ($scoringMethodLabels.ContainsKey($Framework.scoringMethod)) {
+        $scoringMethodLabels[$Framework.scoringMethod]
+    }
+    else { $Framework.scoringMethod }
+
     # Get the inline body content (reuse the inline renderer's table logic)
     $passRatePct = [math]::Round($summary.PassRate * 100, 1)
     $passClass = if ($passRatePct -ge 80) { 'success' } elseif ($passRatePct -ge 60) { 'warning' } else { 'danger' }
@@ -331,17 +363,17 @@ function ConvertTo-CatalogStandaloneHtml {
     # Cover / header section
     $null = $body.AppendLine("<div class='catalog-header'>")
     $null = $body.AppendLine("<h1><span class='fw-tag $fwCss' style='font-size: 0.9em; padding: 4px 12px;'>$fwLabel</span> Framework Catalog</h1>")
-    $null = $body.AppendLine("<p class='catalog-meta'>Tenant: <strong>$TenantName</strong> &bull; Generated: $assessmentDate &bull; Scoring: $($Framework.scoringMethod)</p>")
+    $null = $body.AppendLine("<p class='catalog-meta'>Tenant: <strong>$TenantName</strong> &bull; Generated: $assessmentDate &bull; Scoring: $scoringLabel</p>")
     $null = $body.AppendLine("</div>")
 
     # Summary stats
     $null = $body.AppendLine("<div class='catalog-summary'>")
     $null = $body.AppendLine("<div class='catalog-stats'>")
-    $null = $body.AppendLine("<span class='catalog-stat'><strong>Pass Rate:</strong> <span class='badge badge-$passClass'>$passRatePct%</span></span>")
+    $null = $body.AppendLine("<span class='catalog-stat'><strong>Pass Rate:</strong> <span class='badge badge-$passClass' title='Percentage of assessed checks that returned Pass'>$passRatePct%</span></span>")
     if ($summary.TotalControls -gt 0) {
-        $null = $body.AppendLine("<span class='catalog-stat'><strong>Coverage:</strong> $coveredCount of $($summary.TotalControls) controls</span>")
+        $null = $body.AppendLine("<span class='catalog-stat' title='Distinct framework controls with at least one mapped check'><strong>Coverage:</strong> $coveredCount of $($summary.TotalControls) controls</span>")
     }
-    $null = $body.AppendLine("<span class='catalog-stat'><strong>Automated Checks:</strong> $($summary.MappedControls) assessed</span>")
+    $null = $body.AppendLine("<span class='catalog-stat' title='Automated checks mapped to this framework'><strong>Checks Assessed:</strong> $($summary.MappedControls)</span>")
     $null = $body.AppendLine("</div>")
     if ($summary.TotalControls -gt 0) {
         $null = $body.AppendLine("<div class='coverage-bar'><div class='coverage-fill' style='width: $coveragePct%'></div></div>")

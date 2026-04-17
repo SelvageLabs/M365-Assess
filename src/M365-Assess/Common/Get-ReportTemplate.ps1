@@ -1330,6 +1330,19 @@ $html = @"
             margin-top: 1px;
         }
 
+        /* Collaboration dashboard group headers */
+        .collab-group-header {
+            grid-column: 1 / -1;
+            font-size: 8pt;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--m365a-medium-gray);
+            padding: 4px 0 2px;
+            border-bottom: 1px solid var(--m365a-border);
+            margin-top: 4px;
+        }
+
         /* Dashboard card hover — subtle highlight for presentations */
         .email-metric-card,
         .id-donut-item,
@@ -1746,6 +1759,8 @@ $html = @"
         .collector-detail .table-wrapper.expanded { max-height: none; }
         .table-expand-btn { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; padding: 6px 0; border: 1px solid var(--m365a-accent); border-top: none; border-radius: 0 0 4px 4px; background: var(--m365a-hover-bg); color: var(--m365a-accent); cursor: pointer; font-size: 0.82em; font-weight: 500; text-align: center; transition: background 0.15s, color 0.15s; letter-spacing: 0.02em; }
         .table-expand-btn:hover { background: var(--m365a-accent); color: #fff; }
+        .report-page[data-solo-table='true'] .collector-detail .table-wrapper { max-height: none; overflow-y: visible; }
+        .report-page[data-solo-table='true'] .table-expand-btn { display: none; }
 
         .collector-detail .data-table thead th {
             position: sticky;
@@ -2902,7 +2917,7 @@ if (-not $SkipExecutiveSummary) {
                 </div>
                 <div class="exec-hero-metric">
                     <div class="exec-hero-metric-value">$($allCisFindings.Count)</div>
-                    <div class="exec-hero-metric-label">CIS Controls</div>
+                    <div class="exec-hero-metric-label">Security Checks</div>
                 </div>
                 <div class="exec-hero-metric">
                     <div class="exec-hero-metric-value">$($allFrameworks.Count)</div>
@@ -3410,7 +3425,7 @@ $html += @"
                     card.style.display = activeFw.indexOf(fw) !== -1 ? '' : 'none';
                 });
 
-                // 2. Filter rows by status + section
+                // 2. Filter rows by status + section + framework mapping
                 var visibleCount = 0;
                 compRows.forEach(function(row) {
                     var sec = row.getAttribute('data-section') || '';
@@ -3419,7 +3434,16 @@ $html += @"
                     for (var i = 0; i < activeStatus.length; i++) {
                         if ((row.className || '').indexOf('cis-row-' + activeStatus[i]) !== -1) { statusOk = true; break; }
                     }
-                    var show = sectionOk && statusOk;
+                    // Hide rows where every active framework column is unmapped (—)
+                    var fwOk = activeFw.length === 0;
+                    if (!fwOk) {
+                        var fwCells = Array.from(row.querySelectorAll('td.fw-col'));
+                        fwOk = fwCells.some(function(td) {
+                            return activeFw.indexOf(td.getAttribute('data-fw')) !== -1 &&
+                                   td.querySelector('.fw-unmapped') === null;
+                        });
+                    }
+                    var show = sectionOk && statusOk && fwOk;
                     row.style.display = show ? '' : 'none';
                     if (show) visibleCount++;
                 });
