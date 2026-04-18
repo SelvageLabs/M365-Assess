@@ -84,6 +84,8 @@
         'Common\New-M365BrandingConfig.ps1'
         'Common\ReportHelpers.ps1'
         'Common\Build-SectionHtml.ps1'
+        'Common\Build-RemediationPlanHtml.ps1'
+        'Common\Build-ReportData.ps1'
         'Common\Get-ReportTemplate.ps1'
         'Common\Export-ComplianceMatrix.ps1'
         'Common\Export-ComplianceOverview.ps1'

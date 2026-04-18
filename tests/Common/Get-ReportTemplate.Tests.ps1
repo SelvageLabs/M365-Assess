@@ -1,104 +1,147 @@
-Describe 'Get-ReportTemplate.ps1 - structural validation' {
+Describe 'Get-ReportTemplate — function contract' {
     BeforeAll {
-        $script:sourceFile = "$PSScriptRoot/../../src/M365-Assess/Common/Get-ReportTemplate.ps1"
-        $script:content = Get-Content $script:sourceFile -Raw
+        $script:src = "$PSScriptRoot/../../src/M365-Assess/Common/Get-ReportTemplate.ps1"
+        $script:content = Get-Content $script:src -Raw
     }
 
-    It 'should exist on disk' {
-        Test-Path $script:sourceFile | Should -Be $true
+    It 'source file exists' {
+        Test-Path $script:src | Should -Be $true
     }
 
-    It 'should produce the $html variable' {
-        $script:content | Should -Match '\$html\s*='
+    It 'defines Get-ReportTemplate function' {
+        $script:content | Should -Match 'function Get-ReportTemplate'
     }
 
-    It 'should contain DOCTYPE declaration in html template' {
+    It 'declares Mandatory ReportDataJson parameter' {
+        $script:content | Should -Match '\[Parameter\(Mandatory\)\]'
+        $script:content | Should -Match '\[string\]\$ReportDataJson'
+    }
+
+    It 'declares ReportTitle parameter' {
+        $script:content | Should -Match '\[string\]\$ReportTitle'
+    }
+
+    It 'loads report-themes.css from assets' {
+        $script:content | Should -Match "report-themes\.css"
+    }
+
+    It 'loads report-shell.css from assets' {
+        $script:content | Should -Match "report-shell\.css"
+    }
+
+    It 'loads react.production.min.js from assets' {
+        $script:content | Should -Match "react\.production\.min\.js"
+    }
+
+    It 'loads react-dom.production.min.js from assets' {
+        $script:content | Should -Match "react-dom\.production\.min\.js"
+    }
+
+    It 'loads report-app.js from assets' {
+        $script:content | Should -Match "report-app\.js"
+    }
+
+    It 'uses StringBuilder for safe asset concatenation' {
+        $script:content | Should -Match 'StringBuilder'
+    }
+
+    It 'emits app-root div target for React mount' {
+        $script:content | Should -Match 'app-root'
+    }
+
+    It 'embeds ReportDataJson in a script block' {
+        $script:content | Should -Match '\$ReportDataJson'
+        $script:content | Should -Match '<script>'
+    }
+
+    It 'produces a DOCTYPE declaration' {
         $script:content | Should -Match '<!DOCTYPE html>'
     }
 
-    It 'should contain html element' {
-        $script:content | Should -Match '<html'
+    It 'does not reference old sectionHtml variables' {
+        $script:content | Should -Not -Match '\$sectionHtml'
+        $script:content | Should -Not -Match '\$tocHtml'
+        $script:content | Should -Not -Match '\$complianceHtml'
     }
 
-    It 'should contain closing html tag' {
-        $script:content | Should -Match '</html>'
+    It 'does not reference old branding variables' {
+        $script:content | Should -Not -Match '\$brandName'
+        $script:content | Should -Not -Match '\$logoBase64'
+        $script:content | Should -Not -Match 'ConvertTo-HtmlSafe'
     }
 
-    It 'should include meta charset' {
-        $script:content | Should -Match 'charset'
+    It 'starts assets directory from PSScriptRoot' {
+        $script:content | Should -Match '\$PSScriptRoot'
+    }
+}
+
+Describe 'Get-ReportTemplate — output validation' {
+    BeforeAll {
+        # Load the function; mock Get-Content so asset files don't need to exist on disk
+        . "$PSScriptRoot/../../src/M365-Assess/Common/Get-ReportTemplate.ps1"
+
+        Mock Get-Content {
+            param([string]$Path)
+            switch -Wildcard ($Path) {
+                '*report-themes.css'           { ':root { --test-themes: 1; }' }
+                '*report-shell.css'            { 'body { margin: 0; }' }
+                '*react.production.min.js'     { '/* react stub */' }
+                '*react-dom.production.min.js' { '/* react-dom stub */ var ReactDOM = {};' }
+                '*report-app.js'               { '/* app stub */ document.getElementById("app-root");' }
+                default                        { '' }
+            }
+        } -ParameterFilter { $Path -and $Raw }
     }
 
-    It 'should reference TenantName variable' {
-        $script:content | Should -Match '\$TenantName'
+    It 'returns a non-empty string' {
+        $result = Get-ReportTemplate -ReportDataJson 'window.REPORT_DATA = {};' -ReportTitle 'Test'
+        $result | Should -BeOfType [string]
+        $result.Length | Should -BeGreaterThan 100
     }
 
-    It 'should reference sectionHtml variable' {
-        $script:content | Should -Match '\$sectionHtml'
+    It 'output contains DOCTYPE declaration' {
+        $result = Get-ReportTemplate -ReportDataJson 'window.REPORT_DATA = {};' -ReportTitle 'Test'
+        $result | Should -Match '<!DOCTYPE html>'
     }
 
-    It 'should contain CSS style blocks' {
-        $script:content | Should -Match '<style>'
+    It 'output contains app-root div' {
+        $result = Get-ReportTemplate -ReportDataJson 'window.REPORT_DATA = {};' -ReportTitle 'Test'
+        $result | Should -Match 'id="app-root"'
     }
 
-    It 'should contain JavaScript script block' {
-        $script:content | Should -Match '<script'
+    It 'output embeds the report data JSON' {
+        $json = 'window.REPORT_DATA = {"test":true};'
+        $result = Get-ReportTemplate -ReportDataJson $json -ReportTitle 'Test'
+        $result.Contains($json) | Should -Be $true
     }
 
-    It 'should reference ConvertTo-HtmlSafe for XSS prevention' {
-        $script:content | Should -Match 'ConvertTo-HtmlSafe'
+    It 'output contains report title' {
+        $result = Get-ReportTemplate -ReportDataJson 'window.REPORT_DATA = {};' -ReportTitle 'Contoso Report'
+        $result | Should -Match 'Contoso Report'
     }
 
-    It 'should include cover page or cover section' {
-        $script:content | Should -Match 'cover'
+    It 'output contains themes CSS' {
+        $result = Get-ReportTemplate -ReportDataJson 'window.REPORT_DATA = {};' -ReportTitle 'Test'
+        $result | Should -Match '--test-themes: 1'
     }
 
-    It 'should reference brandName for white-labeling' {
-        $script:content | Should -Match '\$brandName'
+    It 'output contains shell CSS' {
+        $result = Get-ReportTemplate -ReportDataJson 'window.REPORT_DATA = {};' -ReportTitle 'Test'
+        $result | Should -Match 'margin: 0'
     }
 
-    It 'should include dark mode CSS variables or media query' {
-        $script:content | Should -Match 'dark|prefers-color-scheme'
+    It 'output contains react-dom stub' {
+        $result = Get-ReportTemplate -ReportDataJson 'window.REPORT_DATA = {};' -ReportTitle 'Test'
+        $result | Should -Match 'react-dom stub'
     }
 
-    It 'should include navigation or table of contents reference' {
-        $script:content | Should -Match 'tocHtml|toc'
+    It 'output contains app stub' {
+        $result = Get-ReportTemplate -ReportDataJson 'window.REPORT_DATA = {};' -ReportTitle 'Test'
+        $result | Should -Match 'app stub'
     }
 
-    It 'should pre-compute $navTitleHtml before the main here-string' {
-        $script:content | Should -Match '\$navTitleHtml\s*='
-    }
-
-    It 'should pre-compute $footerLineHtml before the main here-string' {
-        $script:content | Should -Match '\$footerLineHtml\s*='
-    }
-
-    It 'should use $navTitleHtml in the nav header area' {
-        $script:content | Should -Match '\$navTitleHtml'
-    }
-
-    It 'should use $footerLineHtml in the footer' {
-        $script:content | Should -Match '\$footerLineHtml'
-    }
-
-    It 'should contain narrative-card CSS class' {
-        $script:content | Should -Match 'narrative-card'
-    }
-
-    It 'should contain narrative-chip CSS class' {
-        $script:content | Should -Match 'narrative-chip'
-    }
-
-    It 'should contain white-label cover CSS classes' {
-        $script:content | Should -Match 'wl-cover|wl-client-logo|wl-prep-pill'
-    }
-
-    It 'should conditionally render narrative card when $findingsNarrativeHtml is set' {
-        $script:content | Should -Match 'findingsNarrativeHtml'
-    }
-
-    It 'should include severity chip classes for critical, high, and medium' {
-        $script:content | Should -Match 'chip-critical'
-        $script:content | Should -Match 'chip-high'
-        $script:content | Should -Match 'chip-medium'
+    It 'uses default title when ReportTitle omitted' {
+        $result = Get-ReportTemplate -ReportDataJson 'window.REPORT_DATA = {};'
+        $result | Should -Match 'M365 Security Assessment'
     }
 }

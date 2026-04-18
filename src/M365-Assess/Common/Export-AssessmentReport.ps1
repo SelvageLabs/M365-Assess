@@ -1,57 +1,46 @@
 #Requires -Version 7.0
 <#
 .SYNOPSIS
-    Generates branded HTML assessment reports from M365 assessment output.
+    Generates an HTML assessment report from M365 assessment output.
 .DESCRIPTION
-    Reads CSV data and metadata from an M365 assessment output folder and produces
-    a self-contained HTML report with M365 Assess branding. The HTML
-    includes embedded CSS, base64-encoded logos, and print-friendly styling that
-    produces clean PDF output when printed from a browser.
+    Reads CSV data from an M365 assessment output folder and produces a self-contained
+    HTML report powered by a React single-page application. The report bundles all
+    JavaScript, CSS, and data inline — no external files or CDN calls required.
 
-    The report includes:
-    - Branded cover page with tenant name and assessment date
-    - Executive summary with section counts and issue overview
-    - Section-by-section data tables for all collected CSV data
-    - Issue report with severity levels and recommended actions
-    - Footer with version and generation timestamp
+    A companion XLSX compliance matrix is also generated in the same folder.
 .PARAMETER AssessmentFolder
     Path to the assessment output folder (e.g., .\M365-Assessment\Assessment_20260306_195618).
-    Must contain _Assessment-Summary.csv and optionally _Assessment-Issues.log.
+    Must contain _Assessment-Summary.csv.
 .PARAMETER OutputPath
-    Path for the generated HTML report. Defaults to _Assessment-Report.html in the
-    assessment folder.
+    Path for the generated HTML report. Defaults to _Assessment-Report_<domain>.html in
+    the assessment folder.
 .PARAMETER TenantName
-    Tenant display name for the cover page. If not specified, attempts to read from
-    the Tenant Information CSV.
+    Tenant display name for the report title. Read from Tenant Information CSV if omitted.
 .PARAMETER WhiteLabel
-    Strip all M365-Assess and GitHub identity from the report. With CustomBranding
-    keys produces Mode A (your brand). Without produces Mode C (neutral/clean).
+    Hides M365-Assess GitHub link and Galvnyz attribution from the report footer.
 .PARAMETER FindingsNarrative
-    Path to a .txt or .md file, or an inline string, with consultant-authored
-    commentary. Rendered as a narrative card before the Executive Summary.
+    Deprecated — no longer rendered in the React report. Retained for backwards compatibility.
 .PARAMETER CompactReport
-    Omit the cover page, executive summary, and compliance overview sections.
-    Produces a data-only report. Automatically enabled when -QuickScan is used.
+    Retained for backwards compatibility. Has no effect in the React report engine.
 .PARAMETER CustomBranding
-    Hashtable for white-label reports. Supported keys: CompanyName (string),
-    LogoPath (file path to PNG/JPEG/SVG), AccentColor (hex color like '#1a56db').
+    Passed through to the XLSX compliance matrix. No effect on the HTML report.
+.PARAMETER CustomerProfile
+    Path to a .psd1 profile that can supply CustomBranding values for the XLSX.
 .PARAMETER OpenReport
-    Automatically open the generated HTML report in the default browser after
-    generation. Works on Windows, macOS, and Linux.
+    Automatically opens the generated HTML report in the default browser.
+.PARAMETER QuickScan
+    Passed through for context; has no effect on the React HTML report.
+.PARAMETER DriftReport
+    Drift comparison rows from Compare-AssessmentBaseline. Passed to the XLSX export.
+.PARAMETER DriftBaselineLabel
+    Baseline label string — retained for downstream compatibility.
+.PARAMETER DriftBaselineTimestamp
+    Baseline timestamp string — retained for downstream compatibility.
 .EXAMPLE
     PS> .\Common\Export-AssessmentReport.ps1 -AssessmentFolder '.\M365-Assessment\Assessment_20260306_195618'
-
-    Generates an HTML report in the assessment folder.
-.EXAMPLE
-    PS> .\Common\Export-AssessmentReport.ps1 -AssessmentFolder '.\M365-Assessment\Assessment_20260306_195618' -TenantName 'Contoso Ltd'
-
-    Generates a report with the specified tenant name on the cover page.
 .NOTES
-
-    Author:  Daren9m
+    Author: Daren9m
 #>
-# Variables set here are consumed by dot-sourced companion files
-# (Build-SectionHtml.ps1, Get-ReportTemplate.ps1) via shared scope.
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '')]
 [CmdletBinding()]
 param(
@@ -102,16 +91,13 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
 
 # ------------------------------------------------------------------
-# Load control registry
+# Load control registry and framework definitions
 # ------------------------------------------------------------------
 . (Join-Path -Path $PSScriptRoot -ChildPath 'Import-ControlRegistry.ps1')
-$controlsPath = Join-Path -Path $projectRoot -ChildPath 'controls'
-$cisFrameworkId = 'cis-m365-v6'
+$controlsPath    = Join-Path -Path $projectRoot -ChildPath 'controls'
+$cisFrameworkId  = 'cis-m365-v6'
 $controlRegistry = Import-ControlRegistry -ControlsPath $controlsPath -CisFrameworkId $cisFrameworkId
 
-# ------------------------------------------------------------------
-# Framework definitions (auto-discovered from JSON)
-# ------------------------------------------------------------------
 . (Join-Path -Path $PSScriptRoot -ChildPath 'Import-FrameworkDefinitions.ps1')
 $allFrameworks = Import-FrameworkDefinitions -FrameworksPath (Join-Path -Path $projectRoot -ChildPath 'controls/frameworks')
 
@@ -130,289 +116,80 @@ if (-not (Test-Path -Path $summaryPath)) {
     return
 }
 
-if (-not $OutputPath) {
-    # Derive domain prefix from tenant data for filename (resolved later, fallback to generic)
-    $reportDomainPrefix = ''
-    $OutputPath = Join-Path -Path $AssessmentFolder -ChildPath '_Assessment-Report.html'
-}
-
 # ------------------------------------------------------------------
-# Load assessment data
+# Load assessment metadata
 # ------------------------------------------------------------------
 $summary = Import-Csv -Path $summaryPath
-$issueFile = Get-ChildItem -Path $AssessmentFolder -Filter '_Assessment-Issues*.log' -ErrorAction SilentlyContinue | Select-Object -First 1
-$issueReportPath = if ($issueFile) { $issueFile.FullName } else { Join-Path -Path $AssessmentFolder -ChildPath '_Assessment-Issues.log' }
-$issueContent = if (Test-Path -Path $issueReportPath) { Get-Content -Path $issueReportPath -Raw } else { '' }
 
-# Load Tenant Info CSV for organization profile card and cover page
-$tenantCsv = Join-Path -Path $AssessmentFolder -ChildPath '01-Tenant-Info.csv'
-$tenantData = $null
-if (Test-Path -Path $tenantCsv) {
-    $tenantData = Import-Csv -Path $tenantCsv
-}
-
-# Load User Summary for enriched organization profile
-$userSummaryCsv = Join-Path -Path $AssessmentFolder -ChildPath '02-User-Summary.csv'
-$userSummaryData = $null
-if (Test-Path -Path $userSummaryCsv) {
-    $userSummaryData = Import-Csv -Path $userSummaryCsv
-}
-
-# Framework mappings are now sourced from the control registry (loaded above).
-# The $controlRegistry hashtable is keyed by CheckId and contains framework data.
+$tenantCsv  = Join-Path -Path $AssessmentFolder -ChildPath '01-Tenant-Info.csv'
+$tenantData = if (Test-Path -Path $tenantCsv) { Import-Csv -Path $tenantCsv } else { $null }
 
 if (-not $TenantName) {
     if ($tenantData -and @($tenantData).Count -gt 0 -and $tenantData[0].PSObject.Properties.Name -contains 'OrgDisplayName') {
         $TenantName = $tenantData[0].OrgDisplayName
-    }
-    elseif ($tenantData -and @($tenantData).Count -gt 0 -and $tenantData[0].PSObject.Properties.Name -contains 'DefaultDomain') {
+    } elseif ($tenantData -and @($tenantData).Count -gt 0 -and $tenantData[0].PSObject.Properties.Name -contains 'DefaultDomain') {
         $TenantName = $tenantData[0].DefaultDomain
-    }
-    else {
+    } else {
         $TenantName = 'M365 Tenant'
     }
 }
 
-# Domain prefix is written to the log header by the main script — read it from there
-# (avoids fragile CSV-scanning; the main script already resolved it from TenantId or Graph)
-
-# Read assessment version and cloud environment from log if available
-$assessmentVersion = (Import-PowerShellDataFile -Path "$PSScriptRoot/../M365-Assess.psd1").ModuleVersion
-$cloudEnvironment = 'commercial'
-# Find the log file (may have domain suffix, e.g., _Assessment-Log_contoso.txt)
+# Read domain prefix and version from the assessment log
+$reportDomainPrefix  = ''
+$assessmentVersion   = (Import-PowerShellDataFile -Path "$PSScriptRoot/../M365-Assess.psd1").ModuleVersion
 $logFile = Get-ChildItem -Path $AssessmentFolder -Filter '_Assessment-Log*.txt' -ErrorAction SilentlyContinue | Select-Object -First 1
 $logPath = if ($logFile) { $logFile.FullName } else { Join-Path -Path $AssessmentFolder -ChildPath '_Assessment-Log.txt' }
 if (Test-Path -Path $logPath) {
     $logHead = Get-Content -Path $logPath -TotalCount 10
     $versionLine = $logHead | Where-Object { $_ -match 'Version:\s+v(.+)' }
-    if ($versionLine) {
-        $assessmentVersion = $Matches[1]
-    }
-    $cloudLine = $logHead | Where-Object { $_ -match 'Cloud:\s+(.+)' }
-    if ($cloudLine) {
-        $cloudEnvironment = $Matches[1].Trim()
-    }
-    if ($reportDomainPrefix -eq '') {
-        $domainLine = $logHead | Where-Object { $_ -match 'Domain:\s+(\S+)' }
-        if ($domainLine -and $Matches[1]) {
-            $reportDomainPrefix = $Matches[1].Trim()
-            $OutputPath = Join-Path -Path $AssessmentFolder -ChildPath "_Assessment-Report_${reportDomainPrefix}.html"
-        }
-    }
+    if ($versionLine) { $assessmentVersion = $Matches[1] }
+    $domainLine = $logHead | Where-Object { $_ -match 'Domain:\s+(\S+)' }
+    if ($domainLine -and $Matches[1]) { $reportDomainPrefix = $Matches[1].Trim() }
 }
 
-# Map cloud environment to display names and CSS classes
-$cloudDisplayNames = @{
-    'commercial' = 'Commercial'
-    'gcc'        = 'GCC'
-    'gcchigh'    = 'GCC High'
-    'dod'        = 'DoD'
-}
-$cloudDisplayName = if ($cloudDisplayNames.ContainsKey($cloudEnvironment)) { $cloudDisplayNames[$cloudEnvironment] } else { $cloudEnvironment }
-
-# Get assessment date from folder name
-$folderName = Split-Path -Leaf $AssessmentFolder
-$assessmentDate = Get-Date -Format 'MMMM d, yyyy'
-if ($folderName -match 'Assessment_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})') {
-    $assessmentDate = Get-Date -Year $Matches[1] -Month $Matches[2] -Day $Matches[3] -Format 'MMMM d, yyyy'
+# Determine output path
+if (-not $OutputPath) {
+    $suffix  = if ($reportDomainPrefix) { "_$reportDomainPrefix" } else { '' }
+    $OutputPath = Join-Path -Path $AssessmentFolder -ChildPath "_Assessment-Report$suffix.html"
 }
 
-# ------------------------------------------------------------------
-# Load report helper functions (needed before asset loading below)
-# ------------------------------------------------------------------
-. (Join-Path -Path $PSScriptRoot -ChildPath 'ReportHelpers.ps1')
-
-# ------------------------------------------------------------------
-# Load and base64-encode logo and background from assets/
-# Searches by pattern so any logo-*.png/jpeg or wave/bg-*.png works.
-# ------------------------------------------------------------------
-$assetsDir = Join-Path -Path $projectRoot -ChildPath 'assets'
-
-$logoAsset = Get-AssetBase64 -Directory $assetsDir -Patterns @('*logo-cropped*white*', '*logo-cropped*', '*logo-white*', '*logo*')
-$logoBase64 = if ($logoAsset) { $logoAsset.Base64 } else { '' }
-$logoMime   = if ($logoAsset) { $logoAsset.Mime }   else { 'image/png' }
-
-$waveAsset = Get-AssetBase64 -Directory $assetsDir -Patterns @('*wave*', '*bg*')
-$waveBase64 = if ($waveAsset) { $waveAsset.Base64 } else { '' }
-$waveMime   = if ($waveAsset) { $waveAsset.Mime }   else { 'image/png' }
-
-# ------------------------------------------------------------------
-# CustomerProfile: load .psd1 and merge into individual params
-# ------------------------------------------------------------------
+# CustomerProfile: forward CustomBranding to XLSX if provided
 if ($CustomerProfile) {
     $cpData = Import-PowerShellDataFile -Path $CustomerProfile
     if ($cpData.CustomBranding -and -not $PSBoundParameters.ContainsKey('CustomBranding')) {
         $CustomBranding = $cpData.CustomBranding
     }
-    if ($cpData.FindingsNarrative -and -not $PSBoundParameters.ContainsKey('FindingsNarrative')) {
-        $FindingsNarrative = $cpData.FindingsNarrative
-    }
     $WhiteLabel = $true
 }
-if ($PSBoundParameters.ContainsKey('CustomBranding') -and -not $WhiteLabel) {
-    $WhiteLabel = $true
-}
-
-$brandName      = 'M365 Assess'
-$accentColor    = ''
-$clientLogoBase64 = ''
-$clientLogoMime   = 'image/png'
-$clientName     = ''
-$reportNote     = ''
-$disclaimer     = ''
-$sidebarSubtitle = ''
-$footerText     = ''
-$footerUrl      = ''
-$primaryColor   = ''
-$reportTitle    = ''
-if ($CustomBranding) {
-    if ($CustomBranding.ContainsKey('LogoPath') -and (Test-Path -Path $CustomBranding.LogoPath)) {
-        $customLogoBytes = [System.IO.File]::ReadAllBytes($CustomBranding.LogoPath)
-        $logoBase64 = [Convert]::ToBase64String($customLogoBytes)
-        $ext = [System.IO.Path]::GetExtension($CustomBranding.LogoPath).TrimStart('.').ToLower()
-        $logoMime = switch ($ext) { 'jpg' { 'image/jpeg' } 'jpeg' { 'image/jpeg' } 'svg' { 'image/svg+xml' } default { 'image/png' } }
-    }
-    if ($CustomBranding.ContainsKey('ClientLogoPath') -and (Test-Path -Path $CustomBranding.ClientLogoPath)) {
-        $clientLogoBytes  = [System.IO.File]::ReadAllBytes($CustomBranding.ClientLogoPath)
-        $clientLogoBase64 = [Convert]::ToBase64String($clientLogoBytes)
-        $ext = [System.IO.Path]::GetExtension($CustomBranding.ClientLogoPath).TrimStart('.').ToLower()
-        $clientLogoMime = switch ($ext) { 'jpg' { 'image/jpeg' } 'jpeg' { 'image/jpeg' } 'svg' { 'image/svg+xml' } default { 'image/png' } }
-    }
-    if ($CustomBranding.ContainsKey('CompanyName'))    { $brandName       = $CustomBranding.CompanyName }
-    if ($CustomBranding.ContainsKey('ClientName'))     { $clientName      = $CustomBranding.ClientName }
-    if ($CustomBranding.ContainsKey('AccentColor'))    { $accentColor     = $CustomBranding.AccentColor }
-    if ($CustomBranding.ContainsKey('PrimaryColor'))   { $primaryColor    = $CustomBranding.PrimaryColor }
-    if ($CustomBranding.ContainsKey('ReportNote'))     { $reportNote      = $CustomBranding.ReportNote }
-    if ($CustomBranding.ContainsKey('Disclaimer'))     { $disclaimer      = $CustomBranding.Disclaimer }
-    if ($CustomBranding.ContainsKey('SidebarSubtitle')){ $sidebarSubtitle = $CustomBranding.SidebarSubtitle }
-    if ($CustomBranding.ContainsKey('FooterText'))     { $footerText      = $CustomBranding.FooterText }
-    if ($CustomBranding.ContainsKey('FooterUrl'))      { $footerUrl       = $CustomBranding.FooterUrl }
-    if ($CustomBranding.ContainsKey('ReportTitle'))    { $reportTitle     = $CustomBranding.ReportTitle }
-}
-# Defaults applied by -WhiteLabel when not explicitly set
-if ($WhiteLabel) {
-    if (-not $disclaimer) { $disclaimer = 'Confidential — Prepared exclusively for the named recipient. Do not distribute.' }
-    if (-not $footerText -and $brandName -ne 'M365 Assess') { $footerText = "Assessment by $brandName" }
-}
-# Resolve FindingsNarrative: file path → read content; inline string → use as-is
-$findingsNarrativeHtml = ''
-if ($FindingsNarrative) {
-    $narrativeText = if (Test-Path -Path $FindingsNarrative -ErrorAction SilentlyContinue) {
-        Get-Content -Path $FindingsNarrative -Raw
-    } else {
-        $FindingsNarrative
-    }
-    # Render Markdown if ConvertFrom-Markdown is available and file is .md
-    $isMarkdown = ($FindingsNarrative -match '\.md$') -or ($narrativeText -match '^#{1,6}\s|^\*\*|^-\s')
-    if ($isMarkdown -and (Get-Command -Name ConvertFrom-Markdown -ErrorAction SilentlyContinue)) {
-        $findingsNarrativeHtml = (ConvertFrom-Markdown -InputObject $narrativeText).Html
-    } else {
-        $safeText = [System.Web.HttpUtility]::HtmlEncode($narrativeText)
-        $findingsNarrativeHtml = $safeText -replace "`r?`n", '<br>'
-    }
-}
-$frameworkDisplayLabels = @()
+if ($PSBoundParameters.ContainsKey('CustomBranding') -and -not $WhiteLabel) { $WhiteLabel = $true }
 
 # ------------------------------------------------------------------
-# Compute summary statistics
+# Load section data, build findings list, and export XLSX
 # ------------------------------------------------------------------
-$completeCount = @($summary | Where-Object { $_.Status -eq 'Complete' }).Count
-$skippedCount = @($summary | Where-Object { $_.Status -eq 'Skipped' }).Count
-$failedCount = @($summary | Where-Object { $_.Status -eq 'Failed' }).Count
-$totalCollectors = $summary.Count
-$sections = @($summary | Select-Object -ExpandProperty Section -Unique)
-
-# Preferred section display order — sections not listed keep their CSV order at the end
-$sectionDisplayOrder = @('Tenant','Identity','Hybrid','Licensing','Email','Intune','Security','Collaboration','PowerBI','Inventory','ActiveDirectory','SOC2')
-$sections = @(
-    foreach ($s in $sectionDisplayOrder) { if ($sections -contains $s) { $s } }
-    foreach ($s in $sections) { if ($sectionDisplayOrder -notcontains $s) { $s } }
-)
-
-# Parse issues from the log file
-$issues = [System.Collections.Generic.List[PSCustomObject]]::new()
-if ($issueContent) {
-    $issueBlocks = $issueContent -split '---\s+Issue\s+\d+\s*/\s*\d+\s+-+'
-    foreach ($block in $issueBlocks) {
-        if ($block -match 'Severity:\s+(.+)') {
-            $severity = $Matches[1].Trim()
-            $section = if ($block -match 'Section:\s+(.+)') { $Matches[1].Trim() } else { '' }
-            $collector = if ($block -match 'Collector:\s+(.+)') { $Matches[1].Trim() } else { '' }
-            $description = if ($block -match 'Description:\s+(.+)') { $Matches[1].Trim() } else { '' }
-            $errorMsg = if ($block -match 'Error:\s+(.+)') { $Matches[1].Trim() } else { '' }
-            $action = if ($block -match 'Action:\s+(.+)') { $Matches[1].Trim() } else { '' }
-            $issues.Add([PSCustomObject]@{
-                Severity    = $severity
-                Section     = $section
-                Collector   = $collector
-                Description = $description
-                Error       = $errorMsg
-                Action      = $action
-            })
-        }
-    }
-}
-
-$errorCount = @($issues | Where-Object { $_.Severity -eq 'ERROR' }).Count
-$warningCount = @($issues | Where-Object { $_.Severity -eq 'WARNING' }).Count
-
-# ------------------------------------------------------------------
-# Value Opportunity analysis (if data available)
-# ------------------------------------------------------------------
-$valueOpportunityHtml = ''
-$voLicensePath = Join-Path -Path $AssessmentFolder -ChildPath '40-License-Utilization.csv'
-$voAdoptionPath = Join-Path -Path $AssessmentFolder -ChildPath '41-Feature-Adoption.csv'
-$voReadinessPath = Join-Path -Path $AssessmentFolder -ChildPath '42-Feature-Readiness.csv'
-$featureMapPath = Join-Path -Path $projectRoot -ChildPath 'controls' -AdditionalChildPath 'sku-feature-map.json'
-
-if ((Test-Path -Path $voLicensePath) -and (Test-Path -Path $voAdoptionPath) -and (Test-Path -Path $voReadinessPath) -and (Test-Path -Path $featureMapPath)) {
-    try {
-        . (Join-Path -Path $PSScriptRoot -ChildPath 'Build-ValueOpportunityHtml.ps1')
-        . (Join-Path -Path $projectRoot -ChildPath 'ValueOpportunity' -AdditionalChildPath 'Measure-ValueOpportunity.ps1')
-
-        $featureMap = Get-Content -Path $featureMapPath -Raw | ConvertFrom-Json
-        $voLicense = Import-Csv -Path $voLicensePath
-        $voAdoption = Import-Csv -Path $voAdoptionPath
-        $voReadiness = Import-Csv -Path $voReadinessPath
-
-        # CSV import converts booleans to strings -- fix IsLicensed
-        foreach ($row in $voLicense) {
-            $row.IsLicensed = $row.IsLicensed -eq 'True'
-        }
-
-        $voAnalysis = Measure-ValueOpportunity -LicenseUtilization $voLicense -FeatureAdoption $voAdoption -FeatureReadiness $voReadiness -FeatureMap $featureMap
-        $valueOpportunityHtml = Build-ValueOpportunityHtml -Analysis $voAnalysis
-    }
-    catch {
-        Write-Warning "Could not generate Value Opportunity report section: $_"
-    }
-}
-
-# ------------------------------------------------------------------
-# Build report content and assemble HTML (dot-sourced for shared scope)
-# ------------------------------------------------------------------
-# Build section HTML: data tables, dashboards, compliance, TOC, issues
+. (Join-Path -Path $PSScriptRoot -ChildPath 'Build-ReportData.ps1')
 . (Join-Path -Path $PSScriptRoot -ChildPath 'Build-SectionHtml.ps1')
+# $allCisFindings and $sectionData are now set in scope
 
-# Build remediation plan page (requires $allCisFindings set by Build-SectionHtml.ps1)
-$remediationPlanHtml = Build-RemediationPlanHtml -Findings $allCisFindings -IsQuickScan:$QuickScan
+# ------------------------------------------------------------------
+# Build REPORT_DATA JSON
+# ------------------------------------------------------------------
+$xlsxName   = if ($reportDomainPrefix) { "_Compliance-Matrix_$reportDomainPrefix.xlsx" } else { '_Compliance-Matrix.xlsx' }
+$reportTitle = if ($TenantName -ne 'M365 Tenant') { "$TenantName — M365 Security Assessment" } else { 'M365 Security Assessment' }
 
-# Build drift analysis page (if a baseline comparison was run)
-$driftHtml = ''
-if ($DriftBaselineLabel) {
-    . (Join-Path -Path $PSScriptRoot -ChildPath 'Build-DriftHtml.ps1')
-    $driftHtml = Build-DriftHtml `
-        -DriftReport $DriftReport `
-        -BaselineLabel $DriftBaselineLabel `
-        -BaselineTimestamp $DriftBaselineTimestamp
-}
+$reportJson = Build-ReportDataJson `
+    -AllFindings    $allCisFindings `
+    -SectionData    $sectionData `
+    -RegistryData   $controlRegistry `
+    -WhiteLabel:    $WhiteLabel `
+    -XlsxFileName   $xlsxName `
+    -FrameworkDefs  $allFrameworks
 
-# Assemble full HTML template: CSS, cover page, executive summary, JS
+# ------------------------------------------------------------------
+# Assemble HTML and write output
+# ------------------------------------------------------------------
 . (Join-Path -Path $PSScriptRoot -ChildPath 'Get-ReportTemplate.ps1')
+$html = Get-ReportTemplate -ReportDataJson $reportJson -ReportTitle $reportTitle
 
-# ------------------------------------------------------------------
-# Write HTML file
-# ------------------------------------------------------------------
 Set-Content -Path $OutputPath -Value $html -Encoding UTF8
 Write-Output "HTML report generated: $OutputPath"
 
