@@ -313,7 +313,7 @@ function ConvertTo-CatalogInlineHtml {
     $null = $html.AppendLine("<button class='catalog-csv-btn csv-export-btn'>Export CSV</button>")
     $null = $html.AppendLine("</div>")
     $null = $html.AppendLine("<table id='$catalogTableId' class='catalog-groups' data-catalog-table='$fwId'><thead><tr>")
-    $null = $html.AppendLine("<th>Group</th><th>Label</th><th>Coverage %</th><th>Automated Checks</th><th>Passed</th><th>Failed</th><th>Warning</th><th>Review</th><th>Pass Rate</th>")
+    $null = $html.AppendLine("<th>Group</th><th>Label</th><th title='Total controls defined in this framework group'>Total Controls</th><th title='Controls with no automated check in this assessment'>Not Automated</th><th>Coverage %</th><th>Automated Checks</th><th>Passed</th><th>Failed</th><th>Warning</th><th>Review</th><th>Pass Rate</th>")
     $null = $html.AppendLine("</tr></thead><tbody>")
 
     foreach ($group in $groups) {
@@ -321,16 +321,20 @@ function ConvertTo-CatalogInlineHtml {
         if ($group.IsGap) {
             $idEncoded    = [System.Web.HttpUtility]::HtmlEncode([string]$group.ControlId)
             $labelEncoded = [System.Web.HttpUtility]::HtmlEncode([string]$group.Label)
-            $null = $html.AppendLine("<tr class='fw-catalog-gap-row'><td><span class='fw-tag $fwCss'>$idEncoded</span></td><td>$labelEncoded</td><td colspan='7'><span class='fw-catalog-gap-badge'>No automated check</span></td></tr>")
+            $null = $html.AppendLine("<tr class='fw-catalog-gap-row'><td><span class='fw-tag $fwCss'>$idEncoded</span></td><td>$labelEncoded</td><td colspan='9'><span class='fw-catalog-gap-badge'>No automated check</span></td></tr>")
             continue
         }
 
         $grpPassRate = if ($group.Mapped -gt 0) { [math]::Round(($group.Passed / $group.Mapped) * 100, 1) } else { 0 }
         $grpClass = if ($group.Mapped -eq 0) { '' } elseif ($grpPassRate -ge 80) { 'success' } elseif ($grpPassRate -ge 60) { 'warning' } else { 'danger' }
 
+        $grpGapCount = if ($group.Total -gt 0) { $group.Total - $group.Covered } else { 0 }
         $null = $html.AppendLine("<tr>")
         $null = $html.AppendLine("<td><span class='fw-tag $fwCss'>$([System.Web.HttpUtility]::HtmlEncode([string]$group.Key))</span></td>")
         $null = $html.AppendLine("<td>$([System.Web.HttpUtility]::HtmlEncode([string]$group.Label))</td>")
+        $null = $html.AppendLine("<td>$($group.Total)</td>")
+        $notAutoDisplay = if ($grpGapCount -gt 0) { "<span class='fw-catalog-gap-badge' title='$grpGapCount control(s) with no automated check'>$grpGapCount</span>" } else { '0' }
+        $null = $html.AppendLine("<td>$notAutoDisplay</td>")
         $coveragePctVal = if ($group.Total -gt 0) { [math]::Round(($group.Covered / $group.Total) * 100, 0) } else { 0 }
         $coverageDisplay = if ($group.Total -gt 0) { "<span title='$($group.Covered) of $($group.Total) controls'>$coveragePctVal%</span>" } else { "$($group.Covered)" }
         $null = $html.AppendLine("<td>$coverageDisplay</td>")

@@ -2629,7 +2629,7 @@ $html = @"
         .csv-export-btn { padding: 4px 10px; border: 1px solid var(--m365a-accent); border-radius: 4px; background: var(--m365a-card-bg); color: var(--m365a-accent); cursor: pointer; font-size: 0.82em; font-weight: 500; white-space: nowrap; }
         .csv-export-btn:hover { background: var(--m365a-accent); color: #fff; }
         /* Framework Catalog — gap rows for uncovered controls */
-        .fw-catalog-gap-row { opacity: 0.55; font-style: italic; }
+        .fw-catalog-gap-row { display: none; opacity: 0.55; font-style: italic; }
         .fw-catalog-gap-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.78em; background: var(--m365a-hover-bg); color: var(--m365a-medium-gray); border: 1px solid var(--m365a-border); white-space: nowrap; }
         /* Intune Overview — category coverage grid */
         .intune-category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; padding: 12px 0 4px; }
@@ -4232,6 +4232,19 @@ $html += @"
         filterAppendixTable();
     }
 
+    // Show/hide catalog gap rows when Detailed Checks <details> is toggled
+    document.querySelectorAll('.catalog-findings-detail').forEach(function(det) {
+        det.addEventListener('toggle', function() {
+            var sec = det.closest('.catalog-section');
+            if (!sec) { return; }
+            sec.querySelectorAll('.fw-catalog-gap-row').forEach(function(row) {
+                row.style.display = det.open ? '' : 'none';
+            });
+        });
+    });
+
+    // Activate all appendix chips on page load
+    appendixFilterAll(true);
 
     </script>
 </body>

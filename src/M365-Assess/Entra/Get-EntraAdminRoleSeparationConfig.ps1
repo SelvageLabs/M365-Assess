@@ -163,7 +163,7 @@ try {
     Add-Setting @settingParams
 }
 catch {
-    if ($_.Exception.Message -match '403|Forbidden|Authorization') {
+    if ($_.Exception.Message -match '403|Forbidden|Authorization|Ensure the required|service is connected|Access_Denied|Authorization_RequestDenied') {
         $settingParams = @{
             Category         = 'Admin Role Separation'
             Setting          = 'Privileged Account vs Daily-Use Account Separation'
@@ -171,7 +171,7 @@ catch {
             RecommendedValue = 'Admin accounts must not have Exchange mailbox service plans'
             Status           = 'Review'
             CheckId          = 'ENTRA-ADMINROLE-SEPARATION-001'
-            Remediation      = 'Requires RoleManagement.Read.Directory and Directory.Read.All permissions.'
+            Remediation      = 'Requires RoleManagement.Read.Directory and Directory.Read.All permissions. Grant via Entra admin center or reconnect with additional scopes.'
         }
         Add-Setting @settingParams
     }
