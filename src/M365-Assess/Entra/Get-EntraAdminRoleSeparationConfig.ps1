@@ -89,7 +89,7 @@ try {
         Write-Verbose "Checking assignments for role $roleId..."
         $assignParams = @{
             Method      = 'GET'
-            Uri         = "/v1.0/roleManagement/directory/roleAssignments?`$filter=roleDefinitionId eq '$roleId'&`$top=999&`$expand=principal"
+            Uri         = "/v1.0/roleManagement/directory/roleAssignments?`$filter=roleDefinitionId eq '$roleId'&`$top=999"
             ErrorAction = 'Stop'
         }
         $assignments = Invoke-MgGraphRequest @assignParams
@@ -163,7 +163,7 @@ try {
     Add-Setting @settingParams
 }
 catch {
-    if ($_.Exception.Message -match '403|Forbidden|Authorization') {
+    if ($_.Exception.Message -match '403|Forbidden|Authorization|Ensure the required|service is connected|Access_Denied|Authorization_RequestDenied') {
         $settingParams = @{
             Category         = 'Admin Role Separation'
             Setting          = 'Privileged Account vs Daily-Use Account Separation'
@@ -171,9 +171,12 @@ catch {
             RecommendedValue = 'Admin accounts must not have Exchange mailbox service plans'
             Status           = 'Review'
             CheckId          = 'ENTRA-ADMINROLE-SEPARATION-001'
-            Remediation      = 'Requires RoleManagement.Read.Directory and Directory.Read.All permissions.'
+            Remediation      = 'Requires RoleManagement.Read.Directory and Directory.Read.All permissions. Grant via Entra admin center or reconnect with additional scopes.'
         }
         Add-Setting @settingParams
+    }
+    elseif ($_.Exception.Message -match '404|ResourceNotFound') {
+        Write-Verbose "Role assignment query returned 404 — no qualifying assignments found."
     }
     else {
         Write-Warning "Could not check admin role separation: $_"

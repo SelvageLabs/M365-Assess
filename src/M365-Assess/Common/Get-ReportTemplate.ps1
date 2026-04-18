@@ -1863,7 +1863,7 @@ $html = @"
         .fw-selector-label { font-weight: 600; font-size: 0.85em; color: var(--m365a-dark); margin-right: 4px; }
         .fw-checkbox { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border: 1px solid var(--m365a-border); border-radius: 4px; font-size: 0.82em; cursor: pointer; transition: all 0.15s; background: var(--m365a-card-bg); user-select: none; }
         .fw-checkbox:hover { background: var(--m365a-hover-bg); border-color: var(--m365a-accent); }
-        .fw-checkbox.active { background: var(--m365a-dark); color: #fff; border-color: var(--m365a-dark); }
+        .fw-checkbox.active { background: var(--m365a-primary); color: #fff; border-color: var(--m365a-primary); }
         .fw-checkbox input[type="checkbox"] { display: none; }
         .fw-selector-actions { margin-left: auto; display: flex; gap: 4px; }
         .fw-action-btn { padding: 3px 10px; border: 1px solid var(--m365a-border); border-radius: 3px; background: var(--m365a-card-bg); cursor: pointer; font-size: 0.78em; color: var(--m365a-medium-gray); }
@@ -1925,7 +1925,7 @@ $html = @"
         .co-profile-group { display: flex; gap: 4px; flex-wrap: wrap; }
         .co-profile-btn { padding: 3px 10px; border: 1px solid var(--m365a-border); border-radius: 4px; background: var(--m365a-card-bg); font-size: 0.82em; cursor: pointer; color: var(--m365a-dark); transition: all 0.15s; }
         .co-profile-btn:hover { background: var(--m365a-hover-bg); border-color: var(--m365a-accent); }
-        .co-profile-btn.active { background: var(--m365a-dark); color: #fff; border-color: var(--m365a-dark); }
+        .co-profile-btn.active { background: var(--m365a-primary); color: #fff; border-color: var(--m365a-primary); }
 
         /* Compact scan header (shown when exec summary is skipped) */
         .scan-header {
@@ -2628,6 +2628,9 @@ $html = @"
         /* CSV export button — in control bar, accent color */
         .csv-export-btn { padding: 4px 10px; border: 1px solid var(--m365a-accent); border-radius: 4px; background: var(--m365a-card-bg); color: var(--m365a-accent); cursor: pointer; font-size: 0.82em; font-weight: 500; white-space: nowrap; }
         .csv-export-btn:hover { background: var(--m365a-accent); color: #fff; }
+        /* Framework Catalog — gap rows for uncovered controls */
+        .fw-catalog-gap-row { display: none; opacity: 0.55; font-style: italic; }
+        .fw-catalog-gap-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.78em; background: var(--m365a-hover-bg); color: var(--m365a-medium-gray); border: 1px solid var(--m365a-border); white-space: nowrap; }
         /* Intune Overview — category coverage grid */
         .intune-category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; padding: 12px 0 4px; }
         .intune-cat-card { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 8px; background: var(--m365a-card-bg); border: 1px solid var(--m365a-border); border-left: 3px solid var(--m365a-border); }
@@ -3394,6 +3397,145 @@ $html += @"
         if (initialPage) navigateTo(initialPage, false);
     })();
 
+    // ---------------------------------------------------------------------------
+    // Shared catalog utilities: initCatalogColumnPicker, exportCatalogTableCsv
+    // ---------------------------------------------------------------------------
+    // columnDefs: [{id, label, defaultVisible}]; storageKey: localStorage key
+    function initCatalogColumnPicker(tableId, columnDefs, storageKey) {
+        var table = document.getElementById(tableId);
+        if (!table) { return; }
+        var stored = localStorage.getItem(storageKey);
+        var visible = stored ? JSON.parse(stored) : columnDefs.reduce(function(acc, c) {
+            acc[c.id] = c.defaultVisible !== false; return acc;
+        }, {});
+
+        function applyVisibility() {
+            columnDefs.forEach(function(c, i) {
+                var idx = i + 1;
+                table.querySelectorAll('tr > *:nth-child(' + idx + ')').forEach(function(cell) {
+                    cell.style.display = visible[c.id] ? '' : 'none';
+                });
+            });
+            localStorage.setItem(storageKey, JSON.stringify(visible));
+        }
+
+        var section = table.closest('.catalog-section');
+        var bar = section ? section.querySelector('.catalog-filter-bar, .status-filter') : null;
+        if (!bar) { applyVisibility(); return; }
+
+        var wrapper = document.createElement('div');
+        wrapper.className = 'col-picker-bar';
+
+        var toggle = document.createElement('button');
+        toggle.className = 'col-picker-toggle';
+        toggle.title = 'Show/hide columns';
+        toggle.textContent = '\u2699 Columns';
+        wrapper.appendChild(toggle);
+
+        var panel = document.createElement('div');
+        panel.className = 'col-picker-panel';
+        panel.style.display = 'none';
+        columnDefs.forEach(function(c) {
+            var lbl = document.createElement('label');
+            lbl.className = 'col-picker-item';
+            var cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.dataset.col = c.id;
+            cb.checked = !!visible[c.id];
+            var span = document.createElement('span');
+            span.textContent = ' ' + c.label;
+            lbl.appendChild(cb);
+            lbl.appendChild(span);
+            panel.appendChild(lbl);
+        });
+        wrapper.appendChild(panel);
+        bar.appendChild(wrapper);
+
+        toggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        });
+        panel.querySelectorAll('input[data-col]').forEach(function(cb) {
+            cb.addEventListener('change', function() {
+                visible[cb.dataset.col] = cb.checked;
+                applyVisibility();
+            });
+        });
+        document.addEventListener('click', function() { panel.style.display = 'none'; });
+
+        applyVisibility();
+    }
+
+    function exportCatalogTableCsv(tableId, fileName) {
+        var table = document.getElementById(tableId);
+        if (!table) { return; }
+        var headers = [];
+        table.querySelectorAll('thead tr th').forEach(function(th) {
+            if (th.style.display !== 'none') {
+                headers.push('"' + th.textContent.trim().replace(/"/g, '""') + '"');
+            }
+        });
+        var rows = [headers.join(',')];
+        table.querySelectorAll('tbody tr').forEach(function(tr) {
+            if (tr.style.display === 'none') { return; }
+            var cells = [];
+            tr.querySelectorAll('td').forEach(function(td) {
+                if (td.style.display !== 'none') {
+                    cells.push('"' + td.textContent.trim().replace(/"/g, '""') + '"');
+                }
+            });
+            if (cells.length) { rows.push(cells.join(',')); }
+        });
+        var blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+    }
+
+    var catalogColumnDefs = {
+        'cis-m365-v6': [
+            { id: 'ctrl-id',     label: 'Control ID',    defaultVisible: true  },
+            { id: 'ctrl-title',  label: 'Title',          defaultVisible: true  },
+            { id: 'profile',     label: 'Profile',        defaultVisible: true  },
+            { id: 'section',     label: 'Section',        defaultVisible: true  },
+            { id: 'ig',          label: 'IG Level',       defaultVisible: false },
+            { id: 'coverage',    label: 'Coverage %',     defaultVisible: true  },
+            { id: 'auto-checks', label: 'Auto Checks',    defaultVisible: true  },
+            { id: 'pass-rate',   label: 'Pass Rate',      defaultVisible: true  }
+        ],
+        'cmmc': [
+            { id: 'ctrl-id',     label: 'Practice ID',   defaultVisible: true  },
+            { id: 'ctrl-title',  label: 'Title',          defaultVisible: true  },
+            { id: 'domain',      label: 'Domain',         defaultVisible: true  },
+            { id: 'level',       label: 'Maturity Level', defaultVisible: true  },
+            { id: 'coverage',    label: 'Coverage %',     defaultVisible: true  },
+            { id: 'auto-checks', label: 'Auto Checks',    defaultVisible: true  },
+            { id: 'pass-rate',   label: 'Pass Rate',      defaultVisible: true  }
+        ]
+    };
+
+    document.querySelectorAll('[data-catalog-table]').forEach(function(table) {
+        var fwId = table.dataset.catalogTable;
+        var defs = catalogColumnDefs[fwId];
+        if (!defs) { return; }
+        if (!table.id) { table.id = 'catalog-tbl-' + fwId; }
+        initCatalogColumnPicker(table.id, defs, 'catalog-cols-' + fwId);
+        var section = table.closest('.catalog-section');
+        var csvBtn = section ? section.querySelector('.catalog-csv-btn') : null;
+        if (csvBtn) {
+            var tenantEl = document.querySelector('[data-tenant-name]');
+            var tenant = tenantEl ? tenantEl.dataset.tenantName : 'tenant';
+            var today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            csvBtn.addEventListener('click', function() {
+                exportCatalogTableCsv(table.id, 'Framework-Catalog_' + fwId + '_' + tenant + '_' + today + '.csv');
+            });
+        }
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.data-table').forEach(function(table) {
             var headers = table.querySelectorAll('thead th');
@@ -3410,6 +3552,7 @@ $html += @"
         var sectionFilter = document.getElementById('sectionFilter');
         var severityFilter = document.getElementById('severityFilter');
         var cisSubFilter = document.getElementById('cisSubFilter');
+        var cmmcSubFilter = document.getElementById('cmmcSubFilter');
         var coFilterBadge = document.getElementById('coFilterBadge');
         var coFilterReset = document.getElementById('coFilterReset');
         var compTable = document.getElementById('complianceTable');
@@ -3460,6 +3603,23 @@ $html += @"
                 }
             }
 
+            function getActiveCmmcLevel() {
+                if (!cmmcSubFilter || cmmcSubFilter.style.display === 'none') return 'all';
+                var activeBtn = cmmcSubFilter.querySelector('.co-profile-btn.active');
+                return activeBtn ? activeBtn.getAttribute('data-cmmc-level') : 'all';
+            }
+
+            function updateCmmcSubFilter(activeFw) {
+                if (!cmmcSubFilter) return;
+                var cmmcActive = activeFw.indexOf('cmmc') !== -1;
+                cmmcSubFilter.style.display = cmmcActive ? '' : 'none';
+                if (!cmmcActive) {
+                    cmmcSubFilter.querySelectorAll('.co-profile-btn').forEach(function(b) { b.classList.remove('active'); });
+                    var allBtn = cmmcSubFilter.querySelector('[data-cmmc-level="all"]');
+                    if (allBtn) allBtn.classList.add('active');
+                }
+            }
+
             function updateFilterBadge(activeFw, activeStatus, activeSv, activeSec, cisProfile) {
                 if (!coFilterBadge) return;
                 var deselected = (fwCbs.length - activeFw.length) + (statusCbs.length - activeStatus.length) +
@@ -3472,8 +3632,8 @@ $html += @"
                 }
             }
 
-            function saveFilters(activeFw, activeSt, activeSv, activeSec, cisProfile) {
-                try { localStorage.setItem(CO_LS_KEY, JSON.stringify({ fw: activeFw, st: activeSt, sv: activeSv, sec: activeSec, cis: cisProfile })); } catch(e) {}
+            function saveFilters(activeFw, activeSt, activeSv, activeSec, cisProfile, cmmcLevel) {
+                try { localStorage.setItem(CO_LS_KEY, JSON.stringify({ fw: activeFw, st: activeSt, sv: activeSv, sec: activeSec, cis: cisProfile, cmmc: cmmcLevel })); } catch(e) {}
             }
 
             function applyAllFilters() {
@@ -3484,10 +3644,12 @@ $html += @"
                     ? getActive(sectionCbs, '.section-checkbox')
                     : Array.from(new Set(Array.from(compRows).map(function(r) { return r.getAttribute('data-section') || ''; })));
                 var cisProfile = getActiveCisProfile();
+                var cmmcLevel = getActiveCmmcLevel();
 
                 updateCisSubFilter(activeFw);
+                updateCmmcSubFilter(activeFw);
                 updateFilterBadge(activeFw, activeStatus, activeSeverities, activeSections, cisProfile);
-                saveFilters(activeFw, activeStatus, activeSeverities, activeSections, cisProfile);
+                saveFilters(activeFw, activeStatus, activeSeverities, activeSections, cisProfile, cmmcLevel);
 
                 // 1. Toggle framework columns and cards
                 allFwCols.forEach(function(el) {
@@ -3518,7 +3680,8 @@ $html += @"
                     }
                     var svOk = activeSeverities.length === 0 || activeSeverities.indexOf((row.getAttribute('data-sv') || '').toLowerCase()) !== -1;
                     var cisOk = cisProfile === 'all' || (row.getAttribute('data-cis-profiles') || '').split(',').indexOf(cisProfile) !== -1;
-                    var show = sectionOk && statusOk && fwOk && svOk && cisOk;
+                    var cmmcOk = cmmcLevel === 'all' || (row.getAttribute('data-cmmc-level') || '').split(',').indexOf(cmmcLevel) !== -1;
+                    var show = sectionOk && statusOk && fwOk && svOk && cisOk && cmmcOk;
                     row.style.display = show ? '' : 'none';
                     if (show) visibleCount++;
                 });
@@ -3645,6 +3808,15 @@ $html += @"
                     });
                 });
             }
+            if (cmmcSubFilter) {
+                cmmcSubFilter.querySelectorAll('.co-profile-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        cmmcSubFilter.querySelectorAll('.co-profile-btn').forEach(function(b) { b.classList.remove('active'); });
+                        btn.classList.add('active');
+                        applyAllFilters();
+                    });
+                });
+            }
 
             // All/None buttons -- severity
             var svAll = document.getElementById('svSelectAll');
@@ -3682,6 +3854,11 @@ $html += @"
                         var allBtn = cisSubFilter.querySelector('[data-profile="all"]');
                         if (allBtn) allBtn.classList.add('active');
                     }
+                    if (cmmcSubFilter) {
+                        cmmcSubFilter.querySelectorAll('.co-profile-btn').forEach(function(b) { b.classList.remove('active'); });
+                        var cmmcAllBtn = cmmcSubFilter.querySelector('[data-cmmc-level="all"]');
+                        if (cmmcAllBtn) cmmcAllBtn.classList.add('active');
+                    }
                     try { localStorage.removeItem(CO_LS_KEY); } catch(e) {}
                     applyAllFilters();
                 });
@@ -3699,6 +3876,11 @@ $html += @"
                         cisSubFilter.querySelectorAll('.co-profile-btn').forEach(function(b) { b.classList.remove('active'); });
                         var savedBtn = cisSubFilter.querySelector('[data-profile="' + coSaved.cis + '"]');
                         if (savedBtn) savedBtn.classList.add('active');
+                    }
+                    if (coSaved.cmmc && cmmcSubFilter) {
+                        cmmcSubFilter.querySelectorAll('.co-profile-btn').forEach(function(b) { b.classList.remove('active'); });
+                        var savedCmmcBtn = cmmcSubFilter.querySelector('[data-cmmc-level="' + coSaved.cmmc + '"]');
+                        if (savedCmmcBtn) savedCmmcBtn.classList.add('active');
                     }
                 }
             } catch(e) {}
@@ -4050,6 +4232,19 @@ $html += @"
         filterAppendixTable();
     }
 
+    // Show/hide catalog gap rows when Detailed Checks <details> is toggled
+    document.querySelectorAll('.catalog-findings-detail').forEach(function(det) {
+        det.addEventListener('toggle', function() {
+            var sec = det.closest('.catalog-section');
+            if (!sec) { return; }
+            sec.querySelectorAll('.fw-catalog-gap-row').forEach(function(row) {
+                row.style.display = det.open ? '' : 'none';
+            });
+        });
+    });
+
+    // Activate all appendix chips on page load
+    appendixFilterAll(true);
 
     </script>
 </body>

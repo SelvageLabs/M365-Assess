@@ -1,4 +1,4 @@
-Describe 'Get-IntuneRemovableMediaConfig - Block Profile Assigned' {
+Describe 'Get-IntuneRemovableMediaConfig - Block profile assigned' {
     BeforeAll {
         function global:Update-CheckProgress { param($CheckId, $Setting, $Status) }
 
@@ -19,24 +19,24 @@ Describe 'Get-IntuneRemovableMediaConfig - Block Profile Assigned' {
         . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-IntuneRemovableMediaConfig.ps1"
     }
 
-    It 'Returns a non-empty settings list' {
-        $settings.Count | Should -BeGreaterThan 0
+    It 'Returns one row for the blocking profile' {
+        $settings.Count | Should -Be 1
     }
 
-    It 'Status is Pass when block profile exists and is assigned' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-REMOVABLEMEDIA-001*' }
-        $check | Should -Not -BeNullOrEmpty
-        $check.Status | Should -Be 'Pass'
+    It 'Status is Pass when block profile is assigned' {
+        $settings[0].Status | Should -Be 'Pass'
     }
 
-    It 'CurrentValue includes the profile name' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-REMOVABLEMEDIA-001*' }
-        $check.CurrentValue | Should -Match 'CMMC Removable Media Block'
+    It 'Setting includes the profile name' {
+        $settings[0].Setting | Should -Match 'CMMC Removable Media Block'
+    }
+
+    It 'CurrentValue mentions assignment count' {
+        $settings[0].CurrentValue | Should -Match '1 assignment'
     }
 
     It 'CheckId follows naming convention' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-REMOVABLEMEDIA-001*' }
-        $check.CheckId | Should -Match '^INTUNE-REMOVABLEMEDIA-001\.\d+$'
+        $settings[0].CheckId | Should -Match '^INTUNE-REMOVABLEMEDIA-001\.\d+$'
     }
 
     AfterAll {
@@ -44,7 +44,7 @@ Describe 'Get-IntuneRemovableMediaConfig - Block Profile Assigned' {
     }
 }
 
-Describe 'Get-IntuneRemovableMediaConfig - Block Profile Not Assigned' {
+Describe 'Get-IntuneRemovableMediaConfig - Block profile not assigned' {
     BeforeAll {
         function global:Update-CheckProgress { param($CheckId, $Setting, $Status) }
 
@@ -66,13 +66,11 @@ Describe 'Get-IntuneRemovableMediaConfig - Block Profile Not Assigned' {
     }
 
     It 'Status is Fail when block profile has no assignments' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-REMOVABLEMEDIA-001*' }
-        $check.Status | Should -Be 'Fail'
+        $settings[0].Status | Should -Be 'Fail'
     }
 
     It 'CurrentValue mentions no active assignments' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-REMOVABLEMEDIA-001*' }
-        $check.CurrentValue | Should -Match 'no active assignments'
+        $settings[0].CurrentValue | Should -Match 'no active assignments'
     }
 
     AfterAll {
@@ -80,7 +78,7 @@ Describe 'Get-IntuneRemovableMediaConfig - Block Profile Not Assigned' {
     }
 }
 
-Describe 'Get-IntuneRemovableMediaConfig - No Block Profile' {
+Describe 'Get-IntuneRemovableMediaConfig - Multiple profiles mixed assignment' {
     BeforeAll {
         function global:Update-CheckProgress { param($CheckId, $Setting, $Status) }
 
@@ -89,9 +87,15 @@ Describe 'Get-IntuneRemovableMediaConfig - No Block Profile' {
                 value = @(
                     @{
                         '@odata.type'                = '#microsoft.graph.windows10GeneralConfiguration'
-                        displayName                  = 'Generic Profile'
-                        storageBlockRemovableStorage = $false
-                        assignments                  = @(@{ id = 'assign-001' })
+                        displayName                  = 'Assigned Block'
+                        storageBlockRemovableStorage = $true
+                        assignments                  = @(@{ id = 'a1' })
+                    }
+                    @{
+                        '@odata.type'                = '#microsoft.graph.windows10GeneralConfiguration'
+                        displayName                  = 'Unassigned Block'
+                        storageBlockRemovableStorage = $true
+                        assignments                  = @()
                     }
                 )
             }
@@ -101,14 +105,16 @@ Describe 'Get-IntuneRemovableMediaConfig - No Block Profile' {
         . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-IntuneRemovableMediaConfig.ps1"
     }
 
-    It 'Status is Fail when no removable storage block profile exists' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-REMOVABLEMEDIA-001*' }
-        $check.Status | Should -Be 'Fail'
+    It 'Returns one row per blocking profile' {
+        $settings.Count | Should -Be 2
     }
 
-    It 'CurrentValue mentions no profile found' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-REMOVABLEMEDIA-001*' }
-        $check.CurrentValue | Should -Match 'No removable storage block profile found'
+    It 'Assigned profile is Pass' {
+        ($settings | Where-Object { $_.Setting -match '— Assigned Block$' }).Status | Should -Be 'Pass'
+    }
+
+    It 'Unassigned profile is Fail' {
+        ($settings | Where-Object { $_.Setting -match '— Unassigned Block$' }).Status | Should -Be 'Fail'
     }
 
     AfterAll {
@@ -116,7 +122,7 @@ Describe 'Get-IntuneRemovableMediaConfig - No Block Profile' {
     }
 }
 
-Describe 'Get-IntuneRemovableMediaConfig - Empty Config List' {
+Describe 'Get-IntuneRemovableMediaConfig - No block profile' {
     BeforeAll {
         function global:Update-CheckProgress { param($CheckId, $Setting, $Status) }
 
@@ -126,9 +132,13 @@ Describe 'Get-IntuneRemovableMediaConfig - Empty Config List' {
         . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-IntuneRemovableMediaConfig.ps1"
     }
 
-    It 'Status is Fail when device configuration list is empty' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-REMOVABLEMEDIA-001*' }
-        $check.Status | Should -Be 'Fail'
+    It 'Emits one Fail sentinel row' {
+        $settings.Count | Should -Be 1
+        $settings[0].Status | Should -Be 'Fail'
+    }
+
+    It 'CurrentValue mentions no profile found' {
+        $settings[0].CurrentValue | Should -Match 'No removable storage block profile found'
     }
 
     AfterAll {
@@ -147,8 +157,7 @@ Describe 'Get-IntuneRemovableMediaConfig - Forbidden' {
     }
 
     It 'Status is Review when Graph returns 403' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-REMOVABLEMEDIA-001*' }
-        $check.Status | Should -Be 'Review'
+        $settings[0].Status | Should -Be 'Review'
     }
 
     AfterAll {

@@ -1,4 +1,4 @@
-Describe 'Get-IntuneFipsConfig - FIPS Enabled via OMA-URI' {
+Describe 'Get-IntuneFipsConfig - FIPS enabled via OMA-URI' {
     BeforeAll {
         function global:Update-CheckProgress { param($CheckId, $Setting, $Status) }
 
@@ -6,7 +6,7 @@ Describe 'Get-IntuneFipsConfig - FIPS Enabled via OMA-URI' {
             return @{ value = @(
                 @{
                     '@odata.type' = '#microsoft.graph.windows10CustomConfiguration'
-                    displayName   = 'FIPS Policy'
+                    displayName   = 'FIPS Cryptography Policy'
                     omaSettings   = @(
                         @{ omaUri = './Device/Vendor/MSFT/Policy/Config/Cryptography/AllowFipsAlgorithmPolicy'; value = 1 }
                     )
@@ -18,19 +18,24 @@ Describe 'Get-IntuneFipsConfig - FIPS Enabled via OMA-URI' {
         . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-IntuneFipsConfig.ps1"
     }
 
-    It 'Returns a non-empty settings list' {
-        $settings.Count | Should -BeGreaterThan 0
+    It 'Returns one row for the matching profile' {
+        $settings.Count | Should -Be 1
     }
 
-    It 'Status is Pass when FIPS OMA-URI is set to 1' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-FIPS-001*' }
-        $check | Should -Not -BeNullOrEmpty
-        $check.Status | Should -Be 'Pass'
+    It 'Status is Pass' {
+        $settings[0].Status | Should -Be 'Pass'
+    }
+
+    It 'Setting includes profile name' {
+        $settings[0].Setting | Should -Match 'FIPS Cryptography Policy'
+    }
+
+    It 'CurrentValue shows OMA-URI value' {
+        $settings[0].CurrentValue | Should -Match 'AllowFipsAlgorithmPolicy'
     }
 
     It 'CheckId follows naming convention' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-FIPS-001*' }
-        $check.CheckId | Should -Match '^INTUNE-FIPS-001\.\d+$'
+        $settings[0].CheckId | Should -Match '^INTUNE-FIPS-001\.\d+$'
     }
 
     AfterAll {
@@ -38,15 +43,18 @@ Describe 'Get-IntuneFipsConfig - FIPS Enabled via OMA-URI' {
     }
 }
 
-Describe 'Get-IntuneFipsConfig - FIPS Policy Name Match (Warning)' {
+Describe 'Get-IntuneFipsConfig - FIPS OMA-URI present but disabled' {
     BeforeAll {
         function global:Update-CheckProgress { param($CheckId, $Setting, $Status) }
 
         Mock Invoke-MgGraphRequest {
             return @{ value = @(
                 @{
-                    '@odata.type' = '#microsoft.graph.windows10EndpointProtectionConfiguration'
-                    displayName   = 'FIPS Cryptography Settings'
+                    '@odata.type' = '#microsoft.graph.windows10CustomConfiguration'
+                    displayName   = 'FIPS Policy Disabled'
+                    omaSettings   = @(
+                        @{ omaUri = './Device/Vendor/MSFT/Policy/Config/Cryptography/AllowFipsAlgorithmPolicy'; value = 0 }
+                    )
                 }
             ) }
         }
@@ -55,10 +63,8 @@ Describe 'Get-IntuneFipsConfig - FIPS Policy Name Match (Warning)' {
         . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-IntuneFipsConfig.ps1"
     }
 
-    It 'Status is Warning when a FIPS-named policy is found but OMA-URI not confirmed' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-FIPS-001*' }
-        $check | Should -Not -BeNullOrEmpty
-        $check.Status | Should -Be 'Warning'
+    It 'Status is Fail when FIPS value is 0' {
+        $settings[0].Status | Should -Be 'Fail'
     }
 
     AfterAll {
@@ -66,22 +72,19 @@ Describe 'Get-IntuneFipsConfig - FIPS Policy Name Match (Warning)' {
     }
 }
 
-Describe 'Get-IntuneFipsConfig - Not Configured' {
+Describe 'Get-IntuneFipsConfig - No FIPS configuration' {
     BeforeAll {
         function global:Update-CheckProgress { param($CheckId, $Setting, $Status) }
 
-        Mock Invoke-MgGraphRequest {
-            return @{ value = @() }
-        }
+        Mock Invoke-MgGraphRequest { return @{ value = @() } }
 
         . "$PSScriptRoot/../../src/M365-Assess/Orchestrator/AssessmentHelpers.ps1"
         . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-IntuneFipsConfig.ps1"
     }
 
-    It 'Status is Fail when no FIPS policy exists' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-FIPS-001*' }
-        $check | Should -Not -BeNullOrEmpty
-        $check.Status | Should -Be 'Fail'
+    It 'Emits one Fail sentinel row' {
+        $settings.Count | Should -Be 1
+        $settings[0].Status | Should -Be 'Fail'
     }
 
     AfterAll {

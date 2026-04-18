@@ -3,7 +3,7 @@
     # Generated: 2026-03-08
 
     RootModule        = 'M365-Assess.psm1'
-    ModuleVersion     = '1.13.0'
+    ModuleVersion     = '1.14.0'
     GUID              = 'f7e3b2a1-4c5d-6e8f-9a0b-1c2d3e4f5a6b'
     Author            = 'Galvnyz'
     CompanyName       = 'Community'
@@ -111,6 +111,7 @@
         'Entra\Get-EntraTouConfig.ps1'
         'Entra\Get-EntraPrivRemoteConfig.ps1'
         'Entra\Get-EntraAdminRoleSeparationConfig.ps1'
+        'Entra\Get-EntraCaRemoteDevicePolicy.ps1'
         'Exchange-Online\Get-MailboxSummary.ps1'
         'Exchange-Online\Get-MailFlowReport.ps1'
         'Exchange-Online\Get-EmailSecurityReport.ps1'
@@ -129,6 +130,9 @@
         'Intune\Get-IntuneInventoryConfig.ps1'
         'Intune\Get-IntuneAutoDiscConfig.ps1'
         'Intune\Get-IntuneRemovableMediaConfig.ps1'
+        'Intune\Get-IntuneAlwaysOnVpnConfig.ps1'
+        'Intune\Get-IntuneVpnSplitTunnelConfig.ps1'
+        'Intune\Get-IntuneWifiEapConfig.ps1'
         'Security\Get-SecureScoreReport.ps1'
         'Security\Get-DefenderPolicyReport.ps1'
         'Security\Get-DefenderSecurityConfig.ps1'
@@ -215,7 +219,7 @@
             IconUri      = 'https://raw.githubusercontent.com/Galvnyz/M365-Assess/main/src/M365-Assess/assets/m365-assess-logo.png'
             LicenseUri   = 'https://github.com/Galvnyz/M365-Assess/blob/main/LICENSE'
             ProjectUri   = 'https://github.com/Galvnyz/M365-Assess'
-            ReleaseNotes = 'v1.13.0 - Compliance Overview filter revamp (severity chips, collapsible panel, localStorage), CIS profile sub-filters, Appendix enrichment (column picker, filters, CSV), Framework Catalog label/tooltip fixes, CheckID v2.6.1 sync'
+            ReleaseNotes = 'v1.14.0 - CMMC L2 collectors (removable media, admin role separation), 4 new Intune collectors (VPN split tunnel, Wi-Fi EAP, CA remote device, always-on VPN), per-profile breakdowns for 6 Intune collectors, admin role separation 404 fix'
         }
     }
 }
