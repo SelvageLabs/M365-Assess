@@ -99,10 +99,10 @@ try {
         Add-Setting @settingParams
     }
     else {
-        foreach ($profile in $blockingProfiles) {
-            $name        = $profile['displayName']
+        foreach ($blockProfile in $blockingProfiles) {
+            $name        = $blockProfile['displayName']
             $assignments = @()
-            if ($profile['assignments']) { $assignments = @($profile['assignments']) }
+            if ($blockProfile['assignments']) { $assignments = @($blockProfile['assignments']) }
             $assigned    = $assignments.Count -gt 0
 
             $settingParams = @{

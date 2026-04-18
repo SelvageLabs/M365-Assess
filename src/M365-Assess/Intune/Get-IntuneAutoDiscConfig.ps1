@@ -125,9 +125,9 @@ try {
         $autopilotProfiles = Invoke-MgGraphRequest @autopilotParams
 
         if ($autopilotProfiles -and $autopilotProfiles['value']) {
-            foreach ($profile in @($autopilotProfiles['value'])) {
+            foreach ($apProfile in @($autopilotProfiles['value'])) {
                 $matchCount++
-                $profileName = $profile['displayName']
+                $profileName = $apProfile['displayName']
                 $settingParams = @{
                     Category         = 'Automated Discovery'
                     Setting          = "Autopilot Deployment Profile — $profileName"

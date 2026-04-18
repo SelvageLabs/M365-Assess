@@ -96,10 +96,10 @@ try {
         Add-Setting @settingParams
     }
     else {
-        foreach ($profile in $relevantProfiles) {
-            $name        = $profile['displayName']
-            $usbBlocked  = $profile['usbBlocked'] -eq $true
-            $storageBlocked = $profile['storageBlockRemovableStorage'] -eq $true
+        foreach ($deviceProfile in $relevantProfiles) {
+            $name        = $deviceProfile['displayName']
+            $usbBlocked  = $deviceProfile['usbBlocked'] -eq $true
+            $storageBlocked = $deviceProfile['storageBlockRemovableStorage'] -eq $true
             $parts = @()
             if ($usbBlocked) { $parts += 'USB blocked' }
             if ($storageBlocked) { $parts += 'Removable storage blocked' }
