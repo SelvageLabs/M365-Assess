@@ -4,6 +4,24 @@ All notable changes to M365 Assess are documented here. This project uses [Conve
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-04-18
+
+### Added
+- XLSX Summary sheet: Combined sub-rows per license tier for CIS M365 (e.g. E3 Combined (L1+L2), E5 Combined (L1+L2)) — counts unique findings across both levels, avoiding double-counting (#508)
+- XLSX Grouped by Profile sheet: same Combined rows added for each CIS license tier (#508)
+
+### Fixed
+- XLSX Grouped by Profile sheet: all data was zero due to `PSObject.Properties.Name` used on a hashtable — replaced with `ContainsKey()` check (#507)
+- XLSX Grouped by Profile sheet: individual CIS control IDs (1.1.1, 1.1.2...) were appearing as profile rows — gap rows now filtered via `IsGap` flag (#507)
+- Framework Catalog gap rows were always visible instead of appearing only when Detailed Checks is expanded (#505)
+- Appendix chip filters were not highlighted on initial page load — `appendixFilterAll(true)` was defined but never called (#505)
+- Framework Catalog group table was missing Total Controls and Not Automated columns (#505)
+- Admin role separation: `Ensure the required PowerShell module is installed` error message did not match the catch pattern — broadened pattern to cover Graph SDK auth errors (#505, #506)
+- Admin role separation: console permission warning added to match `Test-GraphPermissions` output style (#506)
+
+### Changed
+- CheckID registry synced to v2.8.0 (#497)
+
 ## [1.14.0] - 2026-04-18
 
 ### Added
