@@ -4,6 +4,23 @@ All notable changes to M365 Assess are documented here. This project uses [Conve
 
 ## [Unreleased]
 
+## [1.14.0] - 2026-04-18
+
+### Added
+- CMMC L2 collector: `Get-IntuneRemovableMediaConfig` (MP.L2-3.8.7) — enumerates all `storageBlockRemovableStorage` device restriction profiles, one row per profile with assignment status (#467)
+- CMMC L2 collector: `Get-EntraAdminRoleSeparationConfig` (SC.L2-3.13.3) — detects privileged roles used for day-to-day access (permanent Global Admin, dual admin+user accounts) (#468)
+- 4 new Intune CMMC L2 collectors wired into assessment: `Get-IntuneVpnSplitTunnelConfig`, `Get-IntuneWifiEapConfig`, `Get-IntuneCaRemoteDeviceConfig`, `Get-IntuneAlwaysOnVpnConfig` (#449)
+- Framework Catalog full control list with gap rows (controls not yet in assessment), column picker, and per-catalog CSV export (#454, #455)
+- CMMC L2 level sub-filter (L1 / L2 pill buttons) in Compliance Overview, mirroring the existing CIS profile sub-filter (#501)
+
+### Changed
+- 6 Intune collectors rewritten to emit one row per profile instead of a single aggregate row: `Get-IntuneMobileEncryptConfig`, `Get-IntunePortStorageConfig`, `Get-IntuneAppControlConfig`, `Get-IntuneFipsConfig`, `Get-IntuneAutoDiscConfig`, `Get-IntuneRemovableMediaConfig` — each collector now emits a Fail/Warning sentinel row when no qualifying profiles exist (#503)
+- Registry remediation fallback: `Export-AssessmentReport` now falls back to collector-supplied remediation text when `registry.json` has no entry, eliminating blank remediation cells in the Appendix (#491)
+- Dark mode contrast fixed for active filter buttons (`--m365a-dark` replaced with `--m365a-primary` for `.fw-checkbox.active` and `.co-profile-btn.active`) (#501)
+
+### Fixed
+- `Get-EntraAdminRoleSeparationConfig` returned 404 when querying role assignments with `$expand=principal` — orphaned (deleted) principals cause Graph to reject the expand; removed expand and use `principalId` directly (#502)
+
 ## [1.13.0] - 2026-04-17
 
 ### Added
