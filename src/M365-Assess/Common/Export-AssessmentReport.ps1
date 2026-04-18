@@ -1,7 +1,7 @@
 #Requires -Version 7.0
 <#
 .SYNOPSIS
-    Generates branded HTML and PDF assessment reports from M365 assessment output.
+    Generates branded HTML assessment reports from M365 assessment output.
 .DESCRIPTION
     Reads CSV data and metadata from an M365 assessment output folder and produces
     a self-contained HTML report with M365 Assess branding. The HTML
@@ -23,46 +23,18 @@
 .PARAMETER TenantName
     Tenant display name for the cover page. If not specified, attempts to read from
     the Tenant Information CSV.
-.PARAMETER NoBranding
-    Suppress the open-source project branding on the cover page. Useful for
-    white-labeling reports delivered to clients.
 .PARAMETER WhiteLabel
     Strip all M365-Assess and GitHub identity from the report. With CustomBranding
     keys produces Mode A (your brand). Without produces Mode C (neutral/clean).
-.PARAMETER Package
-    Generate HTML + PDF (headless browser) + XLSX delivery package.
 .PARAMETER FindingsNarrative
     Path to a .txt or .md file, or an inline string, with consultant-authored
     commentary. Rendered as a narrative card before the Executive Summary.
-.PARAMETER FrameworkFilters
-    Structured framework filter objects from ConvertTo-FrameworkFilter. Contains
-    sub-level profile/level arrays and display labels for the cover page and
-    compliance matrix heading. Passed from Invoke-M365Assessment.
-.PARAMETER SkipPdf
-    Skip PDF generation even if a headless browser is available on the system.
-.PARAMETER SkipComplianceOverview
-    Omit the Compliance Overview section from the report. Useful when running
-    a single section assessment where framework coverage cards are not relevant.
-.PARAMETER SkipCoverPage
-    Omit the branded cover page (logo, tenant name, date, version). The report
-    starts directly at the executive summary or section content.
-.PARAMETER SkipExecutiveSummary
-    Omit the executive summary hero panel (donut chart, metrics, TOC, alert
-    banners). Useful for data-only exports.
-.PARAMETER FrameworkFilter
-    Limit the compliance overview to specific framework families. Valid values:
-    CIS, NIST, ISO, STIG, PCI, CMMC, HIPAA, CISA, SOC2. Default: all frameworks.
+.PARAMETER CompactReport
+    Omit the cover page, executive summary, and compliance overview sections.
+    Produces a data-only report. Automatically enabled when -QuickScan is used.
 .PARAMETER CustomBranding
     Hashtable for white-label reports. Supported keys: CompanyName (string),
     LogoPath (file path to PNG/JPEG/SVG), AccentColor (hex color like '#1a56db').
-.PARAMETER FrameworkExport
-    Generate standalone per-framework HTML catalog exports alongside the main report.
-    Specify framework families (CIS, NIST, ISO, etc.) or 'All'. Output files are
-    named _<Framework>-Catalog_<tenant>.html in the assessment folder.
-.PARAMETER CisFrameworkId
-    The framework ID for the active CIS benchmark version used for the CisControl
-    property and reverse lookup. Defaults to 'cis-m365-v6'. Set to 'cis-m365-v7'
-    when CIS v7.0 framework data is available.
 .PARAMETER OpenReport
     Automatically open the generated HTML report in the default browser after
     generation. Works on Windows, macOS, and Linux.
@@ -94,36 +66,13 @@ param(
     [string]$TenantName,
 
     [Parameter()]
-    [switch]$NoBranding,
-
-    [Parameter()]
     [switch]$WhiteLabel,
-
-    [Parameter()]
-    [switch]$Package,
 
     [Parameter()]
     [string]$FindingsNarrative,
 
     [Parameter()]
-    [AllowEmptyCollection()]
-    [PSCustomObject[]]$FrameworkFilters = @(),
-
-    [Parameter()]
-    [switch]$SkipPdf,
-
-    [Parameter()]
-    [switch]$SkipComplianceOverview,
-
-    [Parameter()]
-    [switch]$SkipCoverPage,
-
-    [Parameter()]
-    [switch]$SkipExecutiveSummary,
-
-    [Parameter()]
-    [ValidateSet('CIS','NIST','ISO','STIG','PCI','CMMC','HIPAA','CISA','SOC2','FedRAMP','Essential8','MITRE','CISv8')]
-    [string[]]$FrameworkFilter,
+    [switch]$CompactReport,
 
     [Parameter()]
     [hashtable]$CustomBranding,
@@ -131,13 +80,6 @@ param(
     [Parameter()]
     [ValidateScript({ -not $_ -or (Test-Path -Path $_ -PathType Leaf) })]
     [string]$CustomerProfile,
-
-    [Parameter()]
-    [ValidateSet('CIS','NIST','ISO','STIG','PCI','CMMC','HIPAA','CISA','SOC2','FedRAMP','Essential8','MITRE','CISv8','All')]
-    [string[]]$FrameworkExport,
-
-    [Parameter()]
-    [string]$CisFrameworkId = 'cis-m365-v6',
 
     [Parameter()]
     [switch]$OpenReport,
@@ -164,7 +106,8 @@ $projectRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
 # ------------------------------------------------------------------
 . (Join-Path -Path $PSScriptRoot -ChildPath 'Import-ControlRegistry.ps1')
 $controlsPath = Join-Path -Path $projectRoot -ChildPath 'controls'
-$controlRegistry = Import-ControlRegistry -ControlsPath $controlsPath -CisFrameworkId $CisFrameworkId
+$cisFrameworkId = 'cis-m365-v6'
+$controlRegistry = Import-ControlRegistry -ControlsPath $controlsPath -CisFrameworkId $cisFrameworkId
 
 # ------------------------------------------------------------------
 # Framework definitions (auto-discovered from JSON)
@@ -297,20 +240,16 @@ $waveMime   = if ($waveAsset) { $waveAsset.Mime }   else { 'image/png' }
 # CustomerProfile: load .psd1 and merge into individual params
 # ------------------------------------------------------------------
 if ($CustomerProfile) {
-    if (-not (Get-Command -Name ConvertTo-FrameworkFilter -ErrorAction SilentlyContinue)) {
-        . (Join-Path -Path $PSScriptRoot -ChildPath 'ConvertTo-FrameworkFilter.ps1')
-    }
     $cpData = Import-PowerShellDataFile -Path $CustomerProfile
-    if ($cpData.CustomBranding -and -not $CustomBranding) {
+    if ($cpData.CustomBranding -and -not $PSBoundParameters.ContainsKey('CustomBranding')) {
         $CustomBranding = $cpData.CustomBranding
     }
-    if ($cpData.FindingsNarrative -and -not $FindingsNarrative) {
+    if ($cpData.FindingsNarrative -and -not $PSBoundParameters.ContainsKey('FindingsNarrative')) {
         $FindingsNarrative = $cpData.FindingsNarrative
     }
-    if ($cpData.Frameworks -and $FrameworkFilters.Count -eq 0) {
-        $FrameworkFilters = @(ConvertTo-FrameworkFilter -Frameworks @($cpData.Frameworks))
-        $FrameworkFilter  = @($FrameworkFilters | Select-Object -ExpandProperty FilterFamily -Unique)
-    }
+    $WhiteLabel = $true
+}
+if ($PSBoundParameters.ContainsKey('CustomBranding') -and -not $WhiteLabel) {
     $WhiteLabel = $true
 }
 
@@ -372,11 +311,7 @@ if ($FindingsNarrative) {
         $findingsNarrativeHtml = $safeText -replace "`r?`n", '<br>'
     }
 }
-# Framework display labels for cover page (from FrameworkFilters sub-level objects)
 $frameworkDisplayLabels = @()
-if ($FrameworkFilters -and $FrameworkFilters.Count -gt 0) {
-    $frameworkDisplayLabels = $FrameworkFilters | ForEach-Object { $_.DisplayLabel }
-}
 
 # ------------------------------------------------------------------
 # Compute summary statistics
@@ -483,43 +418,4 @@ Write-Output "HTML report generated: $OutputPath"
 
 if ($OpenReport) {
     Start-Process -FilePath $OutputPath
-}
-
-# ------------------------------------------------------------------
-# Generate PDF via headless browser (Edge preferred, Chrome fallback)
-# ------------------------------------------------------------------
-$pdfPath = [System.IO.Path]::ChangeExtension($OutputPath, '.pdf')
-$generatePdf = (-not $SkipPdf) -and ($Package -or -not $SkipPdf)
-
-if ($generatePdf) {
-    $browser = Get-Command -Name 'msedge' -ErrorAction SilentlyContinue
-    if (-not $browser) { $browser = Get-Command -Name 'chrome' -ErrorAction SilentlyContinue }
-
-    if ($browser) {
-        try {
-            $htmlUri = 'file:///' + ($OutputPath -replace '\\', '/')
-            $tmpScript = [System.IO.Path]::GetTempFileName() + '.ps1'
-            Set-Content -Path $tmpScript -Value @"
-& '$($browser.Source)' --headless --print-to-pdf='$pdfPath' --no-pdf-header-footer --disable-gpu '$htmlUri' 2>`$null
-"@
-            pwsh -NoProfile -File $tmpScript 2>$null
-            Remove-Item -Path $tmpScript -ErrorAction SilentlyContinue
-            if (Test-Path -Path $pdfPath) {
-                Write-Output "PDF report generated: $pdfPath"
-            }
-        }
-        catch {
-            Write-Warning "PDF generation failed: $_"
-        }
-    }
-    elseif (Get-Command -Name 'wkhtmltopdf' -ErrorAction SilentlyContinue) {
-        try {
-            & wkhtmltopdf --page-size Letter --margin-top 15 --margin-bottom 15 --margin-left 15 --margin-right 15 --enable-local-file-access $OutputPath $pdfPath 2>$null
-            if (Test-Path -Path $pdfPath) { Write-Output "PDF report generated: $pdfPath" }
-        }
-        catch { Write-Verbose "PDF generation failed: $_" }
-    }
-    else {
-        Write-Warning "No headless browser found (msedge/chrome) and wkhtmltopdf not available. Open the HTML report in a browser and print to PDF."
-    }
 }

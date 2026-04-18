@@ -13,7 +13,7 @@ Describe 'Build-RemediationPlanHtml' {
         # Build-SectionHtml.ps1 sets variables AND defines Build-RemediationPlanHtml.
         # Stub the variables the script-body references so it does not fail.
         $allCisFindings         = @()
-        $SkipComplianceOverview = $false
+        $CompactReport          = $false
         $controlRegistry        = @{}
         $issues                 = @()
         $sections               = @()

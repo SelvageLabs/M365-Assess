@@ -2291,6 +2291,18 @@ $html = @"
         .nav-theme-btn:hover { background: var(--m365a-hover-bg); }
         body:not(.dark-theme) .nav-theme-dark { display: none; }
         body.dark-theme .nav-theme-light { display: none; }
+        .nav-print-btn {
+            background: var(--m365a-card-bg);
+            border: 1px solid var(--m365a-border);
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+            color: var(--m365a-text);
+            transition: background 0.15s;
+        }
+        .nav-print-btn:hover { background: var(--m365a-hover-bg); }
         .nav-list { list-style: none; padding: 8px 0; margin: 0; }
         .nav-item a {
             display: flex;
@@ -2626,6 +2638,7 @@ $html = @"
             .section-filter { display: none; }
             .col-picker-bar { display: none; }
             .csv-export-btn { display: none; }
+            .nav-print-btn { display: none; }
             .table-expand-btn { display: none; }
             .matrix-controls { display: none; }
             .callout-row { display: block; }
@@ -2765,6 +2778,7 @@ $accentCss
                     <span class="nav-theme-light">&#9788;</span>
                     <span class="nav-theme-dark">&#9790;</span>
                 </button>
+                <button class="nav-print-btn" onclick="window.print()" aria-label="Print or save as PDF" title="Print / Save as PDF">&#128438;</button>
             </div>
             <ul class="nav-list" id="navList">
 "@
@@ -2907,7 +2921,7 @@ $html += @"
 "@
 
 # Persistent branded banner -- visible on every page in paginated mode
-if (-not $SkipCoverPage) {
+if (-not $CompactReport) {
     $html += @"
 
         <!-- Persistent branded banner (screen, all pages) -->
@@ -2936,7 +2950,7 @@ $html += @"
         <div class="report-page page-active" data-page="overview" id="overview">
 "@
 
-if (-not $SkipCoverPage) {
+if (-not $CompactReport) {
     if ($WhiteLabel) {
         # White-label cover page: client logo hero + "Prepared by" pill + engagement fields
         $prepByPill = if ($companyLogoImgTag -or ($brandName -ne 'M365 Assess')) {
@@ -2982,16 +2996,12 @@ if (-not $SkipCoverPage) {
             <div class="cover-tenant">$(ConvertTo-HtmlSafe -Text $TenantName)</div>
             <div class="cover-subtitle">$assessmentDate</div>
             <div class="cover-date">v$assessmentVersion</div>
-$(if (-not $NoBranding) {
-@'
             <div class="cover-branding">
                 <a href="https://github.com/Galvnyz/M365-Assess" target="_blank" rel="noopener" class="cover-branding-link">
                     <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" class="cover-branding-icon"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
                     <span>Open-source &mdash; M365-Assess on GitHub</span>
                 </a>
             </div>
-'@
-})
         </header>
 "@
     }
@@ -3003,7 +3013,7 @@ if ($tenantHtml.Length -gt 0) {
 }
 
 # Findings alert — between org profile and exec summary
-if ($allCisFindings.Count -gt 0 -and -not $SkipComplianceOverview) {
+if ($allCisFindings.Count -gt 0 -and -not $CompactReport) {
     $nonPassingCount = @($allCisFindings | Where-Object { $_.Status -ne 'Pass' }).Count
     if ($nonPassingCount -gt 0) {
         $html += @"
@@ -3014,7 +3024,7 @@ if ($allCisFindings.Count -gt 0 -and -not $SkipComplianceOverview) {
     }
 }
 
-if (-not $SkipExecutiveSummary) {
+if (-not $CompactReport) {
     $completePct = if ($totalCollectors -gt 0) { [math]::Round(($completeCount / $totalCollectors) * 100, 0) } else { 0 }
     $donutClass = if ($completePct -ge 90) { 'success' } elseif ($completePct -ge 70) { 'warning' } else { 'danger' }
     $donutSvg = Get-SvgDonut -Percentage $completePct -CssClass $donutClass -Label "$completeCount/$totalCollectors" -Size 120 -StrokeWidth 10

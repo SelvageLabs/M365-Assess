@@ -18,6 +18,10 @@ function Compare-AssessmentBaseline {
         Path to the current assessment output folder (with live CSVs).
     .PARAMETER BaselineFolder
         Path to the named baseline folder created by Export-AssessmentBaseline.
+    .PARAMETER RegistryVersion
+        Registry data version of the current run (from controls/registry.json).
+        Compared against the baseline manifest's RegistryVersion to decide
+        whether to do a full or intersect-only comparison.
     .OUTPUTS
         [PSCustomObject[]] One entry per changed check with fields:
           CheckId, Setting, Category, Section, ChangeType,
@@ -36,7 +40,10 @@ function Compare-AssessmentBaseline {
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$BaselineFolder
+        [string]$BaselineFolder,
+
+        [Parameter()]
+        [string]$RegistryVersion = ''
     )
 
     if (-not (Test-Path -Path $BaselineFolder -PathType Container)) {
@@ -44,10 +51,23 @@ function Compare-AssessmentBaseline {
         return @()
     }
 
+    # Read baseline manifest for version metadata
+    $baselineRegistryVersion = ''
+    $manifestPath = Join-Path -Path $BaselineFolder -ChildPath 'manifest.json'
+    if (Test-Path -Path $manifestPath) {
+        try {
+            $manifestData = Get-Content -Path $manifestPath -Raw -ErrorAction Stop | ConvertFrom-Json
+            $baselineRegistryVersion = $manifestData.RegistryVersion
+        }
+        catch { Write-Verbose "Drift: could not read manifest: $_" }
+    }
+
+    $crossVersionCompare = $RegistryVersion -and $baselineRegistryVersion -and ($RegistryVersion -ne $baselineRegistryVersion)
+
     # Build a lookup of all baseline checks: CheckId -> row object
     $baselineMap = @{}
     $baselineJsonFiles = Get-ChildItem -Path $BaselineFolder -Filter '*.json' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -ne '_baseline-metadata.json' }
+        Where-Object { $_.Name -ne 'manifest.json' }
 
     foreach ($jsonFile in $baselineJsonFiles) {
         try {
@@ -91,17 +111,26 @@ function Compare-AssessmentBaseline {
         }
     }
 
+    # In cross-version mode: only compare CheckIDs present in both snapshots.
+    # New/removed CheckIDs are schema changes, not policy drift.
+    $sharedIds = if ($crossVersionCompare) {
+        $currentMap.Keys | Where-Object { $baselineMap.ContainsKey($_) }
+    } else {
+        $currentMap.Keys
+    }
+
     $passStatuses = @('Pass')
     $failStatuses = @('Fail', 'Warning')
 
     $driftResults = [System.Collections.Generic.List[PSCustomObject]]::new()
 
-    # Check all current items against baseline
-    foreach ($checkId in $currentMap.Keys) {
+    # Check shared (or all) current items against baseline
+    foreach ($checkId in $sharedIds) {
         $current  = $currentMap[$checkId]
         $baseline = $baselineMap[$checkId]
 
         if (-not $baseline) {
+            # New check — only reported in same-version mode
             $driftResults.Add([PSCustomObject]@{
                 CheckId        = $checkId
                 Setting        = $current.Setting
@@ -129,10 +158,8 @@ function Compare-AssessmentBaseline {
             'Improved'
         } elseif ($prevStatus -in $passStatuses -and $currStatus -in $failStatuses) {
             'Regressed'
-        } elseif ($prevStatus -ne $currStatus) {
-            'Modified'
         } else {
-            'Modified'  # Same status, different value
+            'Modified'
         }
 
         $driftResults.Add([PSCustomObject]@{
@@ -148,21 +175,59 @@ function Compare-AssessmentBaseline {
         })
     }
 
-    # Check for removed items (in baseline but not in current)
-    foreach ($checkId in $baselineMap.Keys) {
-        if (-not $currentMap.ContainsKey($checkId)) {
-            $baseline = $baselineMap[$checkId]
-            $driftResults.Add([PSCustomObject]@{
-                CheckId        = $checkId
-                Setting        = $baseline.Setting
-                Category       = $baseline.Category
-                Section        = ''
-                ChangeType     = 'Removed'
-                PreviousStatus = $baseline.Status
-                CurrentStatus  = ''
-                PreviousValue  = $baseline.CurrentValue
-                CurrentValue   = ''
-            })
+    if ($crossVersionCompare) {
+        # Schema additions: in current but not in baseline registry
+        foreach ($checkId in $currentMap.Keys) {
+            if (-not $baselineMap.ContainsKey($checkId)) {
+                $current = $currentMap[$checkId]
+                $driftResults.Add([PSCustomObject]@{
+                    CheckId        = $checkId
+                    Setting        = $current.Setting
+                    Category       = $current.Category
+                    Section        = $current._Section
+                    ChangeType     = 'SchemaNew'
+                    PreviousStatus = ''
+                    CurrentStatus  = $current.Status
+                    PreviousValue  = ''
+                    CurrentValue   = $current.CurrentValue
+                })
+            }
+        }
+        # Schema removals: in baseline but not in current registry
+        foreach ($checkId in $baselineMap.Keys) {
+            if (-not $currentMap.ContainsKey($checkId)) {
+                $baseline = $baselineMap[$checkId]
+                $driftResults.Add([PSCustomObject]@{
+                    CheckId        = $checkId
+                    Setting        = $baseline.Setting
+                    Category       = $baseline.Category
+                    Section        = ''
+                    ChangeType     = 'SchemaRemoved'
+                    PreviousStatus = $baseline.Status
+                    CurrentStatus  = ''
+                    PreviousValue  = $baseline.CurrentValue
+                    CurrentValue   = ''
+                })
+            }
+        }
+    }
+    else {
+        # Same-version mode: removed checks are policy drift
+        foreach ($checkId in $baselineMap.Keys) {
+            if (-not $currentMap.ContainsKey($checkId)) {
+                $baseline = $baselineMap[$checkId]
+                $driftResults.Add([PSCustomObject]@{
+                    CheckId        = $checkId
+                    Setting        = $baseline.Setting
+                    Category       = $baseline.Category
+                    Section        = ''
+                    ChangeType     = 'Removed'
+                    PreviousStatus = $baseline.Status
+                    CurrentStatus  = ''
+                    PreviousValue  = $baseline.CurrentValue
+                    CurrentValue   = ''
+                })
+            }
         }
     }
 

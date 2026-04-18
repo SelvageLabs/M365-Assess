@@ -350,3 +350,25 @@ function Show-AssessmentSummary {
     Write-Host '  ░▒▓████████████████████████████████████████████████▓▒░' -ForegroundColor Cyan
     Write-Host ''
 }
+
+# ------------------------------------------------------------------
+# Helper: Get-RegistryVersion — read version from registry.json
+# ------------------------------------------------------------------
+function Get-RegistryVersion {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)]
+        [string]$ProjectRoot
+    )
+
+    $registryPath = Join-Path -Path $ProjectRoot -ChildPath 'controls/registry.json'
+    if (-not (Test-Path -Path $registryPath)) { return '' }
+    try {
+        $reg = Get-Content -Path $registryPath -Raw -ErrorAction Stop | ConvertFrom-Json
+        return if ($reg.dataVersion) { $reg.dataVersion }
+               elseif ($reg.schemaVersion) { $reg.schemaVersion }
+               else { '' }
+    }
+    catch { return '' }
+}

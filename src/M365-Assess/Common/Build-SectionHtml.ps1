@@ -1476,7 +1476,7 @@ foreach ($c in $summary) {
                 if ($fwData.profiles) { $fwHash[$fwDef.frameworkId].profiles = @($fwData.profiles) }
             }
         }
-        $cisData = $fwHash[$CisFrameworkId]
+        $cisData = $fwHash[$cisFrameworkId]
         $cisId = if ($cisData) { $cisData.controlId } else { '' }
 
         $allCisFindings.Add([PSCustomObject]@{
@@ -1535,17 +1535,15 @@ if ($allCisFindings.Count -gt 0) {
     }
 }
 
-if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0 -and -not $SkipComplianceOverview) {
+if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0 -and -not $CompactReport) {
     . (Join-Path -Path $PSScriptRoot -ChildPath 'Export-ComplianceOverview.ps1')
     $coParams = @{
         Findings         = @($allCisFindings)
         ControlRegistry  = $controlRegistry
         Frameworks       = $allFrameworks
-        FrameworkFilter  = $FrameworkFilter
         Sections         = @($summary | Select-Object -ExpandProperty Section -ErrorAction SilentlyContinue | Where-Object { $_ } | Sort-Object -Unique)
     }
     if ($WhiteLabel) { $coParams['WhiteLabel'] = $true }
-    if ($FrameworkFilters -and $FrameworkFilters.Count -gt 0) { $coParams['FrameworkFilters'] = $FrameworkFilters }
     $complianceHtml = Export-ComplianceOverview @coParams
 }
 
@@ -1555,37 +1553,10 @@ if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0 -and -not $Ski
 $catalogHtml = ''
 if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
     . (Join-Path -Path $PSScriptRoot -ChildPath 'Export-FrameworkCatalog.ps1')
-    $catalogFrameworks = $allFrameworks
-    if ($FrameworkFilter -and $FrameworkFilter.Count -gt 0) {
-        $catalogFrameworks = @($allFrameworks | Where-Object { $_.filterFamily -in $FrameworkFilter })
-    }
-    foreach ($fw in $catalogFrameworks) {
+    foreach ($fw in $allFrameworks) {
         $fwCatalog = Export-FrameworkCatalog -Findings @($allCisFindings) -Framework $fw `
             -ControlRegistry $controlRegistry -Mode Inline
         if ($fwCatalog) { $catalogHtml += $fwCatalog }
-    }
-}
-
-# ------------------------------------------------------------------
-# Framework Catalog standalone exports (optional)
-# ------------------------------------------------------------------
-if ($FrameworkExport -and $allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0) {
-    if (-not (Get-Command -Name Export-FrameworkCatalog -ErrorAction SilentlyContinue)) {
-        . (Join-Path -Path $PSScriptRoot -ChildPath 'Export-FrameworkCatalog.ps1')
-    }
-    $exportFrameworks = $allFrameworks
-    if ('All' -notin $FrameworkExport) {
-        $exportFrameworks = @($allFrameworks | Where-Object { $_.filterFamily -in $FrameworkExport })
-    }
-    $catalogTenantName = if ($reportDomainPrefix) { $reportDomainPrefix } elseif ($TenantName) { $TenantName } else { 'Unknown' }
-    $catalogSuffix = if ($reportDomainPrefix) { "_$reportDomainPrefix" } else { '' }
-    foreach ($fw in $exportFrameworks) {
-        $fwFileName = "_$($fw.label -replace '[^a-zA-Z0-9]','-')-Catalog${catalogSuffix}.html"
-        $fwPath = Join-Path -Path $AssessmentFolder -ChildPath $fwFileName
-        Export-FrameworkCatalog -Findings @($allCisFindings) -Framework $fw `
-            -ControlRegistry $controlRegistry -Mode Standalone `
-            -OutputPath $fwPath -TenantName $catalogTenantName
-        Write-Verbose "Framework catalog exported: $fwFileName"
     }
 }
 
@@ -1597,7 +1568,7 @@ try {
     if (Test-Path -Path $xlsxScript) {
         $xlsxParams = @{ AssessmentFolder = $AssessmentFolder; TenantName = $reportDomainPrefix }
         if ($WhiteLabel -and $CustomBranding) { $xlsxParams['CustomBranding'] = $CustomBranding }
-        if ($FrameworkFilters -and $FrameworkFilters.Count -gt 0) { $xlsxParams['FrameworkFilters'] = $FrameworkFilters }
+        if ($DriftReport -and $DriftReport.Count -gt 0) { $xlsxParams['DriftReport'] = $DriftReport }
         & $xlsxScript @xlsxParams
     }
 } catch {
@@ -1786,7 +1757,7 @@ if ($allCisFindings.Count -gt 0) {
 }
 
 # Append conditional entries to TOC now that compliance/issues counts are known
-if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0 -and -not $SkipComplianceOverview) {
+if ($allCisFindings.Count -gt 0 -and $controlRegistry.Count -gt 0 -and -not $CompactReport) {
     $null = $tocHtml.AppendLine("<li><a href='#compliance-overview'>Compliance Overview</a></li>")
 }
 if ($issues.Count -gt 0) {

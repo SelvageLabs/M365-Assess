@@ -35,7 +35,7 @@ param(
 
     [Parameter()]
     [AllowEmptyCollection()]
-    [PSCustomObject[]]$FrameworkFilters = @()
+    [PSCustomObject[]]$DriftReport = @()
 )
 
 $ErrorActionPreference = 'Stop'
@@ -508,6 +508,34 @@ if ($verificationRows.Count -gt 0) {
 }
 
 # ------------------------------------------------------------------
+# Drift sheet (if a baseline comparison was run)
+# ------------------------------------------------------------------
+if ($DriftReport -and $DriftReport.Count -gt 0) {
+    $driftRows = $DriftReport | ForEach-Object {
+        [PSCustomObject]@{
+            CheckId       = $_.CheckId
+            Setting       = $_.Setting
+            Section       = $_.Section
+            Category      = $_.Category
+            ChangeType    = $_.ChangeType
+            PreviousStatus = $_.PreviousStatus
+            CurrentStatus  = $_.CurrentStatus
+            PreviousValue  = $_.PreviousValue
+            CurrentValue   = $_.CurrentValue
+        }
+    }
+    $driftParams = @{
+        Path          = $outputFile
+        WorksheetName = 'Drift'
+        AutoSize      = $true
+        FreezeTopRow  = $true
+        BoldTopRow    = $true
+        TableStyle    = 'Medium2'
+    }
+    $driftRows | Export-Excel @driftParams
+}
+
+# ------------------------------------------------------------------
 # Apply conditional formatting
 # ------------------------------------------------------------------
 $pkg = Open-ExcelPackage -Path $outputFile
@@ -544,6 +572,31 @@ for ($r = 2; $r -le $lastRow; $r++) {
         'High'     { $matrixSheet.Cells[$r, $impactSevCol].Style.Font.Color.SetColor([System.Drawing.Color]::FromArgb(154, 52, 18));  $matrixSheet.Cells[$r, $impactSevCol].Style.Fill.PatternType = 'Solid'; $matrixSheet.Cells[$r, $impactSevCol].Style.Fill.BackgroundColor.SetColor([System.Drawing.Color]::FromArgb(255, 237, 213)) }
         'Medium'   { $matrixSheet.Cells[$r, $impactSevCol].Style.Font.Color.SetColor([System.Drawing.Color]::FromArgb(146, 64, 14));  $matrixSheet.Cells[$r, $impactSevCol].Style.Fill.PatternType = 'Solid'; $matrixSheet.Cells[$r, $impactSevCol].Style.Fill.BackgroundColor.SetColor([System.Drawing.Color]::FromArgb(254, 243, 199)) }
         'Low'      { $matrixSheet.Cells[$r, $impactSevCol].Style.Font.Color.SetColor([System.Drawing.Color]::FromArgb(21, 128, 61));  $matrixSheet.Cells[$r, $impactSevCol].Style.Fill.PatternType = 'Solid'; $matrixSheet.Cells[$r, $impactSevCol].Style.Fill.BackgroundColor.SetColor([System.Drawing.Color]::FromArgb(220, 252, 231)) }
+    }
+}
+
+# Drift sheet - color-code ChangeType column
+$driftSheet = $pkg.Workbook.Worksheets['Drift']
+if ($driftSheet -and $driftSheet.Dimension) {
+    $changeTypeCol = 5  # Column E = ChangeType
+    $driftLastRow  = $driftSheet.Dimension.End.Row
+    for ($r = 2; $r -le $driftLastRow; $r++) {
+        $ct = $driftSheet.Cells[$r, $changeTypeCol].Value
+        $fg = $null; $bg = $null
+        switch ($ct) {
+            'Regressed'    { $fg = [System.Drawing.Color]::FromArgb(185, 28, 28);  $bg = [System.Drawing.Color]::FromArgb(254, 226, 226) }
+            'Improved'     { $fg = [System.Drawing.Color]::FromArgb(21, 128, 61);  $bg = [System.Drawing.Color]::FromArgb(220, 252, 231) }
+            'Modified'     { $fg = [System.Drawing.Color]::FromArgb(146, 64, 14);  $bg = [System.Drawing.Color]::FromArgb(254, 243, 199) }
+            'New'          { $fg = [System.Drawing.Color]::FromArgb(30, 64, 175);  $bg = [System.Drawing.Color]::FromArgb(219, 234, 254) }
+            'Removed'      { $fg = [System.Drawing.Color]::FromArgb(107, 114, 128);$bg = [System.Drawing.Color]::FromArgb(243, 244, 246) }
+            'SchemaNew'    { $fg = [System.Drawing.Color]::FromArgb(30, 64, 175);  $bg = [System.Drawing.Color]::FromArgb(219, 234, 254) }
+            'SchemaRemoved'{ $fg = [System.Drawing.Color]::FromArgb(107, 114, 128);$bg = [System.Drawing.Color]::FromArgb(243, 244, 246) }
+        }
+        if ($fg) {
+            $driftSheet.Cells[$r, $changeTypeCol].Style.Font.Color.SetColor($fg)
+            $driftSheet.Cells[$r, $changeTypeCol].Style.Fill.PatternType = 'Solid'
+            $driftSheet.Cells[$r, $changeTypeCol].Style.Fill.BackgroundColor.SetColor($bg)
+        }
     }
 }
 

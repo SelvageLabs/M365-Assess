@@ -252,7 +252,7 @@ catch {
 # ------------------------------------------------------------------
 try {
     Write-Verbose "Checking OWA mailbox policies..."
-    $owaPolicies = Get-OwaMailboxPolicy -ErrorAction Stop
+    $owaPolicies = Get-OwaMailboxPolicy -ErrorAction Stop -WarningAction SilentlyContinue
     foreach ($policy in $owaPolicies) {
         $additionalStorage = $policy.AdditionalStorageProvidersAvailable
         $settingParams = @{
@@ -305,7 +305,7 @@ catch {
 # ------------------------------------------------------------------
 try {
     Write-Verbose "Checking mailbox audit bypass..."
-    $bypassedMailboxes = Get-MailboxAuditBypassAssociation -ResultSize Unlimited -ErrorAction Stop |
+    $bypassedMailboxes = Get-MailboxAuditBypassAssociation -ResultSize Unlimited -ErrorAction Stop -WarningAction SilentlyContinue |
         Where-Object { $_.AuditBypassEnabled -eq $true }
     $bypassCount = @($bypassedMailboxes).Count
 
@@ -645,7 +645,7 @@ catch {
 # ------------------------------------------------------------------
 try {
     Write-Verbose "Checking for hidden user mailboxes..."
-    $hiddenMailboxes = @(Get-EXOMailbox -RecipientTypeDetails UserMailbox -ResultSize Unlimited -Filter 'HiddenFromAddressListsEnabled -eq $True' -Properties DisplayName, PrimarySmtpAddress -ErrorAction Stop)
+    $hiddenMailboxes = @(Get-EXOMailbox -RecipientTypeDetails UserMailbox -ResultSize Unlimited -Filter 'HiddenFromAddressListsEnabled -eq $True' -Properties DisplayName, PrimarySmtpAddress -ErrorAction Stop -WarningAction SilentlyContinue)
 
     if ($hiddenMailboxes.Count -eq 0) {
         $settingParams = @{

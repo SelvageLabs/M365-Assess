@@ -401,25 +401,17 @@ Describe 'QuickScan triage report auto-apply' {
         $templateSrc = Get-Content -Path "$PSScriptRoot/../../src/M365-Assess/Common/Get-ReportTemplate.ps1" -Raw
     }
 
-    Context 'Orchestrator auto-applies skip flags for QuickScan' {
-        It 'Should contain the QuickScan auto-apply block' {
-            $orchestratorSrc | Should -Match 'if \(\$QuickScan\)[\s\S]*?SkipCoverPage'
+    Context 'Orchestrator auto-applies CompactReport for QuickScan' {
+        It 'Should contain the QuickScan CompactReport auto-apply block' {
+            $orchestratorSrc | Should -Match 'if \(\$QuickScan\)[\s\S]*?CompactReport'
         }
 
-        It 'Should guard SkipCoverPage with PSBoundParameters check' {
-            $orchestratorSrc | Should -Match "PSBoundParameters\.ContainsKey\('SkipCoverPage'\)"
+        It 'Should guard CompactReport with PSBoundParameters check' {
+            $orchestratorSrc | Should -Match "PSBoundParameters\.ContainsKey\('CompactReport'\)"
         }
 
-        It 'Should guard SkipExecutiveSummary with PSBoundParameters check' {
-            $orchestratorSrc | Should -Match "PSBoundParameters\.ContainsKey\('SkipExecutiveSummary'\)"
-        }
-
-        It 'Should guard SkipComplianceOverview with PSBoundParameters check' {
-            $orchestratorSrc | Should -Match "PSBoundParameters\.ContainsKey\('SkipComplianceOverview'\)"
-        }
-
-        It 'Should document triage report behaviour in QuickScan parameter help' {
-            $orchestratorSrc | Should -Match 'compact.*triage|triage.*report|omits.*cover|cover page.*omit'
+        It 'Should document CompactReport behaviour in QuickScan parameter help' {
+            $orchestratorSrc | Should -Match 'compact.*report|CompactReport|omits.*cover|data.only'
         }
     }
 

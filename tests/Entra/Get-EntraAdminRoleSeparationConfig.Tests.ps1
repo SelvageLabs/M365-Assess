@@ -131,6 +131,42 @@ Describe 'Get-EntraAdminRoleSeparationConfig - No Role Assignments' {
     }
 }
 
+Describe 'Get-EntraAdminRoleSeparationConfig - One Role Returns 404' {
+    BeforeAll {
+        function global:Update-CheckProgress { param($CheckId, $Setting, $Status) }
+
+        # First role throws 404; remaining roles return a valid assignment
+        $script:callCount = 0
+        Mock Invoke-MgGraphRequest {
+            param($Method, $Uri, $ErrorAction)
+            if ($Uri -match 'roleAssignments') {
+                $script:callCount++
+                if ($script:callCount -eq 1) { throw 'Response status code does not indicate success: 404 (Not Found).' }
+                return @{ value = @(@{ principalId = 'admin-ok' }) }
+            }
+            # licenseDetails — no Exchange plans
+            return @{ value = @(@{ servicePlans = @(@{ servicePlanId = 'other-plan' }) }) }
+        }
+
+        . "$PSScriptRoot/../../src/M365-Assess/Orchestrator/AssessmentHelpers.ps1"
+        . "$PSScriptRoot/../../src/M365-Assess/Entra/Get-EntraAdminRoleSeparationConfig.ps1"
+    }
+
+    It 'should still produce a result despite the 404 on one role' {
+        $check = $settings | Where-Object { $_.CheckId -like 'ENTRA-ADMINROLE-SEPARATION-001*' }
+        $check | Should -Not -BeNullOrEmpty
+    }
+
+    It 'should return Pass when the remaining admins have no Exchange plans' {
+        $check = $settings | Where-Object { $_.CheckId -like 'ENTRA-ADMINROLE-SEPARATION-001*' }
+        $check.Status | Should -Be 'Pass'
+    }
+
+    AfterAll {
+        Remove-Item Function:\Update-CheckProgress -ErrorAction SilentlyContinue
+    }
+}
+
 Describe 'Get-EntraAdminRoleSeparationConfig - Forbidden' {
     BeforeAll {
         function global:Update-CheckProgress { param($CheckId, $Setting, $Status) }

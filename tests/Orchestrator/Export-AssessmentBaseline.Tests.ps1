@@ -47,19 +47,20 @@ Describe 'Export-AssessmentBaseline' {
             Test-Path -Path $script:result -PathType Container | Should -Be $true
         }
 
-        It 'should write a metadata file' {
-            $metaPath = Join-Path -Path $script:result -ChildPath '_baseline-metadata.json'
+        It 'should write a manifest file' {
+            $metaPath = Join-Path -Path $script:result -ChildPath 'manifest.json'
             Test-Path -Path $metaPath | Should -Be $true
         }
 
-        It 'should write correct metadata fields' {
-            $metaPath = Join-Path -Path $script:result -ChildPath '_baseline-metadata.json'
+        It 'should write correct manifest fields' {
+            $metaPath = Join-Path -Path $script:result -ChildPath 'manifest.json'
             $meta = Get-Content -Path $metaPath -Raw | ConvertFrom-Json
-            $meta.label   | Should -Be 'Q1-2026'
-            $meta.tenant  | Should -Be 'contoso.com'
-            $meta.version | Should -Be '1.11.0'
-            $meta.sections | Should -Contain 'Entra'
-            $meta.timestamp | Should -Not -BeNullOrEmpty
+            $meta.Label             | Should -Be 'Q1-2026'
+            $meta.TenantId          | Should -Be 'contoso.com'
+            $meta.AssessmentVersion | Should -Be '1.11.0'
+            $meta.Sections          | Should -Contain 'Entra'
+            $meta.SavedAt           | Should -Not -BeNullOrEmpty
+            $meta.CheckCount        | Should -BeGreaterOrEqual 0
         }
 
         It 'should serialize the security-config CSV to JSON' {

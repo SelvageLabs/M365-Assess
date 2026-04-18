@@ -16,7 +16,7 @@ Describe 'Compare-AssessmentBaseline' {
 
         # Write baseline metadata (required; excluded from JSON comparison by name filter)
         @{ label = 'Q1-2026'; tenant = 'test'; timestamp = '2026-01-01T00:00:00Z' } |
-            ConvertTo-Json | Set-Content -Path (Join-Path -Path $script:baselineFolder -ChildPath '_baseline-metadata.json') -Encoding UTF8
+            ConvertTo-Json | Set-Content -Path (Join-Path -Path $script:baselineFolder -ChildPath 'manifest.json') -Encoding UTF8
     }
 
     Context 'when baseline folder does not exist' {
@@ -61,7 +61,7 @@ Describe 'Compare-AssessmentBaseline' {
             $null = New-Item -Path $currentDir  -ItemType Directory -Force
 
             @{ label = 'test' } | ConvertTo-Json |
-                Set-Content -Path (Join-Path -Path $baselineDir -ChildPath '_baseline-metadata.json') -Encoding UTF8
+                Set-Content -Path (Join-Path -Path $baselineDir -ChildPath 'manifest.json') -Encoding UTF8
 
             @(
                 [PSCustomObject]@{ CheckId = 'ENTRA-CA-001'; Setting = 'CA policy'; Status = 'Fail'; CurrentValue = 'Disabled'; Category = 'Access' }
@@ -91,7 +91,7 @@ Describe 'Compare-AssessmentBaseline' {
             $null = New-Item -Path $currentDir  -ItemType Directory -Force
 
             @{ label = 'test' } | ConvertTo-Json |
-                Set-Content -Path (Join-Path -Path $baselineDir -ChildPath '_baseline-metadata.json') -Encoding UTF8
+                Set-Content -Path (Join-Path -Path $baselineDir -ChildPath 'manifest.json') -Encoding UTF8
 
             # Baseline has no matching check
             @(
@@ -123,7 +123,7 @@ Describe 'Compare-AssessmentBaseline' {
             $null = New-Item -Path $currentDir  -ItemType Directory -Force
 
             @{ label = 'test' } | ConvertTo-Json |
-                Set-Content -Path (Join-Path -Path $baselineDir -ChildPath '_baseline-metadata.json') -Encoding UTF8
+                Set-Content -Path (Join-Path -Path $baselineDir -ChildPath 'manifest.json') -Encoding UTF8
 
             @(
                 [PSCustomObject]@{ CheckId = 'ENTRA-GONE-001'; Setting = 'Removed check'; Status = 'Pass'; CurrentValue = 'Yes'; Category = 'Identity' }
@@ -153,7 +153,7 @@ Describe 'Compare-AssessmentBaseline' {
             $null = New-Item -Path $currentDir  -ItemType Directory -Force
 
             @{ label = 'test' } | ConvertTo-Json |
-                Set-Content -Path (Join-Path -Path $baselineDir -ChildPath '_baseline-metadata.json') -Encoding UTF8
+                Set-Content -Path (Join-Path -Path $baselineDir -ChildPath 'manifest.json') -Encoding UTF8
 
             @(
                 [PSCustomObject]@{ CheckId = 'EXO-SPF-001'; Setting = 'SPF record'; Status = 'Pass'; CurrentValue = 'v=spf1 include:old.com ~all'; Category = 'Email' }
@@ -183,7 +183,7 @@ Describe 'Compare-AssessmentBaseline' {
             $null = New-Item -Path $currentDir  -ItemType Directory -Force
 
             @{ label = 'test' } | ConvertTo-Json |
-                Set-Content -Path (Join-Path -Path $baselineDir -ChildPath '_baseline-metadata.json') -Encoding UTF8
+                Set-Content -Path (Join-Path -Path $baselineDir -ChildPath 'manifest.json') -Encoding UTF8
 
             @(
                 [PSCustomObject]@{ CheckId = 'ENTRA-PIM-001'; Setting = 'PIM'; Status = 'Pass'; CurrentValue = 'Enabled'; Category = 'Identity' }
@@ -209,7 +209,7 @@ Describe 'Compare-AssessmentBaseline' {
             $null = New-Item -Path $currentDir  -ItemType Directory -Force
 
             @{ label = 'test' } | ConvertTo-Json |
-                Set-Content -Path (Join-Path -Path $baselineDir -ChildPath '_baseline-metadata.json') -Encoding UTF8
+                Set-Content -Path (Join-Path -Path $baselineDir -ChildPath 'manifest.json') -Encoding UTF8
 
             @(
                 [PSCustomObject]@{ CheckId = 'EXO-DKIM-001'; Setting = 'DKIM'; Status = 'Pass'; CurrentValue = 'Enabled'; Category = 'Email' }

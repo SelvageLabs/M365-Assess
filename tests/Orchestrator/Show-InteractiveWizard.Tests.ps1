@@ -187,7 +187,7 @@ Describe 'Show-InteractiveWizard - non-interactive paths' {
         }
     }
 
-    Context 'when report options are toggled to exclude ComplianceOverview' {
+    Context 'when CompactReport is toggled on' {
         BeforeAll {
             $script:readHostCallCount = 0
             Mock Read-Host {
@@ -195,7 +195,7 @@ Describe 'Show-InteractiveWizard - non-interactive paths' {
                 switch ($script:readHostCallCount) {
                     1 { return 'contoso.onmicrosoft.com' }  # Tenant
                     2 { return '4' }                        # Auth: Skip
-                    3 { return '1' }                        # Toggle option 1 (ComplianceOverview off)
+                    3 { return '1' }                        # Toggle option 1 (CompactReport on)
                     4 { return '' }                         # Accept report options
                     5 { return '' }                         # Confirm
                     default { return '' }
@@ -209,9 +209,9 @@ Describe 'Show-InteractiveWizard - non-interactive paths' {
                 -PreSelectedOutputFolder '.\Out'
         }
 
-        It 'should set SkipComplianceOverview when toggled off' {
-            $result.ContainsKey('SkipComplianceOverview') | Should -Be $true
-            $result.SkipComplianceOverview | Should -Be $true
+        It 'should set CompactReport when toggled on' {
+            $result.ContainsKey('CompactReport') | Should -Be $true
+            $result.CompactReport | Should -Be $true
         }
     }
 }

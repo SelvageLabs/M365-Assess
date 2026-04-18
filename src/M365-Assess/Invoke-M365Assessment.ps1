@@ -14,8 +14,9 @@
 .PARAMETER Section
     One or more assessment sections to run. Valid values: Tenant, Identity,
     Licensing, Email, Intune, Security, Collaboration, Hybrid, PowerBI,
-    Inventory, ActiveDirectory, SOC2, ValueOpportunity. Defaults to all standard
-    sections. Inventory, ActiveDirectory, SOC2, and ValueOpportunity are opt-in only.
+    Inventory, ActiveDirectory, SOC2, ValueOpportunity, All. Defaults to all
+    standard sections. Use 'All' to include opt-in sections (Inventory,
+    ActiveDirectory, SOC2, ValueOpportunity) in a single value.
 .PARAMETER TenantId
     Tenant ID or domain (e.g., 'contoso.onmicrosoft.com').
 .PARAMETER OutputFolder
@@ -49,55 +50,56 @@
     Target cloud environment for all service connections. Commercial and GCC
     use standard endpoints. GCCHigh and DoD use sovereign cloud endpoints.
     Auto-detected from tenant metadata when not explicitly specified.
-.PARAMETER SkipDLP
-    Skips the DLP Policies collector and its Purview (Security & Compliance)
-    connection. Purview connection adds ~46 seconds of latency, so use this
-    switch when DLP policy assessment is not needed.
-.PARAMETER SkipComplianceOverview
-    Omit the Compliance Overview section from the HTML report. Useful when
-    running a single section assessment where framework coverage cards are
-    not relevant.
-.PARAMETER SkipCoverPage
-    Omit the branded cover page from the HTML report.
-.PARAMETER SkipExecutiveSummary
-    Omit the executive summary hero panel from the HTML report.
-.PARAMETER SkipPdf
-    Skip PDF generation even when wkhtmltopdf is available.
-.PARAMETER FrameworkFilter
-    Limit the compliance overview to specific framework families.
+.PARAMETER SkipPurview
+    Skips all Purview-connected collectors (DLP Policies, Compliance Security
+    Config, Purview Retention Config) and their Security and Compliance
+    connection. Saves ~46 seconds of latency when Purview data is not needed.
+.PARAMETER OpenReport
+    Automatically open the generated HTML report in the default browser after
+    generation. Works on Windows, macOS, and Linux.
 .PARAMETER CustomBranding
     Hashtable for white-label reports. Keys: CompanyName, LogoPath, AccentColor,
     ClientLogoPath, ClientName, ReportNote, Disclaimer, SidebarSubtitle, FooterText,
-    FooterUrl, PrimaryColor, ReportTitle.
+    FooterUrl, PrimaryColor, ReportTitle. Automatically enables -WhiteLabel.
 .PARAMETER WhiteLabel
-    Strips all M365-Assess and GitHub identity from the report. Combined with
-    CustomBranding keys produces a fully branded consultant deliverable (Mode A).
-    Without CustomBranding produces a neutral, tool-agnostic report (Mode C).
-.PARAMETER Package
-    Generates a full delivery package: white-labeled HTML, auto-generated PDF
-    (via headless Edge or Chrome), and XLSX compliance matrix in one folder.
+    Strips all M365-Assess and GitHub identity from the report. With -CustomBranding
+    produces a fully branded consultant deliverable (Mode A). Without -CustomBranding
+    produces a neutral, tool-agnostic report (Mode C).
 .PARAMETER CustomerProfile
-    Path to a .psd1 configuration file with CustomBranding, FindingsNarrative,
-    and Frameworks keys. Merged into the equivalent parameters — direct params
-    win on conflict. Enables reusable per-customer configuration.
+    Path to a .psd1 configuration file with CustomBranding and FindingsNarrative
+    keys. Merged into the equivalent parameters — direct params win on conflict.
+    Enables reusable per-customer configuration. Automatically enables -WhiteLabel.
 .PARAMETER FindingsNarrative
     Path to a .txt or .md file (or an inline string) containing consultant-authored
     findings commentary. Rendered as a narrative card before the Executive Summary,
     alongside auto-populated severity chip counts.
-.PARAMETER FrameworkExport
-    Generate standalone per-framework HTML catalog exports. Specify framework
-    families or 'All'. Output files are named _<Framework>-Catalog_<tenant>.html.
-.PARAMETER CisBenchmarkVersion
-    CIS benchmark version to use for framework rendering. Defaults to 'v6'
-    (CIS Microsoft 365 v6.0.1). Set to 'v7' when CIS v7.0 data is available.
+.PARAMETER CompactReport
+    Omit cover page, executive summary, and compliance overview from the HTML
+    report. Produces a lean, findings-focused report. Automatically set by
+    -QuickScan unless overridden with -CompactReport:$false.
 .PARAMETER QuickScan
     Run only Critical and High severity checks. Useful for CI/CD pipelines
     and daily monitoring. Collectors with no qualifying checks are skipped
     entirely. The report shows a "Quick Scan Mode" banner and automatically
-    omits the cover page, executive summary, and compliance overview to
-    produce a compact, action-focused triage report. Override any of these
-    individually with -SkipCoverPage:$false, -SkipExecutiveSummary:$false,
-    or -SkipComplianceOverview:$false.
+    sets -CompactReport. Override with -CompactReport:$false to keep the
+    full report structure.
+.PARAMETER SaveBaseline
+    Label for a new baseline snapshot. Saves the current assessment results
+    to a Baselines subfolder under the output folder. Use with -CompareBaseline
+    on a later run to detect policy drift.
+.PARAMETER CompareBaseline
+    Label of a previously saved baseline to compare against. Generates a drift
+    report highlighting settings that changed since the baseline was captured.
+    Version-aware: when the registry version differs from the baseline, only
+    shared CheckIDs are compared and schema changes are reported separately.
+.PARAMETER AutoBaseline
+    Automatically saves a dated snapshot after every run and compares against
+    the most recent previous auto-snapshot for this tenant. No label management
+    required. Ideal for scheduled assessments and continuous drift tracking.
+.PARAMETER ListBaselines
+    Lists all saved baselines for the tenant (label, date, registry version,
+    check count) and exits without running an assessment. Use -TenantId to
+    scope results; omit to list baselines for all tenants.
 .PARAMETER DryRun
     Show a dry-run preview of what the assessment would do (sections,
     services, Graph scopes, check counts) without connecting or collecting
@@ -116,47 +118,61 @@
     environments. Also triggered automatically when the session is not
     user-interactive ([Environment]::UserInteractive is false).
 .EXAMPLE
-    PS> .\Invoke-M365Assessment.ps1 -TenantId 'contoso.onmicrosoft.com'
+    PS> Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com'
 
-    Runs a full assessment with interactive authentication and exports CSVs.
+    Full assessment with interactive browser auth.
 .EXAMPLE
-    PS> .\Invoke-M365Assessment.ps1 -Section Identity,Email -TenantId 'contoso.onmicrosoft.com'
+    PS> Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -Section All
 
-    Runs only the Identity and Email sections.
+    Full assessment including all opt-in sections (Inventory, ActiveDirectory,
+    SOC2, ValueOpportunity).
 .EXAMPLE
-    PS> .\Invoke-M365Assessment.ps1 -SkipConnection
+    PS> Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -ClientId '00000000-0000-0000-0000-000000000000' -CertificateThumbprint 'ABC123'
 
-    Runs all sections using pre-existing service connections.
+    App-only authentication using a certificate. Recommended for automation.
 .EXAMPLE
-    PS> .\Invoke-M365Assessment.ps1 -TenantId 'contoso.onmicrosoft.com' -ClientId '00000000-0000-0000-0000-000000000000' -CertificateThumbprint 'ABC123'
+    PS> Invoke-M365Assessment -ManagedIdentity -Section Tenant,Identity,Security
 
-    Runs a full assessment using certificate-based app-only auth.
+    Runs selected sections using Azure managed identity (no credentials needed).
 .EXAMPLE
-    PS> .\Invoke-M365Assessment.ps1 -TenantId 'contoso.onmicrosoft.com' -UserPrincipalName 'admin@contoso.onmicrosoft.com'
+    PS> Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.us' -UseDeviceCode
 
-    Runs a full assessment using UPN-based auth for EXO/Purview (avoids WAM broker errors).
+    Device code auth — choose which browser profile to sign in with.
 .EXAMPLE
-    PS> .\Invoke-M365Assessment.ps1 -TenantId 'contoso.onmicrosoft.us' -UseDeviceCode
+    PS> Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -QuickScan
 
-    Runs a full assessment using device code auth. You choose which browser profile
-    to authenticate in (useful for multi-profile machines).
+    Critical and High checks only. Produces a compact triage report.
+.EXAMPLE
+    PS> Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -AutoBaseline
+
+    Runs assessment and auto-saves a dated snapshot. On subsequent runs,
+    generates a drift report showing what changed since the last snapshot.
+.EXAMPLE
+    PS> Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -ListBaselines
+
+    Lists all saved baseline snapshots for the tenant without running an assessment.
 .EXAMPLE
     PS> Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -Section Identity,Email -DryRun
 
-    Shows a dry-run preview: sections, services, Graph scopes, and check counts
-    without connecting or collecting any data.
+    Dry-run preview: sections, services, Graph scopes, and check counts —
+    no connections made, no data collected.
 #>
 #Requires -Version 7.0
 
 function Invoke-M365Assessment {
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = 'Interactive')]
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', 'connectedServices',
     Justification = 'Used by Connect-RequiredService in Orchestrator/ via parent scope')]
 param(
     [Parameter()]
-    [ValidateSet('Tenant', 'Identity', 'Licensing', 'Email', 'Intune', 'Security', 'Collaboration', 'PowerBI', 'Hybrid', 'Inventory', 'ActiveDirectory', 'SOC2', 'ValueOpportunity')]
+    [ValidateSet('Tenant', 'Identity', 'Licensing', 'Email', 'Intune', 'Security', 'Collaboration',
+                 'PowerBI', 'Hybrid', 'Inventory', 'ActiveDirectory', 'SOC2', 'ValueOpportunity', 'All')]
     [string[]]$Section = @('Tenant', 'Identity', 'Licensing', 'Email', 'Intune', 'Security', 'Collaboration', 'PowerBI', 'Hybrid'),
 
+    # TenantId: optional in Interactive/DeviceCode/ManagedIdentity/SkipConnection sets;
+    # mandatory in app-only sets where the tenant cannot be inferred interactively.
+    [Parameter(ParameterSetName = 'AppOnlyCert',   Mandatory)]
+    [Parameter(ParameterSetName = 'AppOnlySecret', Mandatory)]
     [Parameter()]
     [string]$TenantId,
 
@@ -164,25 +180,26 @@ param(
     [ValidateNotNullOrEmpty()]
     [string]$OutputFolder = '.\M365-Assessment',
 
-    [Parameter()]
+    [Parameter(ParameterSetName = 'SkipConnection', Mandatory)]
     [switch]$SkipConnection,
 
-    [Parameter()]
+    [Parameter(ParameterSetName = 'AppOnlyCert',   Mandatory)]
+    [Parameter(ParameterSetName = 'AppOnlySecret', Mandatory)]
     [string]$ClientId,
 
-    [Parameter()]
+    [Parameter(ParameterSetName = 'AppOnlyCert', Mandatory)]
     [string]$CertificateThumbprint,
 
-    [Parameter()]
+    [Parameter(ParameterSetName = 'AppOnlySecret', Mandatory)]
     [SecureString]$ClientSecret,
 
     [Parameter()]
     [string]$UserPrincipalName,
 
-    [Parameter()]
+    [Parameter(ParameterSetName = 'ManagedIdentity', Mandatory)]
     [switch]$ManagedIdentity,
 
-    [Parameter()]
+    [Parameter(ParameterSetName = 'DeviceCode', Mandatory)]
     [switch]$UseDeviceCode,
 
     [Parameter()]
@@ -190,45 +207,16 @@ param(
     [string]$M365Environment = 'commercial',
 
     [Parameter()]
-    [switch]$NoBranding,
-
-    [Parameter()]
-    [switch]$SkipDLP,
-
-    [Parameter()]
-    [switch]$SkipComplianceOverview,
-
-    [Parameter()]
-    [switch]$SkipCoverPage,
-
-    [Parameter()]
-    [switch]$SkipExecutiveSummary,
-
-    [Parameter()]
-    [switch]$SkipPdf,
+    [switch]$SkipPurview,
 
     [Parameter()]
     [switch]$OpenReport,
-
-    [Parameter()]
-    [ValidateScript({
-        $validFamilies = @('CIS','NIST','ISO','STIG','PCI','CMMC','HIPAA','CISA','SOC2','FedRAMP','Essential8','MITRE','CISv8')
-        foreach ($fw in $_) {
-            $family = ($fw -split ':')[0].ToUpper()
-            if ($family -notin $validFamilies) { throw "Invalid framework family '$family' in '$fw'. Valid: $($validFamilies -join ', ')" }
-        }
-        $true
-    })]
-    [string[]]$FrameworkFilter,
 
     [Parameter()]
     [hashtable]$CustomBranding,
 
     [Parameter()]
     [switch]$WhiteLabel,
-
-    [Parameter()]
-    [switch]$Package,
 
     [Parameter()]
     [ValidateScript({ -not $_ -or (Test-Path -Path $_ -PathType Leaf) })]
@@ -238,12 +226,7 @@ param(
     [string]$FindingsNarrative,
 
     [Parameter()]
-    [ValidateSet('CIS','NIST','ISO','STIG','PCI','CMMC','HIPAA','CISA','SOC2','FedRAMP','Essential8','MITRE','All')]
-    [string[]]$FrameworkExport,
-
-    [Parameter()]
-    [ValidatePattern('^v\d+$')]
-    [string]$CisBenchmarkVersion = 'v6',
+    [switch]$CompactReport,
 
     [Parameter()]
     [switch]$NonInteractive,
@@ -255,12 +238,18 @@ param(
     [switch]$DryRun,
 
     [Parameter()]
-    [string]$SaveBaseline = '',
+    [string]$SaveBaseline,
 
     [Parameter()]
-    [string]$CompareBaseline = '',
+    [string]$CompareBaseline,
 
     [Parameter()]
+    [switch]$AutoBaseline,
+
+    [Parameter()]
+    [switch]$ListBaselines,
+
+    [Parameter(ParameterSetName = 'ConnectionProfile', Mandatory)]
     [ArgumentCompleter({
         param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
         $root = Split-Path -Parent $PSCommandPath
@@ -293,14 +282,9 @@ if (-not (Get-Command -Name Show-InteractiveWizard -ErrorAction SilentlyContinue
     Get-ChildItem -Path (Join-Path $projectRoot 'Orchestrator') -Filter '*.ps1' |
         ForEach-Object { . $_.FullName }
 }
-if (-not (Get-Command -Name ConvertTo-FrameworkFilter -ErrorAction SilentlyContinue)) {
-    . (Join-Path $projectRoot 'Common\ConvertTo-FrameworkFilter.ps1')
-}
-
 # ------------------------------------------------------------------
 # CustomerProfile — merge .psd1 into params (direct params win)
 # ------------------------------------------------------------------
-$script:frameworkFilters = $null
 if ($CustomerProfile) {
     $cpData = Import-PowerShellDataFile -Path $CustomerProfile
     if ($cpData.ContainsKey('CustomBranding')) {
@@ -315,18 +299,12 @@ if ($CustomerProfile) {
     if ($cpData.ContainsKey('FindingsNarrative') -and -not $PSBoundParameters.ContainsKey('FindingsNarrative')) {
         $FindingsNarrative = $cpData['FindingsNarrative']
     }
-    if ($cpData.ContainsKey('Frameworks') -and -not $PSBoundParameters.ContainsKey('FrameworkFilter')) {
-        $script:frameworkFilters = ConvertTo-FrameworkFilter -Frameworks $cpData['Frameworks']
-        $FrameworkFilter = $script:frameworkFilters | ForEach-Object { $_.FilterFamily } | Select-Object -Unique
-    }
+    $WhiteLabel = $true
 }
-# Parse any sub-level notation passed directly via -FrameworkFilter
-if ($FrameworkFilter -and -not $script:frameworkFilters) {
-    $hasSubLevel = $FrameworkFilter | Where-Object { $_ -match ':' }
-    if ($hasSubLevel) {
-        $script:frameworkFilters = ConvertTo-FrameworkFilter -Frameworks $FrameworkFilter
-        $FrameworkFilter = $script:frameworkFilters | ForEach-Object { $_.FilterFamily } | Select-Object -Unique
-    }
+
+# CustomBranding implicitly enables WhiteLabel
+if ($PSBoundParameters.ContainsKey('CustomBranding') -and -not $WhiteLabel) {
+    $WhiteLabel = $true
 }
 
 # Show-InteractiveWizard -- extracted to Orchestrator/Show-InteractiveWizard.ps1
@@ -395,20 +373,8 @@ if ($launchWizard -and [Environment]::UserInteractive) {
     }
 
     # Report options from wizard
-    if ($wizardParams.ContainsKey('SkipComplianceOverview')) {
-        $SkipComplianceOverview = [switch]$true
-    }
-    if ($wizardParams.ContainsKey('SkipCoverPage')) {
-        $SkipCoverPage = [switch]$true
-    }
-    if ($wizardParams.ContainsKey('SkipExecutiveSummary')) {
-        $SkipExecutiveSummary = [switch]$true
-    }
-    if ($wizardParams.ContainsKey('NoBranding')) {
-        $NoBranding = [switch]$true
-    }
-    if ($wizardParams.ContainsKey('FrameworkFilter') -and -not $PSBoundParameters.ContainsKey('FrameworkFilter')) {
-        $FrameworkFilter = $wizardParams['FrameworkFilter']
+    if ($wizardParams.ContainsKey('CompactReport')) {
+        $CompactReport = [switch]$true
     }
     if ($wizardParams.ContainsKey('ConnectionProfile') -and -not $PSBoundParameters.ContainsKey('ConnectionProfile')) {
         $ConnectionProfile = $wizardParams['ConnectionProfile']
@@ -532,6 +498,45 @@ $collectorMap      = $maps.CollectorMap
 $dnsCollector      = $maps.DnsCollector
 
 # ------------------------------------------------------------------
+# Section 'All' — expand shorthand to full section list
+# ------------------------------------------------------------------
+if ($Section -contains 'All') {
+    $Section = @('Tenant','Identity','Licensing','Email','Intune','Security',
+                 'Collaboration','PowerBI','Hybrid','Inventory',
+                 'ActiveDirectory','SOC2','ValueOpportunity')
+}
+
+# ------------------------------------------------------------------
+# ListBaselines — display saved snapshots and exit (no assessment)
+# ------------------------------------------------------------------
+if ($ListBaselines) {
+    $baselineRoot = Join-Path -Path $OutputFolder -ChildPath 'Baselines'
+    if (-not (Test-Path -Path $baselineRoot)) {
+        Write-Host "No baselines found at '$baselineRoot'." -ForegroundColor Yellow
+        return
+    }
+    $manifests = Get-ChildItem -Path $baselineRoot -Recurse -Filter 'manifest.json' |
+        Where-Object { -not $TenantId -or $_.FullName -match [regex]::Escape($TenantId) }
+    if ($manifests.Count -eq 0) {
+        Write-Host "No baselines found$(if ($TenantId) { " for tenant '$TenantId'" })." -ForegroundColor Yellow
+        return
+    }
+    $rows = foreach ($m in $manifests | Sort-Object LastWriteTime -Descending) {
+        try { $data = Get-Content -Path $m.FullName -Raw | ConvertFrom-Json } catch { continue }
+        [PSCustomObject]@{
+            Label             = $data.Label
+            SavedAt           = $data.SavedAt
+            RegistryVersion   = $data.RegistryVersion
+            AssessmentVersion = $data.AssessmentVersion
+            CheckCount        = $data.CheckCount
+            TenantId          = $data.TenantId
+        }
+    }
+    $rows | Format-Table -AutoSize
+    return
+}
+
+# ------------------------------------------------------------------
 # Auto-detect cloud environment (when not explicitly specified)
 # ------------------------------------------------------------------
 if ($TenantId -and -not $PSBoundParameters.ContainsKey('M365Environment')) {
@@ -622,7 +627,7 @@ $failedServices = [System.Collections.Generic.HashSet[string]]::new()
 
 # Module compatibility check -- extracted to Orchestrator/Test-ModuleCompatibility.ps1
 if (-not $SkipConnection) {
-    $modResult = Test-ModuleCompatibility -Section $Section -SectionServiceMap $sectionServiceMap -NonInteractive:$NonInteractive -SkipDLP:$SkipDLP
+    $modResult = Test-ModuleCompatibility -Section $Section -SectionServiceMap $sectionServiceMap -NonInteractive:$NonInteractive -SkipDLP:$SkipPurview
     if (-not $modResult.Passed) { return }
     $Section = $modResult.Section
 
@@ -775,13 +780,13 @@ foreach ($sectionName in $Section) {
 
     $collectors = $collectorMap[$sectionName]
 
-    # Skip DLP collector (and its Purview connection overhead) when -SkipDLP is set
-    if ($SkipDLP) {
-        $dlpCollectors = @($collectors | Where-Object { $_.ContainsKey('RequiredServices') -and $_.RequiredServices -contains 'Purview' })
-        if ($dlpCollectors.Count -gt 0) {
+    # Skip Purview collectors (and their Security and Compliance connection overhead) when -SkipPurview is set
+    if ($SkipPurview) {
+        $purviewCollectors = @($collectors | Where-Object { $_.ContainsKey('RequiredServices') -and $_.RequiredServices -contains 'Purview' })
+        if ($purviewCollectors.Count -gt 0) {
             $collectors = @($collectors | Where-Object { -not ($_.ContainsKey('RequiredServices') -and $_.RequiredServices -contains 'Purview') })
-            foreach ($skipped in $dlpCollectors) {
-                Write-AssessmentLog -Level INFO -Message "Skipped: $($skipped.Label) (-SkipDLP)" -Section $sectionName -Collector $skipped.Label
+            foreach ($skipped in $purviewCollectors) {
+                Write-AssessmentLog -Level INFO -Message "Skipped: $($skipped.Label) (-SkipPurview)" -Section $sectionName -Collector $skipped.Label
             }
         }
     }
@@ -1223,7 +1228,8 @@ if ($SaveBaseline) {
         -Label $SaveBaseline `
         -TenantId $TenantId `
         -Sections @($sections | ForEach-Object { $_ }) `
-        -Version $script:AssessmentVersion
+        -Version $script:AssessmentVersion `
+        -RegistryVersion (Get-RegistryVersion -ProjectRoot $projectRoot)
     Write-AssessmentLog -Level INFO -Message "Baseline saved: $savedBaselineDir"
 }
 
@@ -1235,15 +1241,16 @@ if ($CompareBaseline) {
         Write-AssessmentLog -Level INFO -Message "Comparing against baseline '$CompareBaseline'..."
         $driftReport = Compare-AssessmentBaseline `
             -AssessmentFolder $assessmentFolder `
-            -BaselineFolder $baselineFolder
+            -BaselineFolder $baselineFolder `
+            -RegistryVersion (Get-RegistryVersion -ProjectRoot $projectRoot)
         $driftBaselineLabel = $CompareBaseline
-        $metaPath = Join-Path -Path $baselineFolder -ChildPath '_baseline-metadata.json'
+        $metaPath = Join-Path -Path $baselineFolder -ChildPath 'manifest.json'
         if (Test-Path -Path $metaPath) {
             try {
                 $meta = Get-Content -Path $metaPath -Raw | ConvertFrom-Json
-                $driftBaselineTimestamp = $meta.timestamp
+                $driftBaselineTimestamp = $meta.SavedAt
             }
-            catch { Write-Verbose "Drift: could not read baseline metadata: $_" }
+            catch { Write-Verbose "Drift: could not read baseline manifest: $_" }
         }
         Write-AssessmentLog -Level INFO -Message "Drift analysis: $($driftReport.Count) changes detected vs baseline '$CompareBaseline'"
     }
@@ -1253,16 +1260,52 @@ if ($CompareBaseline) {
 }
 
 # ------------------------------------------------------------------
+# AutoBaseline — save dated snapshot and compare to previous auto-*
+# ------------------------------------------------------------------
+if ($AutoBaseline) {
+    $autoLabel   = "auto_$(Get-Date -Format 'yyyy-MM-ddTHH-mm-ss')"
+    $safeTenant  = $TenantId -replace '[^\w\.\-]', '_'
+    $sections    = @($Section | ForEach-Object { $_ })
+    Export-AssessmentBaseline `
+        -AssessmentFolder $assessmentFolder `
+        -OutputFolder $OutputFolder `
+        -TenantId $TenantId `
+        -Label $autoLabel `
+        -Sections $sections `
+        -Version $script:AssessmentVersion `
+        -RegistryVersion (Get-RegistryVersion -ProjectRoot $projectRoot)
+    Write-AssessmentLog -Level INFO -Message "AutoBaseline saved: $autoLabel"
+
+    # Compare to most recent previous auto-snapshot for this tenant
+    $prevAuto = Get-ChildItem -Path (Join-Path $OutputFolder 'Baselines') -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match "^auto_.*_${safeTenant}$" } |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -Skip 1 -First 1
+    if ($prevAuto) {
+        Write-AssessmentLog -Level INFO -Message "AutoBaseline: comparing to $($prevAuto.Name)..."
+        $driftReport = Compare-AssessmentBaseline `
+            -AssessmentFolder $assessmentFolder `
+            -BaselineFolder $prevAuto.FullName `
+            -RegistryVersion (Get-RegistryVersion -ProjectRoot $projectRoot)
+        $driftBaselineLabel = $prevAuto.Name -replace "_${safeTenant}$", ''
+        try {
+            $meta = Get-Content -Path (Join-Path $prevAuto.FullName 'manifest.json') -Raw | ConvertFrom-Json
+            $driftBaselineTimestamp = $meta.SavedAt
+        }
+        catch { Write-Verbose "AutoBaseline: could not read previous manifest: $_" }
+        Write-AssessmentLog -Level INFO -Message "AutoBaseline drift: $($driftReport.Count) changes vs $($prevAuto.Name)"
+    }
+}
+
+# ------------------------------------------------------------------
 # Generate HTML report
 # ------------------------------------------------------------------
 $reportScriptPath = Join-Path -Path $projectRoot -ChildPath 'Common\Export-AssessmentReport.ps1'
 if (Test-Path -Path $reportScriptPath) {
     try {
-        # QuickScan: default to compact triage report unless the user explicitly overrode each flag
-        if ($QuickScan) {
-            if (-not $PSBoundParameters.ContainsKey('SkipCoverPage'))          { $SkipCoverPage = $true }
-            if (-not $PSBoundParameters.ContainsKey('SkipExecutiveSummary'))   { $SkipExecutiveSummary = $true }
-            if (-not $PSBoundParameters.ContainsKey('SkipComplianceOverview')) { $SkipComplianceOverview = $true }
+        # QuickScan: default to compact report unless the user explicitly overrode it
+        if ($QuickScan -and -not $PSBoundParameters.ContainsKey('CompactReport')) {
+            $CompactReport = $true
         }
 
         $reportParams = @{
@@ -1270,26 +1313,17 @@ if (Test-Path -Path $reportScriptPath) {
         }
         if ($script:domainPrefix) { $reportParams['TenantName'] = $script:domainPrefix }
         elseif ($TenantId)        { $reportParams['TenantName'] = $TenantId }
-        if ($NoBranding) { $reportParams['NoBranding'] = $true }
-        if ($WhiteLabel) { $reportParams['WhiteLabel'] = $true }
-        if ($Package) { $reportParams['Package'] = $true }
+        if ($WhiteLabel)        { $reportParams['WhiteLabel']        = $true }
         if ($FindingsNarrative) { $reportParams['FindingsNarrative'] = $FindingsNarrative }
-        if ($script:frameworkFilters) { $reportParams['FrameworkFilters'] = $script:frameworkFilters }
-        if ($SkipComplianceOverview) { $reportParams['SkipComplianceOverview'] = $true }
-        if ($SkipCoverPage) { $reportParams['SkipCoverPage'] = $true }
-        if ($SkipExecutiveSummary) { $reportParams['SkipExecutiveSummary'] = $true }
-        if ($SkipPdf) { $reportParams['SkipPdf'] = $true }
-        if ($OpenReport) { $reportParams['OpenReport'] = $true }
-        if ($FrameworkFilter) { $reportParams['FrameworkFilter'] = $FrameworkFilter }
-        if ($CustomBranding) { $reportParams['CustomBranding'] = $CustomBranding }
-        if ($FrameworkExport) { $reportParams['FrameworkExport'] = $FrameworkExport }
-        if ($QuickScan) { $reportParams['QuickScan'] = $true }
+        if ($CompactReport)     { $reportParams['CompactReport']     = $true }
+        if ($OpenReport)        { $reportParams['OpenReport']        = $true }
+        if ($CustomBranding)    { $reportParams['CustomBranding']    = $CustomBranding }
+        if ($QuickScan)         { $reportParams['QuickScan']         = $true }
         if ($driftReport.Count -gt 0 -or $driftBaselineLabel) {
             $reportParams['DriftReport']            = $driftReport
             $reportParams['DriftBaselineLabel']     = $driftBaselineLabel
             $reportParams['DriftBaselineTimestamp'] = $driftBaselineTimestamp
         }
-        $reportParams['CisFrameworkId'] = "cis-m365-$CisBenchmarkVersion"
 
         $reportOutput = & $reportScriptPath @reportParams
         foreach ($line in $reportOutput) {

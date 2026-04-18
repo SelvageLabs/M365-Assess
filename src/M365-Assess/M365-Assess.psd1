@@ -50,6 +50,7 @@
         'Set-M365ConnectionProfile'
         'Remove-M365ConnectionProfile'
         'Get-M365ConnectionProfile'
+        'Compare-M365Baseline'
     )
     CmdletsToExport   = @()
     VariablesToExport = @()
@@ -73,6 +74,7 @@
         'Orchestrator\Invoke-DnsAuthentication.ps1'
         'Orchestrator\Export-AssessmentBaseline.ps1'
         'Orchestrator\Compare-AssessmentBaseline.ps1'
+        'Orchestrator\Compare-M365Baseline.ps1'
         'Common\SecurityConfigHelper.ps1'
         'Common\Connect-Service.ps1'
         'Common\Resolve-DnsRecord.ps1'
