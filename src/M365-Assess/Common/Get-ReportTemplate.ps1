@@ -50,7 +50,7 @@ function Get-ReportTemplate {
     $null = $sb.AppendLine('</style>')
     $null = $sb.AppendLine('</head>')
     $null = $sb.AppendLine('<body>')
-    $null = $sb.AppendLine('<div id="app-root"></div>')
+    $null = $sb.AppendLine('<div id="root"></div>')
     $null = $sb.AppendLine('<script>')
     $null = $sb.Append($ReportDataJson)
     $null = $sb.AppendLine()

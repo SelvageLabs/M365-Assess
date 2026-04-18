@@ -45,8 +45,8 @@ Describe 'Get-ReportTemplate — function contract' {
         $script:content | Should -Match 'StringBuilder'
     }
 
-    It 'emits app-root div target for React mount' {
-        $script:content | Should -Match 'app-root'
+    It 'emits root div target for React mount' {
+        $script:content | Should -Match 'id="root"'
     }
 
     It 'embeds ReportDataJson in a script block' {
@@ -104,9 +104,9 @@ Describe 'Get-ReportTemplate — output validation' {
         $result | Should -Match '<!DOCTYPE html>'
     }
 
-    It 'output contains app-root div' {
+    It 'output contains root div' {
         $result = Get-ReportTemplate -ReportDataJson 'window.REPORT_DATA = {};' -ReportTitle 'Test'
-        $result | Should -Match 'id="app-root"'
+        $result | Should -Match 'id="root"'
     }
 
     It 'output embeds the report data JSON' {
