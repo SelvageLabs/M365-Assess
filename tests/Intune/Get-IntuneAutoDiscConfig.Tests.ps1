@@ -1,14 +1,13 @@
-Describe 'Get-IntuneAutoDiscConfig - MDM Auto-Enrollment Configured' {
+Describe 'Get-IntuneAutoDiscConfig - MDM auto-enrollment configured' {
     BeforeAll {
         function global:Update-CheckProgress { param($CheckId, $Setting, $Status) }
 
-        Mock Invoke-MgGraphRequest {
-            param($Method, $Uri)
-            if ($Uri -match 'deviceEnrollmentConfigurations') {
-                return @{ value = @(
-                    @{ '@odata.type' = '#microsoft.graph.deviceEnrollmentWindowsAutoEnrollment'; displayName = 'Windows MDM Auto Enrollment' }
-                ) }
-            }
+        Mock Invoke-MgGraphRequest -ParameterFilter { $Uri -match 'deviceEnrollmentConfigurations' } {
+            return @{ value = @(
+                @{ '@odata.type' = '#microsoft.graph.deviceEnrollmentWindowsAutoEnrollment'; displayName = 'MDM Auto Enrollment' }
+            ) }
+        }
+        Mock Invoke-MgGraphRequest -ParameterFilter { $Uri -match 'windowsAutopilotDeploymentProfiles' } {
             return @{ value = @() }
         }
 
@@ -16,19 +15,17 @@ Describe 'Get-IntuneAutoDiscConfig - MDM Auto-Enrollment Configured' {
         . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-IntuneAutoDiscConfig.ps1"
     }
 
-    It 'Returns a non-empty settings list' {
-        $settings.Count | Should -BeGreaterThan 0
+    It 'Returns one Pass row for the enrollment config' {
+        $settings.Count | Should -Be 1
+        $settings[0].Status | Should -Be 'Pass'
     }
 
-    It 'Status is Pass when MDM auto-enrollment is configured' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-AUTODISC-001*' }
-        $check | Should -Not -BeNullOrEmpty
-        $check.Status | Should -Be 'Pass'
+    It 'Setting includes config name' {
+        $settings[0].Setting | Should -Match 'MDM Auto Enrollment'
     }
 
     It 'CheckId follows naming convention' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-AUTODISC-001*' }
-        $check.CheckId | Should -Match '^INTUNE-AUTODISC-001\.\d+$'
+        $settings[0].CheckId | Should -Match '^INTUNE-AUTODISC-001\.\d+$'
     }
 
     AfterAll {
@@ -36,28 +33,30 @@ Describe 'Get-IntuneAutoDiscConfig - MDM Auto-Enrollment Configured' {
     }
 }
 
-Describe 'Get-IntuneAutoDiscConfig - Autopilot Profile Configured' {
+Describe 'Get-IntuneAutoDiscConfig - Autopilot profiles configured' {
     BeforeAll {
         function global:Update-CheckProgress { param($CheckId, $Setting, $Status) }
 
-        Mock Invoke-MgGraphRequest {
-            param($Method, $Uri)
-            if ($Uri -match 'deviceEnrollmentConfigurations') {
-                return @{ value = @(
-                    @{ '@odata.type' = '#microsoft.graph.windowsAutopilotDeploymentProfile'; displayName = 'Autopilot Profile' }
-                ) }
-            }
+        Mock Invoke-MgGraphRequest -ParameterFilter { $Uri -match 'deviceEnrollmentConfigurations' } {
             return @{ value = @() }
+        }
+        Mock Invoke-MgGraphRequest -ParameterFilter { $Uri -match 'windowsAutopilotDeploymentProfiles' } {
+            return @{ value = @(
+                @{ displayName = 'Corp Autopilot Profile' }
+                @{ displayName = 'BYOD Autopilot Profile' }
+            ) }
         }
 
         . "$PSScriptRoot/../../src/M365-Assess/Orchestrator/AssessmentHelpers.ps1"
         . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-IntuneAutoDiscConfig.ps1"
     }
 
-    It 'Status is Pass when Autopilot profile is configured' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-AUTODISC-001*' }
-        $check | Should -Not -BeNullOrEmpty
-        $check.Status | Should -Be 'Pass'
+    It 'Returns one row per Autopilot profile' {
+        $settings.Count | Should -Be 2
+    }
+
+    It 'All rows are Pass' {
+        $settings | ForEach-Object { $_.Status | Should -Be 'Pass' }
     }
 
     AfterAll {
@@ -65,22 +64,19 @@ Describe 'Get-IntuneAutoDiscConfig - Autopilot Profile Configured' {
     }
 }
 
-Describe 'Get-IntuneAutoDiscConfig - No Auto-Enrollment' {
+Describe 'Get-IntuneAutoDiscConfig - No enrollment or Autopilot' {
     BeforeAll {
         function global:Update-CheckProgress { param($CheckId, $Setting, $Status) }
 
-        Mock Invoke-MgGraphRequest {
-            return @{ value = @() }
-        }
+        Mock Invoke-MgGraphRequest { return @{ value = @() } }
 
         . "$PSScriptRoot/../../src/M365-Assess/Orchestrator/AssessmentHelpers.ps1"
         . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-IntuneAutoDiscConfig.ps1"
     }
 
-    It 'Status is Warning when no auto-enrollment detected (manual may be in use)' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-AUTODISC-001*' }
-        $check | Should -Not -BeNullOrEmpty
-        $check.Status | Should -Be 'Warning'
+    It 'Emits one Warning sentinel row' {
+        $settings.Count | Should -Be 1
+        $settings[0].Status | Should -Be 'Warning'
     }
 
     AfterAll {

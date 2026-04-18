@@ -3,10 +3,11 @@
     Evaluates whether Intune device configuration blocks removable media on
     managed Windows devices and that the policy is actively assigned.
 .DESCRIPTION
-    Queries Intune device configuration profiles for Windows 10/11 and checks
-    whether removable storage is blocked via storageBlockRemovableStorage. Also
-    verifies the profile has at least one group or device assignment, since an
-    unassigned policy provides no enforcement. Satisfies CMMC MP.L2-3.8.7.
+    Queries Intune device configuration profiles for Windows 10/11 and emits one
+    result row per windows10GeneralConfiguration profile that has
+    storageBlockRemovableStorage set to true. Pass = profile has at least one
+    active assignment; Fail = profile exists but has no assignments. If no
+    blocking profiles exist, a Fail row is emitted. Satisfies CMMC MP.L2-3.8.7.
 
     Requires an active Microsoft Graph connection with
     DeviceManagementConfiguration.Read.All permission.
@@ -16,11 +17,11 @@
 .EXAMPLE
     PS> .\Intune\Get-IntuneRemovableMediaConfig.ps1
 
-    Displays removable media restriction evaluation results.
+    Displays per-profile removable media restriction evaluation results.
 .EXAMPLE
     PS> .\Intune\Get-IntuneRemovableMediaConfig.ps1 -OutputPath '.\intune-removablemedia.csv'
 
-    Exports the evaluation to CSV.
+    Exports the per-profile evaluation to CSV.
 .NOTES
     Author:  Daren9m
     CMMC:    MP.L2-3.8.7 — Control use of removable media on system components
@@ -61,9 +62,10 @@ function Add-Setting {
     Add-SecuritySetting @p
 }
 
+$remediationText = 'Intune admin center > Devices > Configuration > Create profile > Windows 10 and later > Device restrictions > General > Removable storage: Block. Assign the profile to device or user groups.'
+
 # ------------------------------------------------------------------
-# 1. Check device configuration profiles for removable storage block
-#    with active assignments
+# 1. Emit one row per blocking profile, Pass/Fail based on assignments
 # ------------------------------------------------------------------
 try {
     Write-Verbose 'Checking Intune device configurations for removable media restrictions...'
@@ -79,50 +81,46 @@ try {
         $configList = @($configs['value'])
     }
 
-    $blockingProfile = $null
+    $blockingProfiles = @($configList | Where-Object {
+        $_['@odata.type'] -match 'windows10GeneralConfiguration' -and
+        $_['storageBlockRemovableStorage'] -eq $true
+    })
 
-    foreach ($config in $configList) {
-        if ($config['@odata.type'] -notmatch 'windows10GeneralConfiguration') { continue }
-        if ($config['storageBlockRemovableStorage'] -ne $true) { continue }
-
-        $assignments = @()
-        if ($config['assignments']) { $assignments = @($config['assignments']) }
-
-        if ($assignments.Count -gt 0) {
-            $blockingProfile = $config
-            break
+    if ($blockingProfiles.Count -eq 0) {
+        $settingParams = @{
+            Category         = 'Removable Media'
+            Setting          = 'Removable Storage Block (Assigned)'
+            CurrentValue     = 'No removable storage block profile found'
+            RecommendedValue = 'windows10GeneralConfiguration profile with storageBlockRemovableStorage assigned to at least one group'
+            Status           = 'Fail'
+            CheckId          = 'INTUNE-REMOVABLEMEDIA-001'
+            Remediation      = $remediationText
         }
-    }
-
-    if ($blockingProfile) {
-        $profileName = $blockingProfile['displayName']
-        $assignCount = @($blockingProfile['assignments']).Count
-        $currentValue = "Removable storage blocked (Policy: $profileName, $assignCount assignment(s))"
-        $status = 'Pass'
+        Add-Setting @settingParams
     }
     else {
-        $hasUnassigned = $configList | Where-Object {
-            $_['@odata.type'] -match 'windows10GeneralConfiguration' -and
-            $_['storageBlockRemovableStorage'] -eq $true
-        }
-        $currentValue = if ($hasUnassigned) {
-            'Removable storage block profile exists but has no active assignments'
-        } else {
-            'No removable storage block profile found'
-        }
-        $status = 'Fail'
-    }
+        foreach ($blockProfile in $blockingProfiles) {
+            $name        = $blockProfile['displayName']
+            $assignments = @()
+            if ($blockProfile['assignments']) { $assignments = @($blockProfile['assignments']) }
+            $assigned    = $assignments.Count -gt 0
 
-    $settingParams = @{
-        Category         = 'Removable Media'
-        Setting          = 'Removable Storage Block (Assigned)'
-        CurrentValue     = $currentValue
-        RecommendedValue = 'windows10GeneralConfiguration profile with storageBlockRemovableStorage assigned to at least one group'
-        Status           = $status
-        CheckId          = 'INTUNE-REMOVABLEMEDIA-001'
-        Remediation      = 'Intune admin center > Devices > Configuration > Create profile > Windows 10 and later > Device restrictions > General > Removable storage: Block. Assign the profile to device or user groups.'
+            $settingParams = @{
+                Category         = 'Removable Media'
+                Setting          = "Removable Storage Block — $name"
+                CurrentValue     = if ($assigned) {
+                    "Removable storage blocked ($($assignments.Count) assignment(s))"
+                } else {
+                    'Removable storage block profile exists but has no active assignments'
+                }
+                RecommendedValue = 'storageBlockRemovableStorage: true with at least one active assignment'
+                Status           = if ($assigned) { 'Pass' } else { 'Fail' }
+                CheckId          = 'INTUNE-REMOVABLEMEDIA-001'
+                Remediation      = $remediationText
+            }
+            Add-Setting @settingParams
+        }
     }
-    Add-Setting @settingParams
 }
 catch {
     if ($_.Exception.Message -match '403|Forbidden|Authorization') {

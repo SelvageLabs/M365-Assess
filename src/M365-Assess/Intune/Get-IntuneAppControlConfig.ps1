@@ -3,9 +3,11 @@
     Evaluates whether application control policies (WDAC/AppLocker) are deployed
     via Intune to restrict unauthorized software.
 .DESCRIPTION
-    Queries Intune device configuration profiles for Windows Defender Application
-    Control (WDAC) or AppLocker policy deployments. Checks endpoint protection
-    profiles and custom OMA-URI policies that enforce application whitelisting.
+    Queries Intune device configuration profiles and emits one result row per
+    profile that contains WDAC/AppLocker settings — either via
+    appLockerApplicationControl on endpoint protection profiles, or via matching
+    OMA-URI on custom configuration profiles. If no application control policies
+    are found, a Fail row is emitted.
 
     Requires an active Microsoft Graph connection with
     DeviceManagementConfiguration.Read.All permission.
@@ -15,11 +17,11 @@
 .EXAMPLE
     PS> .\Intune\Get-IntuneAppControlConfig.ps1
 
-    Displays application control evaluation results.
+    Displays per-profile application control evaluation results.
 .EXAMPLE
     PS> .\Intune\Get-IntuneAppControlConfig.ps1 -OutputPath '.\intune-appcontrol.csv'
 
-    Exports the evaluation to CSV.
+    Exports the per-profile evaluation to CSV.
 .NOTES
     Author:  Daren9m
     CMMC:    CM.L2-3.4.7 — Restrict, Disable, or Prevent the Use of Nonessential Programs
@@ -60,8 +62,10 @@ function Add-Setting {
     Add-SecuritySetting @p
 }
 
+$remediationText = 'Intune admin center > Devices > Configuration > Create profile > Endpoint protection > Windows Defender Application Control. Alternatively, deploy WDAC via custom OMA-URI.'
+
 # ------------------------------------------------------------------
-# 1. Check for WDAC/AppLocker policies in device configurations
+# 1. Emit one row per profile with WDAC/AppLocker settings
 # ------------------------------------------------------------------
 try {
     Write-Verbose 'Checking Intune device configurations for application control policies...'
@@ -77,47 +81,65 @@ try {
         $configList = @($configs['value'])
     }
 
-    $appControlFound = $false
-    $policyDetail = 'None found'
+    $matchCount = 0
 
     foreach ($config in $configList) {
-        $odataType = $config['@odata.type']
+        $odataType   = $config['@odata.type']
         $displayName = $config['displayName']
 
-        # Check for Endpoint Protection profiles with WDAC
         if ($odataType -match 'windows10EndpointProtectionConfiguration') {
-            $appLockerAppExe = $config['appLockerApplicationControl']
-            if ($null -ne $appLockerAppExe -and $appLockerAppExe -ne 'notConfigured') {
-                $appControlFound = $true
-                $policyDetail = "AppLocker: $appLockerAppExe (Policy: $displayName)"
+            $appLocker = $config['appLockerApplicationControl']
+            if ($null -ne $appLocker -and $appLocker -ne 'notConfigured') {
+                $matchCount++
+                $settingParams = @{
+                    Category         = 'Application Control'
+                    Setting          = "WDAC/AppLocker Policy — $displayName"
+                    CurrentValue     = "AppLocker mode: $appLocker"
+                    RecommendedValue = 'appLockerApplicationControl configured (not notConfigured)'
+                    Status           = 'Pass'
+                    CheckId          = 'INTUNE-APPCONTROL-001'
+                    Remediation      = $remediationText
+                }
+                Add-Setting @settingParams
             }
         }
 
-        # Check custom OMA-URI for WDAC policies
         if ($odataType -match 'windows10CustomConfiguration') {
             $omaSettings = $config['omaSettings']
             if ($omaSettings) {
-                foreach ($setting in $omaSettings) {
+                foreach ($setting in @($omaSettings)) {
                     $omaUri = $setting['omaUri']
                     if ($omaUri -match 'ApplicationControl|AppLocker|CodeIntegrity') {
-                        $appControlFound = $true
-                        $policyDetail = "WDAC/AppLocker OMA-URI: $omaUri (Policy: $displayName)"
+                        $matchCount++
+                        $settingParams = @{
+                            Category         = 'Application Control'
+                            Setting          = "WDAC/AppLocker OMA-URI — $displayName"
+                            CurrentValue     = "OMA-URI: $omaUri"
+                            RecommendedValue = 'OMA-URI matching ApplicationControl, AppLocker, or CodeIntegrity'
+                            Status           = 'Pass'
+                            CheckId          = 'INTUNE-APPCONTROL-001'
+                            Remediation      = $remediationText
+                        }
+                        Add-Setting @settingParams
+                        break
                     }
                 }
             }
         }
     }
 
-    $settingParams = @{
-        Category         = 'Application Control'
-        Setting          = 'WDAC or AppLocker Policy Deployed'
-        CurrentValue     = if ($appControlFound) { $policyDetail } else { 'No application control policies found' }
-        RecommendedValue = 'WDAC or AppLocker policy deployed via Intune'
-        Status           = if ($appControlFound) { 'Pass' } else { 'Fail' }
-        CheckId          = 'INTUNE-APPCONTROL-001'
-        Remediation      = 'Intune admin center > Devices > Configuration > Create profile > Endpoint protection > Windows Defender Application Control. Alternatively, deploy WDAC via custom OMA-URI.'
+    if ($matchCount -eq 0) {
+        $settingParams = @{
+            Category         = 'Application Control'
+            Setting          = 'WDAC or AppLocker Policy Deployed'
+            CurrentValue     = 'No application control policies found'
+            RecommendedValue = 'WDAC or AppLocker policy deployed via Intune'
+            Status           = 'Fail'
+            CheckId          = 'INTUNE-APPCONTROL-001'
+            Remediation      = $remediationText
+        }
+        Add-Setting @settingParams
     }
-    Add-Setting @settingParams
 }
 catch {
     if ($_.Exception.Message -match '403|Forbidden|Authorization') {
