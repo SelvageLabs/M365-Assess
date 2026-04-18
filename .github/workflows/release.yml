@@ -109,8 +109,13 @@ jobs:
           python3 -c "
           import json, glob
           for p in glob.glob('src/M365-Assess/controls/**/*.json', recursive=True):
-              with open(p) as f: data = json.load(f)
-              with open(p, 'w') as f: json.dump(data, f, separators=(',',':'))
+              with open(p, 'rb') as f: raw = f.read()
+              try:
+                  content = raw.decode('utf-8-sig')
+              except UnicodeDecodeError:
+                  content = raw.decode('latin-1')
+              data = json.loads(content)
+              with open(p, 'w', encoding='utf-8') as f: json.dump(data, f, separators=(',',':'))
           print('JSON files minified')
           "
 

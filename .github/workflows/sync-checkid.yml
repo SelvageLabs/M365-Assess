@@ -38,10 +38,11 @@ jobs:
       - name: Normalize encoding in downloaded files
         run: |
           python3 - <<'EOF'
-          import os, glob
+          import glob
 
-          # Some CheckID releases ship framework JSONs with Windows-1252 bytes.
-          # Replace known offenders with their UTF-8 equivalents before committing.
+          # Only apply CP1252 byte fixes to files that are NOT already valid UTF-8.
+          # Applying byte substitutions to valid UTF-8 files double-encodes characters
+          # (e.g. c2 a7 for § becomes c2 c2 a7 when the bare a7 replacement fires).
           cp1252_fixes = {
               bytes([0x97]): '\u2014'.encode('utf-8'),  # em dash
               bytes([0x96]): '\u2013'.encode('utf-8'),  # en dash
@@ -54,6 +55,11 @@ jobs:
           files.append('src/M365-Assess/controls/registry.json')
           for path in files:
               raw = open(path, 'rb').read()
+              try:
+                  raw.decode('utf-8')
+                  continue  # already valid UTF-8, skip
+              except UnicodeDecodeError:
+                  pass
               fixed = raw
               for bad, good in cp1252_fixes.items():
                   fixed = fixed.replace(bad, good)
