@@ -3,9 +3,10 @@
     Evaluates whether automatic device enrollment and discovery is configured
     in Intune for automated inventory management.
 .DESCRIPTION
-    Checks whether MDM auto-enrollment configurations exist so that devices are
-    automatically discovered and enrolled into management. Verifies that at least
-    one auto-enrollment policy is configured with MDM scope set to All or Some.
+    Checks whether MDM auto-enrollment configurations and Windows Autopilot
+    deployment profiles exist. Emits one row per deviceEnrollmentWindowsAutoEnrollment
+    configuration and one row per Autopilot deployment profile. If neither is found,
+    a Warning row is emitted indicating manual enrollment or alternate MDM scope.
 
     Requires an active Microsoft Graph connection with
     DeviceManagementConfiguration.Read.All permission.
@@ -15,11 +16,11 @@
 .EXAMPLE
     PS> .\Intune\Get-IntuneAutoDiscConfig.ps1
 
-    Displays automatic discovery evaluation results.
+    Displays per-configuration automatic discovery evaluation results.
 .EXAMPLE
     PS> .\Intune\Get-IntuneAutoDiscConfig.ps1 -OutputPath '.\intune-autodisc.csv'
 
-    Exports the evaluation to CSV.
+    Exports the per-configuration evaluation to CSV.
 .NOTES
     Author:  Daren9m
     CMMC:    CM.L3-3.4.3E — Employ Automated Discovery and Management Tools
@@ -60,8 +61,10 @@ function Add-Setting {
     Add-SecuritySetting @p
 }
 
+$remediationText = 'Configure Intune automatic enrollment: Entra admin center > Mobility (MDM and WIP) > Microsoft Intune > MDM user scope: All or Some. Consider configuring Windows Autopilot for zero-touch provisioning.'
+
 # ------------------------------------------------------------------
-# 1. Check device enrollment configurations for auto-enrollment
+# 1. Emit one row per enrollment config + one row per Autopilot profile
 # ------------------------------------------------------------------
 try {
     Write-Verbose 'Checking Intune device enrollment configurations for auto-enrollment...'
@@ -77,62 +80,83 @@ try {
         $configList = @($enrollConfigs['value'])
     }
 
-    $autoEnrollFound = $false
-    $enrollDetail = 'No auto-enrollment configuration found'
+    $matchCount = 0
 
     foreach ($config in $configList) {
-        $odataType = $config['@odata.type']
+        $odataType   = $config['@odata.type']
         $displayName = $config['displayName']
 
-        # Windows MDM auto-enrollment — only count types that prove auto-enrollment is configured
         if ($odataType -match 'deviceEnrollmentWindowsAutoEnrollment') {
-            $autoEnrollFound = $true
-            $enrollDetail = "MDM auto-enrollment configuration found: $displayName"
+            $matchCount++
+            $settingParams = @{
+                Category         = 'Automated Discovery'
+                Setting          = "MDM Auto-Enrollment — $displayName"
+                CurrentValue     = 'MDM auto-enrollment configuration present'
+                RecommendedValue = 'MDM auto-enrollment configured (scope: All or Some users)'
+                Status           = 'Pass'
+                CheckId          = 'INTUNE-AUTODISC-001'
+                Remediation      = $remediationText
+            }
+            Add-Setting @settingParams
         }
 
-        # Look for Windows Autopilot deployment profiles (inline, from the enrollment configs endpoint)
         if ($odataType -match 'windowsAutopilot') {
-            $autoEnrollFound = $true
-            $enrollDetail = "Autopilot deployment profile: $displayName"
-        }
-    }
-
-    # Also check for Windows Autopilot deployment profiles directly
-    if (-not $autoEnrollFound) {
-        try {
-            $autopilotParams = @{
-                Method      = 'GET'
-                Uri         = '/beta/deviceManagement/windowsAutopilotDeploymentProfiles'
-                ErrorAction = 'Stop'
+            $matchCount++
+            $settingParams = @{
+                Category         = 'Automated Discovery'
+                Setting          = "Autopilot Deployment Profile (enrollment) — $displayName"
+                CurrentValue     = 'Autopilot profile configured via enrollment endpoint'
+                RecommendedValue = 'Windows Autopilot deployment profile configured'
+                Status           = 'Pass'
+                CheckId          = 'INTUNE-AUTODISC-001'
+                Remediation      = $remediationText
             }
-            $autopilotProfiles = Invoke-MgGraphRequest @autopilotParams
+            Add-Setting @settingParams
+        }
+    }
 
-            if ($autopilotProfiles -and $autopilotProfiles['value'] -and @($autopilotProfiles['value']).Count -gt 0) {
-                $autoEnrollFound = $true
-                $profileCount = @($autopilotProfiles['value']).Count
-                $enrollDetail = "$profileCount Autopilot deployment profile(s) configured"
+    # Also check dedicated Autopilot deployment profiles endpoint
+    try {
+        $autopilotParams = @{
+            Method      = 'GET'
+            Uri         = '/beta/deviceManagement/windowsAutopilotDeploymentProfiles'
+            ErrorAction = 'Stop'
+        }
+        $autopilotProfiles = Invoke-MgGraphRequest @autopilotParams
+
+        if ($autopilotProfiles -and $autopilotProfiles['value']) {
+            foreach ($profile in @($autopilotProfiles['value'])) {
+                $matchCount++
+                $profileName = $profile['displayName']
+                $settingParams = @{
+                    Category         = 'Automated Discovery'
+                    Setting          = "Autopilot Deployment Profile — $profileName"
+                    CurrentValue     = 'Autopilot deployment profile configured'
+                    RecommendedValue = 'Windows Autopilot deployment profile configured'
+                    Status           = 'Pass'
+                    CheckId          = 'INTUNE-AUTODISC-001'
+                    Remediation      = $remediationText
+                }
+                Add-Setting @settingParams
             }
         }
-        catch {
-            Write-Verbose "Could not query Autopilot profiles: $_"
+    }
+    catch {
+        Write-Verbose "Could not query Autopilot profiles: $_"
+    }
+
+    if ($matchCount -eq 0) {
+        $settingParams = @{
+            Category         = 'Automated Discovery'
+            Setting          = 'Automatic Device Enrollment and Discovery'
+            CurrentValue     = 'No MDM auto-enrollment or Autopilot profile detected — manual enrollment or alternate MDM scope may be in use'
+            RecommendedValue = 'MDM auto-enrollment configured (scope: All or Some users)'
+            Status           = 'Warning'
+            CheckId          = 'INTUNE-AUTODISC-001'
+            Remediation      = $remediationText
         }
+        Add-Setting @settingParams
     }
-
-    $autoDiscStatus = if ($autoEnrollFound) { 'Pass' } else { 'Warning' }
-    if (-not $autoEnrollFound) {
-        $enrollDetail = 'No MDM auto-enrollment or Autopilot profile detected — manual enrollment or alternate MDM scope may be in use'
-    }
-
-    $settingParams = @{
-        Category         = 'Automated Discovery'
-        Setting          = 'Automatic Device Enrollment and Discovery'
-        CurrentValue     = $enrollDetail
-        RecommendedValue = 'MDM auto-enrollment configured (scope: All or Some users)'
-        Status           = $autoDiscStatus
-        CheckId          = 'INTUNE-AUTODISC-001'
-        Remediation      = 'Configure Intune automatic enrollment: Entra admin center > Mobility (MDM and WIP) > Microsoft Intune > MDM user scope: All or Some. Consider configuring Windows Autopilot for zero-touch provisioning.'
-    }
-    Add-Setting @settingParams
 }
 catch {
     if ($_.Exception.Message -match '403|Forbidden|Authorization') {

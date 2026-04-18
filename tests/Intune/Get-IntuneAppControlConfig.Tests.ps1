@@ -1,14 +1,10 @@
-Describe 'Get-IntuneAppControlConfig - AppLocker Policy Present' {
+Describe 'Get-IntuneAppControlConfig - AppLocker via endpoint protection' {
     BeforeAll {
         function global:Update-CheckProgress { param($CheckId, $Setting, $Status) }
 
         Mock Invoke-MgGraphRequest {
             return @{ value = @(
-                @{
-                    '@odata.type'                = '#microsoft.graph.windows10EndpointProtectionConfiguration'
-                    displayName                  = 'Endpoint Protection'
-                    appLockerApplicationControl  = 'enforceComponentsStoreAppsAndSmartlocker'
-                }
+                @{ '@odata.type' = '#microsoft.graph.windows10EndpointProtectionConfiguration'; displayName = 'CMMC AppControl'; appLockerApplicationControl = 'enforceComponentsAndStoreApps' }
             ) }
         }
 
@@ -16,19 +12,24 @@ Describe 'Get-IntuneAppControlConfig - AppLocker Policy Present' {
         . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-IntuneAppControlConfig.ps1"
     }
 
-    It 'Returns a non-empty settings list' {
-        $settings.Count | Should -BeGreaterThan 0
+    It 'Returns one row for the matching profile' {
+        $settings.Count | Should -Be 1
     }
 
-    It 'Status is Pass when AppLocker policy is configured' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-APPCONTROL-001*' }
-        $check | Should -Not -BeNullOrEmpty
-        $check.Status | Should -Be 'Pass'
+    It 'Status is Pass' {
+        $settings[0].Status | Should -Be 'Pass'
+    }
+
+    It 'Setting includes profile name' {
+        $settings[0].Setting | Should -Match 'CMMC AppControl'
+    }
+
+    It 'CurrentValue includes AppLocker mode' {
+        $settings[0].CurrentValue | Should -Match 'enforceComponentsAndStoreApps'
     }
 
     It 'CheckId follows naming convention' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-APPCONTROL-001*' }
-        $check.CheckId | Should -Match '^INTUNE-APPCONTROL-001\.\d+$'
+        $settings[0].CheckId | Should -Match '^INTUNE-APPCONTROL-001\.\d+$'
     }
 
     AfterAll {
@@ -36,7 +37,7 @@ Describe 'Get-IntuneAppControlConfig - AppLocker Policy Present' {
     }
 }
 
-Describe 'Get-IntuneAppControlConfig - WDAC via OMA-URI' {
+Describe 'Get-IntuneAppControlConfig - WDAC via custom OMA-URI' {
     BeforeAll {
         function global:Update-CheckProgress { param($CheckId, $Setting, $Status) }
 
@@ -46,7 +47,7 @@ Describe 'Get-IntuneAppControlConfig - WDAC via OMA-URI' {
                     '@odata.type' = '#microsoft.graph.windows10CustomConfiguration'
                     displayName   = 'WDAC Policy'
                     omaSettings   = @(
-                        @{ omaUri = './Device/Vendor/MSFT/Policy/Config/ApplicationControl'; value = '<WDAC Policy XML>' }
+                        @{ omaUri = './Vendor/MSFT/ApplicationControl/Policies/12345'; value = '<SiPolicy/>' }
                     )
                 }
             ) }
@@ -56,10 +57,12 @@ Describe 'Get-IntuneAppControlConfig - WDAC via OMA-URI' {
         . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-IntuneAppControlConfig.ps1"
     }
 
-    It 'Status is Pass when WDAC OMA-URI policy is configured' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-APPCONTROL-001*' }
-        $check | Should -Not -BeNullOrEmpty
-        $check.Status | Should -Be 'Pass'
+    It 'Status is Pass' {
+        $settings[0].Status | Should -Be 'Pass'
+    }
+
+    It 'Setting includes profile name' {
+        $settings[0].Setting | Should -Match 'WDAC Policy'
     }
 
     AfterAll {
@@ -67,22 +70,19 @@ Describe 'Get-IntuneAppControlConfig - WDAC via OMA-URI' {
     }
 }
 
-Describe 'Get-IntuneAppControlConfig - No Policy' {
+Describe 'Get-IntuneAppControlConfig - No app control policies' {
     BeforeAll {
         function global:Update-CheckProgress { param($CheckId, $Setting, $Status) }
 
-        Mock Invoke-MgGraphRequest {
-            return @{ value = @() }
-        }
+        Mock Invoke-MgGraphRequest { return @{ value = @() } }
 
         . "$PSScriptRoot/../../src/M365-Assess/Orchestrator/AssessmentHelpers.ps1"
         . "$PSScriptRoot/../../src/M365-Assess/Intune/Get-IntuneAppControlConfig.ps1"
     }
 
-    It 'Status is Fail when no application control policies found' {
-        $check = $settings | Where-Object { $_.CheckId -like 'INTUNE-APPCONTROL-001*' }
-        $check | Should -Not -BeNullOrEmpty
-        $check.Status | Should -Be 'Fail'
+    It 'Emits one Fail sentinel row' {
+        $settings.Count | Should -Be 1
+        $settings[0].Status | Should -Be 'Fail'
     }
 
     AfterAll {
