@@ -419,8 +419,29 @@ function Initialize-CheckProgress {
         # Start the Write-Progress bar
         Write-Progress -Activity 'M365 Security Assessment' -Status "0 / $totalChecks checks complete" -PercentComplete 0 -Id 1
     } else {
-        # Spectre mode: clear screen and start background render loop
-        if ($totalChecks -eq 0) { return }
+        # Spectre mode: only start the live display on non-Silent calls.
+        # Silent calls (e.g. re-init during Connect-RequiredService) just update
+        # state — the display is started explicitly via Start-CheckProgressDisplay
+        # after all service connections complete.
+        if ($totalChecks -eq 0 -or $Silent) { return }
+        [Console]::Clear()
+        Invoke-SpectreRenderLoop
+    }
+}
+
+
+function Start-CheckProgressDisplay {
+    <#
+    .SYNOPSIS
+        Starts the Spectre live display after all service connections have completed.
+        Idempotent — safe to call multiple times; only starts the runspace once.
+    #>
+    [CmdletBinding()]
+    param()
+
+    $state = $script:State
+    if (-not $state -or $state.Total -eq 0 -or $script:BackgroundPs) { return }
+    if ($state.Mode -eq 'Spectre') {
         [Console]::Clear()
         Invoke-SpectreRenderLoop
     }

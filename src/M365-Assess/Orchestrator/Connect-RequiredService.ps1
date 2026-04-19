@@ -119,6 +119,10 @@ function Connect-RequiredService {
                                     Version         = if ($script:AssessmentVersion) { $script:AssessmentVersion } else { '' }
                                 }
                                 if ($QuickScan) { $reInitParams['SeverityFilter'] = @('Critical', 'High') }
+                                # In Spectre mode, defer display start until after all connections complete
+                                if ($global:CheckProgressState -and $global:CheckProgressState.Mode -eq 'Spectre') {
+                                    $reInitParams['Silent'] = $true
+                                }
                                 Initialize-CheckProgress @reInitParams
                             }
                         }

@@ -787,6 +787,10 @@ foreach ($sectionName in $Section) {
     if (-not $SkipConnection -and (-not $hasPerCollectorRequirements -or $hasMixedRequirements)) {
         $sectionServices = $sectionServiceMap[$sectionName]
         Connect-RequiredService -Services $sectionServices -SectionName $sectionName
+        # Start Spectre display once, after first connection batch completes
+        if (Get-Command -Name Start-CheckProgressDisplay -ErrorAction SilentlyContinue) {
+            Start-CheckProgressDisplay
+        }
     }
 
     # Check if ALL section services failed — skip entire section if so
