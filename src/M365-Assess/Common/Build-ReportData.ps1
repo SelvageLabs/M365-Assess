@@ -209,6 +209,9 @@ function Build-ReportDataJson {
     # 5. Serialize + escape </script> in string values
     # ------------------------------------------------------------------
     $json = $reportData | ConvertTo-Json -Depth 10
+    # ConvertTo-Json serializes [string[]]@() as null in PSCustomObject properties.
+    # All per-finding frameworks fields must be arrays for the React app's .forEach().
+    $json = $json -replace '"frameworks":\s*null', '"frameworks": []'
     $json = $json -replace '</script>', '<\/script>'
     return "window.REPORT_DATA = $json;"
 }
