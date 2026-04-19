@@ -112,6 +112,44 @@ Describe 'Update-CheckProgress' {
     }
 }
 
+Describe 'Update-CheckProgress Spectre mode state' {
+    BeforeAll {
+        . "$PSScriptRoot/../../src/M365-Assess/Common/Show-CheckProgress.ps1"
+        Mock Write-Host { }
+        Mock Write-Progress { }
+        if (-not (Get-Command -Name Invoke-SpectreRenderLoop -ErrorAction SilentlyContinue)) {
+            function global:Invoke-SpectreRenderLoop { }
+        }
+        Mock Invoke-SpectreRenderLoop { }
+
+        $registry = @{
+            'ENTRA-ADMIN-001' = @{ checkId = 'ENTRA-ADMIN-001'; hasAutomatedCheck = $true; collector = 'Entra' }
+            'ENTRA-ADMIN-002' = @{ checkId = 'ENTRA-ADMIN-002'; hasAutomatedCheck = $true; collector = 'Entra' }
+        }
+        Initialize-CheckProgress -ControlRegistry $registry -ActiveSections @('Identity')
+        # Force Spectre mode (CI sets Fallback; override for testing)
+        $global:CheckProgressState.Mode = 'Spectre'
+    }
+
+    It 'should append to state.Checks list in Spectre mode' {
+        Update-CheckProgress -CheckId 'ENTRA-ADMIN-001' -Setting 'Global Admin Count' -Status 'Pass'
+        $global:CheckProgressState.Checks.Count | Should -Be 1
+    }
+
+    It 'should increment Pass counter' {
+        $global:CheckProgressState.Pass | Should -Be 1
+    }
+
+    It 'should increment Fail counter on Fail status' {
+        Update-CheckProgress -CheckId 'ENTRA-ADMIN-002' -Setting 'Another Check' -Status 'Fail'
+        $global:CheckProgressState.Fail | Should -Be 1
+    }
+
+    It 'should NOT call Write-Host in Spectre mode' {
+        Should -Invoke Write-Host -Times 0 -Scope It
+    }
+}
+
 Describe 'Complete-CheckProgress' {
     BeforeAll {
         . "$PSScriptRoot/../../src/M365-Assess/Common/Show-CheckProgress.ps1"

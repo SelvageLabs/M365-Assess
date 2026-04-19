@@ -291,6 +291,31 @@ function global:Update-CheckProgress {
         $state.CollectorDone[$collectorName]++
     }
 
+    # Always append to Checks list (feeds the Spectre live stream)
+    $state.Checks.Add(@{
+        CheckId = $CheckId
+        Setting = $Setting
+        Status  = $Status
+    }) | Out-Null
+
+    # Update pass/fail/warn/skip counters (first occurrence only)
+    if ($isFirstOccurrence) {
+        switch ($Status) {
+            'Pass'    { $state.Pass++ }
+            'Fail'    { $state.Fail++ }
+            'Warning' { $state.Warn++ }
+            'Review'  { $state.Warn++ }
+            'Skipped' { $state.Skip++ }
+        }
+    }
+
+    if ($state.Mode -eq 'Spectre') {
+        # Dashboard reads from $state.Checks — no console output needed
+        return
+    }
+
+    # ── Fallback path: existing Write-Host + Write-Progress output follows ──
+
     # Print collector sub-header on first check from this collector
     if (-not $state.PrintedHeaders[$collectorName]) {
         $state.PrintedHeaders[$collectorName] = $true
@@ -344,13 +369,29 @@ function global:Update-CheckProgress {
 function global:Update-ProgressStatus {
     <#
     .SYNOPSIS
-        Updates the Write-Progress bar with a verbose status message.
+        Updates the current section/collector in the progress display.
     #>
     param([string]$Message)
 
     $state = $global:CheckProgressState
     if (-not $state -or $state.Total -eq 0) { return }
 
+    # Track current section for dashboard sidebar highlighting
+    if ($script:CollectorSectionMap.ContainsKey($Message)) {
+        $sec = $script:CollectorSectionMap[$Message]
+        $state.CurrentSection    = $sec
+        $state.CurrentCollector  = if ($script:CollectorLabelMap[$Message]) { $script:CollectorLabelMap[$Message] } else { $Message }
+
+        # Transition: mark previous Running section Complete, mark current as Running
+        foreach ($s in $state.Sections) {
+            if ($s.Name -eq $sec)             { $s.Status = 'Running' }
+            elseif ($s.Status -eq 'Running')  { $s.Status = 'Complete' }
+        }
+    }
+
+    if ($state.Mode -eq 'Spectre') { return }
+
+    # Fallback: update Write-Progress status text
     $pct = if ($state.Total -gt 0) { [math]::Round(($state.Completed / $state.Total) * 100) } else { 0 }
     Write-Progress -Activity 'M365 Security Assessment' -Status $Message -PercentComplete $pct -Id 1 -CurrentOperation "$($state.Completed) / $($state.Total) checks"
 }
