@@ -267,7 +267,7 @@ function Sidebar({
     const fails = domainCounts.fail[d] || 0;
     const total = domainCounts.total[d] || 0;
     return /*#__PURE__*/React.createElement("a", {
-      href: "#findings",
+      href: "#findings-anchor",
       key: d,
       onClick: e => {
         e.preventDefault();
@@ -496,10 +496,10 @@ function Posture() {
   }, /*#__PURE__*/React.createElement("div", {
     className: "banner-icon"
   }, "!"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", null, critical, " critical finding", critical === 1 ? '' : 's'), " require immediate remediation.", MFA_STATS.adminsWithoutMfa > 0 && ` ${MFA_STATS.adminsWithoutMfa} admin${MFA_STATS.adminsWithoutMfa === 1 ? ' is' : ' are'} not MFA-enrolled.`, ' ', "Prioritized using CISA KEV and CIS Critical Controls guidance.", ' ', /*#__PURE__*/React.createElement("a", {
-    href: "#findings",
+    href: "#findings-anchor",
     onClick: e => {
       e.preventDefault();
-      document.getElementById('findings')?.scrollIntoView({
+      document.getElementById('findings-anchor')?.scrollIntoView({
         behavior: 'smooth',
         block: 'start'
       });
@@ -1037,7 +1037,7 @@ function FrameworkQuilt({
     className: "chip chip-more selected",
     onClick: () => {
       onSelect(expandedFw);
-      document.getElementById('findings')?.scrollIntoView({
+      document.getElementById('findings-anchor')?.scrollIntoView({
         behavior: 'smooth',
         block: 'start'
       });
@@ -1688,10 +1688,10 @@ function Roadmap() {
     }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, "Section:"), " ", t.section), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, "Severity:"), " ", SEV_LABEL[t.severity]), t.effort && /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, "Effort:"), " ", t.effort), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, "Frameworks:"), " ", t.frameworks.join(', ') || '—')), /*#__PURE__*/React.createElement("div", {
       className: "task-actions"
     }, /*#__PURE__*/React.createElement("a", {
-      href: "#findings",
+      href: "#findings-anchor",
       onClick: e => {
         e.preventDefault();
-        document.getElementById('findings')?.scrollIntoView({
+        document.getElementById('findings-anchor')?.scrollIntoView({
           behavior: 'smooth',
           block: 'start'
         });
@@ -2287,7 +2287,7 @@ function App() {
       ...f,
       framework: fw ? [fw] : []
     }));
-    if (fw) document.getElementById('findings')?.scrollIntoView({
+    if (fw) document.getElementById('findings-anchor')?.scrollIntoView({
       behavior: 'smooth',
       block: 'start'
     });
@@ -2297,7 +2297,7 @@ function App() {
       ...f,
       domain: d ? [d] : []
     }));
-    if (d) document.getElementById('findings')?.scrollIntoView({
+    if (d) document.getElementById('findings-anchor')?.scrollIntoView({
       behavior: 'smooth',
       block: 'start'
     });

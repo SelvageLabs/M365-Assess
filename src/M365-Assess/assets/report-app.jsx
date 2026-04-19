@@ -109,7 +109,7 @@ function Sidebar({ active, counts, domainCounts, activeDomain, onDomainJump, nav
             const fails = domainCounts.fail[d] || 0;
             const total = domainCounts.total[d] || 0;
             return (
-              <a href="#findings" key={d}
+              <a href="#findings-anchor" key={d}
                  onClick={(e)=>{ e.preventDefault(); onDomainJump(d); closeIfMobile(); }}
                  className={'nav-item' + (activeDomain===d?' active':'')}>
                 <span>{d}</span>
@@ -248,7 +248,7 @@ function Posture() {
             <strong>{critical} critical finding{critical===1?'':'s'}</strong> require immediate remediation.
             {MFA_STATS.adminsWithoutMfa > 0 && ` ${MFA_STATS.adminsWithoutMfa} admin${MFA_STATS.adminsWithoutMfa===1?' is':' are'} not MFA-enrolled.`}
             {' '}Prioritized using CISA KEV and CIS Critical Controls guidance.{' '}
-            <a href="#findings" onClick={e=>{e.preventDefault();document.getElementById('findings')?.scrollIntoView({behavior:'smooth',block:'start'});}}>
+            <a href="#findings-anchor" onClick={e=>{e.preventDefault();document.getElementById('findings-anchor')?.scrollIntoView({behavior:'smooth',block:'start'});}}>
               Review in findings table →
             </a>
           </div>
@@ -551,7 +551,7 @@ function FrameworkQuilt({ onSelect, selected }) {
           <div style={{marginTop:14, paddingTop:12, borderTop:'1px solid var(--border)'}}>
             <button className="chip chip-more selected" onClick={() => {
               onSelect(expandedFw);
-              document.getElementById('findings')?.scrollIntoView({behavior:'smooth', block:'start'});
+              document.getElementById('findings-anchor')?.scrollIntoView({behavior:'smooth', block:'start'});
             }}>
               View all {expandedData.total} findings in this framework →
             </button>
@@ -1000,9 +1000,9 @@ function Roadmap() {
               <span><b>Frameworks:</b> {t.frameworks.join(', ') || '—'}</span>
             </div>
             <div className="task-actions">
-              <a href="#findings" onClick={(e)=>{
+              <a href="#findings-anchor" onClick={(e)=>{
                 e.preventDefault();
-                document.getElementById('findings')?.scrollIntoView({behavior:'smooth', block:'start'});
+                document.getElementById('findings-anchor')?.scrollIntoView({behavior:'smooth', block:'start'});
               }}>View in findings table →</a>
             </div>
           </div>
@@ -1317,11 +1317,11 @@ function App() {
 
   const onFrameworkSelect = (fw) => {
     setFilters(f => ({ ...f, framework: fw ? [fw] : [] }));
-    if (fw) document.getElementById('findings')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (fw) document.getElementById('findings-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
   const onDomainJump = (d) => {
     setFilters(f => ({ ...f, domain: d ? [d] : [] }));
-    if (d) document.getElementById('findings')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (d) document.getElementById('findings-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   return (
