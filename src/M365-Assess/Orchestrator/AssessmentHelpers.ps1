@@ -239,6 +239,8 @@ function Show-SectionHeader {
     [CmdletBinding()]
     param([string]$Name)
 
+    if ($global:CheckProgressState -and $global:CheckProgressState.Mode -eq 'Spectre') { return }
+
     $label = " $Name "
     $lineLength = 56
     $remaining = $lineLength - $label.Length - 3
@@ -256,6 +258,8 @@ function Show-CollectorResult {
         [double]$DurationSeconds,
         [string]$ErrorMessage
     )
+
+    if ($global:CheckProgressState -and $global:CheckProgressState.Mode -eq 'Spectre') { return }
 
     $symbol = switch ($Status) {
         'Complete' { [char]0x2713 }
