@@ -115,6 +115,8 @@ function Connect-RequiredService {
                                     ControlRegistry = $progressRegistry
                                     ActiveSections  = $Section
                                     TenantLicenses  = $tenantLicenses
+                                    TenantDomain    = if ($script:domainPrefix) { $script:domainPrefix } elseif ($TenantId) { $TenantId } else { 'Unknown' }
+                                    Version         = if ($script:AssessmentVersion) { $script:AssessmentVersion } else { '' }
                                 }
                                 if ($QuickScan) { $reInitParams['SeverityFilter'] = @('Critical', 'High') }
                                 Initialize-CheckProgress @reInitParams

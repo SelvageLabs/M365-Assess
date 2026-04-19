@@ -638,6 +638,8 @@ if (Test-Path -Path $progressHelper) {
             $progressParams = @{
                 ControlRegistry = $progressRegistry
                 ActiveSections  = $Section
+                TenantDomain    = if ($script:domainPrefix) { $script:domainPrefix } elseif ($TenantId) { $TenantId } else { 'Unknown' }
+                Version         = if ($script:AssessmentVersion) { $script:AssessmentVersion } else { '' }
             }
             if (-not $SkipConnection) { $progressParams['Silent'] = $true }
             if ($QuickScan) { $progressParams['SeverityFilter'] = @('Critical', 'High') }
@@ -1288,6 +1290,15 @@ if (Test-Path -Path $reportScriptPath) {
     catch {
         Write-AssessmentLog -Level WARN -Message "HTML report generation failed: $($_.Exception.Message)"
     }
+}
+
+# ── Close the TUI dashboard (Spectre: freeze+keypress; Fallback: compact summary) ──
+if (Get-Command -Name Close-CheckProgress -ErrorAction SilentlyContinue) {
+    $reportSuffix   = if ($script:domainPrefix) { "_$($script:domainPrefix)" } else { '' }
+    $htmlFilePath   = Join-Path -Path $assessmentFolder -ChildPath "_Assessment-Report${reportSuffix}.html"
+    $xlsxFilePath   = Join-Path -Path $assessmentFolder -ChildPath "_Compliance-Matrix${reportSuffix}.xlsx"
+    $outputFileList = @($htmlFilePath, $xlsxFilePath) | Where-Object { Test-Path -Path $_ }
+    Close-CheckProgress -OutputFiles $outputFileList
 }
 
 # ------------------------------------------------------------------
