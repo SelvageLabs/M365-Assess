@@ -948,7 +948,7 @@ function FrameworkQuilt({
   }, f.full || f.id), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: 'var(--font-mono)',
-      fontSize: 10,
+      fontSize: 12,
       color: 'var(--muted)',
       marginTop: 1
     }
@@ -1090,7 +1090,7 @@ function FrameworkQuilt({
     }
   })), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 10,
+      fontSize: 12,
       fontWeight: 700,
       textTransform: 'uppercase',
       letterSpacing: '.1em',
@@ -1900,7 +1900,7 @@ function StrykerBlock() {
     }
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 11,
+      fontSize: 12,
       color: 'var(--muted)',
       textTransform: 'uppercase',
       letterSpacing: '.1em',
@@ -1934,7 +1934,7 @@ function StrykerBlock() {
     }
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 11,
+      fontSize: 12,
       color: 'var(--muted)'
     }
   }, "Pass"), /*#__PURE__*/React.createElement("div", {
@@ -1944,7 +1944,7 @@ function StrykerBlock() {
     }
   }, pass)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 11,
+      fontSize: 12,
       color: 'var(--muted)'
     }
   }, "Fail"), /*#__PURE__*/React.createElement("div", {
@@ -1954,7 +1954,7 @@ function StrykerBlock() {
     }
   }, fail)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 11,
+      fontSize: 12,
       color: 'var(--muted)'
     }
   }, "Total"), /*#__PURE__*/React.createElement("div", {
@@ -2124,7 +2124,7 @@ function Appendix() {
     style: {
       padding: '6px 0',
       fontFamily: 'var(--font-mono)',
-      fontSize: 11
+      fontSize: 12
     }
   }, r.Domain), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(StatusDot, {
     ok: r.SPF && !r.SPF.includes('Not')
@@ -2169,7 +2169,7 @@ function Appendix() {
   })), /*#__PURE__*/React.createElement("td", {
     style: {
       textAlign: 'right',
-      fontSize: 11,
+      fontSize: 12,
       color: 'var(--muted)'
     }
   }, r.State)))))), /*#__PURE__*/React.createElement("div", {
@@ -2193,12 +2193,12 @@ function Appendix() {
     key: i,
     className: "fw-pill",
     style: {
-      fontSize: 11,
+      fontSize: 12,
       padding: '4px 8px'
     }
   }, r.MemberDisplayName))), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 11,
+      fontSize: 12,
       color: 'var(--muted)',
       marginTop: 8
     }
@@ -2292,7 +2292,7 @@ function TweaksPanel({
     onClick: () => setDensity('comfort')
   }, "Comfort"))), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 11,
+      fontSize: 12,
       color: 'var(--muted)',
       marginTop: 4,
       borderTop: '1px solid var(--border)',
@@ -2456,7 +2456,7 @@ function App() {
     style: {
       textAlign: 'center',
       padding: '30px 0 10px',
-      fontSize: 11,
+      fontSize: 12,
       color: 'var(--muted)',
       fontFamily: 'var(--font-mono)',
       letterSpacing: '.06em'

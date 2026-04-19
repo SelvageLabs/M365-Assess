@@ -503,7 +503,7 @@ function FrameworkQuilt({ onSelect, selected }) {
                   <input type="checkbox" checked={visibleFws.includes(f.id)} onChange={() => toggleFw(f.id)}/>
                   <div style={{minWidth:0}}>
                     <div style={{fontSize:12, fontWeight:500, lineHeight:1.3}}>{f.full || f.id}</div>
-                    <div style={{fontFamily:'var(--font-mono)', fontSize:10, color:'var(--muted)', marginTop:1}}>{f.id}</div>
+                    <div style={{fontFamily:'var(--font-mono)', fontSize:12, color:'var(--muted)', marginTop:1}}>{f.id}</div>
                   </div>
                   <span className="ct">{byFw[f.id]?.total || 0}</span>
                 </label>
@@ -580,7 +580,7 @@ function FrameworkQuilt({ onSelect, selected }) {
             {expandedData.review>0 && <div className="fw-seg review" style={{flex:expandedData.review}}/>}
             {expandedData.info>0   && <div className="fw-seg info"   style={{flex:expandedData.info}}/>}
           </div>
-          <div style={{fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'.1em', color:'var(--muted)', marginBottom:8}}>
+          <div style={{fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'.1em', color:'var(--muted)', marginBottom:8}}>
             Coverage by domain
           </div>
           <div className="fw-detail-domains">
@@ -1119,7 +1119,7 @@ function StrykerBlock() {
       </div>
       <div className="card" style={{marginBottom:12, display:'flex', gap:24, alignItems:'center', flexWrap:'wrap'}}>
         <div>
-          <div style={{fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.1em', fontWeight:600}}>Coverage</div>
+          <div style={{fontSize:12, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.1em', fontWeight:600}}>Coverage</div>
           <div style={{fontSize:34, fontWeight:700, fontFamily:'var(--font-display)', letterSpacing:'-.02em'}}>
             {pct(pass, stryker.length)}<span style={{fontSize:18, color:'var(--muted)'}}>%</span>
           </div>
@@ -1128,9 +1128,9 @@ function StrykerBlock() {
           Mapped to MITRE ATT&amp;CK Enterprise techniques and CISA Known Exploited Vulnerabilities (KEV). Prioritized by CIS Critical Security Controls v8 — covers privileged account exposure, CA exclusions, dangerous Graph permissions, and audit trail gaps.
         </div>
         <div style={{display:'flex', gap:18, fontVariantNumeric:'tabular-nums'}}>
-          <div><div style={{fontSize:11,color:'var(--muted)'}}>Pass</div><div style={{fontWeight:700, color:'var(--success-text)'}}>{pass}</div></div>
-          <div><div style={{fontSize:11,color:'var(--muted)'}}>Fail</div><div style={{fontWeight:700, color:'var(--danger-text)'}}>{fail}</div></div>
-          <div><div style={{fontSize:11,color:'var(--muted)'}}>Total</div><div style={{fontWeight:700}}>{stryker.length}</div></div>
+          <div><div style={{fontSize:12,color:'var(--muted)'}}>Pass</div><div style={{fontWeight:700, color:'var(--success-text)'}}>{pass}</div></div>
+          <div><div style={{fontSize:12,color:'var(--muted)'}}>Fail</div><div style={{fontWeight:700, color:'var(--danger-text)'}}>{fail}</div></div>
+          <div><div style={{fontSize:12,color:'var(--muted)'}}>Total</div><div style={{fontWeight:700}}>{stryker.length}</div></div>
         </div>
       </div>
       <div className="findings">
@@ -1210,7 +1210,7 @@ function Appendix() {
             <tbody>
               {D.dns.map((r,i)=>(
                 <tr key={i} style={{borderTop:'1px solid var(--border)'}}>
-                  <td style={{padding:'6px 0',fontFamily:'var(--font-mono)',fontSize:11}}>{r.Domain}</td>
+                  <td style={{padding:'6px 0',fontFamily:'var(--font-mono)',fontSize:12}}>{r.Domain}</td>
                   <td><StatusDot ok={r.SPF && !r.SPF.includes('Not')}/></td>
                   <td><StatusDot ok={r.DMARCPolicy === 'reject' || r.DMARCPolicy === 'quarantine'} warn={r.DMARCPolicy?.includes('none')}/></td>
                   <td><StatusDot ok={r.DKIMStatus === 'OK'}/></td>
@@ -1227,7 +1227,7 @@ function Appendix() {
                 <tr key={i} style={{borderTop:'1px solid var(--border)'}}>
                   <td style={{padding:'6px 0'}}>{r.DisplayName}</td>
                   <td style={{textAlign:'right'}}><StatusDot ok={r.State === 'enabled'} warn={r.State?.includes('Report')}/></td>
-                  <td style={{textAlign:'right',fontSize:11,color:'var(--muted)'}}>{r.State}</td>
+                  <td style={{textAlign:'right',fontSize:12,color:'var(--muted)'}}>{r.State}</td>
                 </tr>
               ))}
             </tbody>
@@ -1237,12 +1237,12 @@ function Appendix() {
           <div style={{fontSize:12,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.08em',fontWeight:600,marginBottom:10}}>Global administrators</div>
           <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
             {D['admin-roles'].filter(r=>r.RoleName==='Global Administrator').map((r,i)=>(
-              <span key={i} className="fw-pill" style={{fontSize:11,padding:'4px 8px'}}>
+              <span key={i} className="fw-pill" style={{fontSize:12,padding:'4px 8px'}}>
                 {r.MemberDisplayName}
               </span>
             ))}
           </div>
-          <div style={{fontSize:11,color:'var(--muted)',marginTop:8}}>
+          <div style={{fontSize:12,color:'var(--muted)',marginTop:8}}>
             {D['admin-roles'].filter(r=>r.RoleName==='Global Administrator').length} Global Administrators detected (including break-glass).
           </div>
         </div>
@@ -1285,7 +1285,7 @@ function TweaksPanel({ onClose, theme, setTheme, mode, setMode, density, setDens
           <button className={density==='comfort'?'active':''} onClick={()=>setDensity('comfort')}>Comfort</button>
         </div>
       </div>
-      <div style={{fontSize:11,color:'var(--muted)',marginTop:4,borderTop:'1px solid var(--border)',paddingTop:10}}>
+      <div style={{fontSize:12,color:'var(--muted)',marginTop:4,borderTop:'1px solid var(--border)',paddingTop:10}}>
         Palette/mode/density settings are saved to localStorage and apply to this report.
       </div>
     </div>
@@ -1399,7 +1399,7 @@ function App() {
         <Roadmap/>
         <Appendix/>
         {!D.whiteLabel && (
-          <div style={{textAlign:'center',padding:'30px 0 10px',fontSize:11,color:'var(--muted)',fontFamily:'var(--font-mono)',letterSpacing:'.06em'}}>
+          <div style={{textAlign:'center',padding:'30px 0 10px',fontSize:12,color:'var(--muted)',fontFamily:'var(--font-mono)',letterSpacing:'.06em'}}>
             <a href="https://github.com/Galvnyz/M365-Assess" target="_blank" rel="noreferrer" style={{color:'inherit',textDecoration:'underline',textUnderlineOffset:3}}>M365 ASSESS</a>
             {' · READ-ONLY SECURITY ASSESSMENT · '}
             <a href="https://galvnyz.com" target="_blank" rel="noreferrer" style={{color:'inherit',textDecoration:'underline',textUnderlineOffset:3}}>GALVNYZ</a>
