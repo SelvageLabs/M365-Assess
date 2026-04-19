@@ -114,7 +114,7 @@ function Sidebar({ active, counts, domainCounts, activeDomain, onDomainJump, nav
           </div>
           <button className="sidebar-close" onClick={onClose} aria-label="Close navigation"><Icon.close/></button>
         </div>
-        <nav>
+        <nav style={{flex:1}}>
           <div className="nav-label">Executive</div>
           {exec.map(it => (
             <a href={`#${it.id}`} key={it.id} onClick={closeIfMobile} className={'nav-item' + (active===it.id?' active':'')}>
@@ -144,9 +144,32 @@ function Sidebar({ active, counts, domainCounts, activeDomain, onDomainJump, nav
             </a>
           ))}
         </nav>
-        <div style={{marginTop:24, padding:'12px 8px', borderTop:'1px solid var(--border)', fontSize:11, color:'var(--muted)', lineHeight:1.5}}>
-          <div style={{fontFamily:'var(--font-mono)'}}>{TENANT.OrgDisplayName}</div>
-          <div style={{marginTop:2, opacity:.7}}>Run · {new Date(SCORE.CreatedDateTime || Date.now()).toLocaleDateString()}</div>
+        <div className="sidebar-cards">
+          <div className="sc-card">
+            <div className="sc-header">
+              <span className="sc-dot" style={{background:'var(--success)'}}/>
+              <span className="sc-title">TENANT</span>
+              <span className="sc-sub">· LIVE</span>
+            </div>
+            <div className="sc-row"><span>org</span><span>{TENANT.DefaultDomain || TENANT.OrgDisplayName}</span></div>
+            <div className="sc-row"><span>tenant</span><span>{(TENANT.TenantId||'').slice(0,8)+'…'}</span></div>
+            <div className="sc-row"><span>users</span><span>{fmt(USERS.TotalUsers)}</span></div>
+            <div className="sc-row"><span>licensed</span><span>{fmt(USERS.Licensed)}</span></div>
+            <div className="sc-row"><span>guests</span><span>{fmt(USERS.GuestUsers)}</span></div>
+            {USERS.SyncedFromOnPrem > 0 && <div className="sc-row"><span>synced</span><span>{fmt(USERS.SyncedFromOnPrem)}</span></div>}
+          </div>
+          <div className="sc-card">
+            <div className="sc-header">
+              <span className="sc-dot" style={{background: MFA_STATS.adminsWithoutMfa > 0 ? 'var(--warn)' : 'var(--success)'}}/>
+              <span className="sc-title">MFA</span>
+              <span className="sc-sub">· COVERAGE</span>
+            </div>
+            {MFA_STATS.phishResistant > 0 && <div className="sc-row"><span>phish-res</span><span>{fmt(MFA_STATS.phishResistant)}</span></div>}
+            {MFA_STATS.standard > 0     && <div className="sc-row"><span>standard</span><span>{fmt(MFA_STATS.standard)}</span></div>}
+            {MFA_STATS.weak > 0         && <div className="sc-row"><span>weak</span><span className="sc-warn">{fmt(MFA_STATS.weak)}</span></div>}
+            <div className="sc-row"><span>none</span><span className={MFA_STATS.none > 0 ? 'sc-danger' : ''}>{fmt(MFA_STATS.none)}</span></div>
+            {MFA_STATS.adminsWithoutMfa > 0 && <div className="sc-row"><span>adm gap</span><span className="sc-danger">{fmt(MFA_STATS.adminsWithoutMfa)}</span></div>}
+          </div>
         </div>
       </aside>
     </>

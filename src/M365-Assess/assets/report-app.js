@@ -309,7 +309,11 @@ function Sidebar({
     className: "sidebar-close",
     onClick: onClose,
     "aria-label": "Close navigation"
-  }, /*#__PURE__*/React.createElement(Icon.close, null))), /*#__PURE__*/React.createElement("nav", null, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(Icon.close, null))), /*#__PURE__*/React.createElement("nav", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
     className: "nav-label"
   }, "Executive"), exec.map(it => /*#__PURE__*/React.createElement("a", {
     href: `#${it.id}`,
@@ -352,24 +356,62 @@ function Sidebar({
   }, /*#__PURE__*/React.createElement("span", null, it.label), it.count !== undefined && /*#__PURE__*/React.createElement("span", {
     className: "count"
   }, it.count)))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 24,
-      padding: '12px 8px',
-      borderTop: '1px solid var(--border)',
-      fontSize: 11,
-      color: 'var(--muted)',
-      lineHeight: 1.5
-    }
+    className: "sidebar-cards"
   }, /*#__PURE__*/React.createElement("div", {
+    className: "sc-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "sc-header"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "sc-dot",
     style: {
-      fontFamily: 'var(--font-mono)'
+      background: 'var(--success)'
     }
-  }, TENANT.OrgDisplayName), /*#__PURE__*/React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "sc-title"
+  }, "TENANT"), /*#__PURE__*/React.createElement("span", {
+    className: "sc-sub"
+  }, "\xB7 LIVE")), /*#__PURE__*/React.createElement("div", {
+    className: "sc-row"
+  }, /*#__PURE__*/React.createElement("span", null, "org"), /*#__PURE__*/React.createElement("span", null, TENANT.DefaultDomain || TENANT.OrgDisplayName)), /*#__PURE__*/React.createElement("div", {
+    className: "sc-row"
+  }, /*#__PURE__*/React.createElement("span", null, "tenant"), /*#__PURE__*/React.createElement("span", null, (TENANT.TenantId || '').slice(0, 8) + '…')), /*#__PURE__*/React.createElement("div", {
+    className: "sc-row"
+  }, /*#__PURE__*/React.createElement("span", null, "users"), /*#__PURE__*/React.createElement("span", null, fmt(USERS.TotalUsers))), /*#__PURE__*/React.createElement("div", {
+    className: "sc-row"
+  }, /*#__PURE__*/React.createElement("span", null, "licensed"), /*#__PURE__*/React.createElement("span", null, fmt(USERS.Licensed))), /*#__PURE__*/React.createElement("div", {
+    className: "sc-row"
+  }, /*#__PURE__*/React.createElement("span", null, "guests"), /*#__PURE__*/React.createElement("span", null, fmt(USERS.GuestUsers))), USERS.SyncedFromOnPrem > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "sc-row"
+  }, /*#__PURE__*/React.createElement("span", null, "synced"), /*#__PURE__*/React.createElement("span", null, fmt(USERS.SyncedFromOnPrem)))), /*#__PURE__*/React.createElement("div", {
+    className: "sc-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "sc-header"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "sc-dot",
     style: {
-      marginTop: 2,
-      opacity: .7
+      background: MFA_STATS.adminsWithoutMfa > 0 ? 'var(--warn)' : 'var(--success)'
     }
-  }, "Run \xB7 ", new Date(SCORE.CreatedDateTime || Date.now()).toLocaleDateString()))));
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "sc-title"
+  }, "MFA"), /*#__PURE__*/React.createElement("span", {
+    className: "sc-sub"
+  }, "\xB7 COVERAGE")), MFA_STATS.phishResistant > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "sc-row"
+  }, /*#__PURE__*/React.createElement("span", null, "phish-res"), /*#__PURE__*/React.createElement("span", null, fmt(MFA_STATS.phishResistant))), MFA_STATS.standard > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "sc-row"
+  }, /*#__PURE__*/React.createElement("span", null, "standard"), /*#__PURE__*/React.createElement("span", null, fmt(MFA_STATS.standard))), MFA_STATS.weak > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "sc-row"
+  }, /*#__PURE__*/React.createElement("span", null, "weak"), /*#__PURE__*/React.createElement("span", {
+    className: "sc-warn"
+  }, fmt(MFA_STATS.weak))), /*#__PURE__*/React.createElement("div", {
+    className: "sc-row"
+  }, /*#__PURE__*/React.createElement("span", null, "none"), /*#__PURE__*/React.createElement("span", {
+    className: MFA_STATS.none > 0 ? 'sc-danger' : ''
+  }, fmt(MFA_STATS.none))), MFA_STATS.adminsWithoutMfa > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "sc-row"
+  }, /*#__PURE__*/React.createElement("span", null, "adm gap"), /*#__PURE__*/React.createElement("span", {
+    className: "sc-danger"
+  }, fmt(MFA_STATS.adminsWithoutMfa)))))));
 }
 
 // ======================== Topbar ========================
