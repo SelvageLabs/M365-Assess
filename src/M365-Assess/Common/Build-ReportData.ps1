@@ -110,9 +110,9 @@ function Build-ReportDataJson {
         $fwSource = if ($f.PSObject.Properties['Frameworks'] -and $f.Frameworks) { $f.Frameworks }
                     elseif ($regEntry -and $regEntry.frameworks)                  { $regEntry.frameworks }
                     else                                                           { $null }
-        $frameworks = if ($fwSource -is [hashtable])  { @($fwSource.Keys) }
-                      elseif ($fwSource)               { @($fwSource.PSObject.Properties.Name) }
-                      else                             { @() }
+        $frameworks = if ($fwSource -is [hashtable])  { [string[]]($fwSource.Keys) }
+                      elseif ($fwSource)               { [string[]]($fwSource.PSObject.Properties.Name) }
+                      else                             { [string[]]@() }
 
         $recommended = if ($f.PSObject.Properties['RecommendedValue']) { $f.RecommendedValue }
                        elseif ($f.PSObject.Properties['Recommended'])   { $f.Recommended }
