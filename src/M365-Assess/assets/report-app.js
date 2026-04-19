@@ -324,7 +324,7 @@ function Topbar({
     className: "icon-btn",
     href: D.xlsxFileName,
     download: true,
-    title: "Download XLSX"
+    title: `Download compliance matrix — ${D.xlsxFileName}`
   }, /*#__PURE__*/React.createElement(Icon.xlsx, null)), /*#__PURE__*/React.createElement("button", {
     className: "icon-btn",
     title: "Print / PDF",

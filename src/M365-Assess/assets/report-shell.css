@@ -1080,3 +1080,14 @@ section.block { margin-bottom: 40px; scroll-margin-top: 20px; }
 /* Hide scrollbars in sidebar subtle */
 .sidebar::-webkit-scrollbar { width: 6px; }
 .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* =========================================================
+   DENSITY — comfort adds breathing room over compact default
+   ========================================================= */
+[data-density="comfort"] .nav-item           { padding: 9px 10px; }
+[data-density="comfort"] .findings-head,
+[data-density="comfort"] .finding-row        { padding: 14px 16px; }
+[data-density="comfort"] .card               { padding: 22px 24px; }
+[data-density="comfort"] .kpi                { padding: 18px 20px; }
+[data-density="comfort"] .domain-card        { padding: 18px 20px; }
+[data-density="comfort"] .domain-card .dc-head { margin-bottom: 14px; }
