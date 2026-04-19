@@ -18,14 +18,14 @@ graph LR
 
     subgraph CICD["GitHub Actions CI/CD"]
         direction TB
-        CIWorkflow["ci.yml<br/>(quality gates + Pester)"]
+        CIWorkflow["ci.yml<br/>(quality gates + 2,000+ Pester tests)"]
         SyncWorkflow["sync-checkid.yml<br/>(cross-repo sync)"]
         ReleaseWorkflow["release.yml<br/>(v* tag → GH release)"]
     end
 
     subgraph Controls["controls/"]
         direction TB
-        Registry["registry.json<br/>(244 checks)"]
+        Registry["registry.json<br/>(307 checks)"]
         Frameworks["frameworks/*.json<br/>(14 frameworks)"]
         RiskSev["risk-severity.json"]
         MITREMap["mitre-technique-map.json"]
@@ -80,7 +80,7 @@ graph LR
     MITRE --> MITREMap
 
     %% CI/CD connections
-    CIWorkflow -.->|"PSScriptAnalyzer +<br/>614 Pester tests"| Core
+    CIWorkflow -.->|"PSScriptAnalyzer +<br/>Pester matrix (PS 7.4 + 7.6)"| Core
     ReleaseWorkflow -.->|"v* tag push"| Core
 
     %% Service connections

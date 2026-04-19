@@ -3,10 +3,11 @@ function New-M365BrandingConfig {
     .SYNOPSIS
         Creates a validated branding hashtable for use with -CustomBranding.
     .DESCRIPTION
-        Returns a hashtable with tab-completable, validated parameters that can
-        be passed directly to Invoke-M365Assessment -CustomBranding or
-        Export-AssessmentReport -CustomBranding. Logo paths are validated at
-        call time; hex colors are validated for correct format.
+        Returns a validated branding hashtable. Intended for use with the
+        M365-Assess-Mods private report engine; -CustomBranding is not a
+        parameter on the public Invoke-M365Assessment or Export-AssessmentReport
+        cmdlets. Logo paths are validated at call time; hex colors are validated
+        for correct format.
     .PARAMETER CompanyName
         Your company name, shown in the report header and footer.
     .PARAMETER LogoPath
@@ -33,14 +34,9 @@ function New-M365BrandingConfig {
         URL the footer text links to.
     .EXAMPLE
         PS> $branding = New-M365BrandingConfig -CompanyName 'Contoso Consulting' -LogoPath './logo.png' -AccentColor '#0078D4'
-        PS> Invoke-M365Assessment -TenantId 'fabrikam.com' -CustomBranding $branding
+        PS> $branding
 
-        Creates a branding config and passes it to an assessment run.
-    .EXAMPLE
-        PS> $branding = New-M365BrandingConfig -CompanyName 'Contoso' -ClientName 'Fabrikam' -ClientLogoPath './client.png'
-        PS> Export-AssessmentReport -AssessmentFolder '.\Assessment_20260418' -CustomBranding $branding
-
-        Re-renders an existing assessment with client-specific branding.
+        Creates a validated branding hashtable for use with the M365-Assess-Mods report engine.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]

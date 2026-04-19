@@ -71,18 +71,16 @@ graph TD
 
     subgraph P5["Phase 5: Report Generation"]
         direction TB
-        LoadReg["Import-ControlRegistry<br/>(registry.json → 244 checks)"]
+        LoadReg["Import-ControlRegistry<br/>(registry.json → 307 checks)"]
         LoadFw["Import-FrameworkDefinitions<br/>(14 framework JSONs)"]
-        GenReport["Export-AssessmentReport<br/>(self-contained HTML)"]
-        CompOverview["Export-ComplianceOverview<br/>(framework cards + matrix)"]
-        FwCatalog["Export-FrameworkCatalog<br/>(per-framework standalone HTML)"]
+        GenReport["Export-AssessmentReport<br/>(React 18 inline HTML)"]
+        BuildData["Build-ReportData.ps1<br/>(window.REPORT_DATA JSON)"]
         XLSX["Export-ComplianceMatrix<br/>(XLSX workbook)"]
         Summary["Assessment Summary CSV<br/>+ Issues Log"]
 
-        LoadReg --> GenReport
-        LoadFw --> GenReport
-        GenReport --> CompOverview
-        GenReport --> FwCatalog
+        LoadReg --> BuildData
+        LoadFw --> BuildData
+        BuildData --> GenReport
         GenReport --> XLSX
         GenReport --> Summary
     end
@@ -104,6 +102,6 @@ graph TD
     class ConnSvc,Graph,DomainResolve,DnsPrefetch,EXO,Purview,PBI phase2
     class SectionLoop,CollectorLoop,ConnJIT,RunScript,AddSetting,Progress,ExportCsv,ScubaNote,PBINote,SecScore phase3
     class WaitJobs,DnsAuth,DnsSec phase4
-    class LoadReg,LoadFw,GenReport,CompOverview,FwCatalog,XLSX,Summary phase5
+    class LoadReg,LoadFw,GenReport,BuildData,XLSX,Summary phase5
     class Start,Done startEnd
 ```

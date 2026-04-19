@@ -16,7 +16,7 @@
 [![Coverage](https://img.shields.io/badge/coverage-check%20CI-informational)](https://github.com/Galvnyz/M365-Assess/actions/workflows/ci.yml)
 [![PowerShell 7.x](https://img.shields.io/badge/PowerShell-7.x-blue?logo=powershell&logoColor=white)](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows)
 [![Read-Only](https://img.shields.io/badge/Operations-Read--Only-brightgreen)](.)
-[![Version](https://img.shields.io/badge/version-1.16.0-blue)](.)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue)](.)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 </div>
@@ -152,32 +152,29 @@ Invoke-M365Assessment -Section Tenant,Identity,Licensing,Email,Intune,Security,C
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `-Section` | string[] | Tenant, Identity, Licensing, Email, Intune, Security, Collaboration, PowerBI, Hybrid | Sections to assess. Add `Inventory`, `ActiveDirectory`, `SOC2`, `ValueOpportunity` opt-in sections. |
+| `-Section` | string[] | Tenant, Identity, Licensing, Email, Intune, Security, Collaboration, PowerBI, Hybrid | Sections to assess. Add `Inventory`, `ActiveDirectory`, `SOC2`, `ValueOpportunity` opt-in sections. Use `All` to run every section. |
 | `-TenantId` | string | *(wizard prompt)* | Tenant ID or `*.onmicrosoft.com` domain |
 | `-OutputFolder` | string | `.\M365-Assessment` | Base output directory |
 | `-SkipConnection` | switch | | Skip service connections (use pre-existing) |
 | `-ClientId` | string | | App Registration client ID for certificate auth |
 | `-CertificateThumbprint` | string | | Certificate thumbprint for app-only auth |
+| `-ClientSecret` | SecureString | | App Registration client secret for app-only auth |
 | `-UserPrincipalName` | string | | UPN for interactive auth (avoids WAM broker issues) |
 | `-UseDeviceCode` | switch | | Use device code flow for headless environments |
-| `-NonInteractive` | switch | | Skip all interactive prompts; log errors and exit on required module issues, skip sections for optional ones |
 | `-ManagedIdentity` | switch | | Use Azure managed identity auth (VMs, App Service, Functions) |
+| `-ConnectionProfile` | string | | Name of a saved connection profile from `.m365assess.json` |
+| `-NonInteractive` | switch | | Skip all interactive prompts; log errors and exit on required module issues, skip sections for optional ones |
 | `-M365Environment` | string | `commercial` | Cloud environment: `commercial`, `gcc`, `gcchigh`, `dod` |
-| `-NoBranding` | switch | | Generate report without M365 Assess branding |
-| `-SkipDLP` | switch | | Skip DLP collector and Purview connection (saves ~46s) |
-| `-SkipComplianceOverview` | switch | | Omit Compliance Overview section from report |
-| `-SkipCoverPage` | switch | | Omit branded cover page from report |
-| `-SkipExecutiveSummary` | switch | | Omit executive summary, show compact scan header instead |
-| `-SkipPdf` | switch | | Skip PDF generation even when wkhtmltopdf is available |
-| `-FrameworkFilter` | string[] | *(all)* | Limit compliance overview to specific framework families (e.g., `CIS`, `NIST`) |
-| `-CustomBranding` | hashtable | | White-label reports. Keys: `CompanyName`, `LogoPath`, `AccentColor` |
-| `-FrameworkExport` | string[] | | Generate standalone per-framework HTML catalog exports (e.g., `CIS`, `NIST`, or `All`) |
-| `-CisBenchmarkVersion` | string | `v6` | CIS benchmark version (`v6` for v6.0.1). Set to `v7` when available |
 | `-QuickScan` | switch | | Run only Critical and High severity checks for faster CI/CD or daily monitoring |
+| `-CompactReport` | switch | | Generate a compact report (omits cover page, executive summary, and compliance overview) |
+| `-WhiteLabel` | switch | | Hide M365 Assess GitHub link and Galvnyz attribution from the report footer |
+| `-SkipPurview` | switch | | Skip Purview/DLP collector and connection (saves ~46s) |
 | `-DryRun` | switch | | Preview sections, services, scopes, and check counts without connecting |
 | `-OpenReport` | switch | | Auto-open the HTML report in the default browser after generation |
-| `-ClientSecret` | SecureString | | App Registration client secret for app-only auth |
-| `-ConnectionProfile` | string | | Name of a saved connection profile from `.m365assess.json` |
+| `-SaveBaseline` | string | | Save a policy baseline snapshot with this label for future drift comparison |
+| `-CompareBaseline` | string | | Compare the current run against a previously saved baseline and show drift in the XLSX |
+| `-AutoBaseline` | switch | | Automatically save and compare against the most recent baseline for this tenant |
+| `-ListBaselines` | switch | | List all saved baselines for the current tenant and exit |
 
 ### Interactive Wizard
 

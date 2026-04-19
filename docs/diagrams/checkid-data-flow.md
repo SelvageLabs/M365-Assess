@@ -28,7 +28,7 @@ sequenceDiagram
     note over ORC,OUT: Assessment Runtime
 
     ORC->>REG: Load controls/registry.json
-    REG->>REG: Build hashtable<br/>(244 entries keyed by CheckId)
+    REG->>REG: Build hashtable<br/>(307 entries keyed by CheckId)
     REG->>REG: Merge risk-severity.json<br/>(Critical/High/Medium/Low)
     REG->>REG: Build __cisReverseLookup<br/>(CIS control ID → CheckId)
     REG-->>ORC: Return progressRegistry
@@ -59,5 +59,5 @@ sequenceDiagram
 
     RPT->>RPT: Export-FrameworkCatalog<br/>(per-framework standalone HTMLs,<br/>9 scoring methods)
 
-    RPT->>OUT: Write self-contained HTML<br/>(embedded CSS, base64 assets,<br/>client-side JS filtering)
+    RPT->>OUT: Write self-contained HTML<br/>(React 18 inline app,<br/>window.REPORT_DATA JSON embedded)
 ```

@@ -1,8 +1,6 @@
 # M365-Assess Cmdlet Reference
 
-> Module version: 1.6.0 | PowerShell 7.0+ required
->
-> All 15 exported functions from the `M365-Assess` module.
+> Module version: 2.0.0 | PowerShell 7.0+ required
 
 ## Table of Contents
 
@@ -69,7 +67,7 @@ Orchestrates all M365 assessment collector scripts to produce a folder of CSV re
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `Section` | string[] | No | One or more sections to run. Valid: `Tenant`, `Identity`, `Licensing`, `Email`, `Intune`, `Security`, `Collaboration`, `PowerBI`, `Hybrid`, `Inventory`, `ActiveDirectory`, `SOC2`. Defaults to all standard sections. `Inventory`, `ActiveDirectory`, and `SOC2` are opt-in only. |
+| `Section` | string[] | No | One or more sections to run. Valid: `Tenant`, `Identity`, `Licensing`, `Email`, `Intune`, `Security`, `Collaboration`, `PowerBI`, `Hybrid`, `Inventory`, `ActiveDirectory`, `SOC2`, `All`. Defaults to all standard sections. `Inventory`, `ActiveDirectory`, and `SOC2` are opt-in only. Use `All` to include opt-in sections. |
 | `TenantId` | string | No | Tenant ID or domain (e.g., `contoso.onmicrosoft.com`). |
 | `OutputFolder` | string | No | Root folder for assessment output. A timestamped subfolder is created automatically. Defaults to `.\M365-Assessment`. |
 | `SkipConnection` | switch | No | Use pre-existing service connections instead of connecting automatically. |
@@ -77,23 +75,21 @@ Orchestrates all M365 assessment collector scripts to produce a folder of CSV re
 | `CertificateThumbprint` | string | No | Certificate thumbprint for app-only authentication. |
 | `ClientSecret` | SecureString | No | Client secret for app-only auth. Less secure than certificate -- prefer `-CertificateThumbprint` for production. |
 | `UserPrincipalName` | string | No | UPN (e.g., `admin@contoso.onmicrosoft.com`) for interactive auth to EXO/Purview. Bypasses WAM broker errors on some systems. |
-| `ManagedIdentity` | switch | No | Use Azure managed identity auth. Requires running on an Azure resource with managed identity. Purview and Power BI fall back with a warning. |
 | `UseDeviceCode` | switch | No | Use device code auth flow. Displays a code and URL for browser-based auth -- useful on multi-profile machines. Purview does not support device code and falls back. |
-| `M365Environment` | string | No | Target cloud: `commercial`, `gcc`, `gcchigh`, `dod`. Auto-detected from tenant metadata when not specified. |
-| `NoBranding` | switch | No | Suppress branding in the HTML report. |
-| `SkipDLP` | switch | No | Skip DLP policy collector and Purview connection (saves ~46s of latency). |
-| `SkipComplianceOverview` | switch | No | Omit the Compliance Overview section from the HTML report. |
-| `SkipCoverPage` | switch | No | Omit the branded cover page from the HTML report. |
-| `SkipExecutiveSummary` | switch | No | Omit the executive summary hero panel from the HTML report. |
-| `SkipPdf` | switch | No | Skip PDF generation even when wkhtmltopdf is available. |
-| `OpenReport` | switch | No | Open the HTML report in the default browser after generation. |
-| `FrameworkFilter` | string[] | No | Limit compliance overview to specific frameworks: `CIS`, `NIST`, `ISO`, `STIG`, `PCI`, `CMMC`, `HIPAA`, `CISA`, `SOC2`, `FedRAMP`, `Essential8`, `MITRE`, `CISv8`. |
-| `CustomBranding` | hashtable | No | White-label reports. Keys: `CompanyName`, `LogoPath`, `AccentColor`. |
-| `FrameworkExport` | string[] | No | Generate standalone per-framework HTML catalog exports. Specify framework families or `All`. |
-| `CisBenchmarkVersion` | string | No | CIS benchmark version for rendering. Defaults to `v6`. Set to `v7` when v7 data is available. |
+| `ManagedIdentity` | switch | No | Use Azure managed identity auth. Requires running on an Azure resource with managed identity. Purview and Power BI fall back with a warning. |
+| `ConnectionProfile` | string | No | Path to a `.m365assess.json` credentials file saved by `Grant-M365AssessConsent`. Loads `ClientId`, `CertificateThumbprint`, and `TenantId` automatically. |
 | `NonInteractive` | switch | No | Suppress all interactive prompts. Missing required modules log the fix command and exit. Missing optional modules skip the section with a warning. Use for CI/CD and headless environments. |
+| `M365Environment` | string | No | Target cloud: `commercial`, `gcc`, `gcchigh`, `dod`. Auto-detected from tenant metadata when not specified. |
 | `QuickScan` | switch | No | Run only Critical and High severity checks. Collectors with no qualifying checks are skipped. Report shows a "Quick Scan Mode" banner. |
-| `DryRun` | switch | No | Show a dry-run preview of sections, services, Graph scopes, and check counts without connecting or collecting data. Useful for validating configuration before a real run. |
+| `CompactReport` | switch | No | Omit the Appendix (raw data tables) from the HTML report. Produces a smaller, exec-friendly output. |
+| `WhiteLabel` | switch | No | Generate report without the M365 Assess GitHub link and Galvnyz attribution in the footer. Ideal for client delivery. |
+| `SkipPurview` | switch | No | Skip the Purview (Security & Compliance) connection and DLP/retention collectors (saves ~46s of latency). |
+| `DryRun` | switch | No | Show a dry-run preview of sections, services, Graph scopes, and check counts without connecting or collecting data. |
+| `OpenReport` | switch | No | Open the HTML report in the default browser after generation. |
+| `SaveBaseline` | string | No | Save a named policy baseline snapshot after the assessment completes (e.g., `PreChange`). Stored under `<OutputFolder>/Baselines/`. |
+| `CompareBaseline` | string | No | Compare results against a previously saved baseline and add a Drift sheet to the XLSX output. |
+| `AutoBaseline` | switch | No | Automatically save a baseline named `Auto` after every successful run. Enables drift tracking without manual `-SaveBaseline` calls. |
+| `ListBaselines` | switch | No | List all saved baselines for the tenant and exit without running an assessment. |
 
 **Output:** Assessment folder containing CSV reports, an HTML report, optional XLSX compliance matrix, and optional PDF.
 

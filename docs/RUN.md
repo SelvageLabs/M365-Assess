@@ -98,35 +98,42 @@ Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -OutputFolder 'C:\Repo
 ### White-Label Client Report
 
 ```powershell
-Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' `
-    -CustomBranding @{
-        CompanyName = 'Contoso Security'
-        LogoPath    = 'C:\Branding\logo.png'
-        AccentColor = '#1a73e8'
-    }
+Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -WhiteLabel
 ```
 
-### Skip DLP to Save Time
+Removes the M365 Assess GitHub link and Galvnyz attribution from the report footer. Ideal for client delivery.
+
+### Compact Report (no Appendix)
 
 ```powershell
-Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -SkipDLP
+Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -CompactReport
+```
+
+Omits the raw data Appendix tables for a smaller, exec-friendly output.
+
+### Skip Purview to Save Time
+
+```powershell
+Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -SkipPurview
 ```
 
 Skips the Purview (Security & Compliance) connection, saving approximately 46 seconds.
 
-### Framework-Filtered Report
+### Baseline and Drift Tracking
 
 ```powershell
-Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -FrameworkFilter CIS,NIST
+# Save a named baseline after an assessment
+Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -SaveBaseline 'PreChange'
+
+# Compare against a previous baseline (adds Drift sheet to XLSX)
+Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -CompareBaseline 'PreChange'
+
+# Auto-save a baseline after every run
+Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -AutoBaseline
+
+# List saved baselines for a tenant
+Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -ListBaselines
 ```
-
-### Standalone Framework Catalog Export
-
-```powershell
-Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -FrameworkExport All
-```
-
-Generates per-framework HTML catalog files alongside the main report.
 
 ### Pre-Existing Connections
 
@@ -161,9 +168,9 @@ Approximate runtimes for a typical SMB tenant (10--500 users). Actual times vary
 **Total for default sections:** 5--8 minutes for a full scan (including service connections and report generation).
 
 **Tips to reduce runtime:**
-- Use `-SkipDLP` to skip the Purview connection (~46 seconds saved)
+- Use `-SkipPurview` to skip the Purview connection (~46 seconds saved)
 - Use `-Section` to run only the sections you need
-- Use `-SkipComplianceOverview` for single-section assessments where framework cards are not relevant
+- Use `-QuickScan` to run only Critical and High severity checks
 
 ## Output Files
 
@@ -220,14 +227,10 @@ See [AUTHENTICATION.md](../AUTHENTICATION.md) for App Registration setup and det
 
 | Flag | Effect |
 |------|--------|
-| `-SkipCoverPage` | Omit the branded cover page |
-| `-SkipExecutiveSummary` | Omit the executive summary hero panel |
-| `-SkipComplianceOverview` | Omit the compliance framework overview section |
-| `-SkipPdf` | Skip PDF generation even when wkhtmltopdf is available |
-| `-NoBranding` | Generate report without M365 Assess branding |
-| `-CustomBranding @{...}` | White-label with custom company name, logo, and accent color |
-| `-FrameworkFilter CIS,NIST` | Limit compliance overview to specific frameworks |
-| `-FrameworkExport All` | Generate standalone per-framework HTML catalogs |
+| `-WhiteLabel` | Remove M365 Assess attribution from the report footer |
+| `-CompactReport` | Omit the Appendix (raw data tables) for a smaller exec-friendly report |
+| `-SkipPurview` | Skip the Purview connection and DLP/retention collectors (~46s saved) |
+| `-OpenReport` | Open the HTML report in the default browser after generation |
 
 ## Troubleshooting
 
@@ -237,8 +240,8 @@ In non-interactive mode, missing required modules cause an immediate exit. Check
 **PowerBI section is skipped**
 Install the optional module: `Install-Module MicrosoftPowerBIMgmt -Scope CurrentUser`
 
-**DLP section adds ~46 seconds**
-The Purview (Security & Compliance) connection is slow. Use `-SkipDLP` if DLP assessment is not needed.
+**Purview section adds ~46 seconds**
+The Purview (Security & Compliance) connection is slow. Use `-SkipPurview` if DLP/retention assessment is not needed.
 
 **Browser does not open for authentication**
 Use `-UseDeviceCode` for device code flow, or `-UserPrincipalName admin@contoso.com` to bypass WAM broker issues.

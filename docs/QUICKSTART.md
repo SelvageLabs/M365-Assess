@@ -77,7 +77,7 @@ Results land in a timestamped folder (e.g., `M365-Assessment/Assessment_20260330
 | File | Description |
 |------|-------------|
 | `*.csv` | Raw data per collector (mailbox summary, MFA report, etc.) |
-| `*_Assessment.html` | Branded HTML report with all findings |
+| `*_Assessment-Report.html` | React-based HTML report with all findings |
 | `*_Compliance-Matrix.xlsx` | Framework compliance matrix (requires ImportExcel) |
 
 Open the HTML report in any browser to review findings.
