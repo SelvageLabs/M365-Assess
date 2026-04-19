@@ -1005,13 +1005,14 @@ section.block { margin-bottom: 40px; scroll-margin-top: 20px; }
   overflow: hidden; margin-bottom: 12px;
   background: var(--border);
 }
-.quilt-cell .fw-seg { min-width: 1px; }
-.quilt-cell .fw-seg.pass   { background: var(--success); }
-.quilt-cell .fw-seg.warn   { background: var(--warn); }
-.quilt-cell .fw-seg.fail   { background: var(--danger); }
-.quilt-cell .fw-seg.review { background: var(--accent); opacity: 0.7; }
-.quilt-cell .fw-seg.info   { background: var(--muted); opacity: 0.4; }
-.quilt-cell .fw-seg.empty  { background: var(--border); }
+/* fw-seg colors are global so .fw-detail-panel and .fw-domain-bar share them */
+.fw-seg { min-width: 1px; }
+.fw-seg.pass   { background: var(--success); }
+.fw-seg.warn   { background: var(--warn); }
+.fw-seg.fail   { background: var(--danger); }
+.fw-seg.review { background: var(--accent); opacity: 0.7; }
+.fw-seg.info   { background: var(--muted); opacity: 0.4; }
+.fw-seg.empty  { background: var(--border); }
 .quilt-cell .fw-stat {
   display: flex; gap: 10px;
   font-size: 11px; color: var(--muted);
