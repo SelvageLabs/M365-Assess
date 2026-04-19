@@ -4,23 +4,11 @@ BeforeDiscovery {
 
 Describe 'Build-RemediationPlanHtml' {
     BeforeAll {
-        # Stub Update-CheckProgress globally so Build-SectionHtml.ps1 can load without error
-        function global:Update-CheckProgress { param($CheckId, $Setting, $Status) }
-
         # ReportHelpers provides ConvertTo-HtmlSafe used inside the function
         . "$PSScriptRoot/../../src/M365-Assess/Common/ReportHelpers.ps1"
 
-        # Build-SectionHtml.ps1 sets variables AND defines Build-RemediationPlanHtml.
-        # Stub the variables the script-body references so it does not fail.
-        $allCisFindings         = @()
-        $CompactReport          = $false
-        $controlRegistry        = @{}
-        $issues                 = @()
-        $sections               = @()
-        $sectionStatusCounts    = @{}
-        $QuickScan              = $false
-
-        . "$PSScriptRoot/../../src/M365-Assess/Common/Build-SectionHtml.ps1"
+        # Build-RemediationPlanHtml is now a standalone file (extracted from Build-SectionHtml.ps1 in v2.0.0)
+        . "$PSScriptRoot/../../src/M365-Assess/Common/Build-RemediationPlanHtml.ps1"
     }
 
     AfterAll {

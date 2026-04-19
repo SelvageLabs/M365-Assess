@@ -51,7 +51,6 @@
         'Remove-M365ConnectionProfile'
         'Get-M365ConnectionProfile'
         'Compare-M365Baseline'
-        'New-M365BrandingConfig'
     )
     CmdletsToExport   = @()
     VariablesToExport = @()
@@ -84,6 +83,8 @@
         'Common\New-M365BrandingConfig.ps1'
         'Common\ReportHelpers.ps1'
         'Common\Build-SectionHtml.ps1'
+        'Common\Build-RemediationPlanHtml.ps1'
+        'Common\Build-ReportData.ps1'
         'Common\Get-ReportTemplate.ps1'
         'Common\Export-ComplianceMatrix.ps1'
         'Common\Export-ComplianceOverview.ps1'
@@ -213,6 +214,11 @@
         'assets\m365-assess-logo-white.png'
         'assets\m365-assess-logo.png'
         'assets\sku-friendly-names.csv'
+        'assets\report-app.js'
+        'assets\react.production.min.js'
+        'assets\react-dom.production.min.js'
+        'assets\report-themes.css'
+        'assets\report-shell.css'
     )
 
     # Private data / PSData for PowerShell Gallery
