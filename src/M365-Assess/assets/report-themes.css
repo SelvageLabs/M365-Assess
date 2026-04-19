@@ -322,25 +322,25 @@
   --surface:   #0d0d0d;
   --surface-hero: #0d0d0d;
   --subtle:    #0d0d0d;
-  --hover:     rgba(255,255,0,0.1);
+  --hover:     rgba(255,255,255,0.08);
   --input-bg:  #0d0d0d;
 
   --text:      #ffffff;
-  --text-soft: #e8e8e8;
-  --muted:     #b0b0b0;
+  --text-soft: #e0e0e0;
+  --muted:     #909090;
 
-  --border:        #555555;
-  --border-strong: #999999;
+  --border:        #444444;
+  --border-strong: #888888;
   --track:         #222222;
   --chip:          #1a1a1a;
 
-  --accent:        #ffff00;
-  --accent-hover:  #ffe000;
-  --accent-text:   #ffff00;
-  --accent-soft:   rgba(255,255,0,0.12);
-  --accent-border: rgba(255,255,0,0.6);
-  --accent-ring:   rgba(255,255,0,0.35);
-  --accent-grad:   linear-gradient(135deg, #ffff00 0%, #ffcc00 100%);
+  --accent:        #ffffff;
+  --accent-hover:  #e0e0e0;
+  --accent-text:   #ffffff;
+  --accent-soft:   rgba(255,255,255,0.1);
+  --accent-border: rgba(255,255,255,0.4);
+  --accent-ring:   rgba(255,255,255,0.2);
+  --accent-grad:   linear-gradient(135deg, #ffffff 0%, #c0c0c0 100%);
 
   --success:       #00e676;
   --success-text:  #00e676;
@@ -353,11 +353,11 @@
   --danger:        #ff5252;
   --danger-text:   #ff5252;
   --danger-soft:   rgba(255,82,82,0.14);
-  --danger-border: rgba(255,82,82,0.6);
-  --danger-ring:   rgba(255,82,82,0.35);
+  --danger-border: rgba(255,82,82,0.5);
+  --danger-ring:   rgba(255,82,82,0.3);
 
   --shadow:        rgba(0,0,0,0.9);
-  --shadow-card:   0 0 0 1px #555;
+  --shadow-card:   0 0 0 1px #444;
   --mark-glow:     none;
   --bar-glow:      none;
   --hero-glow:     none;
