@@ -2333,7 +2333,7 @@ function App() {
     id: "findings-anchor"
   }), /*#__PURE__*/React.createElement("div", {
     style: {
-      marginTop: -24
+      marginTop: 20
     }
   }), /*#__PURE__*/React.createElement(FilterBar, {
     filters: filters,
