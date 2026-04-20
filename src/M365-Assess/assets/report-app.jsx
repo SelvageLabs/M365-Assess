@@ -747,6 +747,7 @@ function DomainRollup({ onJump }) {
       <MailboxSummaryPanel />
       <SharePointSummaryPanel />
       <AdHybridPanel />
+      <DnsAuthPanel />
     </section>
   );
 }
@@ -1715,7 +1716,6 @@ function Appendix() {
             </tbody>
           </table>
         </div>
-        <DnsAuthPanel />
         <div className="card">
           <div style={{fontSize:12,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.08em',fontWeight:600,marginBottom:10}}>Conditional Access policies</div>
           <table style={{width:'100%',fontSize:12,borderCollapse:'collapse'}}>

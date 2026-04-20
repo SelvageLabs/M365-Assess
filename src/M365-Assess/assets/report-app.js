@@ -1390,7 +1390,7 @@ function DomainRollup({
     })), /*#__PURE__*/React.createElement("div", {
       className: "dc-meta"
     }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, d.pass), " pass"), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, d.warn), " warn"), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, d.fail), " fail"), d.review > 0 && /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, d.review), " review")));
-  })), /*#__PURE__*/React.createElement(IntuneCategoryGrid, null), /*#__PURE__*/React.createElement(MailboxSummaryPanel, null), /*#__PURE__*/React.createElement(SharePointSummaryPanel, null), /*#__PURE__*/React.createElement(AdHybridPanel, null));
+  })), /*#__PURE__*/React.createElement(IntuneCategoryGrid, null), /*#__PURE__*/React.createElement(MailboxSummaryPanel, null), /*#__PURE__*/React.createElement(SharePointSummaryPanel, null), /*#__PURE__*/React.createElement(AdHybridPanel, null), /*#__PURE__*/React.createElement(DnsAuthPanel, null));
 }
 
 // ======================== Framework quilt ========================
@@ -2924,7 +2924,7 @@ function Appendix() {
       fontVariantNumeric: 'tabular-nums',
       color: 'var(--muted)'
     }
-  }, l.Total)))))), /*#__PURE__*/React.createElement(DnsAuthPanel, null), /*#__PURE__*/React.createElement("div", {
+  }, l.Total)))))), /*#__PURE__*/React.createElement("div", {
     className: "card"
   }, /*#__PURE__*/React.createElement("div", {
     style: {
