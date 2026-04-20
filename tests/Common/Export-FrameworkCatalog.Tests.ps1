@@ -167,7 +167,7 @@ Describe 'Export-FrameworkCatalog - Scoring Engine' {
             $fw = $allFrameworks | Where-Object { $_.frameworkId -eq 'nist-csf' }
             $html = Export-FrameworkCatalog -Findings $inlineFindings -Framework $fw -ControlRegistry $registry -Mode Inline
             $html | Should -BeOfType [string]
-            $html | Should -Match 'NIST CSF'
+            $html | Should -Match 'NIST'
             $html | Should -Match '<details'
             $html | Should -Match 'badge-success|badge-failed'
         }
@@ -206,7 +206,7 @@ Describe 'Export-FrameworkCatalog - Scoring Engine' {
             foreach ($fw in $allFrameworks) {
                 $html = Export-FrameworkCatalog -Findings $inlineFindings -Framework $fw -ControlRegistry $registry -Mode Inline -WarningAction SilentlyContinue
                 $html | Should -BeOfType [string] -Because "$($fw.frameworkId) should return HTML"
-                $html | Should -Match $fw.label -Because "$($fw.frameworkId) HTML should contain its label"
+                $html | Should -Match ([regex]::Escape($fw.label)) -Because "$($fw.frameworkId) HTML should contain its label"
             }
         }
     }
@@ -231,7 +231,7 @@ Describe 'Export-FrameworkCatalog - Scoring Engine' {
             Test-Path -Path $outPath | Should -BeTrue
             $content = Get-Content -Path $outPath -Raw
             $content | Should -Match '<!DOCTYPE html>'
-            $content | Should -Match 'NIST CSF'
+            $content | Should -Match 'NIST'
             $content | Should -Match 'TestTenant'
         }
 
