@@ -142,6 +142,11 @@ a:hover { text-decoration: underline; }
   background: var(--chip); color: var(--text-soft);
   font-variant-numeric: tabular-nums;
 }
+.nav-expand-icon {
+  font-size: 14px; font-weight: 400; line-height: 1;
+  color: var(--muted); opacity: .7;
+  flex-shrink: 0;
+}
 
 /* ---------- Topbar ---------- */
 .topbar {
@@ -222,14 +227,14 @@ a:hover { text-decoration: underline; }
 }
 
 /* ---------- Section ---------- */
-section.block { margin-bottom: 40px; scroll-margin-top: 20px; }
+section.block { margin-bottom: 52px; scroll-margin-top: 20px; }
 .section-head {
   display: flex; align-items: baseline; gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
 }
-.section-head h2 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+.section-head h2 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
 .section-head .eyebrow {
-  font-family: var(--font-mono); font-size: 12px;
+  font-family: var(--font-mono); font-size: 13px;
   text-transform: uppercase; letter-spacing: 0.1em;
   color: var(--accent);
 }

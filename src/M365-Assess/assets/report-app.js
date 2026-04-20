@@ -372,7 +372,9 @@ function Sidebar({
       closeIfMobile();
     },
     className: 'nav-item' + (active === it.id && !(it.id === 'findings' && activeDomain) ? ' active' : '')
-  }, /*#__PURE__*/React.createElement("span", null, it.label), it.count !== undefined && /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", null, it.label), it.id === 'roadmap' ? /*#__PURE__*/React.createElement("span", {
+    className: "nav-expand-icon"
+  }, active === 'roadmap' ? '−' : '+') : it.count !== undefined && /*#__PURE__*/React.createElement("span", {
     className: "count"
   }, it.count)), it.id === 'roadmap' && active === 'roadmap' && /*#__PURE__*/React.createElement("div", {
     className: "nav-subitems"

@@ -150,7 +150,10 @@ function Sidebar({ active, counts, domainCounts, activeDomain, onDomainJump, onO
                  onClick={e => { if (it.id === 'findings') onDomainJump(null); closeIfMobile(); }}
                  className={'nav-item' + (active===it.id && !(it.id==='findings' && activeDomain)?' active':'')}>
                 <span>{it.label}</span>
-                {it.count !== undefined && <span className="count">{it.count}</span>}
+                {it.id === 'roadmap'
+                  ? <span className="nav-expand-icon">{active === 'roadmap' ? '−' : '+'}</span>
+                  : it.count !== undefined && <span className="count">{it.count}</span>
+                }
               </a>
               {it.id === 'roadmap' && active === 'roadmap' && (
                 <div className="nav-subitems">
