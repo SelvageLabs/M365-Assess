@@ -207,7 +207,7 @@ function Initialize-CheckProgress {
             $planList = ($skipInfo.RequiredPlans | ForEach-Object {
                 if ($planFriendlyNames.ContainsKey($_)) { $planFriendlyNames[$_] } else { $_ }
             }) -join ' or '
-            Write-Host "    $([char]0x25B8) $($skipEntry.Key): $($skipInfo.Name)" -ForegroundColor DarkYellow
+            Write-Host "    $([char]0x25B8) $($skipEntry.Key): $($skipInfo.Name)" -ForegroundColor DarkGray
             Write-Host "      Requires: $planList" -ForegroundColor DarkGray
         }
     }
