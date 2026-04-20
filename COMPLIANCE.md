@@ -69,11 +69,11 @@ ENTRA-ADMIN-001.1    First setting assessed under ENTRA-ADMIN-001
 ENTRA-ADMIN-001.2    Second setting assessed under ENTRA-ADMIN-001
 ```
 
-The assessment suite includes **293 security checks** across 16 security config collectors (Entra, CA Evaluator, EntApp, EXO, DNS, Defender, Compliance, Stryker Readiness, Intune, SharePoint, Teams, Power BI, Forms, Purview Retention, SOC2, AzAssess), each mapped to one or more compliance frameworks.
+The assessment suite includes **294 security checks** across 16 security config collectors (Entra, CA Evaluator, EntApp, EXO, DNS, Defender, Compliance, Stryker Readiness, Intune, SharePoint, Teams, Power BI, Forms, Purview Retention, SOC2, AzAssess), each mapped to one or more compliance frameworks.
 
 ## Control Registry
 
-Framework mappings are defined in `controls/registry.json`, which contains **1079 control entries** (CheckID v2.9.0 upstream). Each entry specifies the check ID, description, and mappings to all applicable frameworks.
+Framework mappings are defined in `controls/registry.json`, which contains **1080 control entries** (CheckID v2.9.0 upstream + ENTRA-DISABLED-001). Each entry specifies the check ID, description, and mappings to all applicable frameworks.
 
 To view or edit mappings:
 

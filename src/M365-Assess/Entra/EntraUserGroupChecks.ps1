@@ -743,3 +743,41 @@ $settingParams = @{
     Remediation      = 'M365 admin center > Settings > Org settings > Bookings > restrict shared booking pages to selected staff members.'
 }
 Add-Setting @settingParams
+
+# ------------------------------------------------------------------
+# Disabled Member Account Count
+# ------------------------------------------------------------------
+try {
+    Write-Verbose "Counting disabled member accounts..."
+    $countHeaders  = @{ 'ConsistencyLevel' = 'eventual' }
+    $totalCount    = [int](Invoke-MgGraphRequest -Method GET `
+        -Uri "/v1.0/users/`$count?`$filter=userType eq 'Member'" `
+        -Headers $countHeaders -ErrorAction Stop)
+    $disabledCount = [int](Invoke-MgGraphRequest -Method GET `
+        -Uri "/v1.0/users/`$count?`$filter=accountEnabled eq false and userType eq 'Member'" `
+        -Headers $countHeaders -ErrorAction Stop)
+    $pct = if ($totalCount -gt 0) { [math]::Round($disabledCount / $totalCount * 100, 1) } else { 0 }
+    $settingParams = @{
+        CheckId          = 'ENTRA-DISABLED-001'
+        Category         = 'Directory Health'
+        Setting          = 'Disabled Member Accounts'
+        CurrentValue     = "$disabledCount disabled of $totalCount total members ($pct%)"
+        RecommendedValue = 'Review periodically; remove accounts no longer needed'
+        Status           = 'Info'
+        Remediation      = 'Review disabled accounts and remove any that are no longer needed. Entra admin center > Users > All users > filter by Account status: Disabled.'
+    }
+    Add-Setting @settingParams
+}
+catch {
+    Write-Warning "Could not count disabled member accounts: $_"
+    $settingParams = @{
+        CheckId          = 'ENTRA-DISABLED-001'
+        Category         = 'Directory Health'
+        Setting          = 'Disabled Member Accounts'
+        CurrentValue     = "Error: $($_.Exception.Message)"
+        RecommendedValue = 'Review periodically; remove accounts no longer needed'
+        Status           = 'Skipped'
+        Remediation      = 'Check Graph API permissions (User.Read.All) and retry.'
+    }
+    Add-Setting @settingParams
+}
