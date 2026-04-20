@@ -4,6 +4,11 @@ All notable changes to M365 Assess are documented here. This project uses [Conve
 
 ## [Unreleased]
 
+### Added
+- Roadmap CSV export — "Download CSV" button in the Remediation Roadmap exports the current roadmap table (reflecting any localStorage lane overrides) with columns: Lane, Setting, CheckID, Severity, Effort, Domain, Section, CurrentValue, RecommendedValue, Remediation, LearnMore, ControlRef (#549)
+- Evidence field Phase 1 — 5 collectors (CA-MFA-ADMIN-001, ENTRA-SECDEFAULT-001, DEFENDER-ANTIPHISH-001, EXO-AUTH-001, SPO-SHARING-001) emit structured evidence data wired through `REPORT_DATA.findings[].evidence`; React finding detail panel shows a collapsible `<details>` Evidence block (#546)
+- AD/Hybrid dashboard panel — `AdHybridPanel` React component in the report home view surfaces hybrid sync status, last sync time, sync type, password hash sync, and AD security finding counts when ActiveDirectory section is in scope (#562)
+
 ## [2.1.0] - 2026-04-20
 
 ### Added

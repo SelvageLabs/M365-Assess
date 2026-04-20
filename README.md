@@ -35,6 +35,14 @@
 
 Run a single command to produce CSV reports, a branded HTML assessment report, and an XLSX compliance matrix covering identity, email, security, devices, collaboration, and compliance baselines. **274 security checks** mapped across **15 compliance frameworks**.
 
+## What's New in v2.2.0
+
+| Feature | Description |
+|---------|-------------|
+| **Roadmap CSV Export** | "Download CSV" button in the Remediation Roadmap exports your prioritized task list — reflecting any custom lane assignments — ready to paste into a project tracker |
+| **Evidence Field** | Five key checks (CA MFA admin policy, security defaults, Defender anti-phishing, EXO modern auth, SharePoint sharing) now embed structured evidence data in the report, viewable in an expandable panel per finding |
+| **AD/Hybrid Dashboard Panel** | When the ActiveDirectory section is included, the report home view shows hybrid sync status, last sync time, password hash sync state, and AD security finding counts |
+
 ## Installation
 
 ### From PSGallery (recommended)
@@ -136,7 +144,7 @@ During execution, the console displays real-time streaming progress for each sec
 | **Hybrid** | Hybrid Sync | Microsoft Entra Connect sync status and domain configuration |
 | **PowerBI** | Power BI Security Config | 11 CIS 9.1.x tenant setting checks: guest access, external sharing, publish to web, sensitivity labels, service principal restrictions. Requires MicrosoftPowerBIMgmt module. |
 | **Inventory** *(opt-in)* | Mailbox, Group, Teams, SharePoint, OneDrive Inventory | Per-object M&A inventory: mailboxes, distribution lists, M365 groups, Teams, SharePoint sites, OneDrive accounts |
-| **ActiveDirectory** *(opt-in)* | AD Domain & Forest, AD DC Health, AD Replication, AD Security | Domain/forest topology, DC health via dcdiag, replication partners and lag, password policies, privileged group membership. Requires RSAT or domain controller access. |
+| **ActiveDirectory** *(opt-in)* | AD Domain & Forest, AD DC Health, AD Replication, AD Security | Domain/forest topology, DC health via dcdiag, replication partners and lag, password policies, privileged group membership. Includes a hybrid sync dashboard panel in the report home view. Requires RSAT or domain controller access. |
 | **SOC2** *(opt-in)* | Security Controls, Confidentiality Controls, Audit Evidence, Readiness Checklist | SOC 2 Trust Services Criteria assessment: security and confidentiality controls, 30-day audit log evidence collection, organizational readiness checklist for non-automatable criteria (CC1-CC5, CC8-CC9) |
 | **ValueOpportunity** *(opt-in)* | License Utilization, Feature Adoption, Feature Readiness | Analyzes license utilization and feature adoption to identify features your tenant pays for but does not use. Produces an adoption roadmap with quick wins. |
 
