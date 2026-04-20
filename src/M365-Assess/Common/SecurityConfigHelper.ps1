@@ -95,7 +95,10 @@ function Add-SecuritySetting {
         [string]$CheckId = '',
 
         [Parameter()]
-        [string]$Remediation = ''
+        [string]$Remediation = '',
+
+        [Parameter()]
+        [switch]$IntentDesign
     )
 
     # Auto-generate sub-numbered CheckId for individual setting traceability
@@ -123,6 +126,7 @@ function Add-SecuritySetting {
         Status           = $Status
         CheckId          = $subCheckId
         Remediation      = $Remediation
+        IntentDesign     = [bool]$IntentDesign
     })
 
     # Accumulate adoption signal for Value Opportunity analysis

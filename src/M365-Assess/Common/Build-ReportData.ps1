@@ -142,19 +142,20 @@ function Build-ReportDataJson {
                        else                                              { '' }
 
         $findings.Add([PSCustomObject]@{
-            checkId     = $f.CheckId
-            status      = $f.Status
-            severity    = $severity
-            domain      = Get-CheckDomain -CheckId $baseCheckId
-            section     = $f.Section
-            category    = $f.Category
-            setting     = $f.Setting
-            current     = $f.CurrentValue
-            recommended = $recommended
-            remediation = $f.Remediation
-            effort      = if ($regEntry) { $e = if ($regEntry -is [hashtable]) { $regEntry['effort'] } else { $regEntry.effort }; if ($e) { $e } else { 'medium' } } else { 'medium' }
-            frameworks  = $frameworks
-            fwMeta      = $fwMeta
+            checkId      = $f.CheckId
+            status       = $f.Status
+            severity     = $severity
+            domain       = Get-CheckDomain -CheckId $baseCheckId
+            section      = $f.Section
+            category     = $f.Category
+            setting      = $f.Setting
+            current      = $f.CurrentValue
+            recommended  = $recommended
+            remediation  = $f.Remediation
+            effort       = if ($regEntry) { $e = if ($regEntry -is [hashtable]) { $regEntry['effort'] } else { $regEntry.effort }; if ($e) { $e } else { 'medium' } } else { 'medium' }
+            frameworks   = $frameworks
+            fwMeta       = $fwMeta
+            intentDesign = [bool]($f.PSObject.Properties['IntentDesign'] -and $f.IntentDesign)
         })
     }
 
@@ -210,9 +211,19 @@ function Build-ReportDataJson {
 
     $frameworkList = @($FrameworkDefs | ForEach-Object { @{ id = $_['frameworkId']; full = $_['label'] } })
 
+    $tenantRows = @($tenantRows | ForEach-Object {
+        $ageYears = $null
+        if ($_.CreatedDateTime) {
+            try { $ageYears = [math]::Round(((Get-Date) - [datetime]$_.CreatedDateTime).TotalDays / 365.25, 1) }
+            catch { Write-Verbose "Could not parse tenant CreatedDateTime: $_" }
+        }
+        $_ | Select-Object OrgDisplayName, TenantId, DefaultDomain, CreatedDateTime,
+            @{ N = 'tenantAgeYears'; E = { $ageYears } }
+    })
+
     $reportData = [ordered]@{
-        tenant         = @($tenantRows | Select-Object OrgDisplayName, TenantId, DefaultDomain, CreatedDateTime)
-        users          = @($usersRows  | Select-Object TotalUsers, Licensed, GuestUsers, SyncedFromOnPrem)
+        tenant         = @($tenantRows)
+        users          = @($usersRows  | Select-Object TotalUsers, Licensed, GuestUsers, SyncedFromOnPrem, DisabledUsers, NeverSignedIn, StaleMember)
         score          = @($scoreRows  | Select-Object Percentage, AverageComparativeScore, CurrentScore, MaxScore, CreatedDateTime)
         mfaStats       = $mfaStats
         findings       = @($findings)

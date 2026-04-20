@@ -299,9 +299,10 @@ else {
     # ------------------------------------------------------------------
     try {
         Write-Verbose "Checking DMARC records..."
-        $dmarcMissing = @()
-        $dmarcWeak = @()
-        $dmarcStrong = @()
+        $dmarcMissing    = @()
+        $dmarcNone       = @()   # p=none — monitoring only, no enforcement
+        $dmarcQuarantine = @()   # p=quarantine — staged rollout in progress
+        $dmarcReject     = @()   # p=reject — fully enforced
         foreach ($domain in $authDomains) {
             $domainName = $domain.DomainName
             if ($servfailDomains.Contains($domainName)) { continue }
@@ -312,40 +313,60 @@ else {
             }
             else {
                 $policy = ($dmarcRecord.Strings | Select-Object -First 1)
-                if ($policy -match 'p=(quarantine|reject)') {
-                    $dmarcStrong += $domainName
+                if ($policy -match 'p=reject') {
+                    $dmarcReject += $domainName
                     $null = $dmarcEnforcingDomains.Add($domainName)
                 }
-                else { $dmarcWeak += $domainName }
+                elseif ($policy -match 'p=quarantine') {
+                    $dmarcQuarantine += $domainName
+                    $null = $dmarcEnforcingDomains.Add($domainName)
+                }
+                else {
+                    $dmarcNone += $domainName
+                }
             }
         }
 
-        $totalGood = $dmarcStrong.Count
-        $totalDomains = $dmarcStrong.Count + $dmarcWeak.Count + $dmarcMissing.Count
-        if ($dmarcMissing.Count -eq 0 -and $dmarcWeak.Count -eq 0) {
+        $totalDomains = $dmarcReject.Count + $dmarcQuarantine.Count + $dmarcNone.Count + $dmarcMissing.Count
+        if ($dmarcMissing.Count -eq 0 -and $dmarcNone.Count -eq 0 -and $dmarcQuarantine.Count -eq 0) {
+            # All domains at p=reject
             $settingParams = @{
                 Category         = 'DNS Authentication'
                 Setting          = 'DMARC Records'
-                CurrentValue     = "$totalGood/$totalDomains domains have enforcing DMARC"
-                RecommendedValue = 'DMARC p=quarantine or p=reject for all'
+                CurrentValue     = "$($dmarcReject.Count)/$totalDomains domains at p=reject"
+                RecommendedValue = 'DMARC p=reject for all domains'
                 Status           = 'Pass'
                 CheckId          = 'DNS-DMARC-001'
                 Remediation      = 'No action needed.'
             }
             Add-Setting @settingParams
         }
-        else {
-            $issues = @()
-            if ($dmarcMissing.Count -gt 0) { $issues += "missing: $($dmarcMissing -join ', ')" }
-            if ($dmarcWeak.Count -gt 0) { $issues += "p=none: $($dmarcWeak -join ', ')" }
+        elseif ($dmarcMissing.Count -eq 0 -and $dmarcNone.Count -eq 0) {
+            # All domains at quarantine or reject — staged rollout in progress
             $settingParams = @{
                 Category         = 'DNS Authentication'
                 Setting          = 'DMARC Records'
-                CurrentValue     = "$totalGood/$totalDomains enforcing -- $($issues -join '; ')"
-                RecommendedValue = 'DMARC p=quarantine or p=reject for all'
+                CurrentValue     = "$($dmarcReject.Count)/$totalDomains at p=reject; $($dmarcQuarantine.Count) at p=quarantine (staged): $($dmarcQuarantine -join ', ')"
+                RecommendedValue = 'DMARC p=reject for all domains'
+                Status           = 'Warning'
+                CheckId          = 'DNS-DMARC-001'
+                Remediation      = "Advance p=quarantine domains to p=reject once DMARC reports confirm no legitimate mail is failing: $($dmarcQuarantine -join ', ')"
+            }
+            Add-Setting @settingParams
+        }
+        else {
+            $issues = @()
+            if ($dmarcMissing.Count -gt 0) { $issues += "missing: $($dmarcMissing -join ', ')" }
+            if ($dmarcNone.Count -gt 0) { $issues += "p=none: $($dmarcNone -join ', ')" }
+            if ($dmarcQuarantine.Count -gt 0) { $issues += "p=quarantine (staged): $($dmarcQuarantine -join ', ')" }
+            $settingParams = @{
+                Category         = 'DNS Authentication'
+                Setting          = 'DMARC Records'
+                CurrentValue     = "$($dmarcReject.Count)/$totalDomains at p=reject -- $($issues -join '; ')"
+                RecommendedValue = 'DMARC p=reject for all domains'
                 Status           = 'Fail'
                 CheckId          = 'DNS-DMARC-001'
-                Remediation      = "Add/update DMARC for: $($issues -join '; '). Example: v=DMARC1; p=reject; rua=mailto:dmarc@yourdomain.com"
+                Remediation      = "Add/update DMARC for: $($issues -join '; '). Start with p=none + rua= to gather reports, then advance to p=quarantine, then p=reject. Example: v=DMARC1; p=reject; rua=mailto:dmarc@yourdomain.com"
             }
             Add-Setting @settingParams
         }
