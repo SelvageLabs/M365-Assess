@@ -209,7 +209,7 @@ param(
     [switch]$OpenReport,
 
     [Parameter()]
-    [ValidateSet('Neon', 'Console', 'HighContrast')]
+    [ValidateSet('Neon', 'Console', 'Light', 'HighContrast')]
     [string]$ReportTheme = 'Neon',
 
     [Parameter()]
