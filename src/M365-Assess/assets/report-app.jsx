@@ -718,7 +718,7 @@ function FrameworkQuilt({ onSelect, selected }) {
 
   const fwProfileStats = useMemo(() => {
     if (!expandedFw) return null;
-    const l1 = new Set(), l2 = new Set(), e3 = new Set(), e5only = new Set();
+    const l1 = new Set(), l2 = new Set(), l3 = new Set(), e3 = new Set(), e5only = new Set();
     FINDINGS.forEach((f, idx) => {
       const profiles = [].concat(f.fwMeta?.[expandedFw]?.profiles || []);
       if (profiles.length === 0) return;
@@ -726,10 +726,12 @@ function FrameworkQuilt({ onSelect, selected }) {
       profiles.forEach(p => {
         if (p.includes('L1')) l1.add(idx);
         if (p.includes('L2')) l2.add(idx);
+        if (p.includes('L3')) l3.add(idx);
       });
       if (hasE3) e3.add(idx); else e5only.add(idx);
     });
-    return { l1: l1.size, l2: l2.size, e3: e3.size, e5only: e5only.size };
+    const isCmmc = expandedFw.startsWith('cmmc');
+    return { l1: l1.size, l2: l2.size, l3: l3.size, e3: e3.size, e5only: e5only.size, isCmmc };
   }, [expandedFw]);
 
   const displayFws = FRAMEWORKS.filter(f => visibleFws.includes(f.id));
@@ -823,13 +825,23 @@ function FrameworkQuilt({ onSelect, selected }) {
             <span><b style={{color:'var(--danger-text)'}}>{expandedData.fail}</b> fail</span>
             {expandedData.review > 0 && <span><b>{expandedData.review}</b> review</span>}
           </div>
-          {fwProfileStats && (fwProfileStats.l1 + fwProfileStats.l2 + fwProfileStats.e3 + fwProfileStats.e5only) > 0 && (
+          {fwProfileStats && (fwProfileStats.l1 + fwProfileStats.l2 + fwProfileStats.l3 + fwProfileStats.e3 + fwProfileStats.e5only) > 0 && (
             <div className="fw-profile-stats">
-              <span className="fw-profile-chip level">L1 <b>{fwProfileStats.l1}</b></span>
-              {fwProfileStats.l2 > 0 && <span className="fw-profile-chip level2">L2 <b>{fwProfileStats.l2}</b></span>}
-              <span className="fw-profile-sep">·</span>
-              <span className="fw-profile-chip lic">E3 <b>{fwProfileStats.e3}</b></span>
-              {fwProfileStats.e5only > 0 && <span className="fw-profile-chip lic5">E5 only <b>{fwProfileStats.e5only}</b></span>}
+              {fwProfileStats.isCmmc ? (
+                <>
+                  {fwProfileStats.l1 > 0 && <span className="fw-profile-chip level">L1 <b>{fwProfileStats.l1}</b></span>}
+                  {fwProfileStats.l2 > 0 && <span className="fw-profile-chip level2">L2 <b>{fwProfileStats.l2}</b></span>}
+                  {fwProfileStats.l3 > 0 && <span className="fw-profile-chip level3">L3 <b>{fwProfileStats.l3}</b></span>}
+                </>
+              ) : (
+                <>
+                  <span className="fw-profile-chip level">L1 <b>{fwProfileStats.l1}</b></span>
+                  {fwProfileStats.l2 > 0 && <span className="fw-profile-chip level2">L2 <b>{fwProfileStats.l2}</b></span>}
+                  <span className="fw-profile-sep">·</span>
+                  <span className="fw-profile-chip lic">E3 <b>{fwProfileStats.e3}</b></span>
+                  {fwProfileStats.e5only > 0 && <span className="fw-profile-chip lic5">E5 only <b>{fwProfileStats.e5only}</b></span>}
+                </>
+              )}
             </div>
           )}
           <div className="fw-bar" style={{marginBottom:16, height:10, borderRadius:5}}>
@@ -915,7 +927,7 @@ function FilterBar({ filters, setFilters, counts, total, search, setSearch }) {
       return { ...f, [k]: [...cur] };
     });
   };
-  const active = filters.status.length + filters.severity.length + filters.framework.length + filters.domain.length;
+  const active = filters.status.length + filters.severity.length + filters.framework.length + filters.domain.length + (filters.profile||[]).length;
 
   const statusChips = [
     ['Fail','fail'], ['Warning','warn'], ['Review','review'], ['Pass','pass'], ['Info','info']
@@ -990,10 +1002,36 @@ function FilterBar({ filters, setFilters, counts, total, search, setSearch }) {
           </div>
         )}
       </div>
+      {(() => {
+        const singleFw = filters.framework.length === 1 ? filters.framework[0] : null;
+        if (!singleFw || !singleFw.startsWith('cmmc')) return null;
+        const profileCounts = {};
+        FINDINGS.forEach(f => {
+          [].concat(f.fwMeta?.[singleFw]?.profiles || []).forEach(p => {
+            if (/^L\d+$/.test(p)) profileCounts[p] = (profileCounts[p] || 0) + 1;
+          });
+        });
+        const levels = Object.keys(profileCounts).sort();
+        if (!levels.length) return null;
+        const lvlCss = { L1: 'level', L2: 'level2', L3: 'level3' };
+        return (
+          <>
+            <div className="filter-divider"/>
+            <div className="filter-group">
+              <span className="filter-group-label">Level</span>
+              {levels.map(lvl => (
+                <button key={lvl} className={'chip ' + (lvlCss[lvl]||'level') + ((filters.profile||[]).includes(lvl) ? ' selected' : '')} onClick={() => update('profile', lvl)}>
+                  {lvl}<span className="ct">{profileCounts[lvl]||0}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        );
+      })()}
       {active > 0 && (
         <>
           <div className="filter-divider"/>
-          <button className="filter-clear" onClick={()=>setFilters({status:[],severity:[],framework:[],domain:[]})}>
+          <button className="filter-clear" onClick={()=>setFilters({status:[],severity:[],framework:[],domain:[],profile:[]})}>
             Clear {active} filter{active===1?'':'s'}
           </button>
         </>
@@ -1060,6 +1098,11 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear }) {
       if (filters.severity.length && !filters.severity.includes(f.severity)) return false;
       if (filters.framework.length && !f.frameworks.some(fw => filters.framework.includes(fw))) return false;
       if (filters.domain.length && !filters.domain.includes(f.domain)) return false;
+      if ((filters.profile||[]).length) {
+        const activeFw = filters.framework.length === 1 ? filters.framework[0] : null;
+        const fProfiles = activeFw ? [].concat(f.fwMeta?.[activeFw]?.profiles || []) : [];
+        if (!filters.profile.some(lvl => fProfiles.includes(lvl))) return false;
+      }
       if (s) {
         const hay = (f.setting+' '+f.checkId+' '+f.current+' '+f.recommended+' '+f.remediation+' '+f.domain+' '+f.section).toLowerCase();
         if (!hay.includes(s)) return false;
@@ -1101,7 +1144,12 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear }) {
           return first?.controlId || null;
         })();
         const profiles = activeFw ? [].concat(meta?.profiles || []) : [];
-        const lvl  = [...new Set(profiles.map(p => p.split('-')[1]).filter(Boolean))].join('+');
+        // Handles both "E3-L1" (CIS) and bare "L1" (CMMC) profile formats
+        const rawLevels = [...new Set(profiles.flatMap(p => { const m = p.match(/(L\d+)/); return m ? [m[1]] : []; }))].sort();
+        // For CMMC (cumulative model) show only the highest level; for others show full set
+        const isCmmcFw = activeFw?.startsWith('cmmc');
+        const lvl = isCmmcFw && rawLevels.length > 1 ? rawLevels[rawLevels.length - 1] : rawLevels.join('+');
+        const lvlCls = lvl === 'L3' ? 'level3' : lvl.includes('L2') && !lvl.includes('L1') ? 'level2' : 'level';
         const lic  = profiles.some(p => p.startsWith('E3')) && profiles.some(p => p.startsWith('E5')) ? 'E3+E5'
                    : profiles.some(p => p.startsWith('E5')) ? 'E5'
                    : profiles.some(p => p.startsWith('E3')) ? 'E3' : '';
@@ -1110,7 +1158,7 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear }) {
             <span className="check-id" style={cid ? undefined : {color:'var(--muted)', fontStyle:'italic'}}>{cid || '—'}</span>
             {(lvl || lic) && (
               <span style={{display:'inline-flex', gap:3}}>
-                {lvl && <span className={'fw-profile-chip level' + (lvl.includes('L2') ? (lvl.includes('L1') ? '' : '2') : '')}>{lvl}</span>}
+                {lvl && <span className={'fw-profile-chip ' + lvlCls}>{lvl}</span>}
                 {lic && <span className={'fw-profile-chip ' + (lic === 'E5' ? 'lic5' : 'lic')}>{lic}</span>}
               </span>
             )}
@@ -1564,7 +1612,7 @@ function App() {
   const [mode, setMode] = useState(() => lsGet('m365-mode', DEFAULTS.mode));
   const [density, setDensity] = useState(() => lsGet('m365-density', DEFAULTS.density));
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({ status:[], severity:[], framework:[], domain:[] });
+  const [filters, setFilters] = useState({ status:[], severity:[], framework:[], domain:[], profile:[] });
   const [active, setActive] = useState('overview');
   const [showTweaks, setShowTweaks] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
@@ -1637,7 +1685,7 @@ function App() {
     if (d) document.getElementById('findings-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
   const onViewFinding = useCallback((checkId) => {
-    setFilters({ status:[], severity:[], framework:[], domain:[] });
+    setFilters({ status:[], severity:[], framework:[], domain:[], profile:[] });
     setSearch('');
     setFocusFinding(checkId);
     document.getElementById('findings-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });

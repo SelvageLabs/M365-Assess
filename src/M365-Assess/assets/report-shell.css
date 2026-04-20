@@ -1177,6 +1177,7 @@ section.block { margin-bottom: 40px; scroll-margin-top: 20px; }
 .fw-profile-chip b { font-weight: 700; }
 .fw-profile-chip.level  { background: var(--success-soft); color: var(--success-text); border-color: color-mix(in oklab, var(--success) 30%, transparent); }
 .fw-profile-chip.level2 { background: var(--accent-soft);  color: var(--accent-text);  border-color: var(--accent-border); }
+.fw-profile-chip.level3 { background: var(--danger-soft);  color: var(--danger-text);  border-color: color-mix(in oklab, var(--danger) 30%, transparent); }
 .fw-profile-chip.lic    { background: var(--chip); color: var(--text-soft); }
 .fw-profile-chip.lic5   { background: var(--warn-soft); color: var(--warn-text); border-color: color-mix(in oklab, var(--warn) 30%, transparent); }
 

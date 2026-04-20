@@ -15,6 +15,17 @@ const SCORE = D.score[0] || {};
 const MFA_STATS = D.mfaStats;
 const FINDINGS = D.findings;
 const DOMAIN_STATS = D.domainStats;
+
+// Pre-compute roadmap lane counts for sidebar sub-nav (mirrors Roadmap bucketing logic)
+const _RM = FINDINGS.filter(f => f.status !== 'Pass' && f.status !== 'Info');
+const _RM_NOW = _RM.filter(t => t.severity === 'critical' || t.severity === 'high' && t.effort === 'small');
+const _RM_SOON = _RM.filter(t => !_RM_NOW.includes(t) && (t.severity === 'high' || t.severity === 'medium' && t.effort !== 'large'));
+const _RM_LATER = _RM.filter(t => !_RM_NOW.includes(t) && !_RM_SOON.includes(t));
+const ROADMAP_COUNTS = {
+  now: _RM_NOW.length,
+  soon: _RM_SOON.length,
+  later: _RM_LATER.length
+};
 const FRAMEWORKS = D.frameworks && D.frameworks.length ? D.frameworks : [{
   id: 'cis-m365-v6',
   full: 'CIS Microsoft 365 v6.0.1'
@@ -345,9 +356,10 @@ function Sidebar({
     style: {
       marginTop: 14
     }
-  }, "Details"), details.map(it => /*#__PURE__*/React.createElement("a", {
+  }, "Details"), details.map(it => /*#__PURE__*/React.createElement(React.Fragment, {
+    key: it.id
+  }, /*#__PURE__*/React.createElement("a", {
     href: `#${it.id}`,
-    key: it.id,
     onClick: e => {
       if (it.id === 'findings') onDomainJump(null);
       closeIfMobile();
@@ -355,7 +367,24 @@ function Sidebar({
     className: 'nav-item' + (active === it.id && !(it.id === 'findings' && activeDomain) ? ' active' : '')
   }, /*#__PURE__*/React.createElement("span", null, it.label), it.count !== undefined && /*#__PURE__*/React.createElement("span", {
     className: "count"
-  }, it.count)))), /*#__PURE__*/React.createElement("div", {
+  }, it.count)), it.id === 'roadmap' && active === 'roadmap' && /*#__PURE__*/React.createElement("div", {
+    className: "nav-subitems"
+  }, /*#__PURE__*/React.createElement("a", {
+    href: "#roadmap-now",
+    className: "nav-subitem"
+  }, "Now   ", /*#__PURE__*/React.createElement("span", {
+    className: "count"
+  }, ROADMAP_COUNTS.now)), /*#__PURE__*/React.createElement("a", {
+    href: "#roadmap-next",
+    className: "nav-subitem"
+  }, "Next  ", /*#__PURE__*/React.createElement("span", {
+    className: "count"
+  }, ROADMAP_COUNTS.soon)), /*#__PURE__*/React.createElement("a", {
+    href: "#roadmap-later",
+    className: "nav-subitem"
+  }, "Later ", /*#__PURE__*/React.createElement("span", {
+    className: "count"
+  }, ROADMAP_COUNTS.later)))))), /*#__PURE__*/React.createElement("div", {
     className: "sidebar-cards"
   }, /*#__PURE__*/React.createElement("div", {
     className: "sc-card"
@@ -524,7 +553,21 @@ function Posture() {
   }, /*#__PURE__*/React.createElement("span", null, "0"), /*#__PURE__*/React.createElement("span", null, "Peer avg \xB7 ", avg.toFixed(1), "%"), /*#__PURE__*/React.createElement("span", null, "100")), /*#__PURE__*/React.createElement(Sparkline, {
     scores: D.score,
     avg: avg
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }), SCORE.MicrosoftScore != null && SCORE.CustomerScore != null && /*#__PURE__*/React.createElement("div", {
+    className: "score-split"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "score-split-item"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "score-split-label"
+  }, "Microsoft-managed"), /*#__PURE__*/React.createElement("div", {
+    className: "score-split-value"
+  }, fmt(SCORE.MicrosoftScore), " pts")), /*#__PURE__*/React.createElement("div", {
+    className: "score-split-item"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "score-split-label"
+  }, "Customer-earned"), /*#__PURE__*/React.createElement("div", {
+    className: "score-split-value"
+  }, fmt(SCORE.CustomerScore), " pts")))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "kpi-strip",
     style: {
       marginBottom: 10
@@ -738,6 +781,409 @@ function MFABreakdown() {
   }))));
 }
 
+// ======================== DNS auth panel (replaces flat Appendix table) ========================
+function DnsAuthPanel() {
+  const dns = D.dns || [];
+  if (!dns.length) return null;
+  const spfPass = dns.filter(r => r.SPF && !r.SPF.includes('Not')).length;
+  const dkimPass = dns.filter(r => r.DKIMStatus === 'OK').length;
+  const dmarcEnf = dns.filter(r => r.DMARCPolicy === 'reject' || r.DMARCPolicy === 'quarantine').length;
+  const dmarcNone = dns.filter(r => r.DMARCPolicy && r.DMARCPolicy.includes('none')).length;
+  const dmarcMiss = dns.filter(r => !r.DMARC || r.DMARC.includes('Not') || !r.DMARCPolicy).length;
+  const n = dns.length;
+  const statCards = [{
+    label: 'SPF',
+    pass: spfPass,
+    total: n
+  }, {
+    label: 'DKIM',
+    pass: dkimPass,
+    total: n
+  }, {
+    label: 'DMARC enforced',
+    pass: dmarcEnf,
+    total: n
+  }];
+  const policyClass = p => p === 'reject' || p === 'quarantine' ? 'pass' : p && p.includes('none') ? 'warn' : 'fail';
+  const risks = [n - spfPass > 0 && {
+    cls: 'fail',
+    msg: `${n - spfPass} domain${n - spfPass !== 1 ? 's' : ''} missing SPF`
+  }, dmarcNone > 0 && {
+    cls: 'warn',
+    msg: `${dmarcNone} domain${dmarcNone !== 1 ? 's' : ''} with DMARC p=none`
+  }, dmarcMiss > 0 && {
+    cls: 'fail',
+    msg: `${dmarcMiss} domain${dmarcMiss !== 1 ? 's' : ''} missing DMARC`
+  }, n - dkimPass > 0 && {
+    cls: 'warn',
+    msg: `${n - dkimPass} domain${n - dkimPass !== 1 ? 's' : ''} missing DKIM`
+  }].filter(Boolean);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "card dns-auth-panel",
+    style: {
+      gridColumn: '1 / -1',
+      marginTop: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "dns-panel-label"
+  }, "Email authentication posture"), /*#__PURE__*/React.createElement("div", {
+    className: "dns-stat-row"
+  }, statCards.map(s => /*#__PURE__*/React.createElement("div", {
+    key: s.label,
+    className: "dns-stat-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "dns-stat-label"
+  }, s.label), /*#__PURE__*/React.createElement("div", {
+    className: "dns-stat-val"
+  }, s.pass, /*#__PURE__*/React.createElement("span", null, "/", s.total)), /*#__PURE__*/React.createElement("div", {
+    className: "dns-stat-bar"
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: pct(s.pass, s.total) + '%',
+      background: s.pass === s.total ? 'var(--success)' : 'var(--danger)'
+    }
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "dns-stat-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "dns-stat-label"
+  }, "DMARC policy mix"), /*#__PURE__*/React.createElement("div", {
+    className: "dns-policy-chips"
+  }, dmarcEnf > 0 && /*#__PURE__*/React.createElement("span", {
+    className: "dns-policy-chip pass"
+  }, dmarcEnf, " enforced"), dmarcNone > 0 && /*#__PURE__*/React.createElement("span", {
+    className: "dns-policy-chip warn"
+  }, dmarcNone, " monitor"), dmarcMiss > 0 && /*#__PURE__*/React.createElement("span", {
+    className: "dns-policy-chip fail"
+  }, dmarcMiss, " missing")))), /*#__PURE__*/React.createElement("table", {
+    className: "dns-domain-table"
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Domain"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'center'
+    }
+  }, "SPF"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'center'
+    }
+  }, "DMARC"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'center'
+    }
+  }, "Policy"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'center'
+    }
+  }, "DKIM"))), /*#__PURE__*/React.createElement("tbody", null, dns.map((r, i) => /*#__PURE__*/React.createElement("tr", {
+    key: i
+  }, /*#__PURE__*/React.createElement("td", {
+    className: "dns-domain-name"
+  }, r.Domain), /*#__PURE__*/React.createElement("td", {
+    style: {
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(StatusDot, {
+    ok: r.SPF && !r.SPF.includes('Not')
+  })), /*#__PURE__*/React.createElement("td", {
+    style: {
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(StatusDot, {
+    ok: r.DMARC && !r.DMARC.includes('Not')
+  })), /*#__PURE__*/React.createElement("td", {
+    style: {
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: 'dns-policy-chip ' + policyClass(r.DMARCPolicy)
+  }, r.DMARCPolicy || 'missing')), /*#__PURE__*/React.createElement("td", {
+    style: {
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(StatusDot, {
+    ok: r.DKIMStatus === 'OK'
+  })))))), risks.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "dns-risks"
+  }, risks.map((r, i) => /*#__PURE__*/React.createElement("span", {
+    key: i,
+    className: 'dns-risk-chip ' + r.cls
+  }, "\u26A0 ", r.msg))));
+}
+
+// ======================== Intune category grid ========================
+function IntuneCategoryGrid() {
+  const intune = FINDINGS.filter(f => f.domain === 'Intune');
+  if (!intune.length) return null;
+  const CATS = [{
+    id: 'COMPLIANCE',
+    label: 'Device Compliance',
+    re: /^INTUNE-COMPLIANCE/
+  }, {
+    id: 'DEVICE',
+    label: 'Device Config',
+    re: /^INTUNE-DEVICE/
+  }, {
+    id: 'CONFIG',
+    label: 'Config Profiles',
+    re: /^INTUNE-CONFIG/
+  }, {
+    id: 'APP',
+    label: 'App Protection',
+    re: /^INTUNE-APP/
+  }, {
+    id: 'SECURITY',
+    label: 'Security Baselines',
+    re: /^INTUNE-SECURITY/
+  }, {
+    id: 'VPN',
+    label: 'VPN / Network',
+    re: /^INTUNE-(VPN|WIFI|REMOTE)/
+  }, {
+    id: 'MEDIA',
+    label: 'Removable Media',
+    re: /^INTUNE-REMOVABLEMEDIA/
+  }];
+  const buckets = CATS.map(cat => {
+    const fs = intune.filter(f => cat.re.test(f.checkId));
+    if (!fs.length) return null;
+    const pass = fs.filter(f => f.status === 'Pass').length;
+    const fail = fs.filter(f => f.status === 'Fail').length;
+    const warn = fs.filter(f => f.status === 'Warning').length;
+    return {
+      ...cat,
+      fs,
+      pass,
+      fail,
+      warn,
+      score: pct(pass, fs.length)
+    };
+  }).filter(Boolean);
+  const seen = new Set(buckets.flatMap(b => b.fs.map(f => f.checkId)));
+  const other = intune.filter(f => !seen.has(f.checkId));
+  if (other.length) {
+    const pass = other.filter(f => f.status === 'Pass').length;
+    buckets.push({
+      id: 'OTHER',
+      label: 'Other',
+      fs: other,
+      pass,
+      fail: other.filter(f => f.status === 'Fail').length,
+      warn: other.filter(f => f.status === 'Warning').length,
+      score: pct(pass, other.length)
+    });
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: "intune-cat-section"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "panel-sublabel"
+  }, "Intune coverage by category"), /*#__PURE__*/React.createElement("div", {
+    className: "intune-category-grid"
+  }, buckets.map(b => /*#__PURE__*/React.createElement("div", {
+    key: b.id,
+    className: 'intune-cat-card' + (b.fail > 0 ? ' has-fail' : b.warn > 0 ? ' has-warn' : ' all-pass')
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "icat-label"
+  }, b.label), /*#__PURE__*/React.createElement("div", {
+    className: "icat-score"
+  }, b.score, /*#__PURE__*/React.createElement("span", {
+    className: "icat-pct"
+  }, "%")), /*#__PURE__*/React.createElement("div", {
+    className: "icat-meta"
+  }, b.pass, "P \xB7 ", b.fail, "F \xB7 ", b.fs.length), /*#__PURE__*/React.createElement("div", {
+    className: "dc-bar",
+    style: {
+      height: 4,
+      marginTop: 6
+    }
+  }, b.pass > 0 && /*#__PURE__*/React.createElement("i", {
+    className: "pass-seg",
+    style: {
+      flex: b.pass
+    }
+  }), b.warn > 0 && /*#__PURE__*/React.createElement("i", {
+    className: "warn-seg",
+    style: {
+      flex: b.warn
+    }
+  }), b.fail > 0 && /*#__PURE__*/React.createElement("i", {
+    className: "fail-seg",
+    style: {
+      flex: b.fail
+    }
+  }))))));
+}
+
+// ======================== Mailbox summary panel ========================
+function MailboxSummaryPanel() {
+  const mb = D.mailboxSummary || {};
+  const mf = D.mailflowStats || {};
+  if (!mb.TotalMailboxes) return null;
+  const total = mb.TotalMailboxes || 0;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "domain-sub-panel"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "panel-sublabel"
+  }, "Exchange Online \xB7 mailbox estate"), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-strip",
+    style: {
+      flexWrap: 'wrap'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "kpi"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "kpi-label"
+  }, "Total mailboxes"), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-value"
+  }, fmt(total)), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-hint"
+  }, fmt(mb.UserMailboxes || 0), " user \xB7 ", fmt(mb.SharedMailboxes || 0), " shared"), /*#__PURE__*/React.createElement("div", {
+    className: "tiny-bar"
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: '100%',
+      background: 'var(--accent-muted,var(--accent))'
+    }
+  }))), mb.SharedMailboxes > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "kpi"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "kpi-label"
+  }, "Shared mailboxes"), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-value"
+  }, fmt(mb.SharedMailboxes)), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-hint"
+  }, pct(mb.SharedMailboxes, total), "% of estate"), /*#__PURE__*/React.createElement("div", {
+    className: "tiny-bar"
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: pct(mb.SharedMailboxes, total) + '%'
+    }
+  }))), mf.transportRules != null && /*#__PURE__*/React.createElement("div", {
+    className: 'kpi' + (mf.transportRules > 10 ? ' warn' : '')
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "kpi-label"
+  }, "Transport rules"), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-value"
+  }, fmt(mf.transportRules)), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-hint"
+  }, "active rules"), /*#__PURE__*/React.createElement("div", {
+    className: "tiny-bar"
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: Math.min(100, mf.transportRules * 8) + '%',
+      background: mf.transportRules > 10 ? 'var(--warn)' : 'var(--success)'
+    }
+  }))), mf.inboundConnectors != null && /*#__PURE__*/React.createElement("div", {
+    className: "kpi"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "kpi-label"
+  }, "Mail connectors"), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-value"
+  }, fmt((mf.inboundConnectors || 0) + (mf.outboundConnectors || 0))), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-hint"
+  }, mf.inboundConnectors || 0, " in \xB7 ", mf.outboundConnectors || 0, " out"), /*#__PURE__*/React.createElement("div", {
+    className: "tiny-bar"
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: Math.min(100, ((mf.inboundConnectors || 0) + (mf.outboundConnectors || 0)) * 20) + '%'
+    }
+  })))));
+}
+
+// ======================== SharePoint summary panel ========================
+function SharePointSummaryPanel() {
+  const spo = FINDINGS.filter(f => f.domain === 'SharePoint & OneDrive');
+  if (!spo.length) return null;
+  const pass = spo.filter(f => f.status === 'Pass').length;
+  const fail = spo.filter(f => f.status === 'Fail').length;
+  const warn = spo.filter(f => f.status === 'Warning').length;
+  const cfg = D.sharepointConfig || {};
+  const sharingLevel = cfg.SharingLevel;
+  const sharingColor = sharingLevel === 'Disabled' ? 'var(--success-text)' : sharingLevel?.includes('ExternalUserAndGuestSharing') || sharingLevel === 'Anyone' ? 'var(--danger-text)' : sharingLevel ? 'var(--warn-text,var(--warn))' : 'var(--muted)';
+  const SEV_ORDER = {
+    critical: 4,
+    high: 3,
+    medium: 2,
+    low: 1
+  };
+  const topFails = spo.filter(f => f.status === 'Fail').sort((a, b) => (SEV_ORDER[b.severity] || 0) - (SEV_ORDER[a.severity] || 0)).slice(0, 3);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "domain-sub-panel"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "panel-sublabel"
+  }, "SharePoint & OneDrive posture"), /*#__PURE__*/React.createElement("div", {
+    className: "spo-summary-row"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "spo-stat-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "kpi-label"
+  }, "Pass rate"), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-value"
+  }, pct(pass, spo.length), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14
+    }
+  }, "%")), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-hint"
+  }, pass, " of ", spo.length, " checks"), /*#__PURE__*/React.createElement("div", {
+    className: "tiny-bar"
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: pct(pass, spo.length) + '%',
+      background: 'var(--success)'
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: 'spo-stat-card' + (fail > 0 ? ' spo-stat-bad' : '')
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "kpi-label"
+  }, "Failures"), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-value"
+  }, fail), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-hint"
+  }, warn, " warnings"), /*#__PURE__*/React.createElement("div", {
+    className: "tiny-bar"
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: pct(fail, spo.length) + '%',
+      background: 'var(--danger)'
+    }
+  }))), sharingLevel && /*#__PURE__*/React.createElement("div", {
+    className: "spo-stat-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "kpi-label"
+  }, "External sharing"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 600,
+      color: sharingColor,
+      marginTop: 6,
+      lineHeight: 1.3
+    }
+  }, sharingLevel)), cfg.OneDriveSharingLevel && /*#__PURE__*/React.createElement("div", {
+    className: "spo-stat-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "kpi-label"
+  }, "OneDrive sharing"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 600,
+      color: 'var(--text-soft)',
+      marginTop: 6,
+      lineHeight: 1.3
+    }
+  }, cfg.OneDriveSharingLevel))), topFails.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "spo-top-fails"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "spo-top-fails-label"
+  }, "Top gaps"), topFails.map((f, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "spo-fail-row"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: 'sev-badge ' + f.severity
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "bar"
+  }, /*#__PURE__*/React.createElement("i", null), /*#__PURE__*/React.createElement("i", null), /*#__PURE__*/React.createElement("i", null), /*#__PURE__*/React.createElement("i", null)), /*#__PURE__*/React.createElement("span", null, SEV_LABEL[f.severity])), /*#__PURE__*/React.createElement("span", {
+    className: "spo-fail-name"
+  }, f.setting)))));
+}
+
 // ======================== Domain rollup ========================
 function DomainRollup({
   onJump
@@ -798,7 +1244,7 @@ function DomainRollup({
     })), /*#__PURE__*/React.createElement("div", {
       className: "dc-meta"
     }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, d.pass), " pass"), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, d.warn), " warn"), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, d.fail), " fail"), d.review > 0 && /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, d.review), " review")));
-  })));
+  })), /*#__PURE__*/React.createElement(IntuneCategoryGrid, null), /*#__PURE__*/React.createElement(MailboxSummaryPanel, null), /*#__PURE__*/React.createElement(SharePointSummaryPanel, null));
 }
 
 // ======================== Framework quilt ========================
@@ -867,6 +1313,7 @@ function FrameworkQuilt({
     if (!expandedFw) return null;
     const l1 = new Set(),
       l2 = new Set(),
+      l3 = new Set(),
       e3 = new Set(),
       e5only = new Set();
     FINDINGS.forEach((f, idx) => {
@@ -876,14 +1323,18 @@ function FrameworkQuilt({
       profiles.forEach(p => {
         if (p.includes('L1')) l1.add(idx);
         if (p.includes('L2')) l2.add(idx);
+        if (p.includes('L3')) l3.add(idx);
       });
       if (hasE3) e3.add(idx);else e5only.add(idx);
     });
+    const isCmmc = expandedFw.startsWith('cmmc');
     return {
       l1: l1.size,
       l2: l2.size,
+      l3: l3.size,
       e3: e3.size,
-      e5only: e5only.size
+      e5only: e5only.size,
+      isCmmc
     };
   }, [expandedFw]);
   const displayFws = FRAMEWORKS.filter(f => visibleFws.includes(f.id));
@@ -1044,9 +1495,15 @@ function FrameworkQuilt({
     style: {
       color: 'var(--danger-text)'
     }
-  }, expandedData.fail), " fail"), expandedData.review > 0 && /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, expandedData.review), " review")), fwProfileStats && fwProfileStats.l1 + fwProfileStats.l2 + fwProfileStats.e3 + fwProfileStats.e5only > 0 && /*#__PURE__*/React.createElement("div", {
+  }, expandedData.fail), " fail"), expandedData.review > 0 && /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, expandedData.review), " review")), fwProfileStats && fwProfileStats.l1 + fwProfileStats.l2 + fwProfileStats.l3 + fwProfileStats.e3 + fwProfileStats.e5only > 0 && /*#__PURE__*/React.createElement("div", {
     className: "fw-profile-stats"
-  }, /*#__PURE__*/React.createElement("span", {
+  }, fwProfileStats.isCmmc ? /*#__PURE__*/React.createElement(React.Fragment, null, fwProfileStats.l1 > 0 && /*#__PURE__*/React.createElement("span", {
+    className: "fw-profile-chip level"
+  }, "L1 ", /*#__PURE__*/React.createElement("b", null, fwProfileStats.l1)), fwProfileStats.l2 > 0 && /*#__PURE__*/React.createElement("span", {
+    className: "fw-profile-chip level2"
+  }, "L2 ", /*#__PURE__*/React.createElement("b", null, fwProfileStats.l2)), fwProfileStats.l3 > 0 && /*#__PURE__*/React.createElement("span", {
+    className: "fw-profile-chip level3"
+  }, "L3 ", /*#__PURE__*/React.createElement("b", null, fwProfileStats.l3))) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
     className: "fw-profile-chip level"
   }, "L1 ", /*#__PURE__*/React.createElement("b", null, fwProfileStats.l1)), fwProfileStats.l2 > 0 && /*#__PURE__*/React.createElement("span", {
     className: "fw-profile-chip level2"
@@ -1056,7 +1513,7 @@ function FrameworkQuilt({
     className: "fw-profile-chip lic"
   }, "E3 ", /*#__PURE__*/React.createElement("b", null, fwProfileStats.e3)), fwProfileStats.e5only > 0 && /*#__PURE__*/React.createElement("span", {
     className: "fw-profile-chip lic5"
-  }, "E5 only ", /*#__PURE__*/React.createElement("b", null, fwProfileStats.e5only))), /*#__PURE__*/React.createElement("div", {
+  }, "E5 only ", /*#__PURE__*/React.createElement("b", null, fwProfileStats.e5only)))), /*#__PURE__*/React.createElement("div", {
     className: "fw-bar",
     style: {
       marginBottom: 16,
@@ -1212,7 +1669,7 @@ function FilterBar({
       };
     });
   };
-  const active = filters.status.length + filters.severity.length + filters.framework.length + filters.domain.length;
+  const active = filters.status.length + filters.severity.length + filters.framework.length + filters.domain.length + (filters.profile || []).length;
   const statusChips = [['Fail', 'fail'], ['Warning', 'warn'], ['Review', 'review'], ['Pass', 'pass'], ['Info', 'info']];
   const sevChips = [['critical', 'crit', 'Critical'], ['high', 'high', 'High'], ['medium', 'med', 'Medium'], ['low', 'low', 'Low']];
   const DOM_ORDER = ['Entra ID', 'Conditional Access', 'Enterprise Apps', 'Exchange Online', 'Intune', 'Defender', 'Purview / Compliance', 'SharePoint & OneDrive', 'Teams', 'Forms', 'Power BI', 'Active Directory', 'SOC 2', 'Value Opportunity'];
@@ -1343,7 +1800,36 @@ function FilterBar({
     onChange: () => update('domain', d)
   }), /*#__PURE__*/React.createElement("span", null, d), /*#__PURE__*/React.createElement("span", {
     className: "ct"
-  }, counts.domain[d] || 0))))), active > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+  }, counts.domain[d] || 0))))), (() => {
+    const singleFw = filters.framework.length === 1 ? filters.framework[0] : null;
+    if (!singleFw || !singleFw.startsWith('cmmc')) return null;
+    const profileCounts = {};
+    FINDINGS.forEach(f => {
+      [].concat(f.fwMeta?.[singleFw]?.profiles || []).forEach(p => {
+        if (/^L\d+$/.test(p)) profileCounts[p] = (profileCounts[p] || 0) + 1;
+      });
+    });
+    const levels = Object.keys(profileCounts).sort();
+    if (!levels.length) return null;
+    const lvlCss = {
+      L1: 'level',
+      L2: 'level2',
+      L3: 'level3'
+    };
+    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "filter-divider"
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "filter-group"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "filter-group-label"
+    }, "Level"), levels.map(lvl => /*#__PURE__*/React.createElement("button", {
+      key: lvl,
+      className: 'chip ' + (lvlCss[lvl] || 'level') + ((filters.profile || []).includes(lvl) ? ' selected' : ''),
+      onClick: () => update('profile', lvl)
+    }, lvl, /*#__PURE__*/React.createElement("span", {
+      className: "ct"
+    }, profileCounts[lvl] || 0)))));
+  })(), active > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: "filter-divider"
   }), /*#__PURE__*/React.createElement("button", {
     className: "filter-clear",
@@ -1351,7 +1837,8 @@ function FilterBar({
       status: [],
       severity: [],
       framework: [],
-      domain: []
+      domain: [],
+      profile: []
     })
   }, "Clear ", active, " filter", active === 1 ? '' : 's')));
 }
@@ -1389,7 +1876,9 @@ const ALL_COLS = [{
 const DEFAULT_COLS = ['status', 'finding', 'domain', 'controlId', 'checkId', 'severity'];
 function FindingsTable({
   filters,
-  search
+  search,
+  focusFinding,
+  onFocusClear
 }) {
   const [open, setOpen] = useState(new Set());
   const [visibleCols, setVisibleCols] = useState(DEFAULT_COLS);
@@ -1410,6 +1899,25 @@ function FindingsTable({
       document.removeEventListener('mousedown', onOut);
     };
   }, [colPickerOpen]);
+  useEffect(() => {
+    if (!focusFinding) return;
+    const timer = setTimeout(() => {
+      const rowId = 'finding-row-' + focusFinding.replace(/\./g, '-');
+      const el = document.getElementById(rowId);
+      if (el) {
+        el.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+        el.classList.add('highlight-focus');
+        setTimeout(() => {
+          el.classList.remove('highlight-focus');
+          onFocusClear?.();
+        }, 2500);
+      }
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [focusFinding]);
   const toggleCol = id => setVisibleCols(v => v.includes(id) ? v.length > 1 ? v.filter(c => c !== id) : v : [...v, id]);
   const cols = ALL_COLS.filter(c => visibleCols.includes(c.id));
   const gridTpl = cols.map(c => c.width).join(' ') + ' 28px';
@@ -1420,6 +1928,11 @@ function FindingsTable({
       if (filters.severity.length && !filters.severity.includes(f.severity)) return false;
       if (filters.framework.length && !f.frameworks.some(fw => filters.framework.includes(fw))) return false;
       if (filters.domain.length && !filters.domain.includes(f.domain)) return false;
+      if ((filters.profile || []).length) {
+        const activeFw = filters.framework.length === 1 ? filters.framework[0] : null;
+        const fProfiles = activeFw ? [].concat(f.fwMeta?.[activeFw]?.profiles || []) : [];
+        if (!filters.profile.some(lvl => fProfiles.includes(lvl))) return false;
+      }
       if (s) {
         const hay = (f.setting + ' ' + f.checkId + ' ' + f.current + ' ' + f.recommended + ' ' + f.remediation + ' ' + f.domain + ' ' + f.section).toLowerCase();
         if (!hay.includes(s)) return false;
@@ -1470,7 +1983,15 @@ function FindingsTable({
             return first?.controlId || null;
           })();
           const profiles = activeFw ? [].concat(meta?.profiles || []) : [];
-          const lvl = [...new Set(profiles.map(p => p.split('-')[1]).filter(Boolean))].join('+');
+          // Handles both "E3-L1" (CIS) and bare "L1" (CMMC) profile formats
+          const rawLevels = [...new Set(profiles.flatMap(p => {
+            const m = p.match(/(L\d+)/);
+            return m ? [m[1]] : [];
+          }))].sort();
+          // For CMMC (cumulative model) show only the highest level; for others show full set
+          const isCmmcFw = activeFw?.startsWith('cmmc');
+          const lvl = isCmmcFw && rawLevels.length > 1 ? rawLevels[rawLevels.length - 1] : rawLevels.join('+');
+          const lvlCls = lvl === 'L3' ? 'level3' : lvl.includes('L2') && !lvl.includes('L1') ? 'level2' : 'level';
           const lic = profiles.some(p => p.startsWith('E3')) && profiles.some(p => p.startsWith('E5')) ? 'E3+E5' : profiles.some(p => p.startsWith('E5')) ? 'E5' : profiles.some(p => p.startsWith('E3')) ? 'E3' : '';
           return /*#__PURE__*/React.createElement("div", {
             key: "controlId",
@@ -1491,7 +2012,7 @@ function FindingsTable({
               gap: 3
             }
           }, lvl && /*#__PURE__*/React.createElement("span", {
-            className: 'fw-profile-chip level' + (lvl.includes('L2') ? lvl.includes('L1') ? '' : '2' : '')
+            className: 'fw-profile-chip ' + lvlCls
           }, lvl), lic && /*#__PURE__*/React.createElement("span", {
             className: 'fw-profile-chip ' + (lic === 'E5' ? 'lic5' : 'lic')
           }, lic)));
@@ -1601,6 +2122,7 @@ function FindingsTable({
     return /*#__PURE__*/React.createElement(React.Fragment, {
       key: i
     }, /*#__PURE__*/React.createElement("div", {
+      id: 'finding-row-' + (f.checkId || '').replace(/\./g, '-'),
       className: 'finding-row' + (isOpen ? ' open' : ''),
       onClick: () => toggle(i),
       style: {
@@ -1678,7 +2200,9 @@ function whyItMatters(f) {
 }
 
 // ======================== Roadmap ========================
-function Roadmap() {
+function Roadmap({
+  onViewFinding
+}) {
   const [open, setOpen] = useState(null);
   const tasks = FINDINGS.filter(f => f.status !== 'Pass' && f.status !== 'Info').map(f => ({
     ...f
@@ -1798,10 +2322,7 @@ function Roadmap() {
       href: "#findings-anchor",
       onClick: e => {
         e.preventDefault();
-        document.getElementById('findings-anchor')?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
+        onViewFinding?.(t.checkId);
       }
     }, "View in findings table \u2192"))));
   };
@@ -1831,7 +2352,8 @@ function Roadmap() {
   }, /*#__PURE__*/React.createElement("div", {
     className: "lane-head"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "lane-title"
+    className: "lane-title",
+    id: "roadmap-now"
   }, /*#__PURE__*/React.createElement("span", {
     className: "lane-dot crit"
   }), "Now ", /*#__PURE__*/React.createElement("span", {
@@ -1846,7 +2368,8 @@ function Roadmap() {
   }, /*#__PURE__*/React.createElement("div", {
     className: "lane-head"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "lane-title"
+    className: "lane-title",
+    id: "roadmap-next"
   }, /*#__PURE__*/React.createElement("span", {
     className: "lane-dot soon"
   }), "Next ", /*#__PURE__*/React.createElement("span", {
@@ -1861,7 +2384,8 @@ function Roadmap() {
   }, /*#__PURE__*/React.createElement("div", {
     className: "lane-head"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "lane-title"
+    className: "lane-title",
+    id: "roadmap-later"
   }, /*#__PURE__*/React.createElement("span", {
     className: "lane-dot later"
   }), "Later ", /*#__PURE__*/React.createElement("span", {
@@ -2089,51 +2613,7 @@ function Appendix() {
       fontVariantNumeric: 'tabular-nums',
       color: 'var(--muted)'
     }
-  }, l.Total)))))), /*#__PURE__*/React.createElement("div", {
-    className: "card"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: 'var(--muted)',
-      textTransform: 'uppercase',
-      letterSpacing: '.08em',
-      fontWeight: 600,
-      marginBottom: 10
-    }
-  }, "Email authentication posture"), /*#__PURE__*/React.createElement("table", {
-    style: {
-      width: '100%',
-      fontSize: 12,
-      borderCollapse: 'collapse'
-    }
-  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
-    style: {
-      textAlign: 'left',
-      color: 'var(--muted)'
-    }
-  }, /*#__PURE__*/React.createElement("th", {
-    style: {
-      padding: '6px 0'
-    }
-  }, "Domain"), /*#__PURE__*/React.createElement("th", null, "SPF"), /*#__PURE__*/React.createElement("th", null, "DMARC"), /*#__PURE__*/React.createElement("th", null, "DKIM"))), /*#__PURE__*/React.createElement("tbody", null, D.dns.map((r, i) => /*#__PURE__*/React.createElement("tr", {
-    key: i,
-    style: {
-      borderTop: '1px solid var(--border)'
-    }
-  }, /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '6px 0',
-      fontFamily: 'var(--font-mono)',
-      fontSize: 12
-    }
-  }, r.Domain), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(StatusDot, {
-    ok: r.SPF && !r.SPF.includes('Not')
-  })), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(StatusDot, {
-    ok: r.DMARCPolicy === 'reject' || r.DMARCPolicy === 'quarantine',
-    warn: r.DMARCPolicy?.includes('none')
-  })), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(StatusDot, {
-    ok: r.DKIMStatus === 'OK'
-  }))))))), /*#__PURE__*/React.createElement("div", {
+  }, l.Total)))))), /*#__PURE__*/React.createElement(DnsAuthPanel, null), /*#__PURE__*/React.createElement("div", {
     className: "card"
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -2308,7 +2788,13 @@ function App() {
     "mode": "dark",
     "density": "compact"
   } /*EDITMODE-END*/;
-  const lsGet = (k, def) => { try { return localStorage.getItem(k) || def; } catch(e) { return def; } };
+  const lsGet = (k, def) => {
+    try {
+      return localStorage.getItem(k) || def;
+    } catch (e) {
+      return def;
+    }
+  };
   const [theme, setTheme] = useState(() => lsGet('m365-theme', DEFAULTS.theme));
   const [mode, setMode] = useState(() => lsGet('m365-mode', DEFAULTS.mode));
   const [density, setDensity] = useState(() => lsGet('m365-density', DEFAULTS.density));
@@ -2317,11 +2803,13 @@ function App() {
     status: [],
     severity: [],
     framework: [],
-    domain: []
+    domain: [],
+    profile: []
   });
   const [active, setActive] = useState('overview');
   const [showTweaks, setShowTweaks] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
+  const [focusFinding, setFocusFinding] = useState(null);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.mode = mode;
@@ -2410,6 +2898,21 @@ function App() {
       block: 'start'
     });
   };
+  const onViewFinding = useCallback(checkId => {
+    setFilters({
+      status: [],
+      severity: [],
+      framework: [],
+      domain: [],
+      profile: []
+    });
+    setSearch('');
+    setFocusFinding(checkId);
+    document.getElementById('findings-anchor')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+  }, []);
   return /*#__PURE__*/React.createElement("div", {
     className: "app"
   }, /*#__PURE__*/React.createElement(Sidebar, {
@@ -2452,8 +2955,12 @@ function App() {
     setSearch: setSearch
   }), /*#__PURE__*/React.createElement(FindingsTable, {
     filters: filters,
-    search: search
-  }), /*#__PURE__*/React.createElement(Roadmap, null), /*#__PURE__*/React.createElement(Appendix, null), !D.whiteLabel && /*#__PURE__*/React.createElement("div", {
+    search: search,
+    focusFinding: focusFinding,
+    onFocusClear: () => setFocusFinding(null)
+  }), /*#__PURE__*/React.createElement(Roadmap, {
+    onViewFinding: onViewFinding
+  }), /*#__PURE__*/React.createElement(Appendix, null), !D.whiteLabel && /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: 'center',
       padding: '30px 0 10px',
