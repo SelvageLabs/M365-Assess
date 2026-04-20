@@ -22,7 +22,15 @@ function Get-ReportTemplate {
         [string]$ReportDataJson,
 
         [Parameter()]
-        [string]$ReportTitle = 'M365 Security Assessment'
+        [string]$ReportTitle = 'M365 Security Assessment',
+
+        [Parameter()]
+        [ValidateSet('neon', 'console', 'saas', 'high-contrast')]
+        [string]$DefaultTheme = 'neon',
+
+        [Parameter()]
+        [ValidateSet('dark', 'light')]
+        [string]$DefaultMode = 'dark'
     )
 
     $assetsDir = Join-Path -Path $PSScriptRoot -ChildPath '../assets'
@@ -33,16 +41,29 @@ function Get-ReportTemplate {
     $reactDomJs = (Get-Content -Path (Join-Path $assetsDir 'react-dom.production.min.js')   -Raw -ErrorAction Stop) -replace '</script>', '<\/script>'
     $appJs      = (Get-Content -Path (Join-Path $assetsDir 'report-app.js')                 -Raw -ErrorAction Stop) -replace '</script>', '<\/script>'
 
+    # Anti-FOUC inline script: reads localStorage, validates against known values,
+    # falls back to the baked-in default. Runs synchronously before first paint.
+    $antiFouc = "(function(){try{var v=['neon','console','saas','high-contrast'];" +
+                "var e=document.documentElement;" +
+                "var t=localStorage.getItem('m365-theme');" +
+                "var m=localStorage.getItem('m365-mode');" +
+                "var d=localStorage.getItem('m365-density');" +
+                "if(v.indexOf(t)<0)t='$DefaultTheme';" +
+                "if(m!=='dark'&&m!=='light')m='$DefaultMode';" +
+                "if(d!=='compact'&&d!=='comfort')d='compact';" +
+                "e.dataset.theme=t;e.dataset.mode=m;e.dataset.density=d;" +
+                "}catch(err){}})();"
+
     # Use StringBuilder so JS/CSS content is appended as .NET strings — never PS-interpolated
     $sb = [System.Text.StringBuilder]::new(2097152) # 2 MB initial capacity
 
     $null = $sb.AppendLine('<!DOCTYPE html>')
-    $null = $sb.AppendLine('<html data-theme="neon" data-mode="dark" data-density="compact">')
+    $null = $sb.AppendLine("<html data-theme=`"$DefaultTheme`" data-mode=`"$DefaultMode`" data-density=`"compact`">")
     $null = $sb.AppendLine('<head>')
     $null = $sb.AppendLine('<meta charset="UTF-8">')
     $null = $sb.AppendLine('<meta name="viewport" content="width=device-width,initial-scale=1.0">')
     $null = $sb.AppendLine("<title>$([System.Web.HttpUtility]::HtmlEncode($ReportTitle))</title>")
-    $null = $sb.AppendLine('<script>(function(){try{var e=document.documentElement,t=localStorage.getItem("m365-theme")||"neon",m=localStorage.getItem("m365-mode")||"dark",d=localStorage.getItem("m365-density")||"compact";e.dataset.theme=t;e.dataset.mode=m;e.dataset.density=d;}catch(e){}})();</script>')
+    $null = $sb.AppendLine("<script>$antiFouc</script>")
     $null = $sb.AppendLine('<style>')
     $null = $sb.Append($themesCss)
     $null = $sb.AppendLine()

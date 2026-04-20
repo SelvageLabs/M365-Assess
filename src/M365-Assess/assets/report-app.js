@@ -491,6 +491,9 @@ function Topbar({
     className: theme === 'console' ? 'active' : '',
     onClick: () => setTheme('console')
   }, "Console"), /*#__PURE__*/React.createElement("button", {
+    className: theme === 'saas' ? 'active' : '',
+    onClick: () => setTheme('saas')
+  }, "Light"), /*#__PURE__*/React.createElement("button", {
     className: theme === 'high-contrast' ? 'active' : '',
     onClick: () => setTheme('high-contrast')
   }, "High Contrast")), /*#__PURE__*/React.createElement("div", {
@@ -3059,6 +3062,12 @@ function TweaksPanel({
     onClick: () => setTheme('console'),
     style: {
       background: 'linear-gradient(135deg, #4c8bff, #2563eb)'
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: 'swatch' + (theme === 'saas' ? ' active' : ''),
+    onClick: () => setTheme('saas'),
+    style: {
+      background: 'linear-gradient(135deg, #e0e7ff, #6366f1)'
     }
   }), /*#__PURE__*/React.createElement("div", {
     className: 'swatch' + (theme === 'high-contrast' ? ' active' : ''),

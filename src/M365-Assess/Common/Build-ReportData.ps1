@@ -304,7 +304,7 @@ function Build-ReportDataJson {
         dns            = @($dnsRows      | Select-Object Domain, SPF, DMARC, DMARCPolicy, DKIM, DKIMStatus)
         ca             = @($caRows       | Select-Object DisplayName, State)
         'admin-roles'  = @($adminRoleRows | Select-Object RoleName, MemberDisplayName)
-        summary        = @(@{ Items = $findings.Count })
+        summary        = @($findings | Group-Object -Property Section | ForEach-Object { [ordered]@{ Section = $_.Name; Items = $_.Count } })
         whiteLabel     = [bool]$WhiteLabel
         xlsxFileName   = $XlsxFileName
         mailboxSummary = if ($mbxMap.Count) { $mbxMap } else { $null }

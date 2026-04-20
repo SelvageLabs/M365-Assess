@@ -57,6 +57,9 @@
 .PARAMETER OpenReport
     Automatically open the generated HTML report in the default browser after
     generation. Works on Windows, macOS, and Linux.
+.PARAMETER ReportTheme
+    Default visual theme baked into the generated HTML report. Users can switch themes
+    via the report UI. Valid values: Neon (default), Console, Saas, HighContrast.
 .PARAMETER WhiteLabel
     Strips all M365-Assess and GitHub identity from the report (hides the GitHub
     link and open-source attribution in the React app).
@@ -204,6 +207,10 @@ param(
 
     [Parameter()]
     [switch]$OpenReport,
+
+    [Parameter()]
+    [ValidateSet('Neon', 'Console', 'Light', 'HighContrast')]
+    [string]$ReportTheme = 'Neon',
 
     [Parameter()]
     [switch]$WhiteLabel,
@@ -1271,6 +1278,7 @@ if (Test-Path -Path $reportScriptPath) {
         }
         if ($script:domainPrefix) { $reportParams['TenantName'] = $script:domainPrefix }
         elseif ($TenantId)        { $reportParams['TenantName'] = $TenantId }
+        $reportParams['ReportTheme'] = $ReportTheme
         if ($WhiteLabel)        { $reportParams['WhiteLabel']        = $true }
         if ($CompactReport)     { $reportParams['CompactReport']     = $true }
         if ($OpenReport)        { $reportParams['OpenReport']        = $true }

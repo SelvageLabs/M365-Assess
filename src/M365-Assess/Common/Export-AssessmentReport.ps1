@@ -16,6 +16,10 @@
     the assessment folder.
 .PARAMETER TenantName
     Tenant display name for the report title. Read from Tenant Information CSV if omitted.
+.PARAMETER ReportTheme
+    Default visual theme baked into the report. Users can change the theme via the report
+    UI. Valid values: Neon (default), Console, Saas, HighContrast. Neon and Console default
+    to dark mode; Saas defaults to light mode; HighContrast defaults to dark mode.
 .PARAMETER WhiteLabel
     Hides M365-Assess GitHub link and Galvnyz attribution from the report footer.
 .PARAMETER OpenReport
@@ -45,6 +49,10 @@ param(
 
     [Parameter()]
     [string]$TenantName,
+
+    [Parameter()]
+    [ValidateSet('Neon', 'Console', 'Light', 'HighContrast')]
+    [string]$ReportTheme = 'Neon',
 
     [Parameter()]
     [switch]$WhiteLabel,
@@ -160,7 +168,19 @@ $reportJson = Build-ReportDataJson `
 # Assemble HTML and write output
 # ------------------------------------------------------------------
 . (Join-Path -Path $PSScriptRoot -ChildPath 'Get-ReportTemplate.ps1')
-$html = Get-ReportTemplate -ReportDataJson $reportJson -ReportTitle $reportTitle
+
+$themeDefaults = @{
+    'Neon'          = @{ Theme = 'neon';          Mode = 'dark'  }
+    'Console'       = @{ Theme = 'console';       Mode = 'dark'  }
+    'Light'         = @{ Theme = 'saas';          Mode = 'light' }
+    'HighContrast'  = @{ Theme = 'high-contrast'; Mode = 'dark'  }
+}
+$htmlTheme = $themeDefaults[$ReportTheme]
+$html = Get-ReportTemplate `
+    -ReportDataJson $reportJson `
+    -ReportTitle    $reportTitle `
+    -DefaultTheme   $htmlTheme.Theme `
+    -DefaultMode    $htmlTheme.Mode
 
 Set-Content -Path $OutputPath -Value $html -Encoding UTF8
 Write-Output "HTML report generated: $OutputPath"
