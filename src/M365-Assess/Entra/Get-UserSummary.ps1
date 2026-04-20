@@ -96,6 +96,10 @@ $disabledCount = 0
 $syncedCount = 0
 $cloudOnlyCount = 0
 $activeSignInCount = 0
+$neverSignedInCount = $null
+$staleMemberCount = $null
+
+$staleThreshold = (Get-Date).AddDays(-90)
 
 foreach ($user in $allUsers) {
     if ($user.assignedLicenses -and @($user.assignedLicenses).Count -gt 0) {
@@ -118,8 +122,23 @@ foreach ($user in $allUsers) {
     }
 
     # Sign-in activity (available only with AuditLog.Read.All + AAD Premium)
-    if (-not $fallback -and $user.signInActivity.lastSignInDateTime) {
-        $activeSignInCount++
+    if (-not $fallback) {
+        $lastSignIn = $user.signInActivity?.lastSignInDateTime
+        if ($lastSignIn) {
+            $activeSignInCount++
+        }
+        else {
+            if ($null -eq $neverSignedInCount) { $neverSignedInCount = 0 }
+            $neverSignedInCount++
+        }
+
+        # Stale member: enabled member account with no sign-in in 90 days (or never)
+        if ($user.accountEnabled -eq $true -and $user.userType -ne 'Guest') {
+            if ($null -eq $staleMemberCount) { $staleMemberCount = 0 }
+            if (-not $lastSignIn -or [datetime]$lastSignIn -lt $staleThreshold) {
+                $staleMemberCount++
+            }
+        }
     }
 }
 
@@ -131,6 +150,8 @@ $report = @([PSCustomObject]@{
     SyncedFromOnPrem = $syncedCount
     CloudOnly        = $cloudOnlyCount
     WithMFA          = $activeSignInCount
+    NeverSignedIn    = $neverSignedInCount
+    StaleMember      = $staleMemberCount
 })
 
 Write-Verbose "User summary: $totalUsers total, $licensedCount licensed, $guestCount guests, $disabledCount disabled"
