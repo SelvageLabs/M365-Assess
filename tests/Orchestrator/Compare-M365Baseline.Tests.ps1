@@ -16,7 +16,7 @@ Describe 'Compare-M365Baseline' {
     Context 'when BaselineA folder does not exist' {
         It 'should emit an error and return no output' {
             $result = Compare-M365Baseline -BaselineA 'Ghost' -TenantId 'contoso.com' `
-                -OutputFolder $script:outputFolder 2>$null
+                -OutputFolder $script:outputFolder -ErrorAction SilentlyContinue
             $result | Should -BeNullOrEmpty
         }
     }
@@ -32,7 +32,7 @@ Describe 'Compare-M365Baseline' {
 
         It 'should emit an error and return no output' {
             $result = Compare-M365Baseline -BaselineA 'Q1' -BaselineB 'Ghost' `
-                -TenantId 'noB.test' -OutputFolder $script:outputFolder 2>$null
+                -TenantId 'noB.test' -OutputFolder $script:outputFolder -ErrorAction SilentlyContinue
             $result | Should -BeNullOrEmpty
         }
     }
@@ -162,7 +162,7 @@ Describe 'Compare-M365Baseline' {
 
         It 'should emit an error and return no output' {
             $result = Compare-M365Baseline -BaselineA 'Q1' -TenantId $tenantId `
-                -OutputFolder $script:outputFolder 2>$null
+                -OutputFolder $script:outputFolder -ErrorAction SilentlyContinue
             $result | Should -BeNullOrEmpty
         }
     }
