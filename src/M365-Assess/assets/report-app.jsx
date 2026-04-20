@@ -91,7 +91,7 @@ const pct = (n,d) => d ? Math.round((n/d)*100) : 0;
 const fmt = n => Number(n).toLocaleString();
 
 // ======================== Sidebar ========================
-function Sidebar({ active, counts, domainCounts, activeDomain, onDomainJump, navOpen, onClose }) {
+function Sidebar({ active, counts, domainCounts, activeDomain, onDomainJump, onOverviewClick, navOpen, onClose }) {
   const DOM_ORDER = ['Entra ID','Conditional Access','Enterprise Apps','Exchange Online','Intune','Defender','Purview / Compliance','SharePoint & OneDrive','Teams','Forms','Power BI','Active Directory','SOC 2','Value Opportunity'];
   const domains = DOM_ORDER.filter(d => domainCounts.total[d]).concat(
     Object.keys(domainCounts.total).filter(d => !DOM_ORDER.includes(d)).sort()
@@ -124,7 +124,9 @@ function Sidebar({ active, counts, domainCounts, activeDomain, onDomainJump, nav
         <nav style={{flex:1}}>
           <div className="nav-label">Executive</div>
           {exec.map(it => (
-            <a href={`#${it.id}`} key={it.id} onClick={closeIfMobile} className={'nav-item' + (active===it.id?' active':'')}>
+            <a href={`#${it.id}`} key={it.id}
+               onClick={e => { if (it.id === 'overview') { e.preventDefault(); onOverviewClick(); } closeIfMobile(); }}
+               className={'nav-item' + (active===it.id?' active':'')}>
               <span>{it.label}</span>
             </a>
           ))}
@@ -148,7 +150,10 @@ function Sidebar({ active, counts, domainCounts, activeDomain, onDomainJump, nav
                  onClick={e => { if (it.id === 'findings') onDomainJump(null); closeIfMobile(); }}
                  className={'nav-item' + (active===it.id && !(it.id==='findings' && activeDomain)?' active':'')}>
                 <span>{it.label}</span>
-                {it.count !== undefined && <span className="count">{it.count}</span>}
+                {it.id === 'roadmap'
+                  ? <span className="nav-expand-icon">{active === 'roadmap' ? '−' : '+'}</span>
+                  : it.count !== undefined && <span className="count">{it.count}</span>
+                }
               </a>
               {it.id === 'roadmap' && active === 'roadmap' && (
                 <div className="nav-subitems">
@@ -1874,6 +1879,11 @@ function App() {
     setFilters(f => ({ ...f, domain: d ? [d] : [] }));
     if (d) document.getElementById('findings-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+  const onOverviewClick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setActive('overview');
+    onDomainJump(null);
+  };
   const onViewFinding = useCallback((checkId) => {
     setFilters({ status:[], severity:[], framework:[], domain:[], profile:[] });
     setSearch('');
@@ -1883,7 +1893,7 @@ function App() {
 
   return (
     <div className="app">
-      <Sidebar active={active} counts={navCounts} domainCounts={domainCounts} activeDomain={filters.domain.length===1 ? filters.domain[0] : null} onDomainJump={onDomainJump} navOpen={navOpen} onClose={()=>setNavOpen(false)}/>
+      <Sidebar active={active} counts={navCounts} domainCounts={domainCounts} activeDomain={filters.domain.length===1 ? filters.domain[0] : null} onDomainJump={onDomainJump} onOverviewClick={onOverviewClick} navOpen={navOpen} onClose={()=>setNavOpen(false)}/>
       <main className="main">
         <Topbar
           search={search} setSearch={setSearch}

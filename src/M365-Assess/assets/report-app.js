@@ -270,6 +270,7 @@ function Sidebar({
   domainCounts,
   activeDomain,
   onDomainJump,
+  onOverviewClick,
   navOpen,
   onClose
 }) {
@@ -329,7 +330,13 @@ function Sidebar({
   }, "Executive"), exec.map(it => /*#__PURE__*/React.createElement("a", {
     href: `#${it.id}`,
     key: it.id,
-    onClick: closeIfMobile,
+    onClick: e => {
+      if (it.id === 'overview') {
+        e.preventDefault();
+        onOverviewClick();
+      }
+      closeIfMobile();
+    },
     className: 'nav-item' + (active === it.id ? ' active' : '')
   }, /*#__PURE__*/React.createElement("span", null, it.label))), /*#__PURE__*/React.createElement("div", {
     className: "nav-label",
@@ -365,7 +372,9 @@ function Sidebar({
       closeIfMobile();
     },
     className: 'nav-item' + (active === it.id && !(it.id === 'findings' && activeDomain) ? ' active' : '')
-  }, /*#__PURE__*/React.createElement("span", null, it.label), it.count !== undefined && /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", null, it.label), it.id === 'roadmap' ? /*#__PURE__*/React.createElement("span", {
+    className: "nav-expand-icon"
+  }, active === 'roadmap' ? '−' : '+') : it.count !== undefined && /*#__PURE__*/React.createElement("span", {
     className: "count"
   }, it.count)), it.id === 'roadmap' && active === 'roadmap' && /*#__PURE__*/React.createElement("div", {
     className: "nav-subitems"
@@ -3209,6 +3218,14 @@ function App() {
       block: 'start'
     });
   };
+  const onOverviewClick = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    setActive('overview');
+    onDomainJump(null);
+  };
   const onViewFinding = useCallback(checkId => {
     setFilters({
       status: [],
@@ -3232,6 +3249,7 @@ function App() {
     domainCounts: domainCounts,
     activeDomain: filters.domain.length === 1 ? filters.domain[0] : null,
     onDomainJump: onDomainJump,
+    onOverviewClick: onOverviewClick,
     navOpen: navOpen,
     onClose: () => setNavOpen(false)
   }), /*#__PURE__*/React.createElement("main", {
