@@ -96,20 +96,18 @@ if ($latestScore.AverageComparativeScores) {
 
 Write-Verbose "Secure Score: $currentScore / $maxScore ($percentage%) as of $($latestScore.CreatedDateTime)"
 
-# Compute Microsoft-managed vs customer-earned score split via control profiles.
-# Microsoft-managed controls have actionType = 'ProviderGenerated'. Add $top=250
-# to avoid the default 100-item page limit (Secure Score has 290+ controls).
+# Compute Microsoft-managed vs customer-earned score split via control profiles
 $microsoftScore = 0.0
 $customerScore  = 0.0
 try {
-    $profilesResp = Invoke-MgGraphRequest -Method GET -Uri '/v1.0/security/secureScoreControlProfiles?$top=250' -ErrorAction Stop
+    $profilesResp = Invoke-MgGraphRequest -Method GET -Uri '/v1.0/security/secureScoreControlProfiles' -ErrorAction Stop
     $profileMap = @{}
     foreach ($prof in $profilesResp.value) {
         $profileMap[$prof.id] = $prof.actionType
     }
     foreach ($ctrl in $latestScore.ControlScores) {
         $earned = if ($null -ne $ctrl.Score) { [double]$ctrl.Score } else { 0.0 }
-        if ($profileMap[$ctrl.ControlName] -eq 'ProviderGenerated') {
+        if ($profileMap[$ctrl.ControlName] -eq 'Provider') {
             $microsoftScore += $earned
         } else {
             $customerScore += $earned
