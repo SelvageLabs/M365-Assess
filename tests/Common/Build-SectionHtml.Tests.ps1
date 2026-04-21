@@ -48,6 +48,21 @@ Describe 'Build-SectionHtml.ps1 — structural contract' {
         $script:content | Should -Match '12-DNS-Email-Authentication\.csv'
     }
 
+    It 'loads mailbox summary CSV using numbered prefix (09-Mailbox-Summary.csv)' {
+        $script:content | Should -Match '09-Mailbox-Summary\.csv'
+        $script:content | Should -Not -Match 'Get-MailboxSummary\.csv'
+    }
+
+    It 'loads mail flow CSV using numbered prefix (10-Mail-Flow.csv)' {
+        $script:content | Should -Match '10-Mail-Flow\.csv'
+        $script:content | Should -Not -Match 'Get-MailFlowReport\.csv'
+    }
+
+    It 'loads SharePoint config CSV using numbered prefix (20b-SharePoint-Security-Config.csv)' {
+        $script:content | Should -Match '20b-SharePoint-Security-Config\.csv'
+        $script:content | Should -Not -Match 'Get-SharePointSecurityConfig\.csv'
+    }
+
     It 'filters onmicrosoft.com domains from DNS data' {
         $script:content | Should -Match 'onmicrosoft'
     }
