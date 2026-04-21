@@ -1864,6 +1864,8 @@ function Appendix() {
   const mfaTotal = MFA_STATS.total || 1;
   const mfaPct = n => Math.round((n / mfaTotal) * 100);
 
+  const ca       = D.ca       || [];
+  const licenses = D.licenses || [];
   const dns = D.dns || [];
   const dnsTotal = dns.length;
   const spfPass  = dns.filter(r => r.SPF === 'Pass').length;
@@ -1919,7 +1921,7 @@ function Appendix() {
           <table style={{width:'100%',fontSize:12,borderCollapse:'collapse'}}>
             <thead><tr style={{textAlign:'left',color:'var(--muted)'}}><th style={{padding:'6px 0'}}>SKU</th><th style={{textAlign:'right'}}>Assigned</th><th style={{textAlign:'right'}}>Total</th></tr></thead>
             <tbody>
-              {D.licenses.filter(l => parseInt(l.Assigned) > 0).map((l,i)=>(
+              {licenses.filter(l => parseInt(l.Assigned) > 0).map((l,i)=>(
                 <tr key={i} style={rowStyle}>
                   <td style={cellStyle}>{l.License}</td>
                   <td style={{...cellStyle,...monoRight}}>{l.Assigned}</td>
@@ -1972,10 +1974,10 @@ function Appendix() {
         </div>
 
         <div className="card">
-          <div style={labelStyle}>Conditional Access policies ({D.ca.length})</div>
+          <div style={labelStyle}>Conditional Access policies ({ca.length})</div>
           <table style={{width:'100%',fontSize:12,borderCollapse:'collapse'}}>
             <tbody>
-              {D.ca.map((r,i)=>(
+              {ca.map((r,i)=>(
                 <tr key={i} style={rowStyle}>
                   <td style={cellStyle}>{r.DisplayName}</td>
                   <td style={{textAlign:'right',paddingRight:6}}><StatusDot ok={r.State==='enabled'} warn={r.State?.includes('Report')}/></td>

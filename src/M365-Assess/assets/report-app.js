@@ -3093,6 +3093,8 @@ function Overview() {
 function Appendix() {
   const mfaTotal = MFA_STATS.total || 1;
   const mfaPct = n => Math.round(n / mfaTotal * 100);
+  const ca = D.ca || [];
+  const licenses = D.licenses || [];
   const dns = D.dns || [];
   const dnsTotal = dns.length;
   const spfPass = dns.filter(r => r.SPF === 'Pass').length;
@@ -3207,7 +3209,7 @@ function Appendix() {
     style: {
       textAlign: 'right'
     }
-  }, "Total"))), /*#__PURE__*/React.createElement("tbody", null, D.licenses.filter(l => parseInt(l.Assigned) > 0).map((l, i) => /*#__PURE__*/React.createElement("tr", {
+  }, "Total"))), /*#__PURE__*/React.createElement("tbody", null, licenses.filter(l => parseInt(l.Assigned) > 0).map((l, i) => /*#__PURE__*/React.createElement("tr", {
     key: i,
     style: rowStyle
   }, /*#__PURE__*/React.createElement("td", {
@@ -3302,13 +3304,13 @@ function Appendix() {
     className: "card"
   }, /*#__PURE__*/React.createElement("div", {
     style: labelStyle
-  }, "Conditional Access policies (", D.ca.length, ")"), /*#__PURE__*/React.createElement("table", {
+  }, "Conditional Access policies (", ca.length, ")"), /*#__PURE__*/React.createElement("table", {
     style: {
       width: '100%',
       fontSize: 12,
       borderCollapse: 'collapse'
     }
-  }, /*#__PURE__*/React.createElement("tbody", null, D.ca.map((r, i) => /*#__PURE__*/React.createElement("tr", {
+  }, /*#__PURE__*/React.createElement("tbody", null, ca.map((r, i) => /*#__PURE__*/React.createElement("tr", {
     key: i,
     style: rowStyle
   }, /*#__PURE__*/React.createElement("td", {
