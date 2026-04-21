@@ -907,6 +907,25 @@ foreach ($sectionName in $Section) {
             # ships Microsoft.Identity.Client 4.64 while Microsoft.Graph loads 4.78;
             # a child process gets its own AppDomain and avoids the clash.
             if ($collector.ContainsKey('IsChildProcess') -and $collector.IsChildProcess) {
+                # MicrosoftPowerBIMgmt device code auth hangs on Linux/macOS.
+                # Service principal auth works cross-platform; interactive auth requires Windows.
+                $hasSp = $ClientId -and ($CertificateThumbprint -or $ClientSecret)
+                if (-not $IsWindows -and -not $hasSp) {
+                    $skipMsg = 'Power BI collector skipped: MicrosoftPowerBIMgmt interactive auth is not supported on non-Windows platforms. Re-run on Windows, or supply -ClientId with -ClientSecret / -CertificateThumbprint to use service principal auth.'
+                    Write-Warning $skipMsg
+                    Write-AssessmentLog -Level WARN -Message $skipMsg -Section $sectionName -Collector $collector.Label
+                    $summaryResults.Add([PSCustomObject]@{
+                        Section   = $sectionName
+                        Collector = $collector.Label
+                        FileName  = "$($collector.Name).csv"
+                        Status    = 'Skipped'
+                        Items     = 0
+                        Duration  = '00:00'
+                        Error     = 'Platform not supported for interactive auth'
+                    })
+                    Show-CollectorResult -Label $collector.Label -Status 'Skipped' -Items 0 -DurationSeconds 0 -ErrorMessage 'Platform not supported for interactive auth'
+                    continue
+                }
                 Write-Host "    Connecting to Power BI..." -ForegroundColor Yellow
                 Write-Host "    Running in isolated process (assembly compatibility)..." -ForegroundColor Gray
                 Write-AssessmentLog -Level INFO -Message "Running $($collector.Label) in child process to avoid MSAL assembly conflict" -Section $sectionName -Collector $collector.Label

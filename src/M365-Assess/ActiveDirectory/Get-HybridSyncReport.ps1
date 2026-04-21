@@ -117,8 +117,12 @@ $report = foreach ($org in $organizations) {
         'Cloud-only (no hybrid sync)'
     }
 
-    # Determine if password hash sync is enabled based on last sync timestamp
-    $passwordHashSyncEnabled = if ($lastPasswordSyncTime) { $true } else { $false }
+    # Determine PHS state: True = confirmed, Unknown = sync active but no timestamp yet
+    # (onPremisesLastPasswordSyncDateTime can be null when PHS is enabled but no password
+    # changes have occurred, or when Cloud Sync is used instead of Entra Connect)
+    $passwordHashSyncEnabled = if ($lastPasswordSyncTime) { $true }
+                               elseif ($onPremSyncEnabled -eq $true) { 'Unknown' }
+                               else { $false }
 
     # Determine if directory sync is configured (distinct from enabled)
     $dirSyncConfigured = if ($null -ne $onPremSyncEnabled) { $onPremSyncEnabled } else { $false }

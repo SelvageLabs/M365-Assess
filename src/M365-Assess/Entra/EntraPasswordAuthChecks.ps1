@@ -618,14 +618,17 @@ try {
                 Add-Setting @settingParams
             }
             else {
+                # No PHS timestamp found — directory sync is active but password hashes may not be
+                # syncing. This is Warning (not Fail) because: Cloud Sync may not populate this field,
+                # or PHS was recently enabled and no passwords have changed since.
                 $settingParams = @{
                     Category         = 'Hybrid Identity'
                     Setting          = 'Password Hash Sync'
-                    CurrentValue     = 'Directory sync enabled but no password sync detected'
+                    CurrentValue     = 'Directory sync active — no PHS timestamp found; verify in Azure AD Connect'
                     RecommendedValue = 'Enabled'
-                    Status           = 'Fail'
+                    Status           = 'Warning'
                     CheckId          = 'ENTRA-HYBRID-001'
-                    Remediation      = 'Enable Password Hash Sync in Azure AD Connect > Optional Features. This provides leaked credential detection and backup authentication.'
+                    Remediation      = 'Verify Password Hash Sync is enabled in Azure AD Connect > Optional Features (or Entra Cloud Sync settings). PHS provides leaked credential detection and backup authentication.'
                 }
                 Add-Setting @settingParams
             }

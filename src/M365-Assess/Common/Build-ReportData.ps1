@@ -245,7 +245,7 @@ function Build-ReportDataJson {
             syncEnabled      = [bool]($row.OnPremisesSyncEnabled -eq 'True')
             lastSyncTime     = if ($row.LastDirSyncTime) { [string]$row.LastDirSyncTime } else { $null }
             syncType         = if ($row.SyncType) { [string]$row.SyncType } else { $null }
-            pwHashSync       = [bool]($row.PasswordHashSyncEnabled -eq 'True')
+            pwHashSync       = if ($row.PasswordHashSyncEnabled -eq 'True') { $true } elseif ($row.PasswordHashSyncEnabled -eq 'Unknown') { $null } else { $false }
             securityFindings = $adSecurityRows.Count
             highRiskFindings = $highRiskCount
             syncErrorCount   = 0
@@ -266,7 +266,7 @@ function Build-ReportDataJson {
                 syncEnabled      = $true
                 lastSyncTime     = if ($lastSync) { [string]$lastSync } else { $null }
                 syncType         = $null
-                pwHashSync       = ($null -ne $phsDate -and $phsDate -ne '')
+                pwHashSync       = if ($null -ne $phsDate -and $phsDate -ne '') { $true } else { $null }
                 securityFindings = 0
                 highRiskFindings = 0
                 syncErrorCount   = $errCount

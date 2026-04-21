@@ -1307,8 +1307,9 @@ function AdHybridPanel() {
   const fail = adFindings.filter(f => f.status === 'Fail').length;
   const syncOk = ad.syncEnabled;
   const phsOk = ad.pwHashSync;
+  const phsUnknown = phsOk === null || phsOk === undefined;
   const syncColor = syncOk ? 'var(--success-text)' : 'var(--danger-text)';
-  const phsColor = phsOk ? 'var(--success-text)' : 'var(--danger-text)';
+  const phsColor = phsUnknown ? 'var(--warn-text)' : phsOk ? 'var(--success-text)' : 'var(--danger-text)';
   const fmtDate = d => {
     if (!d) return 'Unknown';
     try {
@@ -1366,7 +1367,7 @@ function AdHybridPanel() {
       lineHeight: 1.3
     }
   }, fmtDate(ad.lastSyncTime))), /*#__PURE__*/React.createElement("div", {
-    className: 'spo-stat-card' + (!phsOk ? ' spo-stat-bad' : '')
+    className: 'spo-stat-card' + (phsOk === false ? ' spo-stat-bad' : '')
   }, /*#__PURE__*/React.createElement("div", {
     className: "kpi-label"
   }, "Password hash sync"), /*#__PURE__*/React.createElement("div", {
@@ -1376,12 +1377,17 @@ function AdHybridPanel() {
       color: phsColor,
       marginTop: 6
     }
-  }, phsOk ? 'Enabled' : 'Disabled'), !phsOk && /*#__PURE__*/React.createElement("div", {
+  }, phsOk ? 'Enabled' : phsUnknown ? 'Verify' : 'Disabled'), phsOk === false && /*#__PURE__*/React.createElement("div", {
     className: "kpi-hint",
     style: {
       color: 'var(--danger-text)'
     }
-  }, "Users cannot reset passwords from Entra")), ad.syncErrorCount > 0 && /*#__PURE__*/React.createElement("div", {
+  }, "Leaked credential detection and fallback auth may be impacted"), phsUnknown && /*#__PURE__*/React.createElement("div", {
+    className: "kpi-hint",
+    style: {
+      color: 'var(--warn-text)'
+    }
+  }, "No PHS timestamp \u2014 verify in Azure AD Connect")), ad.syncErrorCount > 0 && /*#__PURE__*/React.createElement("div", {
     className: "spo-stat-card spo-stat-bad"
   }, /*#__PURE__*/React.createElement("div", {
     className: "kpi-label"

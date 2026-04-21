@@ -683,10 +683,11 @@ function AdHybridPanel() {
   const adFindings = FINDINGS.filter(f => f.domain === 'Active Directory');
   const pass = adFindings.filter(f => f.status==='Pass').length;
   const fail = adFindings.filter(f => f.status==='Fail').length;
-  const syncOk    = ad.syncEnabled;
-  const phsOk     = ad.pwHashSync;
-  const syncColor = syncOk ? 'var(--success-text)' : 'var(--danger-text)';
-  const phsColor  = phsOk  ? 'var(--success-text)' : 'var(--danger-text)';
+  const syncOk      = ad.syncEnabled;
+  const phsOk       = ad.pwHashSync;
+  const phsUnknown  = phsOk === null || phsOk === undefined;
+  const syncColor   = syncOk    ? 'var(--success-text)' : 'var(--danger-text)';
+  const phsColor    = phsUnknown ? 'var(--warn-text)'   : phsOk ? 'var(--success-text)' : 'var(--danger-text)';
   const fmtDate   = d => {
     if (!d) return 'Unknown';
     try { return new Date(d).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' }); }
@@ -711,10 +712,11 @@ function AdHybridPanel() {
           <div className="kpi-label">Last sync</div>
           <div style={{fontSize:12, fontWeight:600, color:'var(--text-soft)', marginTop:6, lineHeight:1.3}}>{fmtDate(ad.lastSyncTime)}</div>
         </div>
-        <div className={'spo-stat-card' + (!phsOk ? ' spo-stat-bad' : '')}>
+        <div className={'spo-stat-card' + (phsOk === false ? ' spo-stat-bad' : '')}>
           <div className="kpi-label">Password hash sync</div>
-          <div style={{fontSize:13, fontWeight:700, color: phsColor, marginTop:6}}>{phsOk ? 'Enabled' : 'Disabled'}</div>
-          {!phsOk && <div className="kpi-hint" style={{color:'var(--danger-text)'}}>Users cannot reset passwords from Entra</div>}
+          <div style={{fontSize:13, fontWeight:700, color: phsColor, marginTop:6}}>{phsOk ? 'Enabled' : phsUnknown ? 'Verify' : 'Disabled'}</div>
+          {phsOk === false && <div className="kpi-hint" style={{color:'var(--danger-text)'}}>Leaked credential detection and fallback auth may be impacted</div>}
+          {phsUnknown && <div className="kpi-hint" style={{color:'var(--warn-text)'}}>No PHS timestamp — verify in Azure AD Connect</div>}
         </div>
         {ad.syncErrorCount > 0 && (
           <div className="spo-stat-card spo-stat-bad">
