@@ -1387,7 +1387,7 @@ function AdHybridPanel() {
     style: {
       color: 'var(--warn-text)'
     }
-  }, "No PHS timestamp \u2014 verify in Azure AD Connect")), ad.syncErrorCount > 0 && /*#__PURE__*/React.createElement("div", {
+  }, "No PHS timestamp - verify in Microsoft Entra Connect or Entra Cloud Sync")), ad.syncErrorCount > 0 && /*#__PURE__*/React.createElement("div", {
     className: "spo-stat-card spo-stat-bad"
   }, /*#__PURE__*/React.createElement("div", {
     className: "kpi-label"

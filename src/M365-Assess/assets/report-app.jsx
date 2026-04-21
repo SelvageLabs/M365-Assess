@@ -716,7 +716,7 @@ function AdHybridPanel() {
           <div className="kpi-label">Password hash sync</div>
           <div style={{fontSize:13, fontWeight:700, color: phsColor, marginTop:6}}>{phsOk ? 'Enabled' : phsUnknown ? 'Verify' : 'Disabled'}</div>
           {phsOk === false && <div className="kpi-hint" style={{color:'var(--danger-text)'}}>Leaked credential detection and fallback auth may be impacted</div>}
-          {phsUnknown && <div className="kpi-hint" style={{color:'var(--warn-text)'}}>No PHS timestamp — verify in Azure AD Connect</div>}
+          {phsUnknown && <div className="kpi-hint" style={{color:'var(--warn-text)'}}>No PHS timestamp - verify in Microsoft Entra Connect or Entra Cloud Sync</div>}
         </div>
         {ad.syncErrorCount > 0 && (
           <div className="spo-stat-card spo-stat-bad">

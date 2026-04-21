@@ -582,7 +582,7 @@ try {
             RecommendedValue = 'Enabled (if hybrid)'
             Status           = 'Review'
             CheckId          = 'ENTRA-HYBRID-001'
-            Remediation      = 'Verify Password Hash Sync status in Azure AD Connect. Entra admin center > Identity > Hybrid management > Azure AD Connect.'
+            Remediation      = 'Verify Password Hash Sync status in Microsoft Entra Connect. Entra admin center > Identity > Hybrid management > Microsoft Entra Connect.'
         }
         Add-Setting @settingParams
     }
@@ -598,7 +598,7 @@ try {
                 RecommendedValue = 'Enabled (if hybrid)'
                 Status           = 'Info'
                 CheckId          = 'ENTRA-HYBRID-001'
-                Remediation      = 'Not applicable for cloud-only tenants. If you configure hybrid identity in the future, enable Password Hash Sync in Azure AD Connect.'
+                Remediation      = 'Not applicable for cloud-only tenants. If you configure hybrid identity in the future, enable Password Hash Sync in Microsoft Entra Connect or Microsoft Entra Cloud Sync.'
             }
             Add-Setting @settingParams
         }
@@ -613,7 +613,7 @@ try {
                     RecommendedValue = 'Enabled'
                     Status           = 'Pass'
                     CheckId          = 'ENTRA-HYBRID-001'
-                    Remediation      = 'Password Hash Sync is enabled. Verify it remains active in Azure AD Connect configuration.'
+                    Remediation      = 'Password Hash Sync is enabled. Verify it remains active in Microsoft Entra Connect or Microsoft Entra Cloud Sync.'
                 }
                 Add-Setting @settingParams
             }
@@ -624,11 +624,11 @@ try {
                 $settingParams = @{
                     Category         = 'Hybrid Identity'
                     Setting          = 'Password Hash Sync'
-                    CurrentValue     = 'Directory sync active — no PHS timestamp found; verify in Azure AD Connect'
+                    CurrentValue     = 'Directory sync active - no PHS timestamp found; verify in Microsoft Entra Connect or Entra Cloud Sync'
                     RecommendedValue = 'Enabled'
                     Status           = 'Warning'
                     CheckId          = 'ENTRA-HYBRID-001'
-                    Remediation      = 'Verify Password Hash Sync is enabled in Azure AD Connect > Optional Features (or Entra Cloud Sync settings). PHS provides leaked credential detection and backup authentication.'
+                    Remediation      = 'Verify Password Hash Sync is enabled in Microsoft Entra Connect (Optional Features) or Microsoft Entra Cloud Sync. PHS provides leaked credential detection and backup authentication.'
                 }
                 Add-Setting @settingParams
             }
