@@ -200,10 +200,14 @@ function Sidebar({ active, counts, domainCounts, activeDomain, onDomainJump, onO
             </div>
             <div className="sc-row"><span>org</span><span>{TENANT.DefaultDomain || TENANT.OrgDisplayName}</span></div>
             <div className="sc-row"><span>tenant</span><span>{(TENANT.TenantId||'').slice(0,8)+'…'}</span></div>
+            {TENANT.tenantAgeYears != null && <div className="sc-row"><span>age</span><span>{TENANT.tenantAgeYears} yrs</span></div>}
             <div className="sc-row"><span>users</span><span>{fmt(USERS.TotalUsers)}</span></div>
             <div className="sc-row"><span>licensed</span><span>{fmt(USERS.Licensed)}</span></div>
             <div className="sc-row"><span>guests</span><span>{fmt(USERS.GuestUsers)}</span></div>
             {USERS.SyncedFromOnPrem > 0 && <div className="sc-row"><span>synced</span><span>{fmt(USERS.SyncedFromOnPrem)}</span></div>}
+            {USERS.DisabledUsers  > 0 && <div className="sc-row"><span>disabled</span><span className="sc-warn">{fmt(USERS.DisabledUsers)}</span></div>}
+            {USERS.NeverSignedIn  > 0 && <div className="sc-row"><span>never signed in</span><span className="sc-warn">{fmt(USERS.NeverSignedIn)}</span></div>}
+            {USERS.StaleMember    > 0 && <div className="sc-row"><span>stale</span><span className="sc-warn">{fmt(USERS.StaleMember)}</span></div>}
           </div>
           <div className="sc-card">
             <div className="sc-header">
@@ -1284,10 +1288,11 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, editMode, 
   const renderCell = (colId, f) => {
     switch (colId) {
       case 'status': return (
-        <div key="status">
+        <div key="status" style={{display:'flex',flexDirection:'column',gap:3}}>
           <span className={'status-badge ' + STATUS_COLORS[f.status]}>
             <span className="dot"/>{f.status}
           </span>
+          {f.intentDesign && <span className="badge-intent">By Design</span>}
         </div>
       );
       case 'finding': return (
@@ -1408,6 +1413,12 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, editMode, 
               </div>
               {isOpen && (
                 <div className="finding-detail">
+                  {f.intentDesign && (
+                    <div className="intent-callout">
+                      <strong>Intentional by design.</strong>
+                      {f.intentRationale && <span> {f.intentRationale}</span>}
+                    </div>
+                  )}
                   <div className="why">
                     <div className="why-label">Why it matters</div>
                     <div className="why-text">{whyItMatters(f)}</div>
