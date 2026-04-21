@@ -602,7 +602,9 @@ Describe 'Build-ReportData' {
             $d.adHybrid | Should -BeNullOrEmpty
         }
 
-        It 'should detect PHS disabled when LastPasswordSyncDateTime is absent' {
+        It 'should return null pwHashSync when sync is enabled but LastPasswordSyncDateTime is absent' {
+            # Cloud Sync or recently-enabled PHS may not populate this timestamp;
+            # null signals the UI to show amber "Verify" rather than red "Disabled"
             $tenant = [PSCustomObject]@{
                 OrgDisplayName                     = 'Contoso'
                 TenantId                           = 'test-tenant-id'
@@ -612,7 +614,7 @@ Describe 'Build-ReportData' {
                 OnPremisesProvisioningErrorCount   = '0'
             }
             $d = ConvertFrom-ReportDataJson (Build-ReportDataJson -SectionData @{ 'tenant' = @($tenant) })
-            $d.adHybrid.pwHashSync | Should -Be $false
+            $d.adHybrid.pwHashSync | Should -BeNullOrEmpty
         }
     }
 }
