@@ -516,6 +516,14 @@ section.block { margin-bottom: 52px; scroll-margin-top: 20px; }
 }
 .finding-row.highlight-focus { animation: focus-flash 2.5s ease-out forwards; }
 
+mark.search-hl {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  border-radius: 2px;
+  padding: 0 1px;
+  font-style: inherit;
+}
+
 .finding-dom {
   font-size: 12px;
   font-weight: 500;

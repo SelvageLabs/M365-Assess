@@ -1166,6 +1166,23 @@ function FilterBar({ filters, setFilters, counts, total, search, setSearch }) {
   );
 }
 
+// ======================== Search highlight helper ========================
+function Highlight({ text, query }) {
+  if (!query || !text) return text || null;
+  const str = String(text);
+  const q = query.toLowerCase();
+  const parts = [];
+  let lower = str.toLowerCase();
+  let last = 0, idx;
+  while ((idx = lower.indexOf(q, last)) !== -1) {
+    if (idx > last) parts.push(str.slice(last, idx));
+    parts.push(<mark key={idx} className="search-hl">{str.slice(idx, idx + q.length)}</mark>);
+    last = idx + q.length;
+  }
+  if (last < str.length) parts.push(str.slice(last));
+  return parts.length ? parts : text;
+}
+
 // ======================== Findings table ========================
 const ALL_COLS = [
   { id: 'status',    label: 'Status',    width: '80px'  },
@@ -1255,11 +1272,11 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, editMode, 
       );
       case 'finding': return (
         <div key="finding" className="finding-title">
-          <div className="t">{f.setting}</div>
-          <div className="sub">{f.section}</div>
+          <div className="t"><Highlight text={f.setting} query={search}/></div>
+          <div className="sub"><Highlight text={f.section} query={search}/></div>
         </div>
       );
-      case 'domain':    return <div key="domain" className="finding-dom">{f.domain}</div>;
+      case 'domain':    return <div key="domain" className="finding-dom"><Highlight text={f.domain} query={search}/></div>;
       case 'controlId': {
         const activeFw = filters.framework.length === 1 ? filters.framework[0] : null;
         const meta = activeFw ? f.fwMeta?.[activeFw] : null;
@@ -1293,7 +1310,7 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, editMode, 
         );
       }
       case 'checkId': return (
-        <div key="checkId" className="check-id">{f.checkId}</div>
+        <div key="checkId" className="check-id"><Highlight text={f.checkId} query={search}/></div>
       );
       case 'severity':  return (
         <div key="severity">

@@ -2045,6 +2045,30 @@ function FilterBar({
   }, "Clear ", active, " filter", active === 1 ? '' : 's')));
 }
 
+// ======================== Search highlight helper ========================
+function Highlight({
+  text,
+  query
+}) {
+  if (!query || !text) return text || null;
+  const str = String(text);
+  const q = query.toLowerCase();
+  const parts = [];
+  let lower = str.toLowerCase();
+  let last = 0,
+    idx;
+  while ((idx = lower.indexOf(q, last)) !== -1) {
+    if (idx > last) parts.push(str.slice(last, idx));
+    parts.push(/*#__PURE__*/React.createElement("mark", {
+      key: idx,
+      className: "search-hl"
+    }, str.slice(idx, idx + q.length)));
+    last = idx + q.length;
+  }
+  if (last < str.length) parts.push(str.slice(last));
+  return parts.length ? parts : text;
+}
+
 // ======================== Findings table ========================
 const ALL_COLS = [{
   id: 'status',
@@ -2169,14 +2193,23 @@ function FindingsTable({
           className: "finding-title"
         }, /*#__PURE__*/React.createElement("div", {
           className: "t"
-        }, f.setting), /*#__PURE__*/React.createElement("div", {
+        }, /*#__PURE__*/React.createElement(Highlight, {
+          text: f.setting,
+          query: search
+        })), /*#__PURE__*/React.createElement("div", {
           className: "sub"
-        }, f.section));
+        }, /*#__PURE__*/React.createElement(Highlight, {
+          text: f.section,
+          query: search
+        })));
       case 'domain':
         return /*#__PURE__*/React.createElement("div", {
           key: "domain",
           className: "finding-dom"
-        }, f.domain);
+        }, /*#__PURE__*/React.createElement(Highlight, {
+          text: f.domain,
+          query: search
+        }));
       case 'controlId':
         {
           const activeFw = filters.framework.length === 1 ? filters.framework[0] : null;
@@ -2229,7 +2262,10 @@ function FindingsTable({
         return /*#__PURE__*/React.createElement("div", {
           key: "checkId",
           className: "check-id"
-        }, f.checkId);
+        }, /*#__PURE__*/React.createElement(Highlight, {
+          text: f.checkId,
+          query: search
+        }));
       case 'severity':
         return /*#__PURE__*/React.createElement("div", {
           key: "severity"
