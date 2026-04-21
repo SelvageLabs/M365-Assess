@@ -1458,3 +1458,5 @@ mark.search-hl {
 .finding-hidden { opacity: .45; }
 .restore-all-btn { font-size: 12px; padding: 4px 10px; border-radius: 5px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; margin-left: auto; }
 .restore-all-btn:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.edit-toolbar-reset { font-size: 12px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; }
+.edit-toolbar-reset:hover { border-color: var(--warn, #f59e0b); color: var(--warn, #f59e0b); }

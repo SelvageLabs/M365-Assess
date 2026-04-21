@@ -494,6 +494,7 @@ function Topbar({
   editMode,
   onEditToggle,
   onFinalize,
+  onReset,
   hiddenCount
 }) {
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
@@ -554,6 +555,9 @@ function Topbar({
   }, "\u270E Edit Mode"), hiddenCount > 0 && /*#__PURE__*/React.createElement("span", {
     className: "edit-toolbar-info"
   }, hiddenCount, " finding", hiddenCount === 1 ? '' : 's', " hidden"), /*#__PURE__*/React.createElement("button", {
+    className: "edit-toolbar-reset",
+    onClick: onReset
+  }, "\u21BA Reset all"), /*#__PURE__*/React.createElement("button", {
     className: "edit-toolbar-finalize",
     onClick: onFinalize
   }, "\u2193 Finalize report"), /*#__PURE__*/React.createElement("button", {
@@ -3239,6 +3243,10 @@ function App() {
     hiddenFindings: [...hiddenFindings],
     roadmapOverrides
   });
+  const handleResetAll = () => {
+    setHiddenFindings(new Set());
+    setRoadmapOverrides({});
+  };
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.mode = mode;
@@ -3376,6 +3384,7 @@ function App() {
     editMode: editMode,
     onEditToggle: () => setEditMode(e => !e),
     onFinalize: handleFinalize,
+    onReset: handleResetAll,
     hiddenCount: hiddenFindings.size
   }), /*#__PURE__*/React.createElement(Overview, null), /*#__PURE__*/React.createElement(Posture, null), /*#__PURE__*/React.createElement(DomainRollup, {
     onJump: onDomainJump

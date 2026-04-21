@@ -223,7 +223,7 @@ function Sidebar({ active, counts, domainCounts, activeDomain, onDomainJump, onO
 }
 
 // ======================== Topbar ========================
-function Topbar({ search, setSearch, mode, setMode, theme, setTheme, onPrint, onTweaks, onHamburger, editMode, onEditToggle, onFinalize, hiddenCount }) {
+function Topbar({ search, setSearch, mode, setMode, theme, setTheme, onPrint, onTweaks, onHamburger, editMode, onEditToggle, onFinalize, onReset, hiddenCount }) {
   return (
     <>
       <div className="topbar">
@@ -261,6 +261,7 @@ function Topbar({ search, setSearch, mode, setMode, theme, setTheme, onPrint, on
           {hiddenCount > 0 && (
             <span className="edit-toolbar-info">{hiddenCount} finding{hiddenCount===1?'':'s'} hidden</span>
           )}
+          <button className="edit-toolbar-reset" onClick={onReset}>↺ Reset all</button>
           <button className="edit-toolbar-finalize" onClick={onFinalize}>↓ Finalize report</button>
           <button className="edit-toolbar-exit" onClick={onEditToggle}>✕ Exit edit mode</button>
         </div>
@@ -1887,6 +1888,11 @@ function App() {
     roadmapOverrides,
   });
 
+  const handleResetAll = () => {
+    setHiddenFindings(new Set());
+    setRoadmapOverrides({});
+  };
+
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.mode = mode;
@@ -1979,6 +1985,7 @@ function App() {
           editMode={editMode}
           onEditToggle={()=>setEditMode(e=>!e)}
           onFinalize={handleFinalize}
+          onReset={handleResetAll}
           hiddenCount={hiddenFindings.size}
         />
         <Overview/>
