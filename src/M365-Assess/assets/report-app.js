@@ -2104,6 +2104,19 @@ function FindingsTable({
     if (n.has(i)) n.delete(i);else n.add(i);
     return n;
   });
+  const hl = (text, q) => {
+    if (!q || !text) return text;
+    const i = text.toLowerCase().indexOf(q.toLowerCase());
+    if (i === -1) return text;
+    return [text.slice(0, i), /*#__PURE__*/React.createElement("span", {
+      style: {
+        background: 'var(--accent-soft)',
+        color: 'var(--accent-text)',
+        borderRadius: 2,
+        padding: '0 1px'
+      }
+    }, text.slice(i, i + q.length)), text.slice(i + q.length)];
+  };
   const renderCell = (colId, f) => {
     switch (colId) {
       case 'status':
@@ -2120,14 +2133,14 @@ function FindingsTable({
           className: "finding-title"
         }, /*#__PURE__*/React.createElement("div", {
           className: "t"
-        }, f.setting), /*#__PURE__*/React.createElement("div", {
+        }, hl(f.setting, search)), /*#__PURE__*/React.createElement("div", {
           className: "sub"
-        }, f.section));
+        }, hl(f.section, search)));
       case 'domain':
         return /*#__PURE__*/React.createElement("div", {
           key: "domain",
           className: "finding-dom"
-        }, f.domain);
+        }, hl(f.domain, search));
       case 'controlId':
         {
           const activeFw = filters.framework.length === 1 ? filters.framework[0] : null;
@@ -2180,7 +2193,7 @@ function FindingsTable({
         return /*#__PURE__*/React.createElement("div", {
           key: "checkId",
           className: "check-id"
-        }, f.checkId);
+        }, hl(f.checkId, search));
       case 'severity':
         return /*#__PURE__*/React.createElement("div", {
           key: "severity"

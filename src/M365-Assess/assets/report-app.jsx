@@ -1213,6 +1213,17 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear }) {
     return n;
   });
 
+  const hl = (text, q) => {
+    if (!q || !text) return text;
+    const i = text.toLowerCase().indexOf(q.toLowerCase());
+    if (i === -1) return text;
+    return [
+      text.slice(0, i),
+      <span style={{background:'var(--accent-soft)',color:'var(--accent-text)',borderRadius:2,padding:'0 1px'}}>{text.slice(i, i + q.length)}</span>,
+      text.slice(i + q.length)
+    ];
+  };
+
   const renderCell = (colId, f) => {
     switch (colId) {
       case 'status': return (
@@ -1224,11 +1235,11 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear }) {
       );
       case 'finding': return (
         <div key="finding" className="finding-title">
-          <div className="t">{f.setting}</div>
-          <div className="sub">{f.section}</div>
+          <div className="t">{hl(f.setting, search)}</div>
+          <div className="sub">{hl(f.section, search)}</div>
         </div>
       );
-      case 'domain':    return <div key="domain" className="finding-dom">{f.domain}</div>;
+      case 'domain':    return <div key="domain" className="finding-dom">{hl(f.domain, search)}</div>;
       case 'controlId': {
         const activeFw = filters.framework.length === 1 ? filters.framework[0] : null;
         const meta = activeFw ? f.fwMeta?.[activeFw] : null;
@@ -1262,7 +1273,7 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear }) {
         );
       }
       case 'checkId': return (
-        <div key="checkId" className="check-id">{f.checkId}</div>
+        <div key="checkId" className="check-id">{hl(f.checkId, search)}</div>
       );
       case 'severity':  return (
         <div key="severity">
