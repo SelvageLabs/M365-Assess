@@ -74,12 +74,11 @@ jobs:
         shell: bash
         run: |
           npm ci --ignore-scripts
-          cp src/M365-Assess/assets/report-app.js src/M365-Assess/assets/report-app.js.bak
           npm run build
           node --check src/M365-Assess/assets/report-app.js
-          if ! diff -q src/M365-Assess/assets/report-app.js.bak src/M365-Assess/assets/report-app.js > /dev/null 2>&1; then
+          if git diff --name-only | grep -q "report-app.js"; then
             echo "::error::report-app.js is out of sync with report-app.jsx — run 'npm run build' and commit the result"
-            diff src/M365-Assess/assets/report-app.js.bak src/M365-Assess/assets/report-app.js | head -40
+            git diff src/M365-Assess/assets/report-app.js | head -60
             exit 1
           fi
           echo "JS build check passed — report-app.js matches Babel output"
