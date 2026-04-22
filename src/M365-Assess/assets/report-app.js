@@ -332,6 +332,7 @@ function Sidebar({
 }) {
   const [roadmapOpen, setRoadmapOpen] = useState(false);
   const [domainNavOpen, setDomainNavOpen] = useState(false);
+  const [domainsCollapsed, setDomainsCollapsed] = useState(true);
   function toggleRoadmap(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -429,11 +430,14 @@ function Sidebar({
     className: "nav-subitem",
     onClick: closeIfMobile
   }, "Email auth")))), /*#__PURE__*/React.createElement("div", {
-    className: "nav-label",
+    className: "nav-label nav-label-collapsible",
     style: {
       marginTop: 14
-    }
-  }, "Domains"), domains.map(d => {
+    },
+    onClick: () => setDomainsCollapsed(c => !c)
+  }, /*#__PURE__*/React.createElement("span", null, "Domains"), /*#__PURE__*/React.createElement("span", {
+    className: "nav-label-chev"
+  }, domainsCollapsed ? '+' : '−')), !domainsCollapsed && domains.map(d => {
     const fails = domainCounts.fail[d] || 0;
     const total = domainCounts.total[d] || 0;
     return /*#__PURE__*/React.createElement("a", {
@@ -449,11 +453,11 @@ function Sidebar({
       className: 'count' + (fails ? ' pill-fail' : '')
     }, fails || total));
   }), /*#__PURE__*/React.createElement("div", {
-    className: "nav-label",
+    className: "nav-label nav-label-emphasis",
     style: {
       marginTop: 14
     }
-  }, "Details"), details.map(it => /*#__PURE__*/React.createElement(React.Fragment, {
+  }, "Findings & action"), details.map(it => /*#__PURE__*/React.createElement(React.Fragment, {
     key: it.id
   }, /*#__PURE__*/React.createElement("a", {
     href: `#${it.id}`,
@@ -565,6 +569,8 @@ function Topbar({
   setMode,
   theme,
   setTheme,
+  textScale,
+  setTextScale,
   onPrint,
   onTweaks,
   onHamburger,
@@ -574,7 +580,30 @@ function Topbar({
   onReset,
   hiddenCount
 }) {
-  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+  const SCALE_CYCLE = ['normal', 'large', 'xlarge'];
+  const cycleScale = () => setTextScale(s => SCALE_CYCLE[(SCALE_CYCLE.indexOf(s) + 1) % SCALE_CYCLE.length] || 'normal');
+  const scaleLabel = {
+    normal: 'A',
+    large: 'A+',
+    xlarge: 'A++'
+  }[textScale] || 'A';
+  const scaleTitle = `Text size: ${textScale} (click to cycle)`;
+  return /*#__PURE__*/React.createElement(React.Fragment, null, editMode && /*#__PURE__*/React.createElement("div", {
+    className: "edit-toolbar"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "edit-toolbar-badge"
+  }, "\u270E Edit Mode"), hiddenCount > 0 && /*#__PURE__*/React.createElement("span", {
+    className: "edit-toolbar-info"
+  }, hiddenCount, " finding", hiddenCount === 1 ? '' : 's', " hidden"), /*#__PURE__*/React.createElement("button", {
+    className: "edit-toolbar-reset",
+    onClick: onReset
+  }, "\u21BA Reset all"), /*#__PURE__*/React.createElement("button", {
+    className: "edit-toolbar-finalize",
+    onClick: onFinalize
+  }, "\u2193 Finalize report"), /*#__PURE__*/React.createElement("button", {
+    className: "edit-toolbar-exit",
+    onClick: onEditToggle
+  }, "\u2715 Exit edit mode")), /*#__PURE__*/React.createElement("div", {
     className: "topbar"
   }, /*#__PURE__*/React.createElement("button", {
     className: "hamburger-btn",
@@ -609,6 +638,16 @@ function Topbar({
   }, "High Contrast")), /*#__PURE__*/React.createElement("div", {
     className: "icon-btn-group"
   }, /*#__PURE__*/React.createElement("button", {
+    className: 'icon-btn text-scale-btn scale-' + textScale,
+    title: scaleTitle,
+    onClick: cycleScale
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 600,
+      fontSize: 13,
+      letterSpacing: '-0.02em'
+    }
+  }, scaleLabel)), /*#__PURE__*/React.createElement("button", {
     className: "icon-btn",
     title: mode === 'dark' ? 'Light mode' : 'Dark mode',
     onClick: () => setMode(mode === 'dark' ? 'light' : 'dark')
@@ -625,22 +664,7 @@ function Topbar({
     className: "icon-btn",
     title: "Tweaks",
     onClick: onTweaks
-  }, /*#__PURE__*/React.createElement(Icon.sliders, null)))), editMode && /*#__PURE__*/React.createElement("div", {
-    className: "edit-toolbar"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "edit-toolbar-badge"
-  }, "\u270E Edit Mode"), hiddenCount > 0 && /*#__PURE__*/React.createElement("span", {
-    className: "edit-toolbar-info"
-  }, hiddenCount, " finding", hiddenCount === 1 ? '' : 's', " hidden"), /*#__PURE__*/React.createElement("button", {
-    className: "edit-toolbar-reset",
-    onClick: onReset
-  }, "\u21BA Reset all"), /*#__PURE__*/React.createElement("button", {
-    className: "edit-toolbar-finalize",
-    onClick: onFinalize
-  }, "\u2193 Finalize report"), /*#__PURE__*/React.createElement("button", {
-    className: "edit-toolbar-exit",
-    onClick: onEditToggle
-  }, "\u2715 Exit edit mode")));
+  }, /*#__PURE__*/React.createElement(Icon.sliders, null)))));
 }
 
 // ======================== Posture hero ========================
@@ -690,7 +714,7 @@ function Posture() {
   }, /*#__PURE__*/React.createElement("span", null, "0"), /*#__PURE__*/React.createElement("span", null, "Peer avg \xB7 ", avg.toFixed(1), "%"), /*#__PURE__*/React.createElement("span", null, "100")), /*#__PURE__*/React.createElement(Sparkline, {
     scores: D.score,
     avg: avg
-  }), SCORE.MicrosoftScore != null && SCORE.CustomerScore != null && /*#__PURE__*/React.createElement("div", {
+  }), SCORE.MicrosoftScore != null && SCORE.CustomerScore != null && SCORE.MicrosoftScore > 0 && /*#__PURE__*/React.createElement("div", {
     className: "score-split"
   }, /*#__PURE__*/React.createElement("div", {
     className: "score-split-item"
@@ -973,13 +997,13 @@ function DnsAuthPanel() {
   }, s.label), /*#__PURE__*/React.createElement("div", {
     className: "dns-stat-val"
   }, s.pass, /*#__PURE__*/React.createElement("span", null, "/", s.total)), /*#__PURE__*/React.createElement("div", {
-    className: "dns-stat-bar"
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      width: pct(s.pass, s.total) + '%',
-      background: s.pass === s.total ? 'var(--success)' : 'var(--danger)'
-    }
-  })))), /*#__PURE__*/React.createElement("div", {
+    className: "dns-stat-bar dns-stat-bar-segments"
+  }, Array.from({
+    length: s.total
+  }).map((_, i) => /*#__PURE__*/React.createElement("span", {
+    key: i,
+    className: i < s.pass ? 'seg seg-pass' : 'seg seg-fail'
+  }))))), /*#__PURE__*/React.createElement("div", {
     className: "dns-stat-card"
   }, /*#__PURE__*/React.createElement("div", {
     className: "dns-stat-label"
@@ -1542,28 +1566,42 @@ function DomainRollup({
       style: {
         flex: d.info
       }
-    })), /*#__PURE__*/React.createElement("div", {
+    }), (() => {
+      const skipped = Math.max(0, d.total - d.pass - d.warn - d.fail - d.review - d.info);
+      return skipped > 0 ? /*#__PURE__*/React.createElement("i", {
+        className: "skipped-seg",
+        style: {
+          flex: skipped
+        }
+      }) : null;
+    })()), /*#__PURE__*/React.createElement("div", {
       className: "dc-meta"
-    }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, d.pass), " pass"), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, d.warn), " warn"), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, d.fail), " fail"), d.review > 0 && /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, d.review), " review")));
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "dc-pass"
+    }, /*#__PURE__*/React.createElement("b", null, d.pass), " pass"), /*#__PURE__*/React.createElement("span", {
+      className: "dc-warn"
+    }, /*#__PURE__*/React.createElement("b", null, d.warn), " warn"), /*#__PURE__*/React.createElement("span", {
+      className: "dc-fail"
+    }, /*#__PURE__*/React.createElement("b", null, d.fail), " fail"), d.review > 0 && /*#__PURE__*/React.createElement("span", {
+      className: "dc-review"
+    }, /*#__PURE__*/React.createElement("b", null, d.review), " review"), (() => {
+      const skipped = Math.max(0, d.total - d.pass - d.warn - d.fail - d.review - d.info);
+      return skipped > 0 ? /*#__PURE__*/React.createElement("span", {
+        className: "dc-skipped",
+        title: "Skipped \u2014 prerequisite unmet or not assessable"
+      }, /*#__PURE__*/React.createElement("b", null, skipped), " skipped") : null;
+    })()));
   })), FINDINGS.some(f => f.domain === 'Intune') && /*#__PURE__*/React.createElement("div", {
     id: "identity-intune"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "posture-sub-label"
-  }, "Intune coverage by category"), /*#__PURE__*/React.createElement(IntuneCategoryGrid, null)), D.mailboxSummary && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(IntuneCategoryGrid, null)), D.mailboxSummary && /*#__PURE__*/React.createElement("div", {
     id: "identity-mailbox"
   }, /*#__PURE__*/React.createElement(MailboxSummaryPanel, null)), FINDINGS.some(f => f.domain === 'SharePoint & OneDrive') && /*#__PURE__*/React.createElement("div", {
     id: "identity-sharepoint"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "posture-sub-label"
-  }, "SharePoint & OneDrive posture"), /*#__PURE__*/React.createElement(SharePointSummaryPanel, null)), D.adHybrid && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(SharePointSummaryPanel, null)), D.adHybrid && /*#__PURE__*/React.createElement("div", {
     id: "identity-ad"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "posture-sub-label"
-  }, "Active Directory & hybrid posture"), /*#__PURE__*/React.createElement(AdHybridPanel, null)), (D.dns || []).length > 0 && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(AdHybridPanel, null)), (D.dns || []).length > 0 && /*#__PURE__*/React.createElement("div", {
     id: "identity-email"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "posture-sub-label"
-  }, "Email authentication posture"), /*#__PURE__*/React.createElement(DnsAuthPanel, null))));
+  }, /*#__PURE__*/React.createElement(DnsAuthPanel, null))));
 }
 
 // ======================== Framework quilt ========================
@@ -1590,6 +1628,13 @@ function FrameworkQuilt({
       document.removeEventListener('mousedown', onOut);
     };
   }, [pickerOpen]);
+  useEffect(() => {
+    const expand = () => {
+      if (!expandedFw && visibleFws.length > 0) setExpandedFw(visibleFws[0]);
+    };
+    window.addEventListener('beforeprint', expand);
+    return () => window.removeEventListener('beforeprint', expand);
+  }, [expandedFw, visibleFws]);
   const toggleFw = fw => setVisibleFws(v => v.includes(fw) ? v.length > 1 ? v.filter(x => x !== fw) : v : [...v, fw]);
   const byFw = useMemo(() => {
     const out = {};
@@ -1741,7 +1786,8 @@ function FrameworkQuilt({
     }, f.id), /*#__PURE__*/React.createElement("div", {
       className: "fw-long"
     }, f.full), /*#__PURE__*/React.createElement("div", {
-      className: "fw-bar"
+      className: "fw-bar",
+      title: "Pass (green) / Warn (amber) / Fail (red) / Review (accent) / Skipped (grey, prerequisite unmet)"
     }, d.pass > 0 && /*#__PURE__*/React.createElement("div", {
       className: "fw-seg pass",
       style: {
@@ -1767,7 +1813,15 @@ function FrameworkQuilt({
       style: {
         flex: d.info
       }
-    }), d.total === 0 && /*#__PURE__*/React.createElement("div", {
+    }), (() => {
+      const skipped = Math.max(0, d.total - d.pass - d.warn - d.fail - d.review - d.info);
+      return skipped > 0 ? /*#__PURE__*/React.createElement("div", {
+        className: "fw-seg skipped",
+        style: {
+          flex: skipped
+        }
+      }) : null;
+    })(), d.total === 0 && /*#__PURE__*/React.createElement("div", {
       className: "fw-seg empty",
       style: {
         flex: 1
@@ -1989,12 +2043,15 @@ function FilterBar({
     });
   };
   const active = filters.status.length + filters.severity.length + filters.framework.length + filters.domain.length + (filters.profile || []).length;
+  const isActive = search.length > 0 || active > 0;
   const statusChips = [['Fail', 'fail'], ['Warning', 'warn'], ['Review', 'review'], ['Pass', 'pass'], ['Info', 'info']];
   const sevChips = [['critical', 'crit', 'Critical'], ['high', 'high', 'High'], ['medium', 'med', 'Medium'], ['low', 'low', 'Low']];
   const DOM_ORDER = ['Entra ID', 'Conditional Access', 'Enterprise Apps', 'Exchange Online', 'Intune', 'Defender', 'Purview / Compliance', 'SharePoint & OneDrive', 'Teams', 'Forms', 'Power BI', 'Active Directory', 'SOC 2', 'Value Opportunity'];
   const domainList = DOM_ORDER.filter(d => counts.domain[d]).concat(Object.keys(counts.domain).filter(d => !DOM_ORDER.includes(d)).sort());
   return /*#__PURE__*/React.createElement("div", {
-    className: "filter-bar"
+    className: 'filter-bar' + (isActive ? ' filter-bar-active' : '')
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "fb-row fb-row-search"
   }, /*#__PURE__*/React.createElement("div", {
     className: "fb-search"
   }, /*#__PURE__*/React.createElement("svg", {
@@ -2018,9 +2075,9 @@ function FilterBar({
     className: "fb-clear-x",
     onClick: () => setSearch(''),
     "aria-label": "Clear"
-  }, "\xD7")), /*#__PURE__*/React.createElement("div", {
-    className: "filter-divider"
-  }), /*#__PURE__*/React.createElement("div", {
+  }, "\xD7"))), /*#__PURE__*/React.createElement("div", {
+    className: "fb-row fb-row-chips"
+  }, /*#__PURE__*/React.createElement("div", {
     className: "filter-group"
   }, /*#__PURE__*/React.createElement("span", {
     className: "filter-group-label"
@@ -2046,9 +2103,9 @@ function FilterBar({
     className: "dot"
   }), label, /*#__PURE__*/React.createElement("span", {
     className: "ct"
-  }, counts.severity[v] || 0)))), /*#__PURE__*/React.createElement("div", {
-    className: "filter-divider"
-  }), /*#__PURE__*/React.createElement("div", {
+  }, counts.severity[v] || 0))))), /*#__PURE__*/React.createElement("div", {
+    className: "fb-row fb-row-dropdowns"
+  }, /*#__PURE__*/React.createElement("div", {
     className: "filter-group",
     ref: fwRef
   }, /*#__PURE__*/React.createElement("span", {
@@ -2119,7 +2176,7 @@ function FilterBar({
     onChange: () => update('domain', d)
   }), /*#__PURE__*/React.createElement("span", null, d), /*#__PURE__*/React.createElement("span", {
     className: "ct"
-  }, counts.domain[d] || 0))))), (() => {
+  }, counts.domain[d] || 0)))))), (() => {
     const singleFw = filters.framework.length === 1 ? filters.framework[0] : null;
     if (!singleFw || !singleFw.startsWith('cmmc')) return null;
     const profileCounts = {};
@@ -2135,9 +2192,9 @@ function FilterBar({
       L2: 'level2',
       L3: 'level3'
     };
-    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      className: "filter-divider"
-    }), /*#__PURE__*/React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "fb-row fb-row-level"
+    }, /*#__PURE__*/React.createElement("div", {
       className: "filter-group"
     }, /*#__PURE__*/React.createElement("span", {
       className: "filter-group-label"
@@ -2148,9 +2205,9 @@ function FilterBar({
     }, lvl, /*#__PURE__*/React.createElement("span", {
       className: "ct"
     }, profileCounts[lvl] || 0)))));
-  })(), active > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-    className: "filter-divider"
-  }), /*#__PURE__*/React.createElement("button", {
+  })(), active > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "fb-row fb-row-clear"
+  }, /*#__PURE__*/React.createElement("button", {
     className: "filter-clear",
     onClick: () => setFilters({
       status: [],
@@ -2452,11 +2509,19 @@ function FindingsTable({
   }, " \xB7 ", FINDINGS.length, " total")), editMode && hiddenFindings?.size > 0 && /*#__PURE__*/React.createElement("button", {
     className: "restore-all-btn",
     onClick: onRestoreAll
-  }, "\u21A9 Restore ", hiddenFindings.size, " hidden"), /*#__PURE__*/React.createElement("div", {
+  }, "\u21A9 Restore ", hiddenFindings.size, " hidden"), /*#__PURE__*/React.createElement("button", {
+    className: "chip chip-more",
+    style: {
+      marginLeft: 12,
+      flexShrink: 0
+    },
+    onClick: () => setOpen(open.size === filtered.length && filtered.length > 0 ? new Set() : new Set(filtered.map((_, i) => i))),
+    title: open.size === filtered.length && filtered.length > 0 ? 'Collapse all findings' : 'Expand all findings'
+  }, open.size === filtered.length && filtered.length > 0 ? '− Collapse all' : '+ Expand all'), /*#__PURE__*/React.createElement("div", {
     ref: colPickerRef,
     style: {
       position: 'relative',
-      marginLeft: 12,
+      marginLeft: 8,
       flexShrink: 0
     }
   }, /*#__PURE__*/React.createElement("button", {
@@ -3602,6 +3667,7 @@ function App() {
   const [theme, setTheme] = useState(() => lsGet('m365-theme', DEFAULTS.theme));
   const [mode, setMode] = useState(() => lsGet('m365-mode', DEFAULTS.mode));
   const [density, setDensity] = useState(() => lsGet('m365-density', DEFAULTS.density));
+  const [textScale, setTextScale] = useState(() => lsGet('m365-text-scale', 'normal'));
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState(() => {
     try {
@@ -3649,10 +3715,12 @@ function App() {
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.mode = mode;
     document.documentElement.dataset.density = density;
+    document.documentElement.dataset.textScale = textScale;
     localStorage.setItem('m365-theme', theme);
     localStorage.setItem('m365-mode', mode);
     localStorage.setItem('m365-density', density);
-  }, [theme, mode, density]);
+    localStorage.setItem('m365-text-scale', textScale);
+  }, [theme, mode, density, textScale]);
   useEffect(() => {
     try {
       localStorage.setItem(FILTER_KEY, JSON.stringify(filters));
@@ -3781,6 +3849,8 @@ function App() {
     setMode: setMode,
     theme: theme,
     setTheme: setTheme,
+    textScale: textScale,
+    setTextScale: setTextScale,
     onPrint: () => window.print(),
     onTweaks: () => setShowTweaks(s => !s),
     onHamburger: () => setNavOpen(o => !o),

@@ -114,8 +114,8 @@ Describe 'EntraConditionalAccessChecks' {
         $check.Status | Should -Be 'Pass'
     }
 
-    It 'Azure AD join restriction passes when restricted' {
-        $check = $settings | Where-Object { $_.Setting -eq 'Azure AD Join Restriction' }
+    It 'Microsoft Entra join restriction passes when restricted' {
+        $check = $settings | Where-Object { $_.Setting -eq 'Microsoft Entra Join Restriction' }
         $check | Should -Not -BeNullOrEmpty
         $check.Status | Should -Be 'Pass'
     }
@@ -216,8 +216,8 @@ Describe 'EntraConditionalAccessChecks - No CA Policies' {
         $check.Status | Should -Be 'Warning'
     }
 
-    It 'Azure AD join restriction fails when all users allowed' {
-        $check = $settings | Where-Object { $_.Setting -eq 'Azure AD Join Restriction' }
+    It 'Microsoft Entra join restriction fails when all users allowed' {
+        $check = $settings | Where-Object { $_.Setting -eq 'Microsoft Entra Join Restriction' }
         $check | Should -Not -BeNullOrEmpty
         $check.Status | Should -Be 'Fail'
     }

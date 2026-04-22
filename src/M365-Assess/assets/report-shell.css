@@ -100,6 +100,24 @@ a:hover { text-decoration: underline; }
   text-transform: uppercase; letter-spacing: 0.08em;
   color: var(--muted); padding: 0 8px 8px 8px;
 }
+.nav-label-collapsible {
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; user-select: none;
+  padding-left: 10px; padding-right: 10px;
+  transition: color .15s;
+}
+.nav-label-collapsible:hover { color: var(--text-soft); }
+.nav-label-chev {
+  font-size: 14px; font-weight: 400; line-height: 1;
+  color: var(--muted); opacity: .7;
+  flex-shrink: 0;
+}
+.nav-label-emphasis {
+  color: var(--accent-text, var(--accent));
+  border-top: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  padding-top: 10px !important;
+  letter-spacing: 0.1em;
+}
 .nav-item {
   display: flex; align-items: center; justify-content: space-between;
   gap: 8px;
@@ -203,6 +221,7 @@ a:hover { text-decoration: underline; }
 .icon-btn-group {
   display: flex; align-items: center; gap: 8px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 /* Palette switcher */
@@ -433,13 +452,27 @@ section.block { margin-bottom: 52px; scroll-margin-top: 20px; }
 .fb-clear-x:hover { background: var(--border-strong); }
 
 .filter-bar {
-  display: flex; flex-wrap: wrap; gap: 8px;
-  align-items: center;
+  display: flex; flex-direction: column; gap: 8px;
   margin-bottom: 14px;
   padding: 10px 12px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+}
+.fb-row {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  align-items: center;
+}
+.fb-row-search .fb-search { flex: 1 1 100%; max-width: none; }
+.fb-row-chips { justify-content: flex-start; }
+.fb-row-chips .filter-group { flex: 1 1 auto; min-width: 0; }
+.fb-row-dropdowns .filter-group { flex: 1 1 auto; min-width: 0; }
+.filter-bar-active {
+  position: sticky; top: 0;
+  z-index: 50;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--bg) 40%, transparent);
+  background: color-mix(in srgb, var(--surface) 92%, var(--accent));
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
 }
 .filter-group { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .filter-group-label {
@@ -780,13 +813,19 @@ mark.search-hl {
 .domain-card .dc-bar .fail-seg { background: var(--danger); }
 .domain-card .dc-bar .review-seg { background: var(--accent); }
 .domain-card .dc-bar .info-seg { background: var(--muted); opacity: 0.3; }
+.domain-card .dc-bar .skipped-seg { background: var(--muted); opacity: 0.45; }
 .domain-card .dc-meta {
   margin-top: 8px;
-  display: flex; gap: 10px;
+  display: flex; gap: 10px; flex-wrap: wrap;
   font-size: 12px; color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
-.domain-card .dc-meta span b { color: var(--text); font-weight: 600; }
+.domain-card .dc-meta span b { font-weight: 700; }
+.domain-card .dc-meta .dc-pass    b { color: var(--success-text, var(--success)); }
+.domain-card .dc-meta .dc-warn    b { color: var(--warn-text,    var(--warn));    }
+.domain-card .dc-meta .dc-fail    b { color: var(--danger-text,  var(--danger));  }
+.domain-card .dc-meta .dc-review  b { color: var(--accent-text,  var(--accent));  }
+.domain-card .dc-meta .dc-skipped b { color: var(--text-soft); opacity: .85; }
 
 /* ---------- Roadmap ---------- */
 .roadmap {
@@ -1180,6 +1219,7 @@ mark.search-hl {
 .fw-seg.fail   { background: var(--danger); }
 .fw-seg.review { background: var(--accent); opacity: 0.7; }
 .fw-seg.info   { background: var(--muted); opacity: 0.4; }
+.fw-seg.skipped{ background: var(--muted); opacity: 0.45; }
 .fw-seg.empty  { background: var(--border); }
 .quilt-cell .fw-stat {
   display: flex; gap: 10px;
@@ -1429,6 +1469,29 @@ mark.search-hl {
 .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
 /* =========================================================
+   TEXT SCALE — user-selectable text sizing via topbar control.
+   normal = baseline (default sizes below),
+   large  = +15%, xlarge = +30%. Applied to finding-row title,
+   finding-detail body text, and remediation/value content.
+   ========================================================= */
+[data-text-scale="large"]  .finding-title .t       { font-size: 15px; }
+[data-text-scale="large"]  .finding-title .sub     { font-size: 13px; }
+[data-text-scale="large"]  .finding-detail .why-text       { font-size: 14.5px; }
+[data-text-scale="large"]  .finding-detail .remediation-text { font-size: 15px; }
+[data-text-scale="large"]  .finding-detail .value-box       { font-size: 13.5px; }
+[data-text-scale="large"]  .finding-detail .block-title     { font-size: 13px; }
+
+[data-text-scale="xlarge"] .finding-title .t       { font-size: 17px; }
+[data-text-scale="xlarge"] .finding-title .sub     { font-size: 14px; }
+[data-text-scale="xlarge"] .finding-detail .why-text       { font-size: 16px; }
+[data-text-scale="xlarge"] .finding-detail .remediation-text { font-size: 16px; }
+[data-text-scale="xlarge"] .finding-detail .value-box       { font-size: 15px; }
+[data-text-scale="xlarge"] .finding-detail .block-title     { font-size: 14px; }
+
+.text-scale-btn.scale-large span  { color: var(--accent-text, var(--accent)); }
+.text-scale-btn.scale-xlarge span { color: var(--accent-text, var(--accent)); font-size: 15px !important; }
+
+/* =========================================================
    DENSITY — base CSS is the neutral midpoint.
    Compact reduces padding; Comfort increases it significantly.
    ========================================================= */
@@ -1470,6 +1533,10 @@ mark.search-hl {
 .dns-stat-val span { font-size: 13px; color: var(--muted); font-weight: 400; }
 .dns-stat-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
 .dns-stat-bar span { display: block; height: 100%; border-radius: 2px; transition: width .4s; }
+.dns-stat-bar-segments { display: flex; gap: 2px; background: transparent; overflow: visible; }
+.dns-stat-bar-segments .seg { flex: 1 1 0; height: 4px; border-radius: 2px; }
+.dns-stat-bar-segments .seg-pass { background: var(--success); }
+.dns-stat-bar-segments .seg-fail { background: var(--danger); }
 .dns-policy-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
 .dns-policy-chip { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; font-family: var(--font-mono); letter-spacing: .04em; }
 .dns-policy-chip.pass { background: var(--success-soft, color-mix(in srgb, var(--success) 15%, transparent)); color: var(--success-text, var(--success)); }
