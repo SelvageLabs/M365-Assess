@@ -457,7 +457,7 @@ function Sidebar({
     style: {
       marginTop: 14
     }
-  }, "Details"), details.map(it => /*#__PURE__*/React.createElement(React.Fragment, {
+  }, "Findings & action"), details.map(it => /*#__PURE__*/React.createElement(React.Fragment, {
     key: it.id
   }, /*#__PURE__*/React.createElement("a", {
     href: `#${it.id}`,
@@ -1571,23 +1571,15 @@ function DomainRollup({
     }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, d.pass), " pass"), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, d.warn), " warn"), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, d.fail), " fail"), d.review > 0 && /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, d.review), " review")));
   })), FINDINGS.some(f => f.domain === 'Intune') && /*#__PURE__*/React.createElement("div", {
     id: "identity-intune"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "posture-sub-label"
-  }, "Intune coverage by category"), /*#__PURE__*/React.createElement(IntuneCategoryGrid, null)), D.mailboxSummary && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(IntuneCategoryGrid, null)), D.mailboxSummary && /*#__PURE__*/React.createElement("div", {
     id: "identity-mailbox"
   }, /*#__PURE__*/React.createElement(MailboxSummaryPanel, null)), FINDINGS.some(f => f.domain === 'SharePoint & OneDrive') && /*#__PURE__*/React.createElement("div", {
     id: "identity-sharepoint"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "posture-sub-label"
-  }, "SharePoint & OneDrive posture"), /*#__PURE__*/React.createElement(SharePointSummaryPanel, null)), D.adHybrid && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(SharePointSummaryPanel, null)), D.adHybrid && /*#__PURE__*/React.createElement("div", {
     id: "identity-ad"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "posture-sub-label"
-  }, "Active Directory & hybrid posture"), /*#__PURE__*/React.createElement(AdHybridPanel, null)), (D.dns || []).length > 0 && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(AdHybridPanel, null)), (D.dns || []).length > 0 && /*#__PURE__*/React.createElement("div", {
     id: "identity-email"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "posture-sub-label"
-  }, "Email authentication posture"), /*#__PURE__*/React.createElement(DnsAuthPanel, null))));
+  }, /*#__PURE__*/React.createElement(DnsAuthPanel, null))));
 }
 
 // ======================== Framework quilt ========================

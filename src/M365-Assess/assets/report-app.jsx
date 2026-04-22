@@ -207,7 +207,7 @@ function Sidebar({ active, counts, domainCounts, activeDomain, onDomainJump, onO
               </a>
             );
           })}
-          <div className="nav-label nav-label-emphasis" style={{marginTop:14}}>Details</div>
+          <div className="nav-label nav-label-emphasis" style={{marginTop:14}}>Findings &amp; action</div>
           {details.map(it => (
             <React.Fragment key={it.id}>
               <a href={`#${it.id}`}
@@ -854,7 +854,6 @@ function DomainRollup({ onJump }) {
           </div>
           {FINDINGS.some(f => f.domain === 'Intune') && (
             <div id="identity-intune">
-              <div className="posture-sub-label">Intune coverage by category</div>
               <IntuneCategoryGrid />
             </div>
           )}
@@ -865,19 +864,16 @@ function DomainRollup({ onJump }) {
           )}
           {FINDINGS.some(f => f.domain === 'SharePoint & OneDrive') && (
             <div id="identity-sharepoint">
-              <div className="posture-sub-label">SharePoint & OneDrive posture</div>
               <SharePointSummaryPanel />
             </div>
           )}
           {D.adHybrid && (
             <div id="identity-ad">
-              <div className="posture-sub-label">Active Directory & hybrid posture</div>
               <AdHybridPanel />
             </div>
           )}
           {(D.dns || []).length > 0 && (
             <div id="identity-email">
-              <div className="posture-sub-label">Email authentication posture</div>
               <DnsAuthPanel />
             </div>
           )}
