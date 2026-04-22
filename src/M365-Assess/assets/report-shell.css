@@ -1459,6 +1459,27 @@ mark.search-hl {
 .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
 /* =========================================================
+   TEXT SCALE — user-selectable text sizing via topbar control.
+   normal = baseline, large = +12.5%, xlarge = +25%. Applied by
+   scaling the finding row / detail typography without touching
+   the chrome (nav, chips, headers).
+   ========================================================= */
+[data-text-scale="large"] .finding-row .f-title,
+[data-text-scale="large"] .finding-detail { font-size: 15px; }
+[data-text-scale="large"] .finding-detail .fd-rec,
+[data-text-scale="large"] .finding-detail .fd-cur,
+[data-text-scale="large"] .finding-detail .fd-remed { font-size: 14px; }
+
+[data-text-scale="xlarge"] .finding-row .f-title,
+[data-text-scale="xlarge"] .finding-detail { font-size: 16px; }
+[data-text-scale="xlarge"] .finding-detail .fd-rec,
+[data-text-scale="xlarge"] .finding-detail .fd-cur,
+[data-text-scale="xlarge"] .finding-detail .fd-remed { font-size: 15px; }
+
+.text-scale-btn.scale-large span  { color: var(--accent-text, var(--accent)); }
+.text-scale-btn.scale-xlarge span { color: var(--accent-text, var(--accent)); font-size: 15px !important; }
+
+/* =========================================================
    DENSITY — base CSS is the neutral midpoint.
    Compact reduces padding; Comfort increases it significantly.
    ========================================================= */

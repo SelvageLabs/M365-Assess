@@ -266,7 +266,11 @@ function Sidebar({ active, counts, domainCounts, activeDomain, onDomainJump, onO
 }
 
 // ======================== Topbar ========================
-function Topbar({ search, setSearch, mode, setMode, theme, setTheme, onPrint, onTweaks, onHamburger, editMode, onEditToggle, onFinalize, onReset, hiddenCount }) {
+function Topbar({ search, setSearch, mode, setMode, theme, setTheme, textScale, setTextScale, onPrint, onTweaks, onHamburger, editMode, onEditToggle, onFinalize, onReset, hiddenCount }) {
+  const SCALE_CYCLE = ['normal', 'large', 'xlarge'];
+  const cycleScale = () => setTextScale(s => SCALE_CYCLE[(SCALE_CYCLE.indexOf(s) + 1) % SCALE_CYCLE.length] || 'normal');
+  const scaleLabel = { normal: 'A', large: 'A+', xlarge: 'A++' }[textScale] || 'A';
+  const scaleTitle = `Text size: ${textScale} (click to cycle)`;
   return (
     <>
       {editMode && (
@@ -299,6 +303,9 @@ function Topbar({ search, setSearch, mode, setMode, theme, setTheme, onPrint, on
           <button className={theme==='high-contrast'?'active':''} onClick={()=>setTheme('high-contrast')}>High Contrast</button>
         </div>
         <div className="icon-btn-group">
+          <button className={'icon-btn text-scale-btn scale-' + textScale} title={scaleTitle} onClick={cycleScale}>
+            <span style={{fontWeight:600,fontSize:13,letterSpacing:'-0.02em'}}>{scaleLabel}</span>
+          </button>
           <button className="icon-btn" title={mode==='dark'?'Light mode':'Dark mode'} onClick={()=>setMode(mode==='dark'?'light':'dark')}>
             {mode==='dark' ? <Icon.sun/> : <Icon.moon/>}
           </button>
@@ -2144,6 +2151,7 @@ function App() {
   const [theme, setTheme] = useState(() => lsGet('m365-theme', DEFAULTS.theme));
   const [mode, setMode] = useState(() => lsGet('m365-mode', DEFAULTS.mode));
   const [density, setDensity] = useState(() => lsGet('m365-density', DEFAULTS.density));
+  const [textScale, setTextScale] = useState(() => lsGet('m365-text-scale', 'normal'));
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState(() => {
     try {
@@ -2187,10 +2195,12 @@ function App() {
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.mode = mode;
     document.documentElement.dataset.density = density;
+    document.documentElement.dataset.textScale = textScale;
     localStorage.setItem('m365-theme', theme);
     localStorage.setItem('m365-mode', mode);
     localStorage.setItem('m365-density', density);
-  }, [theme, mode, density]);
+    localStorage.setItem('m365-text-scale', textScale);
+  }, [theme, mode, density, textScale]);
 
   useEffect(() => {
     try { localStorage.setItem(FILTER_KEY, JSON.stringify(filters)); } catch {}
@@ -2273,6 +2283,7 @@ function App() {
           search={search} setSearch={setSearch}
           mode={mode} setMode={setMode}
           theme={theme} setTheme={setTheme}
+          textScale={textScale} setTextScale={setTextScale}
           onPrint={()=>window.print()}
           onTweaks={()=>setShowTweaks(s=>!s)}
           onHamburger={()=>setNavOpen(o=>!o)}

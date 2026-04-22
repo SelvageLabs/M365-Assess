@@ -569,6 +569,8 @@ function Topbar({
   setMode,
   theme,
   setTheme,
+  textScale,
+  setTextScale,
   onPrint,
   onTweaks,
   onHamburger,
@@ -578,6 +580,14 @@ function Topbar({
   onReset,
   hiddenCount
 }) {
+  const SCALE_CYCLE = ['normal', 'large', 'xlarge'];
+  const cycleScale = () => setTextScale(s => SCALE_CYCLE[(SCALE_CYCLE.indexOf(s) + 1) % SCALE_CYCLE.length] || 'normal');
+  const scaleLabel = {
+    normal: 'A',
+    large: 'A+',
+    xlarge: 'A++'
+  }[textScale] || 'A';
+  const scaleTitle = `Text size: ${textScale} (click to cycle)`;
   return /*#__PURE__*/React.createElement(React.Fragment, null, editMode && /*#__PURE__*/React.createElement("div", {
     className: "edit-toolbar"
   }, /*#__PURE__*/React.createElement("span", {
@@ -628,6 +638,16 @@ function Topbar({
   }, "High Contrast")), /*#__PURE__*/React.createElement("div", {
     className: "icon-btn-group"
   }, /*#__PURE__*/React.createElement("button", {
+    className: 'icon-btn text-scale-btn scale-' + textScale,
+    title: scaleTitle,
+    onClick: cycleScale
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 600,
+      fontSize: 13,
+      letterSpacing: '-0.02em'
+    }
+  }, scaleLabel)), /*#__PURE__*/React.createElement("button", {
     className: "icon-btn",
     title: mode === 'dark' ? 'Light mode' : 'Dark mode',
     onClick: () => setMode(mode === 'dark' ? 'light' : 'dark')
@@ -3624,6 +3644,7 @@ function App() {
   const [theme, setTheme] = useState(() => lsGet('m365-theme', DEFAULTS.theme));
   const [mode, setMode] = useState(() => lsGet('m365-mode', DEFAULTS.mode));
   const [density, setDensity] = useState(() => lsGet('m365-density', DEFAULTS.density));
+  const [textScale, setTextScale] = useState(() => lsGet('m365-text-scale', 'normal'));
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState(() => {
     try {
@@ -3671,10 +3692,12 @@ function App() {
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.mode = mode;
     document.documentElement.dataset.density = density;
+    document.documentElement.dataset.textScale = textScale;
     localStorage.setItem('m365-theme', theme);
     localStorage.setItem('m365-mode', mode);
     localStorage.setItem('m365-density', density);
-  }, [theme, mode, density]);
+    localStorage.setItem('m365-text-scale', textScale);
+  }, [theme, mode, density, textScale]);
   useEffect(() => {
     try {
       localStorage.setItem(FILTER_KEY, JSON.stringify(filters));
@@ -3803,6 +3826,8 @@ function App() {
     setMode: setMode,
     theme: theme,
     setTheme: setTheme,
+    textScale: textScale,
+    setTextScale: setTextScale,
     onPrint: () => window.print(),
     onTweaks: () => setShowTweaks(s => !s),
     onHamburger: () => setNavOpen(o => !o),
