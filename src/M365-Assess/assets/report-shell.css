@@ -157,6 +157,11 @@ a:hover { text-decoration: underline; }
   transition: background .15s, color .15s;
 }
 .nav-subitem:hover { background: var(--hover); color: var(--text); }
+.nav-subitem.active {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 600;
+}
 .nav-subitem .count {
   font-size: 11px; padding: 1px 6px; border-radius: 10px;
   background: var(--chip); color: var(--text-soft);
