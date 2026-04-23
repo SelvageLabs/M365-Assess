@@ -246,6 +246,18 @@ function Sidebar({ active, counts, domainCounts, activeDomain, onDomainJump, onO
             {USERS.DisabledUsers  > 0 && <div className="sc-row"><span>disabled</span><span className="sc-warn">{fmt(USERS.DisabledUsers)}</span></div>}
             {USERS.NeverSignedIn  > 0 && <div className="sc-row"><span>never signed in</span><span className="sc-warn">{fmt(USERS.NeverSignedIn)}</span></div>}
             {USERS.StaleMember    > 0 && <div className="sc-row"><span>stale</span><span className="sc-warn">{fmt(USERS.StaleMember)}</span></div>}
+            {D.deviceStats != null && (() => {
+              const ds = D.deviceStats;
+              const other = Math.max(0, ds.total - ds.compliant - ds.nonCompliant);
+              return (
+                <React.Fragment>
+                  <div className="sc-row"><span>devices</span><span>{fmt(ds.total)}</span></div>
+                  {ds.compliant > 0    && <div className="sc-row"><span>compliant</span><span className="sc-good">{fmt(ds.compliant)}</span></div>}
+                  {ds.nonCompliant > 0 && <div className="sc-row"><span>non-compliant</span><span className="sc-danger">{fmt(ds.nonCompliant)}</span></div>}
+                  {other > 0           && <div className="sc-row" title="Grace period, error, unknown, or not-applicable states"><span>other state</span><span className="sc-warn">{fmt(other)}</span></div>}
+                </React.Fragment>
+              );
+            })()}
           </div>
           <div className="sc-card">
             <div className="sc-header">
