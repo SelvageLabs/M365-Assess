@@ -322,6 +322,7 @@ const fmt = n => Number(n).toLocaleString();
 // ======================== Sidebar ========================
 function Sidebar({
   active,
+  activeSubsection,
   counts,
   domainCounts,
   activeDomain,
@@ -411,23 +412,23 @@ function Sidebar({
   }, /*#__PURE__*/React.createElement("span", null, it.label), it.id === 'identity' && /*#__PURE__*/React.createElement("span", {
     className: "nav-expand-icon",
     onClick: toggleDomainNav
-  }, domainNavOpen ? '\u2212' : '+')), it.id === 'identity' && domainNavOpen && /*#__PURE__*/React.createElement("div", {
+  }, domainNavOpen || active === 'identity' ? '\u2212' : '+')), it.id === 'identity' && (domainNavOpen || active === 'identity') && /*#__PURE__*/React.createElement("div", {
     className: "nav-subitems"
   }, FINDINGS.some(f => f.domain === 'Intune') && /*#__PURE__*/React.createElement("a", {
     href: "#identity-intune",
-    className: "nav-subitem",
+    className: 'nav-subitem' + (activeSubsection === 'identity-intune' ? ' active' : ''),
     onClick: closeIfMobile
   }, "Intune coverage"), FINDINGS.some(f => f.domain === 'SharePoint & OneDrive') && /*#__PURE__*/React.createElement("a", {
     href: "#identity-sharepoint",
-    className: "nav-subitem",
+    className: 'nav-subitem' + (activeSubsection === 'identity-sharepoint' ? ' active' : ''),
     onClick: closeIfMobile
   }, "SharePoint & OneDrive"), D.adHybrid && /*#__PURE__*/React.createElement("a", {
     href: "#identity-ad",
-    className: "nav-subitem",
+    className: 'nav-subitem' + (activeSubsection === 'identity-ad' ? ' active' : ''),
     onClick: closeIfMobile
   }, "AD & hybrid"), (D.dns || []).length > 0 && /*#__PURE__*/React.createElement("a", {
     href: "#identity-email",
-    className: "nav-subitem",
+    className: 'nav-subitem' + (activeSubsection === 'identity-email' ? ' active' : ''),
     onClick: closeIfMobile
   }, "Email auth")))), /*#__PURE__*/React.createElement("div", {
     className: "nav-label nav-label-collapsible",
@@ -3906,6 +3907,7 @@ function App() {
     };
   });
   const [active, setActive] = useState('overview');
+  const [activeSubsection, setActiveSubsection] = useState(null);
   const [showTweaks, setShowTweaks] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [focusFinding, setFocusFinding] = useState(null);
@@ -3954,7 +3956,7 @@ function App() {
     return () => window.removeEventListener('keydown', h);
   }, []);
 
-  // Scrollspy
+  // Scrollspy — main sections
   useEffect(() => {
     const sections = document.querySelectorAll('section.block');
     const obs = new IntersectionObserver(entries => {
@@ -3965,6 +3967,22 @@ function App() {
       rootMargin: '-40% 0px -55% 0px'
     });
     sections.forEach(s => obs.observe(s));
+    return () => obs.disconnect();
+  }, []);
+
+  // Scrollspy — Domain posture sub-sections (drives submenu auto-highlight)
+  useEffect(() => {
+    const subIds = ['identity-intune', 'identity-sharepoint', 'identity-ad', 'identity-email'];
+    const elements = subIds.map(id => document.getElementById(id)).filter(Boolean);
+    if (!elements.length) return;
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) setActiveSubsection(e.target.id);
+      });
+    }, {
+      rootMargin: '-30% 0px -60% 0px'
+    });
+    elements.forEach(el => obs.observe(el));
     return () => obs.disconnect();
   }, []);
 
@@ -4048,6 +4066,7 @@ function App() {
     className: "app"
   }, /*#__PURE__*/React.createElement(Sidebar, {
     active: active,
+    activeSubsection: activeSubsection,
     counts: navCounts,
     domainCounts: domainCounts,
     activeDomain: filters.domain.length === 1 ? filters.domain[0] : null,

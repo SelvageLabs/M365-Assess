@@ -117,7 +117,7 @@ const pct = (n,d) => d ? Math.round((n/d)*100) : 0;
 const fmt = n => Number(n).toLocaleString();
 
 // ======================== Sidebar ========================
-function Sidebar({ active, counts, domainCounts, activeDomain, onDomainJump, onOverviewClick, navOpen, onClose }) {
+function Sidebar({ active, activeSubsection, counts, domainCounts, activeDomain, onDomainJump, onOverviewClick, navOpen, onClose }) {
   const [roadmapOpen, setRoadmapOpen] = useState(false);
   const [domainNavOpen, setDomainNavOpen] = useState(false);
   const [domainsCollapsed, setDomainsCollapsed] = useState(true);
@@ -168,23 +168,23 @@ function Sidebar({ active, counts, domainCounts, activeDomain, onDomainJump, onO
                 <span>{it.label}</span>
                 {it.id === 'identity' && (
                   <span className="nav-expand-icon" onClick={toggleDomainNav}>
-                    {domainNavOpen ? '\u2212' : '+'}
+                    {(domainNavOpen || active === 'identity') ? '\u2212' : '+'}
                   </span>
                 )}
               </a>
-              {it.id === 'identity' && domainNavOpen && (
+              {it.id === 'identity' && (domainNavOpen || active === 'identity') && (
                 <div className="nav-subitems">
                   {FINDINGS.some(f => f.domain === 'Intune') && (
-                    <a href="#identity-intune" className="nav-subitem" onClick={closeIfMobile}>Intune coverage</a>
+                    <a href="#identity-intune"     className={'nav-subitem' + (activeSubsection==='identity-intune'?' active':'')}     onClick={closeIfMobile}>Intune coverage</a>
                   )}
                   {FINDINGS.some(f => f.domain === 'SharePoint & OneDrive') && (
-                    <a href="#identity-sharepoint" className="nav-subitem" onClick={closeIfMobile}>SharePoint &amp; OneDrive</a>
+                    <a href="#identity-sharepoint" className={'nav-subitem' + (activeSubsection==='identity-sharepoint'?' active':'')} onClick={closeIfMobile}>SharePoint &amp; OneDrive</a>
                   )}
                   {D.adHybrid && (
-                    <a href="#identity-ad" className="nav-subitem" onClick={closeIfMobile}>AD &amp; hybrid</a>
+                    <a href="#identity-ad"         className={'nav-subitem' + (activeSubsection==='identity-ad'?' active':'')}         onClick={closeIfMobile}>AD &amp; hybrid</a>
                   )}
                   {(D.dns || []).length > 0 && (
-                    <a href="#identity-email" className="nav-subitem" onClick={closeIfMobile}>Email auth</a>
+                    <a href="#identity-email"      className={'nav-subitem' + (activeSubsection==='identity-email'?' active':'')}      onClick={closeIfMobile}>Email auth</a>
                   )}
                 </div>
               )}
@@ -2365,6 +2365,7 @@ function App() {
     return { status:[], severity:[], framework:[], domain:[], profile:[] };
   });
   const [active, setActive] = useState('overview');
+  const [activeSubsection, setActiveSubsection] = useState(null);
   const [showTweaks, setShowTweaks] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [focusFinding, setFocusFinding] = useState(null);
@@ -2414,13 +2415,25 @@ function App() {
     return () => window.removeEventListener('keydown', h);
   }, []);
 
-  // Scrollspy
+  // Scrollspy — main sections
   useEffect(() => {
     const sections = document.querySelectorAll('section.block');
     const obs = new IntersectionObserver(entries => {
       entries.forEach(e => { if (e.isIntersecting) setActive(e.target.id); });
     }, { rootMargin: '-40% 0px -55% 0px' });
     sections.forEach(s => obs.observe(s));
+    return () => obs.disconnect();
+  }, []);
+
+  // Scrollspy — Domain posture sub-sections (drives submenu auto-highlight)
+  useEffect(() => {
+    const subIds = ['identity-intune','identity-sharepoint','identity-ad','identity-email'];
+    const elements = subIds.map(id => document.getElementById(id)).filter(Boolean);
+    if (!elements.length) return;
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) setActiveSubsection(e.target.id); });
+    }, { rootMargin: '-30% 0px -60% 0px' });
+    elements.forEach(el => obs.observe(el));
     return () => obs.disconnect();
   }, []);
 
@@ -2473,7 +2486,7 @@ function App() {
 
   return (
     <div className="app">
-      <Sidebar active={active} counts={navCounts} domainCounts={domainCounts} activeDomain={filters.domain.length===1 ? filters.domain[0] : null} onDomainJump={onDomainJump} onOverviewClick={onOverviewClick} navOpen={navOpen} onClose={()=>setNavOpen(false)}/>
+      <Sidebar active={active} activeSubsection={activeSubsection} counts={navCounts} domainCounts={domainCounts} activeDomain={filters.domain.length===1 ? filters.domain[0] : null} onDomainJump={onDomainJump} onOverviewClick={onOverviewClick} navOpen={navOpen} onClose={()=>setNavOpen(false)}/>
       <main className="main">
         <Topbar
           search={search} setSearch={setSearch}
