@@ -96,6 +96,7 @@ a:hover { text-decoration: underline; }
 .sc-danger { color: var(--danger-text) !important; }
 .sc-warn   { color: var(--warn-text) !important; }
 .sc-good   { color: var(--success-text) !important; }
+.sc-row-indent > span:first-child { padding-left: 10px; color: var(--text-soft); }
 .nav-label {
   font-size: 12px; font-weight: 600;
   text-transform: uppercase; letter-spacing: 0.08em;
