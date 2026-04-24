@@ -1076,11 +1076,18 @@ function DomainRollup({ onJump }) {
 }
 
 // ======================== Framework quilt ========================
-function FrameworkQuilt({ onSelect, selected }) {
+function FrameworkQuilt({ onSelect, selected, onProfileSelect, activeProfile }) {
   const [visibleFws, setVisibleFws] = useState(['cis-m365-v6']);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [expandedFw, setExpandedFw] = useState(null);
   const pickerRef = useRef(null);
+
+  // Toggle: clicking the same profile chip again clears the filter (single-select).
+  const handleProfileClick = (token) => {
+    if (!expandedFw || !onProfileSelect) return;
+    const next = activeProfile === token ? null : token;
+    onProfileSelect(expandedFw, next);
+  };
 
   useEffect(() => {
     if (!pickerOpen) return;
@@ -1245,17 +1252,17 @@ function FrameworkQuilt({ onSelect, selected }) {
             <div className="fw-profile-stats">
               {fwProfileStats.isCmmc ? (
                 <>
-                  {fwProfileStats.l1 > 0 && <span className="fw-profile-chip level">L1 <b>{fwProfileStats.l1}</b></span>}
-                  {fwProfileStats.l2 > 0 && <span className="fw-profile-chip level2">L2 <b>{fwProfileStats.l2}</b></span>}
-                  {fwProfileStats.l3 > 0 && <span className="fw-profile-chip level3">L3 <b>{fwProfileStats.l3}</b></span>}
+                  {fwProfileStats.l1 > 0 && <button type="button" className={'fw-profile-chip level fw-profile-chip-btn' + (activeProfile === 'L1' ? ' selected' : '')} onClick={() => handleProfileClick('L1')} aria-pressed={activeProfile === 'L1'}>L1 <b>{fwProfileStats.l1}</b></button>}
+                  {fwProfileStats.l2 > 0 && <button type="button" className={'fw-profile-chip level2 fw-profile-chip-btn' + (activeProfile === 'L2' ? ' selected' : '')} onClick={() => handleProfileClick('L2')} aria-pressed={activeProfile === 'L2'}>L2 <b>{fwProfileStats.l2}</b></button>}
+                  {fwProfileStats.l3 > 0 && <button type="button" className={'fw-profile-chip level3 fw-profile-chip-btn' + (activeProfile === 'L3' ? ' selected' : '')} onClick={() => handleProfileClick('L3')} aria-pressed={activeProfile === 'L3'}>L3 <b>{fwProfileStats.l3}</b></button>}
                 </>
               ) : (
                 <>
-                  <span className="fw-profile-chip level">L1 <b>{fwProfileStats.l1}</b></span>
-                  {fwProfileStats.l2 > 0 && <span className="fw-profile-chip level2">L2 <b>{fwProfileStats.l2}</b></span>}
+                  <button type="button" className={'fw-profile-chip level fw-profile-chip-btn' + (activeProfile === 'L1' ? ' selected' : '')} onClick={() => handleProfileClick('L1')} aria-pressed={activeProfile === 'L1'}>L1 <b>{fwProfileStats.l1}</b></button>
+                  {fwProfileStats.l2 > 0 && <button type="button" className={'fw-profile-chip level2 fw-profile-chip-btn' + (activeProfile === 'L2' ? ' selected' : '')} onClick={() => handleProfileClick('L2')} aria-pressed={activeProfile === 'L2'}>L2 <b>{fwProfileStats.l2}</b></button>}
                   <span className="fw-profile-sep">·</span>
-                  <span className="fw-profile-chip lic">E3 <b>{fwProfileStats.e3}</b></span>
-                  {fwProfileStats.e5only > 0 && <span className="fw-profile-chip lic5">E5 only <b>{fwProfileStats.e5only}</b></span>}
+                  <button type="button" className={'fw-profile-chip lic fw-profile-chip-btn' + (activeProfile === 'E3' ? ' selected' : '')} onClick={() => handleProfileClick('E3')} aria-pressed={activeProfile === 'E3'}>E3 <b>{fwProfileStats.e3}</b></button>
+                  {fwProfileStats.e5only > 0 && <button type="button" className={'fw-profile-chip lic5 fw-profile-chip-btn' + (activeProfile === 'E5only' ? ' selected' : '')} onClick={() => handleProfileClick('E5only')} aria-pressed={activeProfile === 'E5only'}>E5 only <b>{fwProfileStats.e5only}</b></button>}
                 </>
               )}
             </div>
@@ -1263,7 +1270,7 @@ function FrameworkQuilt({ onSelect, selected }) {
           {expandedFw === 'cmmc' && D.cmmcHandoff && D.cmmcHandoff.Summary && D.cmmcHandoff.Summary.Total && (
             <div style={{marginTop:8, marginBottom:12, padding:'10px 12px', background:'var(--card-subtle, rgba(255,255,255,0.03))', borderRadius:6, fontSize:12}}>
               <div style={{fontWeight:700, textTransform:'uppercase', letterSpacing:'.08em', color:'var(--muted)', marginBottom:6}}>
-                Handoff gaps (EZ-CMMC)
+                Handoff gaps
               </div>
               <div className="fw-profile-stats" style={{marginTop:0, marginBottom:0}}>
                 <span className="fw-profile-chip">Out of scope <b>{D.cmmcHandoff.Summary.Total.outOfScope}</b></span>
@@ -1274,7 +1281,7 @@ function FrameworkQuilt({ onSelect, selected }) {
                 )}
               </div>
               <div style={{marginTop:6, color:'var(--muted)', lineHeight:1.5}}>
-                {D.cmmcHandoff.Summary.Total.practices} CMMC 2.0 practices require non-M365 controls (physical access, HR, inherent defaults) and are tracked separately by EZ-CMMC.
+                {D.cmmcHandoff.Summary.Total.practices} CMMC 2.0 practices require non-M365 controls (physical access, HR, inherent defaults) and are tracked separately.
               </div>
             </div>
           )}
@@ -1556,7 +1563,15 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, editMode, 
       if ((filters.profile||[]).length) {
         const activeFw = filters.framework.length === 1 ? filters.framework[0] : null;
         const fProfiles = activeFw ? [].concat(f.fwMeta?.[activeFw]?.profiles || []) : [];
-        if (!filters.profile.some(lvl => fProfiles.includes(lvl))) return false;
+        // Token semantics: 'E3' matches any profile starting with E3; 'E5only' matches
+        // findings whose CIS profiles include E5 but no E3 variant. Bare 'L1'/'L2'/'L3'
+        // substring-match handles both bare CMMC values ('L1') and CIS suffixes ('E3-L1').
+        const matched = filters.profile.some(token => {
+          if (token === 'E5only') return fProfiles.length > 0 && !fProfiles.some(p => p.startsWith('E3'));
+          if (token === 'E3')      return fProfiles.some(p => p.startsWith('E3'));
+          return fProfiles.some(p => p.includes(token));
+        });
+        if (!matched) return false;
       }
       if (s) {
         const hay = (f.setting+' '+f.checkId+' '+f.current+' '+f.recommended+' '+f.remediation+' '+f.domain+' '+f.section).toLowerCase();
@@ -2486,6 +2501,14 @@ function App() {
     setFilters(f => ({ ...f, framework: fw ? [fw] : [] }));
     if (fw) document.getElementById('findings-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+  const onProfileSelect = (fw, profile) => {
+    if (!profile) {
+      setFilters(f => ({ ...f, profile: [] }));
+      return;
+    }
+    setFilters(f => ({ ...f, framework: fw ? [fw] : f.framework, profile: [profile] }));
+    document.getElementById('findings-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
   const onDomainJump = (d) => {
     setFilters(f => ({ ...f, domain: d ? [d] : [] }));
     if (d) document.getElementById('findings-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2523,7 +2546,7 @@ function App() {
         <Overview/>
         <Posture/>
         <TrendChart/>
-        <FrameworkQuilt onSelect={onFrameworkSelect} selected={filters.framework[0]}/>
+        <FrameworkQuilt onSelect={onFrameworkSelect} selected={filters.framework[0]} onProfileSelect={onProfileSelect} activeProfile={(filters.profile && filters.profile[0]) || null}/>
         <DomainRollup onJump={onDomainJump}/>
         <div id="findings-anchor"/>
         <div style={{marginTop:20}}/>
