@@ -301,6 +301,41 @@ section.block { margin-bottom: 52px; scroll-margin-top: 20px; }
   color: var(--accent);
 }
 .section-head .hr { flex: 1; height: 1px; background: var(--border); }
+/* Issue #737: every section header is now collapsible. The .section-head-toggle
+   class is added by the useCollapsibleSection hook for sections that opt in. */
+.section-head-toggle {
+  cursor: pointer;
+  user-select: none;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin-left: -4px;
+  margin-right: -4px;
+  transition: background 0.12s;
+}
+.section-head-toggle:hover {
+  background: color-mix(in oklab, var(--accent) 6%, transparent);
+}
+.section-head-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.section-head-toggle.is-closed {
+  margin-bottom: 0;
+}
+/* Issue #744: small inline indicator on the CMMC chip row clarifying that L2
+   is a strict superset of L3 (no L3-only-by-controlId checks exist). Hover
+   surfaces the longer explanation via the title attribute. */
+.fw-profile-info {
+  display: inline-flex; align-items: center;
+  font-family: var(--font-mono); font-size: 10.5px;
+  padding: 2px 6px; border-radius: 3px;
+  background: color-mix(in oklab, var(--accent) 8%, transparent);
+  color: var(--muted);
+  border: 1px dashed color-mix(in oklab, var(--accent) 30%, transparent);
+  margin-left: 4px;
+  cursor: help;
+  letter-spacing: 0.04em;
+}
 
 /* ---------- Cards ---------- */
 .card {
