@@ -71,6 +71,9 @@ param(
     [switch]$QuickScan,
 
     [Parameter()]
+    [switch]$IncludeTrend,
+
+    [Parameter()]
     [AllowEmptyCollection()]
     [PSCustomObject[]]$DriftReport = @(),
 
@@ -173,7 +176,8 @@ $reportJson = Build-ReportDataJson `
     -WhiteLabel:    $WhiteLabel `
     -XlsxFileName   $xlsxName `
     -FrameworkDefs  $allFrameworks `
-    -CmmcHandoff    $cmmcHandoff
+    -CmmcHandoff    $cmmcHandoff `
+    -IncludeTrend:  $IncludeTrend
 
 # ------------------------------------------------------------------
 # Assemble HTML and write output

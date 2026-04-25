@@ -581,6 +581,36 @@ function Sidebar({
   }, fmt(MFA_STATS.adminsWithoutMfa)))))));
 }
 
+// Issue #737: shared collapsible-section hook. Each top-level section's
+// .section-head spreads `headProps` to gain click + keyboard toggle. The
+// `beforeprint` listener auto-expands so PDF/print exports never lose
+// content that happens to be collapsed in-screen.
+function useCollapsibleSection(defaultOpen = true) {
+  const [open, setOpen] = useState(defaultOpen);
+  useEffect(() => {
+    const expand = () => setOpen(true);
+    window.addEventListener('beforeprint', expand);
+    return () => window.removeEventListener('beforeprint', expand);
+  }, []);
+  const headProps = {
+    role: 'button',
+    tabIndex: 0,
+    'aria-expanded': open,
+    className: 'section-head section-head-toggle' + (open ? '' : ' is-closed'),
+    onClick: () => setOpen(o => !o),
+    onKeyDown: e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        setOpen(o => !o);
+      }
+    }
+  };
+  return {
+    open,
+    headProps
+  };
+}
+
 // ======================== Topbar ========================
 function Topbar({
   search,
@@ -1002,7 +1032,15 @@ function Sparkline({
 
 // ======================== TrendChart (assessment-to-assessment #642) ========================
 function TrendChart() {
+  const {
+    open,
+    headProps
+  } = useCollapsibleSection();
   const trend = D.trendData;
+  // Issue #750: Posture trend is opt-in. Renders only when the assessment was
+  // run with -IncludeTrend (which propagates to D.trendOptIn) AND there are
+  // enough snapshots for a meaningful chart.
+  if (!D.trendOptIn) return null;
   if (!trend || trend.length < 2) return null;
 
   // One line per status track (Pass / Warn / Fail) — most informative triple for a quick read.
@@ -1043,15 +1081,16 @@ function TrendChart() {
   return /*#__PURE__*/React.createElement("section", {
     className: "block",
     id: "trend"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "section-head"
-  }, /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("div", headProps, /*#__PURE__*/React.createElement("span", {
     className: "eyebrow"
   }, "01b \xB7 Trend"), /*#__PURE__*/React.createElement("h2", null, "Posture trend"), /*#__PURE__*/React.createElement("span", {
     className: "trend-subtitle"
-  }, trend.length, " snapshots \xB7 ", daysSpan, " day", daysSpan === 1 ? '' : 's', " span"), /*#__PURE__*/React.createElement("div", {
+  }, trend.length, " snapshots \xB7 ", daysSpan, " day", daysSpan === 1 ? '' : 's', " span"), /*#__PURE__*/React.createElement("span", {
+    className: "section-chevron",
+    "aria-hidden": "true"
+  }, open ? '▾' : '▸'), /*#__PURE__*/React.createElement("div", {
     className: "hr"
-  })), /*#__PURE__*/React.createElement("div", {
+  })), open && /*#__PURE__*/React.createElement("div", {
     className: "trend-chart-wrap"
   }, /*#__PURE__*/React.createElement("svg", {
     viewBox: `0 0 ${W} ${H}`,
@@ -1850,6 +1889,10 @@ function FrameworkQuilt({
   onProfileSelect,
   activeProfiles
 }) {
+  const {
+    open,
+    headProps
+  } = useCollapsibleSection();
   const [visibleFws, setVisibleFws] = useState(['cis-m365-v6']);
   const [pickerOpen, setPickerOpen] = useState(false);
   // Panel open by default (#735): the first visible framework ('cis-m365-v6' initially)
@@ -1983,9 +2026,7 @@ function FrameworkQuilt({
   return /*#__PURE__*/React.createElement("section", {
     className: "block",
     id: "frameworks"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "section-head"
-  }, /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("div", headProps, /*#__PURE__*/React.createElement("span", {
     className: "eyebrow"
   }, "01 \xB7 Compliance"), /*#__PURE__*/React.createElement("h2", null, "Framework coverage"), /*#__PURE__*/React.createElement("div", {
     ref: pickerRef,
@@ -1993,7 +2034,8 @@ function FrameworkQuilt({
       position: 'relative',
       marginLeft: 12,
       flexShrink: 0
-    }
+    },
+    onClick: e => e.stopPropagation()
   }, /*#__PURE__*/React.createElement("button", {
     className: 'chip chip-more' + (visibleFws.length > 1 ? ' selected' : ''),
     onClick: () => setPickerOpen(o => !o)
@@ -2043,9 +2085,12 @@ function FrameworkQuilt({
     }
   }, f.id)), /*#__PURE__*/React.createElement("span", {
     className: "ct"
-  }, byFw[f.id]?.total || 0))))), /*#__PURE__*/React.createElement("div", {
+  }, byFw[f.id]?.total || 0))))), /*#__PURE__*/React.createElement("span", {
+    className: "section-chevron",
+    "aria-hidden": "true"
+  }, open ? '▾' : '▸'), /*#__PURE__*/React.createElement("div", {
     className: "hr"
-  })), /*#__PURE__*/React.createElement("div", {
+  })), open && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: "quilt"
   }, displayFws.map(f => {
     const d = byFw[f.id];
@@ -2178,7 +2223,10 @@ function FrameworkQuilt({
     className: 'fw-profile-chip level3 fw-profile-chip-btn' + ((activeProfiles || []).includes('L3') ? ' selected' : ''),
     onClick: () => handleProfileClick('L3'),
     "aria-pressed": (activeProfiles || []).includes('L3')
-  }, "L3 ", /*#__PURE__*/React.createElement("b", null, fwProfileStats.l3))) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
+  }, "L3 ", /*#__PURE__*/React.createElement("b", null, fwProfileStats.l3)), fwProfileStats.l3 > 0 && /*#__PURE__*/React.createElement("span", {
+    className: "fw-profile-info",
+    title: "L2 includes all L3 practices. Every CMMC L3 control is also assessed at L2 by design \u2014 selecting L2 will count L3 checks too."
+  }, "L2 \u2287 L3")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
     type: "button",
     className: 'fw-profile-chip level fw-profile-chip-btn' + ((activeProfiles || []).includes('L1') ? ' selected' : ''),
     onClick: () => handleProfileClick('L1'),
@@ -2337,7 +2385,7 @@ function FrameworkQuilt({
         block: 'start'
       });
     }
-  }, (activeProfiles || []).length === 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, "View all ", expandedData.total, " findings in this framework \u2192") : /*#__PURE__*/React.createElement(React.Fragment, null, "View ", selectedCount, " of ", expandedData.total, " findings matching ", (activeProfiles || []).join(' + '), " \u2192")))));
+  }, (activeProfiles || []).length === 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, "View all ", expandedData.total, " findings in this framework \u2192") : /*#__PURE__*/React.createElement(React.Fragment, null, "View ", selectedCount, " of ", expandedData.total, " findings matching ", (activeProfiles || []).join(' + '), " \u2192"))))));
 }
 
 // ======================== Filter bar ========================
@@ -2665,6 +2713,10 @@ function FindingsTable({
   onHideBulk,
   onRestoreAll
 }) {
+  const {
+    open: sectionOpen,
+    headProps
+  } = useCollapsibleSection();
   const [open, setOpen] = useState(new Set());
   const [visibleCols, setVisibleCols] = useState(DEFAULT_COLS);
   const [colPickerOpen, setColPickerOpen] = useState(false);
@@ -2895,9 +2947,7 @@ function FindingsTable({
   return /*#__PURE__*/React.createElement("section", {
     className: "block",
     id: "findings"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "section-head"
-  }, /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("div", headProps, /*#__PURE__*/React.createElement("span", {
     className: "eyebrow"
   }, "03 \xB7 Detail"), /*#__PURE__*/React.createElement("h2", null, "All findings", isFiltered ? /*#__PURE__*/React.createElement("span", {
     style: {
@@ -2919,14 +2969,20 @@ function FindingsTable({
     }
   }, " \xB7 ", FINDINGS.length, " total")), editMode && hiddenFindings?.size > 0 && /*#__PURE__*/React.createElement("button", {
     className: "restore-all-btn",
-    onClick: onRestoreAll
+    onClick: e => {
+      e.stopPropagation();
+      onRestoreAll();
+    }
   }, "\u21A9 Restore ", hiddenFindings.size, " hidden"), /*#__PURE__*/React.createElement("button", {
     className: "chip chip-more",
     style: {
       marginLeft: 12,
       flexShrink: 0
     },
-    onClick: () => setOpen(open.size === filtered.length && filtered.length > 0 ? new Set() : new Set(filtered.map((_, i) => i))),
+    onClick: e => {
+      e.stopPropagation();
+      setOpen(open.size === filtered.length && filtered.length > 0 ? new Set() : new Set(filtered.map((_, i) => i)));
+    },
     title: open.size === filtered.length && filtered.length > 0 ? 'Collapse all findings' : 'Expand all findings'
   }, open.size === filtered.length && filtered.length > 0 ? '− Collapse all' : '+ Expand all'), /*#__PURE__*/React.createElement("div", {
     ref: colPickerRef,
@@ -2934,7 +2990,8 @@ function FindingsTable({
       position: 'relative',
       marginLeft: 8,
       flexShrink: 0
-    }
+    },
+    onClick: e => e.stopPropagation()
   }, /*#__PURE__*/React.createElement("button", {
     className: 'chip chip-more' + (visibleCols.length !== DEFAULT_COLS.length ? ' selected' : ''),
     onClick: () => setColPickerOpen(o => !o),
@@ -2977,9 +3034,12 @@ function FindingsTable({
     type: "checkbox",
     checked: visibleCols.includes(c.id),
     onChange: () => toggleCol(c.id)
-  }), /*#__PURE__*/React.createElement("span", null, c.label))))), /*#__PURE__*/React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("span", null, c.label))))), /*#__PURE__*/React.createElement("span", {
+    className: "section-chevron",
+    "aria-hidden": "true"
+  }, sectionOpen ? '▾' : '▸'), /*#__PURE__*/React.createElement("div", {
     className: "hr"
-  })), /*#__PURE__*/React.createElement("div", {
+  })), sectionOpen && /*#__PURE__*/React.createElement("div", {
     className: "findings"
   }, /*#__PURE__*/React.createElement("div", {
     className: "findings-head",
@@ -3136,6 +3196,10 @@ function Roadmap({
   roadmapOverrides,
   onRoadmapChange
 }) {
+  const {
+    open: sectionOpen,
+    headProps
+  } = useCollapsibleSection();
   const [open, setOpen] = useState(null);
   const moveTo = (checkId, lane) => {
     onRoadmapChange({
@@ -3402,19 +3466,23 @@ function Roadmap({
   return /*#__PURE__*/React.createElement("section", {
     className: "block",
     id: "roadmap"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "section-head"
-  }, /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("div", headProps, /*#__PURE__*/React.createElement("span", {
     className: "eyebrow"
-  }, "04 \xB7 Action plan"), /*#__PURE__*/React.createElement("h2", null, "Remediation roadmap"), /*#__PURE__*/React.createElement("div", {
+  }, "04 \xB7 Action plan"), /*#__PURE__*/React.createElement("h2", null, "Remediation roadmap"), /*#__PURE__*/React.createElement("span", {
+    className: "section-chevron",
+    "aria-hidden": "true"
+  }, sectionOpen ? '▾' : '▸'), /*#__PURE__*/React.createElement("div", {
     className: "hr"
   }), /*#__PURE__*/React.createElement("button", {
     className: "lane-reset-btn",
     style: {
       marginTop: '8px'
     },
-    onClick: downloadCsv
-  }, "Download CSV")), /*#__PURE__*/React.createElement("div", {
+    onClick: e => {
+      e.stopPropagation();
+      downloadCsv();
+    }
+  }, "Download CSV")), sectionOpen && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: "roadmap-intro"
   }, /*#__PURE__*/React.createElement("div", {
     className: "roadmap-intro-head"
@@ -3498,11 +3566,15 @@ function Roadmap({
     laneItems: later
   }), /*#__PURE__*/React.createElement("div", {
     className: "lane-eta"
-  }, "1 \u2013 3 months"))), later.map(t => renderTask(t, 'later')))));
+  }, "1 \u2013 3 months"))), later.map(t => renderTask(t, 'later'))))));
 }
 
 // ======================== Critical Exposure section ========================
 function StrykerBlock() {
+  const {
+    open,
+    headProps
+  } = useCollapsibleSection();
   const stryker = FINDINGS.filter(f => f.domain === 'Stryker Readiness');
   if (!stryker.length) return null;
   const fail = stryker.filter(f => f.status === 'Fail').length;
@@ -3510,13 +3582,14 @@ function StrykerBlock() {
   return /*#__PURE__*/React.createElement("section", {
     className: "block",
     id: "stryker"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "section-head"
-  }, /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("div", headProps, /*#__PURE__*/React.createElement("span", {
     className: "eyebrow"
-  }, "01b \xB7 Targeted"), /*#__PURE__*/React.createElement("h2", null, "Critical exposure analysis"), /*#__PURE__*/React.createElement("div", {
+  }, "01b \xB7 Targeted"), /*#__PURE__*/React.createElement("h2", null, "Critical exposure analysis"), /*#__PURE__*/React.createElement("span", {
+    className: "section-chevron",
+    "aria-hidden": "true"
+  }, open ? '▾' : '▸'), /*#__PURE__*/React.createElement("div", {
     className: "hr"
-  })), /*#__PURE__*/React.createElement("div", {
+  })), open && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       marginBottom: 12,
@@ -3619,7 +3692,7 @@ function StrykerBlock() {
   }, f.frameworks.map(fw => /*#__PURE__*/React.createElement("span", {
     key: fw,
     className: "fw-pill"
-  }, fw))), /*#__PURE__*/React.createElement("div", null)))));
+  }, fw))), /*#__PURE__*/React.createElement("div", null))))));
 }
 
 // ======================== Overview (tenant + summary) ========================
@@ -3645,6 +3718,10 @@ function Overview() {
 
 // ======================== Appendix ========================
 function Appendix() {
+  const {
+    open,
+    headProps
+  } = useCollapsibleSection();
   const mfaTotal = MFA_STATS.total || 1;
   const mfaPct = n => Math.round(n / mfaTotal * 100);
   const ca = D.ca || [];
@@ -3686,13 +3763,14 @@ function Appendix() {
   return /*#__PURE__*/React.createElement("section", {
     className: "block",
     id: "appendix"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "section-head"
-  }, /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("div", headProps, /*#__PURE__*/React.createElement("span", {
     className: "eyebrow"
-  }, "05 \xB7 Reference"), /*#__PURE__*/React.createElement("h2", null, "Tenant appendix"), /*#__PURE__*/React.createElement("div", {
+  }, "05 \xB7 Reference"), /*#__PURE__*/React.createElement("h2", null, "Tenant appendix"), /*#__PURE__*/React.createElement("span", {
+    className: "section-chevron",
+    "aria-hidden": "true"
+  }, open ? '▾' : '▸'), /*#__PURE__*/React.createElement("div", {
     className: "hr"
-  })), /*#__PURE__*/React.createElement("div", {
+  })), open && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       marginBottom: 14
@@ -3996,7 +4074,7 @@ function Appendix() {
       textAlign: 'right',
       fontFamily: 'var(--font-mono)'
     }
-  }, String(ad.lastSync).slice(0, 19).replace('T', ' '))))))));
+  }, String(ad.lastSync).slice(0, 19).replace('T', ' ')))))))));
 }
 function StatusDot({
   ok,

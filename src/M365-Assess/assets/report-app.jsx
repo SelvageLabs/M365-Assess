@@ -277,6 +277,30 @@ function Sidebar({ active, activeSubsection, counts, domainCounts, activeDomain,
   );
 }
 
+// Issue #737: shared collapsible-section hook. Each top-level section's
+// .section-head spreads `headProps` to gain click + keyboard toggle. The
+// `beforeprint` listener auto-expands so PDF/print exports never lose
+// content that happens to be collapsed in-screen.
+function useCollapsibleSection(defaultOpen = true) {
+  const [open, setOpen] = useState(defaultOpen);
+  useEffect(() => {
+    const expand = () => setOpen(true);
+    window.addEventListener('beforeprint', expand);
+    return () => window.removeEventListener('beforeprint', expand);
+  }, []);
+  const headProps = {
+    role: 'button',
+    tabIndex: 0,
+    'aria-expanded': open,
+    className: 'section-head section-head-toggle' + (open ? '' : ' is-closed'),
+    onClick: () => setOpen(o => !o),
+    onKeyDown: (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(o => !o); }
+    },
+  };
+  return { open, headProps };
+}
+
 // ======================== Topbar ========================
 function Topbar({ search, setSearch, searchMatches, matchIdx, onAdvanceMatch, onRetreatMatch, mode, setMode, theme, setTheme, textScale, setTextScale, onPrint, onTweaks, onHamburger, editMode, onEditToggle, onFinalize, onReset, hiddenCount }) {
   const SCALE_CYCLE = ['normal', 'large', 'xlarge'];
@@ -571,7 +595,12 @@ function Sparkline({ scores, avg }) {
 
 // ======================== TrendChart (assessment-to-assessment #642) ========================
 function TrendChart() {
+  const { open, headProps } = useCollapsibleSection();
   const trend = D.trendData;
+  // Issue #750: Posture trend is opt-in. Renders only when the assessment was
+  // run with -IncludeTrend (which propagates to D.trendOptIn) AND there are
+  // enough snapshots for a meaningful chart.
+  if (!D.trendOptIn) return null;
   if (!trend || trend.length < 2) return null;
 
   // One line per status track (Pass / Warn / Fail) — most informative triple for a quick read.
@@ -605,13 +634,14 @@ function TrendChart() {
 
   return (
     <section className="block" id="trend">
-      <div className="section-head">
+      <div {...headProps}>
         <span className="eyebrow">01b · Trend</span>
         <h2>Posture trend</h2>
         <span className="trend-subtitle">{trend.length} snapshots · {daysSpan} day{daysSpan===1?'':'s'} span</span>
+        <span className="section-chevron" aria-hidden="true">{open ? '▾' : '▸'}</span>
         <div className="hr"/>
       </div>
-      <div className="trend-chart-wrap">
+      {open && <div className="trend-chart-wrap">
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" preserveAspectRatio="xMidYMid meet" className="trend-chart">
           {/* Y-axis gridlines + labels */}
           {yTicks.map((v, i) => (
@@ -656,7 +686,7 @@ function TrendChart() {
             </span>
           ))}
         </div>
-      </div>
+      </div>}
     </section>
   );
 }
@@ -1101,6 +1131,7 @@ const matchProfileToken = (profilesArr, token) => {
 
 // ======================== Framework quilt ========================
 function FrameworkQuilt({ onSelect, selected, onProfileSelect, activeProfiles }) {
+  const { open, headProps } = useCollapsibleSection();
   const [visibleFws, setVisibleFws] = useState(['cis-m365-v6']);
   const [pickerOpen, setPickerOpen] = useState(false);
   // Panel open by default (#735): the first visible framework ('cis-m365-v6' initially)
@@ -1215,10 +1246,10 @@ function FrameworkQuilt({ onSelect, selected, onProfileSelect, activeProfiles })
 
   return (
     <section className="block" id="frameworks">
-      <div className="section-head">
+      <div {...headProps}>
         <span className="eyebrow">01 · Compliance</span>
         <h2>Framework coverage</h2>
-        <div ref={pickerRef} style={{position:'relative', marginLeft:12, flexShrink:0}}>
+        <div ref={pickerRef} style={{position:'relative', marginLeft:12, flexShrink:0}} onClick={e => e.stopPropagation()}>
           <button className={'chip chip-more' + (visibleFws.length > 1 ? ' selected' : '')}
                   onClick={() => setPickerOpen(o => !o)}>
             {pickerLabel}
@@ -1239,8 +1270,10 @@ function FrameworkQuilt({ onSelect, selected, onProfileSelect, activeProfiles })
             </div>
           )}
         </div>
+        <span className="section-chevron" aria-hidden="true">{open ? '▾' : '▸'}</span>
         <div className="hr"/>
       </div>
+      {open && (<>
       <div className="quilt">
         {displayFws.map(f => {
           const d = byFw[f.id];
@@ -1314,6 +1347,8 @@ function FrameworkQuilt({ onSelect, selected, onProfileSelect, activeProfiles })
                   {fwProfileStats.l1 > 0 && <button type="button" className={'fw-profile-chip level fw-profile-chip-btn' + ((activeProfiles || []).includes('L1') ? ' selected' : '')} onClick={() => handleProfileClick('L1')} aria-pressed={(activeProfiles || []).includes('L1')}>L1 <b>{fwProfileStats.l1}</b></button>}
                   {fwProfileStats.l2 > 0 && <button type="button" className={'fw-profile-chip level2 fw-profile-chip-btn' + ((activeProfiles || []).includes('L2') ? ' selected' : '')} onClick={() => handleProfileClick('L2')} aria-pressed={(activeProfiles || []).includes('L2')}>L2 <b>{fwProfileStats.l2}</b></button>}
                   {fwProfileStats.l3 > 0 && <button type="button" className={'fw-profile-chip level3 fw-profile-chip-btn' + ((activeProfiles || []).includes('L3') ? ' selected' : '')} onClick={() => handleProfileClick('L3')} aria-pressed={(activeProfiles || []).includes('L3')}>L3 <b>{fwProfileStats.l3}</b></button>}
+                  {/* Issue #744: every CMMC L3 check is also tagged L2 in the registry (no L3-only checks exist), so L2 is a strict superset. Surfaces the inheritance so users don't read L2 + L3 as disjoint sets. */}
+                  {fwProfileStats.l3 > 0 && <span className="fw-profile-info" title="L2 includes all L3 practices. Every CMMC L3 control is also assessed at L2 by design — selecting L2 will count L3 checks too.">L2 ⊇ L3</span>}
                 </>
               ) : (
                 <>
@@ -1387,6 +1422,7 @@ function FrameworkQuilt({ onSelect, selected, onProfileSelect, activeProfiles })
           </div>
         </div>
       )}
+      </>)}
     </section>
   );
 }
@@ -1594,6 +1630,7 @@ const ALL_COLS = [
 const DEFAULT_COLS = ['status', 'finding', 'domain', 'controlId', 'checkId', 'severity'];
 
 function FindingsTable({ filters, search, focusFinding, onFocusClear, onMatchesChange, editMode, hiddenFindings, onHide, onHideBulk, onRestoreAll }) {
+  const { open: sectionOpen, headProps } = useCollapsibleSection();
   const [open, setOpen] = useState(new Set());
   const [visibleCols, setVisibleCols] = useState(DEFAULT_COLS);
   const [colPickerOpen, setColPickerOpen] = useState(false);
@@ -1778,23 +1815,23 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, onMatchesC
 
   return (
     <section className="block" id="findings">
-      <div className="section-head">
+      <div {...headProps}>
         <span className="eyebrow">03 · Detail</span>
         <h2>All findings{isFiltered
           ? <span style={{marginLeft:8,fontSize:12,fontWeight:500,background:'var(--accent-soft)',border:'1px solid var(--accent-border)',color:'var(--accent-text)',borderRadius:20,padding:'2px 10px',verticalAlign:'middle'}}>Showing {filtered.length} of {FINDINGS.length}</span>
           : <span style={{fontWeight:400,color:'var(--muted)',fontSize:13}}> · {FINDINGS.length} total</span>
         }</h2>
         {editMode && (hiddenFindings?.size > 0) && (
-          <button className="restore-all-btn" onClick={onRestoreAll}>
+          <button className="restore-all-btn" onClick={e => {e.stopPropagation(); onRestoreAll();}}>
             ↩ Restore {hiddenFindings.size} hidden
           </button>
         )}
         <button className="chip chip-more" style={{marginLeft:12,flexShrink:0}}
-                onClick={() => setOpen(open.size === filtered.length && filtered.length > 0 ? new Set() : new Set(filtered.map((_,i) => i)))}
+                onClick={e => {e.stopPropagation(); setOpen(open.size === filtered.length && filtered.length > 0 ? new Set() : new Set(filtered.map((_,i) => i)));}}
                 title={open.size === filtered.length && filtered.length > 0 ? 'Collapse all findings' : 'Expand all findings'}>
           {open.size === filtered.length && filtered.length > 0 ? '− Collapse all' : '+ Expand all'}
         </button>
-        <div ref={colPickerRef} style={{position:'relative', marginLeft:8, flexShrink:0}}>
+        <div ref={colPickerRef} style={{position:'relative', marginLeft:8, flexShrink:0}} onClick={e => e.stopPropagation()}>
           <button className={'chip chip-more' + (visibleCols.length !== DEFAULT_COLS.length ? ' selected' : '')}
                   onClick={() => setColPickerOpen(o => !o)} title="Choose columns">
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" style={{marginRight:4}}><path d="M3 5h10M3 11h10"/><circle cx="6" cy="5" r="1.5" fill="currentColor" stroke="none"/><circle cx="10" cy="11" r="1.5" fill="currentColor" stroke="none"/></svg>
@@ -1811,10 +1848,11 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, onMatchesC
             </div>
           )}
         </div>
+        <span className="section-chevron" aria-hidden="true">{sectionOpen ? '▾' : '▸'}</span>
         <div className="hr"/>
       </div>
 
-      <div className="findings">
+      {sectionOpen && <div className="findings">
         <div className="findings-head" style={{gridTemplateColumns: gridTpl}}>
           {cols.map(c => <div key={c.id}>{c.label}</div>)}
           <div/>
@@ -1883,7 +1921,7 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, onMatchesC
             </React.Fragment>
           );
         })}
-      </div>
+      </div>}
     </section>
   );
 }
@@ -1954,6 +1992,7 @@ function whyItMatters(f) {
 
 // ======================== Roadmap ========================
 function Roadmap({ onViewFinding, editMode, hiddenFindings, roadmapOverrides, onRoadmapChange }) {
+  const { open: sectionOpen, headProps } = useCollapsibleSection();
   const [open, setOpen] = useState(null);
 
   const moveTo = (checkId, lane) => {
@@ -2143,13 +2182,14 @@ function Roadmap({ onViewFinding, editMode, hiddenFindings, roadmapOverrides, on
 
   return (
     <section className="block" id="roadmap">
-      <div className="section-head">
+      <div {...headProps}>
         <span className="eyebrow">04 · Action plan</span>
         <h2>Remediation roadmap</h2>
+        <span className="section-chevron" aria-hidden="true">{sectionOpen ? '▾' : '▸'}</span>
         <div className="hr"/>
-        <button className="lane-reset-btn" style={{marginTop:'8px'}} onClick={downloadCsv}>Download CSV</button>
+        <button className="lane-reset-btn" style={{marginTop:'8px'}} onClick={e => {e.stopPropagation(); downloadCsv();}}>Download CSV</button>
       </div>
-      <div className="roadmap-intro">
+      {sectionOpen && <><div className="roadmap-intro">
         <div className="roadmap-intro-head">How we prioritized</div>
         <div className="roadmap-intro-body">
           Findings are bucketed by severity. Critical findings — identity takeover, data exfiltration, privilege escalation paths — always go in <b>Now</b>. High-severity findings land in <b>Next</b>: risk is real but remediation typically requires coordination or scheduling. Medium-severity items also join <b>Next</b> when tractable, or <b>Later</b> for larger hardening work. <br/>
@@ -2187,25 +2227,27 @@ function Roadmap({ onViewFinding, editMode, hiddenFindings, roadmapOverrides, on
           </div>
           {later.map(t => renderTask(t, 'later'))}
         </div>
-      </div>
+      </div></>}
     </section>
   );
 }
 
 // ======================== Critical Exposure section ========================
 function StrykerBlock() {
+  const { open, headProps } = useCollapsibleSection();
   const stryker = FINDINGS.filter(f => f.domain === 'Stryker Readiness');
   if (!stryker.length) return null;
   const fail = stryker.filter(f => f.status==='Fail').length;
   const pass = stryker.filter(f => f.status==='Pass').length;
   return (
     <section className="block" id="stryker">
-      <div className="section-head">
+      <div {...headProps}>
         <span className="eyebrow">01b · Targeted</span>
         <h2>Critical exposure analysis</h2>
+        <span className="section-chevron" aria-hidden="true">{open ? '▾' : '▸'}</span>
         <div className="hr"/>
       </div>
-      <div className="card" style={{marginBottom:12, display:'flex', gap:24, alignItems:'center', flexWrap:'wrap'}}>
+      {open && <><div className="card" style={{marginBottom:12, display:'flex', gap:24, alignItems:'center', flexWrap:'wrap'}}>
         <div>
           <div style={{fontSize:12, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.1em', fontWeight:600}}>Coverage</div>
           <div style={{fontSize:34, fontWeight:700, fontFamily:'var(--font-display)', letterSpacing:'-.02em'}}>
@@ -2235,7 +2277,7 @@ function StrykerBlock() {
             <div/>
           </div>
         ))}
-      </div>
+      </div></>}
     </section>
   );
 }
@@ -2268,6 +2310,7 @@ function Overview() {
 
 // ======================== Appendix ========================
 function Appendix() {
+  const { open, headProps } = useCollapsibleSection();
   const mfaTotal = MFA_STATS.total || 1;
   const mfaPct = n => Math.round((n / mfaTotal) * 100);
 
@@ -2301,13 +2344,14 @@ function Appendix() {
 
   return (
     <section className="block" id="appendix">
-      <div className="section-head">
+      <div {...headProps}>
         <span className="eyebrow">05 · Reference</span>
         <h2>Tenant appendix</h2>
+        <span className="section-chevron" aria-hidden="true">{open ? '▾' : '▸'}</span>
         <div className="hr"/>
       </div>
 
-      <div className="card" style={{marginBottom:14}}>
+      {open && <><div className="card" style={{marginBottom:14}}>
         <div style={labelStyle}>Tenant</div>
         <div style={{display:'flex',flexWrap:'wrap',gap:'6px 24px',fontSize:12}}>
           <span><span style={{color:'var(--muted)'}}>org</span> <b>{TENANT.OrgDisplayName}</b></span>
@@ -2454,7 +2498,7 @@ function Appendix() {
             </table>
           </div>
         )}
-      </div>
+      </div></>}
     </section>
   );
 }

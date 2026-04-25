@@ -89,7 +89,10 @@ function Build-ReportDataJson {
         [string]$XlsxFileName = '',
 
         [Parameter()]
-        [hashtable]$CmmcHandoff = $null
+        [hashtable]$CmmcHandoff = $null,
+
+        [Parameter()]
+        [switch]$IncludeTrend
     )
 
     # ------------------------------------------------------------------
@@ -378,6 +381,7 @@ function Build-ReportDataJson {
         adHybrid       = $adHybridData
         deviceStats    = $deviceStats
         trendData      = $trendData
+        trendOptIn     = [bool]$IncludeTrend
         cmmcHandoff    = $CmmcHandoff
         cmmcCoverage   = $cmmcCoverage
     }

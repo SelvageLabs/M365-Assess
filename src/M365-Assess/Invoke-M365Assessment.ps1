@@ -90,6 +90,11 @@
     Lists all saved baselines for the tenant (label, date, registry version,
     check count) and exits without running an assessment. Use -TenantId to
     scope results; omit to list baselines for all tenants.
+.PARAMETER IncludeTrend
+    Renders the Posture trend section in the HTML report when two or more
+    baselines exist for the tenant. Off by default — baselines still auto-save
+    for drift comparison, but the trend section appears only when the user
+    explicitly opts in to longitudinal posture tracking.
 .PARAMETER DryRun
     Show a dry-run preview of what the assessment would do (sections,
     services, Graph scopes, check counts) without connecting or collecting
@@ -242,6 +247,9 @@ param(
 
     [Parameter()]
     [switch]$ListBaselines,
+
+    [Parameter()]
+    [switch]$IncludeTrend,
 
     [Parameter(ParameterSetName = 'ConnectionProfile', Mandatory)]
     [ArgumentCompleter({
@@ -1307,6 +1315,7 @@ if (Test-Path -Path $reportScriptPath) {
         if ($CompactReport)     { $reportParams['CompactReport']     = $true }
         if ($OpenReport)        { $reportParams['OpenReport']        = $true }
         if ($QuickScan)         { $reportParams['QuickScan']         = $true }
+        if ($IncludeTrend)      { $reportParams['IncludeTrend']      = $true }
         if ($driftReport.Count -gt 0 -or $driftBaselineLabel) {
             $reportParams['DriftReport']            = $driftReport
             $reportParams['DriftBaselineLabel']     = $driftBaselineLabel
