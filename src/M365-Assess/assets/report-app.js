@@ -585,6 +585,10 @@ function Sidebar({
 function Topbar({
   search,
   setSearch,
+  searchMatches,
+  matchIdx,
+  onAdvanceMatch,
+  onRetreatMatch,
   mode,
   setMode,
   theme,
@@ -640,8 +644,18 @@ function Topbar({
   }, /*#__PURE__*/React.createElement(Icon.search, null), /*#__PURE__*/React.createElement("input", {
     value: search,
     onChange: e => setSearch(e.target.value),
-    placeholder: "Search findings, check IDs, remediation\u2026"
-  }), /*#__PURE__*/React.createElement("kbd", null, "/")), /*#__PURE__*/React.createElement("div", {
+    onKeyDown: e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (e.shiftKey) onRetreatMatch?.();else onAdvanceMatch?.();
+      } else if (e.key === 'Escape') {
+        setSearch('');
+      }
+    },
+    placeholder: "Search findings, check IDs, remediation\u2026 (Enter to cycle)"
+  }), search && /*#__PURE__*/React.createElement("span", {
+    className: 'search-counter' + ((searchMatches || []).length === 0 ? ' is-empty' : '')
+  }, (searchMatches || []).length === 0 ? '0/0' : matchIdx + 1 + '/' + searchMatches.length), /*#__PURE__*/React.createElement("kbd", null, "/")), /*#__PURE__*/React.createElement("div", {
     className: "palette-switch"
   }, /*#__PURE__*/React.createElement("button", {
     className: theme === 'neon' ? 'active' : '',
@@ -1949,6 +1963,23 @@ function FrameworkQuilt({
   const handleCardClick = fwId => setExpandedFw(e => e === fwId ? null : fwId);
   const expandedMeta = expandedFw ? FRAMEWORKS.find(f => f.id === expandedFw) : null;
   const expandedData = expandedFw ? byFw[expandedFw] : null;
+
+  // Count of findings within the expanded framework that match the active level-chip
+  // selection (L1/L2/L3/E3/E5only). When no chips are selected, falls back to the
+  // framework total so the CTA renders the original phrasing. Uses the same
+  // matchProfileToken semantics as fwDomainBreakdown above.
+  const selectedCount = useMemo(() => {
+    if (!expandedFw || !expandedData) return 0;
+    const tokens = activeProfiles || [];
+    if (tokens.length === 0) return expandedData.total;
+    let n = 0;
+    FINDINGS.forEach(f => {
+      if (!f.frameworks.includes(expandedFw)) return;
+      const profs = [].concat(f.fwMeta?.[expandedFw]?.profiles || []);
+      if (tokens.some(t => matchProfileToken(profs, t))) n++;
+    });
+    return n;
+  }, [expandedFw, activeProfiles, expandedData]);
   return /*#__PURE__*/React.createElement("section", {
     className: "block",
     id: "frameworks"
@@ -2306,7 +2337,7 @@ function FrameworkQuilt({
         block: 'start'
       });
     }
-  }, "View all ", expandedData.total, " findings in this framework \u2192"))));
+  }, (activeProfiles || []).length === 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, "View all ", expandedData.total, " findings in this framework \u2192") : /*#__PURE__*/React.createElement(React.Fragment, null, "View ", selectedCount, " of ", expandedData.total, " findings matching ", (activeProfiles || []).join(' + '), " \u2192")))));
 }
 
 // ======================== Filter bar ========================
@@ -2627,6 +2658,7 @@ function FindingsTable({
   search,
   focusFinding,
   onFocusClear,
+  onMatchesChange,
   editMode,
   hiddenFindings,
   onHide,
@@ -2652,8 +2684,27 @@ function FindingsTable({
       document.removeEventListener('mousedown', onOut);
     };
   }, [colPickerOpen]);
+
+  // Issue #697: track the previously focused finding so smart-search cycling
+  // can collapse the prior expanded row. Plain ref — does not trigger renders.
+  const prevFocusRef = useRef(null);
   useEffect(() => {
     if (!focusFinding) return;
+    // Expand the new match and collapse the previously cycled-to one. Indices
+    // in the `open` Set track positions in `filtered`, so this only works if
+    // the row actually appears in the current filtered view.
+    setOpen(o => {
+      const n = new Set(o);
+      const prev = prevFocusRef.current;
+      if (prev && prev !== focusFinding) {
+        const prevIdx = filtered.findIndex(f => f.checkId === prev);
+        if (prevIdx >= 0) n.delete(prevIdx);
+      }
+      const idx = filtered.findIndex(f => f.checkId === focusFinding);
+      if (idx >= 0) n.add(idx);
+      return n;
+    });
+    prevFocusRef.current = focusFinding;
     const timer = setTimeout(() => {
       const rowId = 'finding-row-' + focusFinding.replace(/\./g, '-');
       const el = document.getElementById(rowId);
@@ -2674,6 +2725,11 @@ function FindingsTable({
   const toggleCol = id => setVisibleCols(v => v.includes(id) ? v.length > 1 ? v.filter(c => c !== id) : v : [...v, id]);
   const cols = ALL_COLS.filter(c => visibleCols.includes(c.id));
   const gridTpl = cols.map(c => c.width).join(' ') + ' 28px';
+
+  // Issue #697: publish the current filtered set up to App so the smart-search
+  // counter and Enter-cycling can operate over the same in-view findings.
+  // Empty array when no search query — counter hides and cycling no-ops.
+
   const filtered = useMemo(() => {
     const s = search.toLowerCase();
     return FINDINGS.filter(f => {
@@ -2694,6 +2750,13 @@ function FindingsTable({
       return true;
     });
   }, [filters, search, editMode, hiddenFindings]);
+
+  // Issue #697: publish matches up to App. Only emit when there is a query;
+  // empty list when search is cleared so the counter hides and cycling no-ops.
+  useEffect(() => {
+    if (!onMatchesChange) return;
+    onMatchesChange(search ? filtered.map(f => f.checkId) : []);
+  }, [filtered, search, onMatchesChange]);
   const isFiltered = search.length > 0 || filters.status.length > 0 || filters.severity.length > 0 || filters.framework.length > 0 || filters.domain.length > 0 || (filters.profile || []).length > 0;
   const toggle = i => setOpen(o => {
     const n = new Set(o);
@@ -2992,23 +3055,52 @@ function renderRemediation(text) {
       color: 'var(--muted)'
     }
   }, "No remediation guidance provided.");
-  // Highlight Run: PowerShell commands
+  // Split into ordered blocks: portal-text segments and Run: PowerShell commands.
+  // Each block renders on its own line so a consultant can scan by action type.
   const parts = text.split(/(Run:[^.]*\.)/);
-  return /*#__PURE__*/React.createElement("span", null, parts.map((p, i) => {
+  const blocks = [];
+  let portalBuf = '';
+  parts.forEach(p => {
+    if (!p) return;
     if (p.startsWith('Run:')) {
+      const trimmed = portalBuf.trim();
+      if (trimmed) blocks.push({
+        type: 'portal',
+        text: trimmed
+      });
+      portalBuf = '';
       const cmd = p.replace(/^Run:\s*/, '').replace(/\.$/, '');
-      return /*#__PURE__*/React.createElement("span", {
-        key: i
-      }, /*#__PURE__*/React.createElement("strong", {
-        style: {
-          color: 'var(--accent-text)'
-        }
-      }, "PowerShell:"), " ", /*#__PURE__*/React.createElement("code", null, cmd), ". ");
+      blocks.push({
+        type: 'ps',
+        cmd
+      });
+    } else {
+      portalBuf += p;
     }
-    return /*#__PURE__*/React.createElement("span", {
-      key: i
-    }, p);
-  }));
+  });
+  const tail = portalBuf.trim();
+  if (tail) blocks.push({
+    type: 'portal',
+    text: tail
+  });
+  if (blocks.length === 0) return /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'var(--muted)'
+    }
+  }, "No remediation guidance provided.");
+  return /*#__PURE__*/React.createElement("div", {
+    className: "remediation-blocks"
+  }, blocks.map((b, i) => b.type === 'ps' ? /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "remediation-block remediation-ps"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "remediation-label"
+  }, "PowerShell"), /*#__PURE__*/React.createElement("pre", null, /*#__PURE__*/React.createElement("code", null, b.cmd))) : /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "remediation-block remediation-portal"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "remediation-label"
+  }, "Portal"), /*#__PURE__*/React.createElement("p", null, b.text))));
 }
 function whyItMatters(f) {
   const id = f.checkId;
@@ -3179,9 +3271,9 @@ function Roadmap({
     }, t.checkId, " \xB7 ", t.domain), /*#__PURE__*/React.createElement("div", {
       className: "task-tags"
     }, /*#__PURE__*/React.createElement("span", {
-      className: "task-tag"
+      className: 'task-tag task-tag-sev sev-' + t.severity
     }, SEV_LABEL[t.severity]), t.effort && /*#__PURE__*/React.createElement("span", {
-      className: "task-tag"
+      className: "task-tag task-tag-effort"
     }, t.effort, " effort"), t.frameworks.slice(0, 3).map(fw => /*#__PURE__*/React.createElement("span", {
       key: fw,
       className: "task-tag",
@@ -3266,7 +3358,7 @@ function Roadmap({
     }, "Business rationale"), /*#__PURE__*/React.createElement("div", {
       className: "task-field-value"
     }, t.rationale)), t.references && t.references.length > 0 && /*#__PURE__*/React.createElement("div", {
-      className: "task-field"
+      className: "task-field task-field-learn-more"
     }, /*#__PURE__*/React.createElement("div", {
       className: "task-field-label"
     }, "Learn more"), /*#__PURE__*/React.createElement("div", {
@@ -4054,6 +4146,29 @@ function App() {
   const [showTweaks, setShowTweaks] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [focusFinding, setFocusFinding] = useState(null);
+  // Issue #697: smart search — App owns the matches array (checkIds) and the
+  // current cursor so FilterBar can render a counter and FindingsTable can
+  // scroll/expand the active match. FindingsTable publishes its filtered set
+  // via onMatchesChange; Topbar drives advance/retreat from the search input.
+  const [searchMatches, setSearchMatches] = useState([]);
+  const [matchIdx, setMatchIdx] = useState(0);
+  // Reset cursor whenever the query changes; matches array re-derives anyway,
+  // but we want index=0 to land on the first match for new queries.
+  useEffect(() => {
+    setMatchIdx(0);
+  }, [search]);
+  const handleAdvanceMatch = useCallback(() => {
+    if (searchMatches.length === 0) return;
+    const next = (matchIdx + 1) % searchMatches.length;
+    setMatchIdx(next);
+    setFocusFinding(searchMatches[next]);
+  }, [matchIdx, searchMatches]);
+  const handleRetreatMatch = useCallback(() => {
+    if (searchMatches.length === 0) return;
+    const prev = (matchIdx - 1 + searchMatches.length) % searchMatches.length;
+    setMatchIdx(prev);
+    setFocusFinding(searchMatches[prev]);
+  }, [matchIdx, searchMatches]);
   const [editMode, setEditMode] = useState(false);
   const [hiddenFindings, setHiddenFindings] = useState(() => new Set(RO?.hiddenFindings || []));
   const [roadmapOverrides, setRoadmapOverrides] = useState(() => RO?.roadmapOverrides || {});
@@ -4232,6 +4347,10 @@ function App() {
   }, /*#__PURE__*/React.createElement(Topbar, {
     search: search,
     setSearch: setSearch,
+    searchMatches: searchMatches,
+    matchIdx: matchIdx,
+    onAdvanceMatch: handleAdvanceMatch,
+    onRetreatMatch: handleRetreatMatch,
     mode: mode,
     setMode: setMode,
     theme: theme,
@@ -4271,6 +4390,7 @@ function App() {
     search: search,
     focusFinding: focusFinding,
     onFocusClear: () => setFocusFinding(null),
+    onMatchesChange: setSearchMatches,
     editMode: editMode,
     hiddenFindings: hiddenFindings,
     onHide: toggleHideFinding,

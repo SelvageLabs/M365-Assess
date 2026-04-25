@@ -278,7 +278,7 @@ function Sidebar({ active, activeSubsection, counts, domainCounts, activeDomain,
 }
 
 // ======================== Topbar ========================
-function Topbar({ search, setSearch, mode, setMode, theme, setTheme, textScale, setTextScale, onPrint, onTweaks, onHamburger, editMode, onEditToggle, onFinalize, onReset, hiddenCount }) {
+function Topbar({ search, setSearch, searchMatches, matchIdx, onAdvanceMatch, onRetreatMatch, mode, setMode, theme, setTheme, textScale, setTextScale, onPrint, onTweaks, onHamburger, editMode, onEditToggle, onFinalize, onReset, hiddenCount }) {
   const SCALE_CYCLE = ['normal', 'large', 'xlarge'];
   const cycleScale = () => setTextScale(s => SCALE_CYCLE[(SCALE_CYCLE.indexOf(s) + 1) % SCALE_CYCLE.length] || 'normal');
   const scaleLabel = { normal: 'A', large: 'A+', xlarge: 'A++' }[textScale] || 'A';
@@ -305,7 +305,22 @@ function Topbar({ search, setSearch, mode, setMode, theme, setTheme, textScale, 
         <div className="spacer" />
         <div className="search">
           <Icon.search />
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search findings, check IDs, remediation…" />
+          <input value={search}
+            onChange={e=>setSearch(e.target.value)}
+            onKeyDown={e=>{
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (e.shiftKey) onRetreatMatch?.(); else onAdvanceMatch?.();
+              } else if (e.key === 'Escape') {
+                setSearch('');
+              }
+            }}
+            placeholder="Search findings, check IDs, remediation… (Enter to cycle)" />
+          {search && (
+            <span className={'search-counter' + ((searchMatches||[]).length === 0 ? ' is-empty' : '')}>
+              {(searchMatches||[]).length === 0 ? '0/0' : (matchIdx + 1) + '/' + searchMatches.length}
+            </span>
+          )}
           <kbd>/</kbd>
         </div>
         <div className="palette-switch">
@@ -1181,6 +1196,23 @@ function FrameworkQuilt({ onSelect, selected, onProfileSelect, activeProfiles })
   const expandedMeta = expandedFw ? FRAMEWORKS.find(f => f.id === expandedFw) : null;
   const expandedData = expandedFw ? byFw[expandedFw] : null;
 
+  // Count of findings within the expanded framework that match the active level-chip
+  // selection (L1/L2/L3/E3/E5only). When no chips are selected, falls back to the
+  // framework total so the CTA renders the original phrasing. Uses the same
+  // matchProfileToken semantics as fwDomainBreakdown above.
+  const selectedCount = useMemo(() => {
+    if (!expandedFw || !expandedData) return 0;
+    const tokens = activeProfiles || [];
+    if (tokens.length === 0) return expandedData.total;
+    let n = 0;
+    FINDINGS.forEach(f => {
+      if (!f.frameworks.includes(expandedFw)) return;
+      const profs = [].concat(f.fwMeta?.[expandedFw]?.profiles || []);
+      if (tokens.some(t => matchProfileToken(profs, t))) n++;
+    });
+    return n;
+  }, [expandedFw, activeProfiles, expandedData]);
+
   return (
     <section className="block" id="frameworks">
       <div className="section-head">
@@ -1348,7 +1380,9 @@ function FrameworkQuilt({ onSelect, selected, onProfileSelect, activeProfiles })
               onSelect(expandedFw);
               document.getElementById('findings-anchor')?.scrollIntoView({behavior:'smooth', block:'start'});
             }}>
-              View all {expandedData.total} findings in this framework →
+              {(activeProfiles || []).length === 0
+                ? <>View all {expandedData.total} findings in this framework →</>
+                : <>View {selectedCount} of {expandedData.total} findings matching {(activeProfiles || []).join(' + ')} →</>}
             </button>
           </div>
         </div>
@@ -1559,7 +1593,7 @@ const ALL_COLS = [
 ];
 const DEFAULT_COLS = ['status', 'finding', 'domain', 'controlId', 'checkId', 'severity'];
 
-function FindingsTable({ filters, search, focusFinding, onFocusClear, editMode, hiddenFindings, onHide, onHideBulk, onRestoreAll }) {
+function FindingsTable({ filters, search, focusFinding, onFocusClear, onMatchesChange, editMode, hiddenFindings, onHide, onHideBulk, onRestoreAll }) {
   const [open, setOpen] = useState(new Set());
   const [visibleCols, setVisibleCols] = useState(DEFAULT_COLS);
   const [colPickerOpen, setColPickerOpen] = useState(false);
@@ -1577,8 +1611,27 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, editMode, 
     };
   }, [colPickerOpen]);
 
+  // Issue #697: track the previously focused finding so smart-search cycling
+  // can collapse the prior expanded row. Plain ref — does not trigger renders.
+  const prevFocusRef = useRef(null);
+
   useEffect(() => {
     if (!focusFinding) return;
+    // Expand the new match and collapse the previously cycled-to one. Indices
+    // in the `open` Set track positions in `filtered`, so this only works if
+    // the row actually appears in the current filtered view.
+    setOpen(o => {
+      const n = new Set(o);
+      const prev = prevFocusRef.current;
+      if (prev && prev !== focusFinding) {
+        const prevIdx = filtered.findIndex(f => f.checkId === prev);
+        if (prevIdx >= 0) n.delete(prevIdx);
+      }
+      const idx = filtered.findIndex(f => f.checkId === focusFinding);
+      if (idx >= 0) n.add(idx);
+      return n;
+    });
+    prevFocusRef.current = focusFinding;
     const timer = setTimeout(() => {
       const rowId = 'finding-row-' + focusFinding.replace(/\./g, '-');
       const el = document.getElementById(rowId);
@@ -1597,6 +1650,10 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, editMode, 
 
   const cols = ALL_COLS.filter(c => visibleCols.includes(c.id));
   const gridTpl = cols.map(c => c.width).join(' ') + ' 28px';
+
+  // Issue #697: publish the current filtered set up to App so the smart-search
+  // counter and Enter-cycling can operate over the same in-view findings.
+  // Empty array when no search query — counter hides and cycling no-ops.
 
   const filtered = useMemo(() => {
     const s = search.toLowerCase();
@@ -1618,6 +1675,13 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, editMode, 
       return true;
     });
   }, [filters, search, editMode, hiddenFindings]);
+
+  // Issue #697: publish matches up to App. Only emit when there is a query;
+  // empty list when search is cleared so the counter hides and cycling no-ops.
+  useEffect(() => {
+    if (!onMatchesChange) return;
+    onMatchesChange(search ? filtered.map(f => f.checkId) : []);
+  }, [filtered, search, onMatchesChange]);
 
   const isFiltered = search.length > 0
     || filters.status.length > 0
@@ -1826,18 +1890,39 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, editMode, 
 
 function renderRemediation(text) {
   if (!text) return <span style={{color:'var(--muted)'}}>No remediation guidance provided.</span>;
-  // Highlight Run: PowerShell commands
+  // Split into ordered blocks: portal-text segments and Run: PowerShell commands.
+  // Each block renders on its own line so a consultant can scan by action type.
   const parts = text.split(/(Run:[^.]*\.)/);
+  const blocks = [];
+  let portalBuf = '';
+  parts.forEach(p => {
+    if (!p) return;
+    if (p.startsWith('Run:')) {
+      const trimmed = portalBuf.trim();
+      if (trimmed) blocks.push({ type: 'portal', text: trimmed });
+      portalBuf = '';
+      const cmd = p.replace(/^Run:\s*/, '').replace(/\.$/, '');
+      blocks.push({ type: 'ps', cmd });
+    } else {
+      portalBuf += p;
+    }
+  });
+  const tail = portalBuf.trim();
+  if (tail) blocks.push({ type: 'portal', text: tail });
+  if (blocks.length === 0) return <span style={{color:'var(--muted)'}}>No remediation guidance provided.</span>;
   return (
-    <span>
-      {parts.map((p,i) => {
-        if (p.startsWith('Run:')) {
-          const cmd = p.replace(/^Run:\s*/, '').replace(/\.$/, '');
-          return <span key={i}><strong style={{color:'var(--accent-text)'}}>PowerShell:</strong> <code>{cmd}</code>. </span>;
-        }
-        return <span key={i}>{p}</span>;
-      })}
-    </span>
+    <div className="remediation-blocks">
+      {blocks.map((b, i) => b.type === 'ps'
+        ? <div key={i} className="remediation-block remediation-ps">
+            <span className="remediation-label">PowerShell</span>
+            <pre><code>{b.cmd}</code></pre>
+          </div>
+        : <div key={i} className="remediation-block remediation-portal">
+            <span className="remediation-label">Portal</span>
+            <p>{b.text}</p>
+          </div>
+      )}
+    </div>
   );
 }
 
@@ -1977,8 +2062,8 @@ function Roadmap({ onViewFinding, editMode, hiddenFindings, roadmapOverrides, on
           </div>
           <div className="task-id">{t.checkId} · {t.domain}</div>
           <div className="task-tags">
-            <span className="task-tag">{SEV_LABEL[t.severity]}</span>
-            {t.effort && <span className="task-tag">{t.effort} effort</span>}
+            <span className={'task-tag task-tag-sev sev-' + t.severity}>{SEV_LABEL[t.severity]}</span>
+            {t.effort && <span className="task-tag task-tag-effort">{t.effort} effort</span>}
             {t.frameworks.slice(0,3).map(fw => <span key={fw} className="task-tag" style={{fontFamily:'var(--font-mono)'}}>{fw}</span>)}
             <span className="task-chev" aria-hidden="true">{isOpen ? '−' : '+'}</span>
           </div>
@@ -2019,7 +2104,7 @@ function Roadmap({ onViewFinding, editMode, hiddenFindings, roadmapOverrides, on
               </div>
             )}
             {t.references && t.references.length > 0 && (
-              <div className="task-field">
+              <div className="task-field task-field-learn-more">
                 <div className="task-field-label">Learn more</div>
                 <div className="task-field-value" style={{display:'flex',flexDirection:'column',gap:'4px'}}>
                   {t.references.map((r, i) => (
@@ -2451,6 +2536,27 @@ function App() {
   const [showTweaks, setShowTweaks] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [focusFinding, setFocusFinding] = useState(null);
+  // Issue #697: smart search — App owns the matches array (checkIds) and the
+  // current cursor so FilterBar can render a counter and FindingsTable can
+  // scroll/expand the active match. FindingsTable publishes its filtered set
+  // via onMatchesChange; Topbar drives advance/retreat from the search input.
+  const [searchMatches, setSearchMatches] = useState([]);
+  const [matchIdx, setMatchIdx] = useState(0);
+  // Reset cursor whenever the query changes; matches array re-derives anyway,
+  // but we want index=0 to land on the first match for new queries.
+  useEffect(() => { setMatchIdx(0); }, [search]);
+  const handleAdvanceMatch = useCallback(() => {
+    if (searchMatches.length === 0) return;
+    const next = (matchIdx + 1) % searchMatches.length;
+    setMatchIdx(next);
+    setFocusFinding(searchMatches[next]);
+  }, [matchIdx, searchMatches]);
+  const handleRetreatMatch = useCallback(() => {
+    if (searchMatches.length === 0) return;
+    const prev = (matchIdx - 1 + searchMatches.length) % searchMatches.length;
+    setMatchIdx(prev);
+    setFocusFinding(searchMatches[prev]);
+  }, [matchIdx, searchMatches]);
   const [editMode, setEditMode] = useState(false);
   const [hiddenFindings, setHiddenFindings] = useState(() => new Set(RO?.hiddenFindings || []));
   const [roadmapOverrides, setRoadmapOverrides] = useState(() => RO?.roadmapOverrides || {});
@@ -2582,6 +2688,8 @@ function App() {
       <main className="main">
         <Topbar
           search={search} setSearch={setSearch}
+          searchMatches={searchMatches} matchIdx={matchIdx}
+          onAdvanceMatch={handleAdvanceMatch} onRetreatMatch={handleRetreatMatch}
           mode={mode} setMode={setMode}
           theme={theme} setTheme={setTheme}
           textScale={textScale} setTextScale={setTextScale}
@@ -2603,6 +2711,7 @@ function App() {
         <div style={{marginTop:20}}/>
         <FilterBar filters={filters} setFilters={setFilters} counts={counts} total={FINDINGS.length} search={search} setSearch={setSearch}/>
         <FindingsTable filters={filters} search={search} focusFinding={focusFinding} onFocusClear={() => setFocusFinding(null)}
+          onMatchesChange={setSearchMatches}
           editMode={editMode} hiddenFindings={hiddenFindings} onHide={toggleHideFinding} onRestoreAll={restoreAllFindings}/>
         <Roadmap onViewFinding={onViewFinding} editMode={editMode} hiddenFindings={hiddenFindings} roadmapOverrides={roadmapOverrides} onRoadmapChange={setRoadmapOverrides}/>
         <Appendix/>
