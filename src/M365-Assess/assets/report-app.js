@@ -329,6 +329,14 @@ const SEV_LABEL = {
 
 // --------------------- Helpers ---------------------
 const pct = (n, d) => d ? Math.round(n / d * 100) : 0;
+
+// Pass% denominator per docs/CHECK-STATUS-MODEL.md (#802):
+//   Pass% = Pass / (Pass + Fail + Warning)
+// All other statuses (Review, Info, Skipped, Unknown, NotApplicable, NotLicensed)
+// are excluded from BOTH numerator and denominator -- not-collected results
+// can never inflate or deflate the score.
+const SCORED_STATUSES = new Set(['Pass', 'Fail', 'Warning']);
+const scoreDenom = arr => (arr || []).filter(f => SCORED_STATUSES.has(f.status)).length;
 const fmt = n => Number(n).toLocaleString();
 
 // ======================== Sidebar ========================
@@ -838,7 +846,7 @@ function Posture() {
     className: "tiny-bar"
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      width: pct(fail, FINDINGS.length) + '%',
+      width: pct(fail, scoreDenom(FINDINGS)) + '%',
       background: 'var(--danger)'
     }
   }))), /*#__PURE__*/React.createElement("div", {
@@ -853,7 +861,7 @@ function Posture() {
     className: "tiny-bar"
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      width: pct(warn, FINDINGS.length) + '%',
+      width: pct(warn, scoreDenom(FINDINGS)) + '%',
       background: 'var(--warn)'
     }
   }))), /*#__PURE__*/React.createElement("div", {
@@ -868,7 +876,7 @@ function Posture() {
     className: "tiny-bar"
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      width: pct(pass, FINDINGS.length) + '%',
+      width: pct(pass, scoreDenom(FINDINGS)) + '%',
       background: 'var(--success)'
     }
   })))), /*#__PURE__*/React.createElement(MFABreakdown, null))), /*#__PURE__*/React.createElement(ExecSummaryRow, null), critical > 0 && /*#__PURE__*/React.createElement("div", {
@@ -1407,7 +1415,7 @@ function IntuneCategoryGrid() {
       pass,
       fail,
       warn,
-      score: pct(pass, fs.length)
+      score: pct(pass, scoreDenom(fs))
     };
   }).filter(Boolean);
   const seen = new Set(buckets.flatMap(b => b.fs.map(f => f.checkId)));
@@ -1421,7 +1429,7 @@ function IntuneCategoryGrid() {
       pass,
       fail: other.filter(f => f.status === 'Fail').length,
       warn: other.filter(f => f.status === 'Warning').length,
-      score: pct(pass, other.length)
+      score: pct(pass, scoreDenom(other))
     });
   }
   return /*#__PURE__*/React.createElement("div", {
@@ -1570,7 +1578,7 @@ function SharePointSummaryPanel() {
     className: "kpi-label"
   }, "Pass rate"), /*#__PURE__*/React.createElement("div", {
     className: "kpi-value"
-  }, pct(pass, spo.length), /*#__PURE__*/React.createElement("span", {
+  }, pct(pass, scoreDenom(spo)), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 14
     }
@@ -1580,7 +1588,7 @@ function SharePointSummaryPanel() {
     className: "tiny-bar"
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      width: pct(pass, spo.length) + '%',
+      width: pct(pass, scoreDenom(spo)) + '%',
       background: 'var(--success)'
     }
   }))), /*#__PURE__*/React.createElement("div", {
@@ -1595,7 +1603,7 @@ function SharePointSummaryPanel() {
     className: "tiny-bar"
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      width: pct(fail, spo.length) + '%',
+      width: pct(fail, scoreDenom(spo)) + '%',
       background: 'var(--danger)'
     }
   }))), sharingLevel && /*#__PURE__*/React.createElement("div", {
@@ -1741,7 +1749,7 @@ function AdHybridPanel() {
     className: "kpi-label"
   }, "AD checks"), /*#__PURE__*/React.createElement("div", {
     className: "kpi-value"
-  }, pct(pass, adFindings.length), /*#__PURE__*/React.createElement("span", {
+  }, pct(pass, scoreDenom(adFindings)), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 14
     }
@@ -1751,7 +1759,7 @@ function AdHybridPanel() {
     className: "tiny-bar"
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      width: pct(pass, adFindings.length) + '%',
+      width: pct(pass, scoreDenom(adFindings)) + '%',
       background: 'var(--success)'
     }
   }))), !ad.entraOnly && ad.highRiskFindings > 0 && /*#__PURE__*/React.createElement("div", {
@@ -1808,8 +1816,10 @@ function DomainRollup({
   }, DOMAIN_ORDER.map(name => {
     const d = DOMAIN_STATS[name];
     if (!d) return null;
-    const total = d.total;
-    const score = Math.round((d.pass + d.info * 0.5) / total * 100);
+    // #802: strict denominator -- removed previous (pass + info*0.5) / total
+    // weighting in favor of the doc's Pass / (Pass + Fail + Warning).
+    const denom = d.pass + d.fail + d.warn;
+    const score = denom > 0 ? Math.round(d.pass / denom * 100) : 0;
     return /*#__PURE__*/React.createElement("div", {
       key: name,
       className: "domain-card",
@@ -2106,7 +2116,8 @@ function FrameworkQuilt({
     className: "quilt"
   }, displayFws.map(f => {
     const d = byFw[f.id];
-    const score = pct(d.pass + Math.round(d.info * 0.5), d.total);
+    // #802: strict denominator -- removed (pass + info*0.5) weighting per doc rule.
+    const score = pct(d.pass, d.pass + d.fail + d.warn);
     const isExpanded = expandedFw === f.id;
     return /*#__PURE__*/React.createElement("div", {
       key: f.id,
@@ -3616,7 +3627,7 @@ function StrykerBlock() {
       fontFamily: 'var(--font-display)',
       letterSpacing: '-.02em'
     }
-  }, pct(pass, stryker.length), /*#__PURE__*/React.createElement("span", {
+  }, pct(pass, scoreDenom(stryker)), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 18,
       color: 'var(--muted)'

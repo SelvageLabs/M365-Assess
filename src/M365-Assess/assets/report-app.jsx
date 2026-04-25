@@ -135,6 +135,14 @@ const SEV_LABEL = { critical:'Critical', high:'High', medium:'Medium', low:'Low'
 
 // --------------------- Helpers ---------------------
 const pct = (n,d) => d ? Math.round((n/d)*100) : 0;
+
+// Pass% denominator per docs/CHECK-STATUS-MODEL.md (#802):
+//   Pass% = Pass / (Pass + Fail + Warning)
+// All other statuses (Review, Info, Skipped, Unknown, NotApplicable, NotLicensed)
+// are excluded from BOTH numerator and denominator -- not-collected results
+// can never inflate or deflate the score.
+const SCORED_STATUSES = new Set(['Pass', 'Fail', 'Warning']);
+const scoreDenom = arr => (arr || []).filter(f => SCORED_STATUSES.has(f.status)).length;
 const fmt = n => Number(n).toLocaleString();
 
 // ======================== Sidebar ========================
@@ -457,19 +465,19 @@ function Posture() {
               <div className="kpi-label">Fails</div>
               <div className="kpi-value">{fail}</div>
               <div className="kpi-hint">of {FINDINGS.length} checks</div>
-              <div className="tiny-bar"><span style={{width: pct(fail, FINDINGS.length)+'%', background:'var(--danger)'}}/></div>
+              <div className="tiny-bar"><span style={{width: pct(fail, scoreDenom(FINDINGS))+'%', background:'var(--danger)'}}/></div>
             </div>
             <div className="kpi warn">
               <div className="kpi-label">Warnings</div>
               <div className="kpi-value">{warn}</div>
               <div className="kpi-hint">Review & harden</div>
-              <div className="tiny-bar"><span style={{width: pct(warn, FINDINGS.length)+'%', background:'var(--warn)'}}/></div>
+              <div className="tiny-bar"><span style={{width: pct(warn, scoreDenom(FINDINGS))+'%', background:'var(--warn)'}}/></div>
             </div>
             <div className="kpi good">
               <div className="kpi-label">Passing</div>
               <div className="kpi-value">{pass}</div>
               <div className="kpi-hint">Controls validated</div>
-              <div className="tiny-bar"><span style={{width: pct(pass, FINDINGS.length)+'%', background:'var(--success)'}}/></div>
+              <div className="tiny-bar"><span style={{width: pct(pass, scoreDenom(FINDINGS))+'%', background:'var(--success)'}}/></div>
             </div>
           </div>
           <MFABreakdown />
@@ -843,13 +851,13 @@ function IntuneCategoryGrid() {
     const pass = fs.filter(f => f.status==='Pass').length;
     const fail = fs.filter(f => f.status==='Fail').length;
     const warn = fs.filter(f => f.status==='Warning').length;
-    return { ...cat, fs, pass, fail, warn, score: pct(pass, fs.length) };
+    return { ...cat, fs, pass, fail, warn, score: pct(pass, scoreDenom(fs)) };
   }).filter(Boolean);
   const seen = new Set(buckets.flatMap(b => b.fs.map(f => f.checkId)));
   const other = intune.filter(f => !seen.has(f.checkId));
   if (other.length) {
     const pass = other.filter(f => f.status==='Pass').length;
-    buckets.push({ id:'OTHER', label:'Other', fs:other, pass, fail:other.filter(f=>f.status==='Fail').length, warn:other.filter(f=>f.status==='Warning').length, score:pct(pass, other.length) });
+    buckets.push({ id:'OTHER', label:'Other', fs:other, pass, fail:other.filter(f=>f.status==='Fail').length, warn:other.filter(f=>f.status==='Warning').length, score:pct(pass, scoreDenom(other)) });
   }
   return (
     <div className="intune-cat-section">
@@ -937,15 +945,15 @@ function SharePointSummaryPanel() {
       <div className="spo-summary-row">
         <div className="spo-stat-card">
           <div className="kpi-label">Pass rate</div>
-          <div className="kpi-value">{pct(pass, spo.length)}<span style={{fontSize:14}}>%</span></div>
+          <div className="kpi-value">{pct(pass, scoreDenom(spo))}<span style={{fontSize:14}}>%</span></div>
           <div className="kpi-hint">{pass} of {spo.length} checks</div>
-          <div className="tiny-bar"><span style={{width: pct(pass, spo.length)+'%', background:'var(--success)'}}/></div>
+          <div className="tiny-bar"><span style={{width: pct(pass, scoreDenom(spo))+'%', background:'var(--success)'}}/></div>
         </div>
         <div className={'spo-stat-card' + (fail>0?' spo-stat-bad':'')}>
           <div className="kpi-label">Failures</div>
           <div className="kpi-value">{fail}</div>
           <div className="kpi-hint">{warn} warnings</div>
-          <div className="tiny-bar"><span style={{width: pct(fail, spo.length)+'%', background:'var(--danger)'}}/></div>
+          <div className="tiny-bar"><span style={{width: pct(fail, scoreDenom(spo))+'%', background:'var(--danger)'}}/></div>
         </div>
         {sharingLevel && (
           <div className="spo-stat-card">
@@ -1027,9 +1035,9 @@ function AdHybridPanel() {
         {!ad.entraOnly && adFindings.length > 0 && (
           <div className={'spo-stat-card' + (fail>0?' spo-stat-bad':'')}>
             <div className="kpi-label">AD checks</div>
-            <div className="kpi-value">{pct(pass, adFindings.length)}<span style={{fontSize:14}}>%</span></div>
+            <div className="kpi-value">{pct(pass, scoreDenom(adFindings))}<span style={{fontSize:14}}>%</span></div>
             <div className="kpi-hint">{pass} pass · {fail} fail</div>
-            <div className="tiny-bar"><span style={{width: pct(pass, adFindings.length)+'%', background:'var(--success)'}}/></div>
+            <div className="tiny-bar"><span style={{width: pct(pass, scoreDenom(adFindings))+'%', background:'var(--success)'}}/></div>
           </div>
         )}
         {!ad.entraOnly && ad.highRiskFindings > 0 && (
@@ -1077,8 +1085,10 @@ function DomainRollup({ onJump }) {
             {DOMAIN_ORDER.map(name => {
               const d = DOMAIN_STATS[name];
               if (!d) return null;
-              const total = d.total;
-              const score = Math.round(((d.pass + d.info*0.5) / total) * 100);
+              // #802: strict denominator -- removed previous (pass + info*0.5) / total
+              // weighting in favor of the doc's Pass / (Pass + Fail + Warning).
+              const denom = d.pass + d.fail + d.warn;
+              const score = denom > 0 ? Math.round((d.pass / denom) * 100) : 0;
               return (
                 <div key={name} className="domain-card" onClick={()=>onJump(name)}>
                   <div className="dc-head">
@@ -1298,7 +1308,8 @@ function FrameworkQuilt({ onSelect, selected, onProfileSelect, activeProfiles })
       <div className="quilt">
         {displayFws.map(f => {
           const d = byFw[f.id];
-          const score = pct(d.pass + Math.round(d.info*0.5), d.total);
+          // #802: strict denominator -- removed (pass + info*0.5) weighting per doc rule.
+          const score = pct(d.pass, d.pass + d.fail + d.warn);
           const isExpanded = expandedFw === f.id;
           return (
             <div key={f.id} className={'quilt-cell' + (isExpanded?' expanded':'') + (selected===f.id?' selected':'')}
@@ -2263,7 +2274,7 @@ function StrykerBlock() {
         <div>
           <div style={{fontSize:12, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.1em', fontWeight:600}}>Coverage</div>
           <div style={{fontSize:34, fontWeight:700, fontFamily:'var(--font-display)', letterSpacing:'-.02em'}}>
-            {pct(pass, stryker.length)}<span style={{fontSize:18, color:'var(--muted)'}}>%</span>
+            {pct(pass, scoreDenom(stryker))}<span style={{fontSize:18, color:'var(--muted)'}}>%</span>
           </div>
         </div>
         <div style={{flex:1, minWidth:200, fontSize:13, color:'var(--text-soft)', lineHeight:1.55}}>

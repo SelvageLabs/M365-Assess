@@ -208,7 +208,10 @@ foreach ($fwDef in $allFrameworks) {
     $fail   = @($mapped | Where-Object { $_.Status -eq 'Fail' }).Count
     $warn   = @($mapped | Where-Object { $_.Status -eq 'Warning' }).Count
     $review = @($mapped | Where-Object { $_.Status -eq 'Review' }).Count
-    $pct    = [math]::Round(($pass / $totalMapped) * 100, 1)
+    # #802: strict denominator -- Pass / (Pass + Fail + Warning) per CHECK-STATUS-MODEL.md.
+    # Review / Skipped / Unknown / NotApplicable / NotLicensed are excluded.
+    $scoreDenom = $pass + $fail + $warn
+    $pct = if ($scoreDenom -gt 0) { [math]::Round(($pass / $scoreDenom) * 100, 1) } else { 0 }
 
     $summaryData.Add([PSCustomObject][ordered]@{
         Framework      = $colLabel
@@ -289,7 +292,9 @@ foreach ($summaryRow in $summaryData) {
         $emittedTiers = [System.Collections.Generic.HashSet[string]]::new()
         foreach ($group in $grpResult.Groups) {
             if ($group.IsGap) { continue }
-            $subRate = if ($group.Mapped -gt 0) { [math]::Round(($group.Passed / $group.Mapped) * 100, 1) } else { 0 }
+            # #802: strict denominator -- Pass / (Pass + Fail + Warning).
+            $subDenom = $group.Passed + $group.Failed + $group.Warning
+            $subRate = if ($subDenom -gt 0) { [math]::Round(($group.Passed / $subDenom) * 100, 1) } else { 0 }
             $summaryExpanded.Add([PSCustomObject][ordered]@{
                 Framework      = "    $($group.Key) — $($group.Label)"
                 'Total Mapped' = $group.Mapped
@@ -337,7 +342,9 @@ foreach ($summaryRow in $summaryData) {
         # maturity-level: CMMC is already cumulative per level, emit groups as-is
         foreach ($group in $grpResult.Groups) {
             if ($group.IsGap) { continue }
-            $subRate = if ($group.Mapped -gt 0) { [math]::Round(($group.Passed / $group.Mapped) * 100, 1) } else { 0 }
+            # #802: strict denominator -- Pass / (Pass + Fail + Warning).
+            $subDenom = $group.Passed + $group.Failed + $group.Warning
+            $subRate = if ($subDenom -gt 0) { [math]::Round(($group.Passed / $subDenom) * 100, 1) } else { 0 }
             $summaryExpanded.Add([PSCustomObject][ordered]@{
                 Framework      = "    $($group.Key) — $($group.Label)"
                 'Total Mapped' = $group.Mapped
