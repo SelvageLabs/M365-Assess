@@ -39,7 +39,14 @@ function finalizeReport({ hiddenFindings, roadmapOverrides }) {
 // Issue #715: roadmap lane counts now read from t.lane (precomputed by
 // Get-RemediationLane.ps1 in the data bridge) so sidebar nav, Roadmap, and
 // XLSX export all agree on bucketing without parallel JS rules.
-const _RM = FINDINGS.filter(f => f.status !== 'Pass' && f.status !== 'Info');
+// Statuses that should NOT become remediation tasks. See docs/CHECK-STATUS-MODEL.md
+//   Pass / Info       — no remediation needed
+//   Skipped           — user intentionally didn't run this check
+//   Unknown           — data couldn't be collected; remediation is "fix permissions", not the check itself
+//   NotApplicable     — service not in use in this tenant
+//   NotLicensed       — surfaced separately as "Requires Licensing", not as a Now/Next/Later task
+const NON_REMEDIATION_STATUSES = new Set(['Pass', 'Info', 'Skipped', 'Unknown', 'NotApplicable', 'NotLicensed']);
+const _RM = FINDINGS.filter(f => !NON_REMEDIATION_STATUSES.has(f.status));
 const ROADMAP_COUNTS = {
   now:   _RM.filter(t => t.lane === 'now').length,
   soon:  _RM.filter(t => t.lane === 'soon').length,
@@ -112,7 +119,18 @@ const Icon = {
   close: () => (<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 3l10 10M13 3L3 13"/></svg>),
 };
 
-const STATUS_COLORS = { Fail:'fail', Warning:'warn', Pass:'pass', Review:'review', Info:'info' };
+// Status -> CSS chip class name. See docs/CHECK-STATUS-MODEL.md for semantics.
+const STATUS_COLORS = {
+  Fail:          'fail',
+  Warning:       'warn',
+  Pass:          'pass',
+  Review:        'review',
+  Info:          'info',
+  Skipped:       'skipped',
+  Unknown:       'unknown',
+  NotApplicable: 'notapplicable',
+  NotLicensed:   'notlicensed',
+};
 const SEV_LABEL = { critical:'Critical', high:'High', medium:'Medium', low:'Low', none:'—', info:'Info' };
 
 // --------------------- Helpers ---------------------
@@ -1471,8 +1489,12 @@ function FilterBar({ filters, setFilters, counts, total, search, setSearch }) {
   const active = filters.status.length + filters.severity.length + filters.framework.length + filters.domain.length + (filters.profile||[]).length;
   const isActive = search.length > 0 || active > 0;
 
+  // [data-value, css-class, optional-display-label]
   const statusChips = [
-    ['Fail','fail'], ['Warning','warn'], ['Review','review'], ['Pass','pass'], ['Info','info']
+    ['Fail','fail'], ['Warning','warn'], ['Review','review'], ['Pass','pass'], ['Info','info'],
+    ['Skipped','skipped'], ['Unknown','unknown'],
+    ['NotApplicable','notapplicable','Not Applicable'],
+    ['NotLicensed','notlicensed','Not Licensed'],
   ];
   const sevChips = [ ['critical','crit','Critical'],['high','high','High'],['medium','med','Medium'],['low','low','Low'] ];
 
@@ -1493,9 +1515,9 @@ function FilterBar({ filters, setFilters, counts, total, search, setSearch }) {
       <div className="fb-row fb-row-chips">
       <div className="filter-group">
         <span className="filter-group-label">Status</span>
-        {statusChips.map(([v,cls])=>(
+        {statusChips.map(([v,cls,label])=>(
           <button key={v} className={'chip '+cls+(filters.status.includes(v)?' selected':'')} onClick={()=>update('status',v)}>
-            <span className="dot"/>{v}<span className="ct">{counts.status[v]||0}</span>
+            <span className="dot"/>{label || v}<span className="ct">{counts.status[v]||0}</span>
           </button>
         ))}
       </div>
@@ -2015,7 +2037,7 @@ function Roadmap({ onViewFinding, editMode, hiddenFindings, roadmapOverrides, on
     onRoadmapChange(next);
   };
 
-  const tasks = FINDINGS.filter(f => f.status !== 'Pass' && f.status !== 'Info' && !hiddenFindings?.has(f.checkId)).map(f => ({ ...f }));
+  const tasks = FINDINGS.filter(f => !NON_REMEDIATION_STATUSES.has(f.status) && !hiddenFindings?.has(f.checkId)).map(f => ({ ...f }));
   const score = f => {
     const sev = { critical:100, high:60, medium:30, low:10, none:0, info:5 }[f.severity];
     const eff = { small:3, medium:2, large:1 }[f.effort];
