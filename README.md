@@ -35,13 +35,14 @@
 
 Run a single command to produce CSV reports, a branded HTML assessment report, and an XLSX compliance matrix covering identity, email, security, devices, collaboration, and compliance baselines. **274 security checks** mapped across **15 compliance frameworks**.
 
-## What's New in v2.2.0
+## What's New in v2.6.0
 
 | Feature | Description |
 |---------|-------------|
-| **Roadmap CSV Export** | "Download CSV" button in the Remediation Roadmap exports your prioritized task list — reflecting any custom lane assignments — ready to paste into a project tracker |
-| **Evidence Field** | Five key checks (CA MFA admin policy, security defaults, Defender anti-phishing, EXO modern auth, SharePoint sharing) now embed structured evidence data in the report, viewable in an expandable panel per finding |
-| **AD/Hybrid Dashboard Panel** | When the ActiveDirectory section is included, the report home view shows hybrid sync status, last sync time, password hash sync state, and AD security finding counts |
+| **Smart Search in Findings** | Press Enter in the findings filter to cycle through matches (Shift+Enter reverses), with an inline `N/M` counter showing position. Active match auto-expands and scrolls into view; previously cycled rows auto-collapse to keep the table tidy |
+| **Collapsible Report Sections** | Every top-level section header (Posture trend, Framework coverage, Findings, Roadmap, Stryker, Appendix) now collapses to focus the view. Print/PDF exports automatically expand all sections so nothing is lost |
+| **XLSX Roadmap Sheet + Horizon Column** | The compliance matrix XLSX gains a dedicated **Remediation Roadmap** sheet (one row per actionable finding, grouped Now/Next/Later) plus a color-coded **Horizon** column on the matrix sheet — closes the parity gap with the HTML report's roadmap |
+| **CMMC L2 / L3 + CIS E3 / E5 Profile Filtering** | Clickable profile chips in the Framework Quilt panel filter findings by license tier; the same filter is mirrored in the FilterBar so selections in either place stay in sync |
 
 ## Installation
 

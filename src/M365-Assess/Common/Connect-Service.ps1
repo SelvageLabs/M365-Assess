@@ -156,6 +156,7 @@ try {
             elseif ($ClientId -and $ClientSecret) {
                 $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $ClientId, $ClientSecret
                 $connectParams['ClientSecretCredential'] = $credential
+                Write-Warning 'Graph: client secret authentication is supported but certificate authentication is recommended for unattended assessments. Pass -CertificateThumbprint where possible.'
             }
             else {
                 $connectParams['Scopes'] = $Scopes
@@ -259,6 +260,7 @@ try {
                 $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $ClientId, $ClientSecret
                 $connectParams['ServicePrincipal'] = $true
                 $connectParams['Credential'] = $credential
+                Write-Warning 'Power BI: client secret authentication is supported but certificate authentication is recommended for unattended assessments. Pass -CertificateThumbprint where possible.'
             }
 
             Connect-PowerBIServiceAccount @connectParams -WarningAction SilentlyContinue

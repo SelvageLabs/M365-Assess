@@ -2,6 +2,8 @@
 
 M365 Assess supports multiple authentication methods for connecting to Microsoft 365 services.
 
+> **Recommended for unattended assessments:** certificate-based authentication. Client secret authentication is supported only where the underlying Microsoft module supports it (Microsoft Graph, Power BI). Exchange Online and Purview reject client-secret auth by design — use `-CertificateThumbprint` for non-interactive runs against those services.
+
 ## Interactive (Default)
 
 A browser window opens for each service (Graph, Exchange Online, etc.). Best for one-time or ad-hoc assessments.

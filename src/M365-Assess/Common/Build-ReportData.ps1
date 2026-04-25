@@ -364,11 +364,22 @@ function Build-ReportDataJson {
 
     $tenantRows = @($tenantRows | ForEach-Object {
         $ageYears = $null
-        if ($_.CreatedDateTime) {
-            try { $ageYears = [math]::Round(((Get-Date) - [datetime]$_.CreatedDateTime).TotalDays / 365.25, 1) }
-            catch { Write-Verbose "Could not parse tenant CreatedDateTime: $_" }
+        $isoCreated = $null
+        $rawCreated = $_.CreatedDateTime  # capture before try -- in catch, $_ is the error record
+        if ($rawCreated) {
+            try {
+                $parsed = [datetime]$rawCreated
+                $ageYears = [math]::Round(((Get-Date) - $parsed).TotalDays / 365.25, 1)
+                $isoCreated = $parsed.ToString('yyyy-MM-dd')
+            }
+            catch {
+                Write-Verbose "Could not parse tenant CreatedDateTime: $rawCreated"
+                # Fallback: emit the original string so the report still shows a value
+                $isoCreated = $rawCreated
+            }
         }
-        $_ | Select-Object OrgDisplayName, TenantId, DefaultDomain, CreatedDateTime,
+        $_ | Select-Object OrgDisplayName, TenantId, DefaultDomain,
+            @{ N = 'CreatedDateTime'; E = { $isoCreated } },
             @{ N = 'tenantAgeYears'; E = { $ageYears } }
     })
 

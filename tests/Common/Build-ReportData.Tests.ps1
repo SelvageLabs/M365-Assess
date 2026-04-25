@@ -496,6 +496,27 @@ Describe 'Build-ReportData' {
             $d.tenant[0].OrgDisplayName | Should -Be 'Contoso'
         }
 
+        It 'should emit CreatedDateTime in ISO yyyy-MM-dd form for ISO input' {
+            $tenant = [PSCustomObject]@{ OrgDisplayName='Contoso'; TenantId='abc'; DefaultDomain='contoso.com'; CreatedDateTime='2020-01-15T08:30:00Z' }
+            $d = ConvertFrom-ReportDataJson (Build-ReportDataJson -SectionData @{ tenant = @($tenant) })
+            $d.tenant[0].CreatedDateTime | Should -Be '2020-01-15'
+        }
+
+        It 'should normalize US-locale CreatedDateTime to ISO yyyy-MM-dd (#692)' {
+            # Reproduces the dz9m.com bug: US-locale "M/D/YYYY H:MM:SS" was sliced to 10 chars
+            # in the report, yielding "2/3/2024 8" (mid-hour truncation). After normalization,
+            # the data bridge always emits ISO so slice(0,10) is safe.
+            $tenant = [PSCustomObject]@{ OrgDisplayName='Contoso'; TenantId='abc'; DefaultDomain='contoso.com'; CreatedDateTime='2/3/2024 8:30:00 AM' }
+            $d = ConvertFrom-ReportDataJson (Build-ReportDataJson -SectionData @{ tenant = @($tenant) })
+            $d.tenant[0].CreatedDateTime | Should -Be '2024-02-03'
+        }
+
+        It 'should fall back to the original string when CreatedDateTime cannot be parsed' {
+            $tenant = [PSCustomObject]@{ OrgDisplayName='Contoso'; TenantId='abc'; DefaultDomain='contoso.com'; CreatedDateTime='not-a-date' }
+            $d = ConvertFrom-ReportDataJson (Build-ReportDataJson -SectionData @{ tenant = @($tenant) })
+            $d.tenant[0].CreatedDateTime | Should -Be 'not-a-date'
+        }
+
         It 'should include license rows with License, Assigned, Total' {
             $lic = [PSCustomObject]@{ License='Microsoft 365 E5'; Assigned=10; Total=25 }
             $d = ConvertFrom-ReportDataJson (Build-ReportDataJson -SectionData @{ licenses = @($lic) })
