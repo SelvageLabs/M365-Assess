@@ -318,6 +318,16 @@ const STATUS_COLORS = {
   NotApplicable: 'notapplicable',
   NotLicensed: 'notlicensed'
 };
+
+// Short display label for the inline status-badge in narrow table columns.
+// The data value (status key) is unchanged; only the rendered text differs.
+// Filter chips use longer friendly labels via the statusChips array's third
+// element (see FilterBar).
+const STATUS_LABEL = {
+  NotApplicable: 'N/A',
+  NotLicensed: 'No License'
+};
+const statusLabel = s => STATUS_LABEL[s] || s;
 const SEV_LABEL = {
   critical: 'Critical',
   high: 'High',
@@ -2505,7 +2515,7 @@ function FilterBar({
     className: "filter-group"
   }, /*#__PURE__*/React.createElement("span", {
     className: "filter-group-label"
-  }, "Status"), statusChips.map(([v, cls, label]) => /*#__PURE__*/React.createElement("button", {
+  }, "Status"), statusChips.filter(([v]) => (counts.status[v] || 0) > 0 || filters.status.includes(v)).map(([v, cls, label]) => /*#__PURE__*/React.createElement("button", {
     key: v,
     className: 'chip ' + cls + (filters.status.includes(v) ? ' selected' : ''),
     onClick: () => update('status', v)
@@ -2867,7 +2877,7 @@ function FindingsTable({
           className: 'status-badge ' + STATUS_COLORS[f.status]
         }, /*#__PURE__*/React.createElement("span", {
           className: "dot"
-        }), f.status), f.intentDesign && /*#__PURE__*/React.createElement("span", {
+        }), statusLabel(f.status)), f.intentDesign && /*#__PURE__*/React.createElement("span", {
           className: "badge-intent"
         }, "By Design"));
       case 'finding':
@@ -3344,7 +3354,7 @@ function Roadmap({
       className: 'status-badge ' + STATUS_COLORS[t.status]
     }, /*#__PURE__*/React.createElement("span", {
       className: "dot"
-    }), t.status)), /*#__PURE__*/React.createElement("div", {
+    }), statusLabel(t.status))), /*#__PURE__*/React.createElement("div", {
       className: "task-id"
     }, t.checkId, " \xB7 ", t.domain), /*#__PURE__*/React.createElement("div", {
       className: "task-tags"
@@ -3689,7 +3699,7 @@ function StrykerBlock() {
     className: 'status-badge ' + STATUS_COLORS[f.status]
   }, /*#__PURE__*/React.createElement("span", {
     className: "dot"
-  }), f.status)), /*#__PURE__*/React.createElement("div", {
+  }), statusLabel(f.status))), /*#__PURE__*/React.createElement("div", {
     className: "finding-title"
   }, /*#__PURE__*/React.createElement("div", {
     className: "t"

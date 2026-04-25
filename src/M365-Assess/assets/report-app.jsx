@@ -131,6 +131,16 @@ const STATUS_COLORS = {
   NotApplicable: 'notapplicable',
   NotLicensed:   'notlicensed',
 };
+
+// Short display label for the inline status-badge in narrow table columns.
+// The data value (status key) is unchanged; only the rendered text differs.
+// Filter chips use longer friendly labels via the statusChips array's third
+// element (see FilterBar).
+const STATUS_LABEL = {
+  NotApplicable: 'N/A',
+  NotLicensed:   'No License',
+};
+const statusLabel = s => STATUS_LABEL[s] || s;
 const SEV_LABEL = { critical:'Critical', high:'High', medium:'Medium', low:'Low', none:'—', info:'Info' };
 
 // --------------------- Helpers ---------------------
@@ -1526,11 +1536,13 @@ function FilterBar({ filters, setFilters, counts, total, search, setSearch }) {
       <div className="fb-row fb-row-chips">
       <div className="filter-group">
         <span className="filter-group-label">Status</span>
-        {statusChips.map(([v,cls,label])=>(
-          <button key={v} className={'chip '+cls+(filters.status.includes(v)?' selected':'')} onClick={()=>update('status',v)}>
-            <span className="dot"/>{label || v}<span className="ct">{counts.status[v]||0}</span>
-          </button>
-        ))}
+        {statusChips
+          .filter(([v]) => (counts.status[v] || 0) > 0 || filters.status.includes(v))
+          .map(([v,cls,label])=>(
+            <button key={v} className={'chip '+cls+(filters.status.includes(v)?' selected':'')} onClick={()=>update('status',v)}>
+              <span className="dot"/>{label || v}<span className="ct">{counts.status[v]||0}</span>
+            </button>
+          ))}
       </div>
       <div className="filter-divider"/>
       <div className="filter-group">
@@ -1785,7 +1797,7 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, onMatchesC
       case 'status': return (
         <div key="status" style={{display:'flex',flexDirection:'column',gap:3}}>
           <span className={'status-badge ' + STATUS_COLORS[f.status]}>
-            <span className="dot"/>{f.status}
+            <span className="dot"/>{statusLabel(f.status)}
           </span>
           {f.intentDesign && <span className="badge-intent">By Design</span>}
         </div>
@@ -2120,7 +2132,7 @@ function Roadmap({ onViewFinding, editMode, hiddenFindings, roadmapOverrides, on
         <button className="task-head-btn" onClick={()=>setOpen(isOpen?null:key)} aria-expanded={isOpen}>
           <div className="task-head">
             <span>{t.setting}{isCustom && <span className="task-custom-badge">custom</span>}</span>
-            <span className={'status-badge ' + STATUS_COLORS[t.status]}><span className="dot"/>{t.status}</span>
+            <span className={'status-badge ' + STATUS_COLORS[t.status]}><span className="dot"/>{statusLabel(t.status)}</span>
           </div>
           <div className="task-id">{t.checkId} · {t.domain}</div>
           <div className="task-tags">
@@ -2292,7 +2304,7 @@ function StrykerBlock() {
         </div>
         {stryker.map((f,i) => (
           <div key={i} className="finding-row" style={{cursor:'default'}}>
-            <div><span className={'status-badge '+STATUS_COLORS[f.status]}><span className="dot"/>{f.status}</span></div>
+            <div><span className={'status-badge '+STATUS_COLORS[f.status]}><span className="dot"/>{statusLabel(f.status)}</span></div>
             <div className="finding-title"><div className="t">{f.setting}</div><div className="sub">{f.section}</div></div>
             <div className="check-id">{f.checkId}</div>
             <div><span className={'sev-badge '+f.severity}><span className="bar"><i/><i/><i/><i/></span><span>{SEV_LABEL[f.severity]}</span></span></div>
