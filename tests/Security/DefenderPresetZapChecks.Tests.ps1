@@ -77,7 +77,7 @@ Describe 'DefenderPresetZapChecks - With Preset Policies' {
     }
 
     It 'All Status values are valid' {
-        $validStatuses = @('Pass', 'Fail', 'Warning', 'Review', 'Info', 'N/A')
+        $validStatuses = @('Pass', 'Fail', 'Warning', 'Review', 'Info', 'Skipped', 'Unknown', 'NotApplicable', 'NotLicensed', 'N/A')
         foreach ($s in $settings) {
             $s.Status | Should -BeIn $validStatuses `
                 -Because "Setting '$($s.Setting)' has status '$($s.Status)'"

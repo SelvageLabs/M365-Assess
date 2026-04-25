@@ -113,7 +113,7 @@ try {
                 Setting          = 'ZAP for Teams'
                 CurrentValue     = 'Property not available on current license'
                 RecommendedValue = 'Defender for Office 365 with Teams ZAP'
-                Status           = 'Review'
+                Status           = 'NotLicensed'
                 CheckId          = 'DEFENDER-ZAP-001'
                 Remediation      = 'ZAP for Teams requires Defender for Office 365 Plan 2. Verify license and check Security admin center > Settings > Zero-hour auto purge.'
             }
@@ -126,7 +126,7 @@ try {
             Setting          = 'ZAP for Teams'
             CurrentValue     = 'Not licensed (Defender for Office 365 required)'
             RecommendedValue = 'Defender for Office 365 with Teams ZAP'
-            Status           = 'Review'
+            Status           = 'NotLicensed'
             CheckId          = 'DEFENDER-ZAP-001'
             Remediation      = 'ZAP for Teams requires Defender for Office 365. Upgrade license to enable this capability.'
         }

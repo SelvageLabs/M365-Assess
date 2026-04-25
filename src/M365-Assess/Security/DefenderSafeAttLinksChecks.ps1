@@ -110,7 +110,7 @@ try {
             Setting          = 'Safe Links Availability'
             CurrentValue     = 'Not licensed'
             RecommendedValue = 'Defender for Office 365 P1+'
-            Status           = 'Review'
+            Status           = 'NotLicensed'
             CheckId          = 'DEFENDER-SAFELINKS-001'
             Remediation      = 'Safe Links requires Defender for Office 365 Plan 1 or higher.'
         }
@@ -223,7 +223,7 @@ try {
             Setting          = 'Safe Attachments Availability'
             CurrentValue     = 'Not licensed'
             RecommendedValue = 'Defender for Office 365 P1+'
-            Status           = 'Review'
+            Status           = 'NotLicensed'
             CheckId          = 'DEFENDER-SAFEATTACH-001'
             Remediation      = 'Safe Attachments requires Defender for Office 365 Plan 1 or higher.'
         }
@@ -261,7 +261,7 @@ try {
             Setting          = 'Safe Attachments for SPO/OneDrive/Teams'
             CurrentValue     = 'Not licensed'
             RecommendedValue = 'Defender for Office 365 P1+'
-            Status           = 'Review'
+            Status           = 'NotLicensed'
             CheckId          = 'DEFENDER-SAFEATTACH-002'
             Remediation      = 'Safe Attachments for SPO/OneDrive/Teams requires Defender for Office 365 Plan 1 or higher.'
         }

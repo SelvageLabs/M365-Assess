@@ -89,7 +89,7 @@ Describe 'DefenderSafeAttLinksChecks - With Defender License' {
     }
 
     It 'All Status values are valid' {
-        $validStatuses = @('Pass', 'Fail', 'Warning', 'Review', 'Info', 'N/A')
+        $validStatuses = @('Pass', 'Fail', 'Warning', 'Review', 'Info', 'Skipped', 'Unknown', 'NotApplicable', 'NotLicensed', 'N/A')
         foreach ($s in $settings) {
             $s.Status | Should -BeIn $validStatuses `
                 -Because "Setting '$($s.Setting)' has status '$($s.Status)'"
@@ -192,16 +192,16 @@ Describe 'DefenderSafeAttLinksChecks - No Defender License' {
         $settings.Count | Should -BeGreaterThan 0
     }
 
-    It 'Safe Links availability shows Review status when not licensed' {
+    It 'Safe Links availability shows NotLicensed when Defender for Office is unavailable' {
         $check = $settings | Where-Object { $_.Setting -eq 'Safe Links Availability' }
         $check | Should -Not -BeNullOrEmpty
-        $check.Status | Should -Be 'Review'
+        $check.Status | Should -Be 'NotLicensed'
     }
 
-    It 'Safe Attachments availability shows Review status when not licensed' {
+    It 'Safe Attachments availability shows NotLicensed when Defender for Office is unavailable' {
         $check = $settings | Where-Object { $_.Setting -eq 'Safe Attachments Availability' }
         $check | Should -Not -BeNullOrEmpty
-        $check.Status | Should -Be 'Review'
+        $check.Status | Should -Be 'NotLicensed'
     }
 
     AfterAll {

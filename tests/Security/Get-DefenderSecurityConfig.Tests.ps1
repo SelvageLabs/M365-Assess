@@ -293,16 +293,16 @@ Describe 'Get-DefenderSecurityConfig - No Defender License' {
         $settings.Count | Should -BeGreaterThan 0
     }
 
-    It 'Safe Links shows Review status when not licensed' {
+    It 'Safe Links shows NotLicensed when Defender for Office is unavailable' {
         $check = $settings | Where-Object { $_.Setting -like 'Safe Links*' }
         $check | Should -Not -BeNullOrEmpty
-        $check.Status | Should -Be 'Review'
+        $check.Status | Should -Be 'NotLicensed'
     }
 
-    It 'Safe Attachments shows Review status when not licensed' {
+    It 'Safe Attachments shows NotLicensed when Defender for Office is unavailable' {
         $check = $settings | Where-Object { $_.Setting -like 'Safe Attachments*' -and $_.CheckId -like 'DEFENDER-SAFEATTACH-001*' }
         $check | Should -Not -BeNullOrEmpty
-        $check.Status | Should -Be 'Review'
+        $check.Status | Should -Be 'NotLicensed'
     }
 
     AfterAll {
