@@ -37,3 +37,37 @@ Describe 'Add-SecuritySetting - remediation fallback' {
         $ctx.Settings[0].Remediation | Should -Be ''
     }
 }
+
+Describe 'Add-SecuritySetting - status taxonomy (#774)' {
+    BeforeEach {
+        $ctx = Initialize-SecurityConfig
+    }
+
+    It 'Accepts <Status> as a valid status value' -ForEach @(
+        @{ Status = 'Pass' }
+        @{ Status = 'Fail' }
+        @{ Status = 'Warning' }
+        @{ Status = 'Review' }
+        @{ Status = 'Info' }
+        @{ Status = 'Skipped' }
+        @{ Status = 'Unknown' }
+        @{ Status = 'NotApplicable' }
+        @{ Status = 'NotLicensed' }
+    ) {
+        {
+            Add-SecuritySetting -Settings $ctx.Settings -CheckIdCounter $ctx.CheckIdCounter `
+                -Category 'Test' -Setting "Status $Status" -CurrentValue 'x' `
+                -RecommendedValue 'y' -Status $Status -CheckId 'TEST-001'
+        } | Should -Not -Throw
+
+        $ctx.Settings[-1].Status | Should -Be $Status
+    }
+
+    It 'Rejects an invalid status value' {
+        {
+            Add-SecuritySetting -Settings $ctx.Settings -CheckIdCounter $ctx.CheckIdCounter `
+                -Category 'Test' -Setting 'Invalid' -CurrentValue 'x' `
+                -RecommendedValue 'y' -Status 'BananaPancakes' -CheckId 'TEST-001'
+        } | Should -Throw -ExpectedMessage '*BananaPancakes*'
+    }
+}

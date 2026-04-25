@@ -90,7 +90,7 @@ function Add-SecuritySetting {
         [string]$RecommendedValue,
 
         [Parameter(Mandatory)]
-        [ValidateSet('Pass', 'Fail', 'Warning', 'Review', 'Info', 'Skipped', 'Unknown')]
+        [ValidateSet('Pass', 'Fail', 'Warning', 'Review', 'Info', 'Skipped', 'Unknown', 'NotApplicable', 'NotLicensed')]
         [string]$Status,
 
         [Parameter()]
