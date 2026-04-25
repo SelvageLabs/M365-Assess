@@ -646,6 +646,11 @@ section.block { margin-bottom: 52px; scroll-margin-top: 20px; }
 .chip.pass .dot { background: var(--success); }
 .chip.review .dot { background: var(--accent); }
 .chip.info .dot { background: var(--muted); }
+/* See docs/CHECK-STATUS-MODEL.md for semantics. */
+.chip.skipped .dot       { background: var(--muted); opacity: 0.6; }
+.chip.unknown .dot       { background: var(--warn); box-shadow: 0 0 0 2px var(--warn-soft); }
+.chip.notapplicable .dot { background: var(--text-soft); opacity: 0.5; }
+.chip.notlicensed .dot   { background: var(--accent); opacity: 0.6; }
 .chip.crit .dot { background: var(--danger); box-shadow: 0 0 0 3px var(--danger-ring); }
 .chip.high .dot { background: #ff7a45; }
 .chip.med .dot { background: var(--warn); }
@@ -798,6 +803,18 @@ mark.search-hl {
 .status-badge.review .dot { background: var(--accent); }
 .status-badge.info { background: var(--chip); color: var(--text-soft); }
 .status-badge.info .dot { background: var(--muted); }
+/* Non-collected / non-applicable states. See docs/CHECK-STATUS-MODEL.md.
+   Skipped, NotApplicable, NotLicensed share a muted treatment with
+   distinct dots; Unknown uses warn-style coloring because it represents
+   a collection failure (permissions / API error) the user should fix. */
+.status-badge.skipped { background: var(--chip); color: var(--muted); }
+.status-badge.skipped .dot { background: var(--muted); }
+.status-badge.unknown { background: var(--warn-soft); color: var(--warn-text); }
+.status-badge.unknown .dot { background: var(--warn); }
+.status-badge.notapplicable { background: var(--chip); color: var(--text-soft); }
+.status-badge.notapplicable .dot { background: var(--text-soft); opacity: 0.6; }
+.status-badge.notlicensed { background: var(--chip); color: var(--accent-text); }
+.status-badge.notlicensed .dot { background: var(--accent); }
 
 .sev-badge {
   display: inline-flex; gap: 4px; align-items: center;
