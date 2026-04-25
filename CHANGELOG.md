@@ -4,34 +4,39 @@ All notable changes to M365 Assess are documented here. This project uses [Conve
 
 ## [Unreleased]
 
-### Changed
-- Remediation roadmap default lane distribution rebalanced: Warnings and Reviews now land in Later by default unless their severity is critical; only Fail-status findings earn a spot in Now / Next. Previous rule put every medium-severity Warning/Review into Next regardless of status, producing ~100+ items in Next on realistic tenants. Observed effect on reference tenant (dz9m, 147 tasks): Now 18 / Next 52 (was 126) / Later 77 (was 3) (#709)
+## [2.6.0] - 2026-04-25
+
+Combined release covering the v2.5.0 (closed 2026-04-24) and v2.6.0 -- Finding Interaction (closed 2026-04-25) milestones.
 
 ### Added
-- Framework cards in the Framework Quilt now carry a rotating chevron affordance in their top-right corner (down when collapsed, up when the detail panel is open) plus keyboard accessibility (`role="button"`, `aria-expanded`, Enter/Space to toggle, `:focus-visible` outline) and a more visible hover state. Signals the card as interactive so first-time readers see it as an expandable element (#743)
-- FilterBar Level row now appears for CIS M365 as well as CMMC, with L1 / L2 / E3 / E5 only chips (CMMC unchanged; still L1/L2/L3). Chips write to the same `filters.profile` field used by the Framework Quilt panel chips, so selecting a level in either place lights up the other — single source of truth (#740)
+- Smart search in the findings table: pressing Enter cycles through matches (Shift+Enter reverses), an inline `N/M` counter shows position, Esc clears. Active match auto-expands and scrolls into view; previously cycled-to row auto-collapses to keep the table tidy. Reuses the existing `focusFinding` + `highlight-focus` infrastructure (#697)
+- Every top-level section header in the report is now collapsible. New `useCollapsibleSection` hook applied to Posture trend, Framework coverage, Findings table, Roadmap, Stryker, and Appendix. `beforeprint` listener auto-expands so PDF/print exports never lose collapsed content. Plain `useState` per the existing no-localStorage policy (#737)
+- New `Get-RemediationLane` PowerShell helper in `Common/` is the single source of truth for Now/Next/Later lane bucketing. Build-ReportData precomputes `lane` onto each finding; HTML report and XLSX export both read it instead of duplicating bucketing rules (#715)
+- XLSX export gains a **Horizon** column on the Compliance Matrix sheet (color-coded Now=red, Next=amber, Later=blue; empty for Pass) and a new dedicated **Remediation Roadmap** sheet -- one row per actionable finding, grouped by Now/Next/Later, sorted within each group by severity then CheckId. Closes the parity gap with the HTML report's roadmap (#715)
+- New `Effort` column on the Compliance Matrix sheet surfacing the registry-derived effort estimate (#715)
+- Framework coverage panel CTA shows the filtered count when one or more level chips are active: `View N of TOTAL findings matching L1 + E3 ->`. Reuses the existing `matchProfileToken` helper (#748)
+- Inline `L2 contains L3` indicator chip on the CMMC chip row with hover tooltip clarifying that every L3 control is also assessed at L2 by design (verified by probe: zero L3-only-by-controlId checks exist in v2.22.1+ registry) (#744)
+- Framework cards in the Framework Quilt carry a rotating chevron affordance in their top-right corner plus keyboard accessibility (`role="button"`, `aria-expanded`, Enter/Space to toggle, `:focus-visible` outline) and a more visible hover state (#743)
+- FilterBar Level row appears for CIS M365 as well as CMMC, with L1 / L2 / E3 / E5 only chips. Chips write to the same `filters.profile` field used by the Framework Quilt panel chips, so selecting a level in either place lights up the other (#740)
+- CMMC complete posture view in the Framework Quilt -- the CMMC detail panel surfaces EZ-CMMC handoff gaps (out-of-scope / partial / coverable / inherent) alongside the existing L1/L2/L3 coverage stats. `REPORT_DATA.cmmcHandoff` and `REPORT_DATA.cmmcCoverage` are part of the report data contract. `sync-checkid.yml` pulls the handoff artifact on every scheduled sync (#594)
+- Clickable CMMC and CIS profile chips in the Framework Quilt expanded panel toggle each level's membership in `filters.profile` (multi-select). The findings table filters to checks whose `fwMeta[fw].profiles` matches at least one active token; the panel's Coverage by Domain bars re-compute against the same filter so the chart and findings stay consistent (#730, #731, #736)
 
 ### Changed
-- FilterBar FRAMEWORK and DOMAIN dropdowns now cluster at the left of their row instead of being pushed to opposite ends by a flex-grow rule. Cleaner association of two related pickers (#741)
-- 12px vertical spacing added between the Executive Summary tile row and the critical-findings banner below it; the two elements were previously flush against each other (#742)
+- Posture trend section is now opt-in via `-IncludeTrend` on `Invoke-M365Assessment` (threaded through Export-AssessmentReport -> Build-ReportData -> `window.REPORT_DATA.trendOptIn`). Baselines still auto-save for drift comparison; only the trend section visibility is gated. Default behaviour: no trend section unless explicitly requested (#750)
+- Remediation block in the findings detail panel splits PowerShell commands from portal navigation steps. New `.remediation-ps` (code-style with violet "PowerShell" label) and `.remediation-portal` (prose with accent "Portal" label) blocks; segments preserve original order but never share a line (#687)
+- Roadmap card visual polish: lane-level color tint via `:has()` selector (Now=danger, Next=warn, Later=accent), stronger solid divider between guidance and metadata blocks, severity tag adopts chip palette colors, Learn more block gets accent border (#686)
+- Remediation roadmap default lane distribution rebalanced: Warnings and Reviews land in Later by default unless their severity is critical; only Fail-status findings earn a spot in Now / Next. Observed effect on reference tenant (147 tasks): Now 18 / Next 52 (was 126) / Later 77 (was 3) (#709)
+- Framework coverage panel is expanded by default on report load; first visible framework opens automatically so L1/L2 chips and Coverage by Domain bars are immediately visible (#735)
+- FilterBar FRAMEWORK and DOMAIN dropdowns cluster at the left of their row instead of being pushed apart by a flex-grow rule (#741)
+- 12px vertical spacing added between the Executive Summary tile row and the critical-findings banner below it (#742)
+- `sync-checkid.yml` declares its CheckID release channel explicitly. Subscribes to the **stable** channel only; defense-in-depth verify-channel step fails the workflow if a preview-channel payload is received. Aligns with the cross-repo channel model from CheckID v0.1
+- Removed the local `Get-CmmcLevelsFromControlId` override in `Build-ReportData.ps1` now that CheckID v2.22.1 publishes identity-semantic `frameworks.cmmc.profiles` upstream. Downstream code consumes registry values directly with zero behavioural change
+- Dropped "EZ-CMMC" project name from the Handoff gaps panel heading and footnote text in the report. Heading reads `Handoff gaps`; footnote ends `tracked separately.` Counts and chip behaviour unchanged (#732)
+- CheckID registry synced to v3.0.0 (additive `frameworks.X.source` field on per-framework mappings; no breaking changes for M365-Assess; all 1106 checks preserved including local extensions)
 
 ### Fixed
-- Posture trend (#642) was silently filtering baselines by tenant GUID while `Invoke-M365Assessment` saves baselines with the tenant domain as the folder-name suffix. Result: real `auto-*_<domain>` baselines were invisible to the trend and only hand-labelled GUID-suffixed fixtures appeared. `Build-SectionHtml.ps1` now prefers the tenant's `DefaultDomain` from the tenant CSV (authoritative full domain) over the log-derived short-form prefix or the GUID. Reference tenant now shows 3 real trend snapshots instead of 2 synthetic fixture snapshots (#733)
-
-### Changed
-- Framework coverage panel is expanded by default on report load (previously required a click). First visible framework (CIS M365 v6) opens automatically so L1/L2 chips and Coverage by Domain bars are immediately visible; the × close button continues to work (#735)
-
-### Added
-- CMMC complete posture view in the Framework Quilt — the CMMC detail panel now surfaces EZ-CMMC handoff gaps (out-of-scope / partial / coverable / inherent) alongside the existing L1/L2/L3 coverage stats, so customers see what M365-Assess automates *and* what requires non-M365 controls (physical access, HR, inherent defaults) tracked separately by EZ-CMMC. `REPORT_DATA.cmmcHandoff` (derived from CheckID's `data/cmmc-ez-handoff.json`) and `REPORT_DATA.cmmcCoverage` (pass/fail/warn per CMMC level, computed from findings) are now part of the report data contract. `sync-checkid.yml` pulls the handoff artifact on every scheduled sync (#594)
-- Clickable CMMC and CIS profile chips in the Framework Quilt expanded panel: clicking L1, L2, L3 (CMMC) or L1, L2, E3, E5 only (CIS) toggles each level's membership in `filters.profile` (multi-select; any combination allowed). The findings table filters to checks whose `fwMeta[fw].profiles` matches at least one active token, and the panel's Coverage by Domain bars re-compute against the same filter so the chart and findings stay consistent. No auto-scroll; the user stays in the framework panel. Selected chips show a subtle accent ring (#730, #731, #736)
-
-### Fixed
-- CMMC Level 1 and Level 2 coverage counts were identical on every tenant because CheckID's `registry.json` uniformly tags every CMMC-mapped check with `profiles=[L1,L2]` regardless of the underlying control's actual maturity level (L1 = 17 FAR 52.204-21 practices, L2 = 110 NIST 800-171 practices — they should not be equal). `Build-ReportData` now derives profiles from the `controlId` string, parsing `.L<n>-` tokens out of values like `IA.L2-3.5.5`, so the quilt panel's L1/L2/L3 chips and the new `cmmcCoverage` block show the correct distribution. Non-CMMC frameworks are untouched. Observed effect on the reference tenant: L1 drops from 233 to 118; L2 and L3 unchanged.
-
-### Changed
-- `sync-checkid.yml` now declares its CheckID release channel explicitly. Subscribes to the **stable** channel (tagged releases via `checkid-released` dispatch only). Adds a defense-in-depth verify-channel step that fails the workflow if a preview-channel payload is received. Aligns with the cross-repo channel model introduced in CheckID v0.1 (PR Galvnyz/CheckID#293).
-- Removed the local `Get-CmmcLevelsFromControlId` override in `Common/Build-ReportData.ps1` now that CheckID v2.22.1 publishes identity-semantic `frameworks.cmmc.profiles` upstream (CheckID#248 / PR #249). Downstream code (`fwMeta`, `cmmcCoverage`, the React `FrameworkQuilt` panel) consumes the registry values directly. Zero behavioural change for the user-facing report — CheckID's derivation and the removed local derivation produce identical output on every spot-check.
-- Dropped "EZ-CMMC" project name from the Handoff gaps panel heading and footnote text in the report. Heading now reads `Handoff gaps`; footnote ends `tracked separately.` Counts and chip behaviour unchanged. Note: `cmmc-ez-handoff.json`'s `description` field still mentions "EZ-CMMC" but is not surfaced in any UI element (#732)
+- Posture trend was silently filtering baselines by tenant GUID while `Invoke-M365Assessment` saves baselines with the tenant domain as the folder-name suffix. `Build-SectionHtml.ps1` now prefers the tenant's `DefaultDomain` from the tenant CSV over the log-derived short-form prefix or the GUID (#733)
+- CMMC Level 1 and Level 2 coverage counts were identical on every tenant because CheckID's `registry.json` uniformly tagged every CMMC-mapped check with `profiles=[L1,L2]`. Build-ReportData now derives profiles from the `controlId` string. Observed effect on reference tenant: L1 drops from 233 to 118; L2 and L3 unchanged (now also resolved upstream in CheckID v2.22.1)
 
 ## [2.4.0] - 2026-04-22
 
