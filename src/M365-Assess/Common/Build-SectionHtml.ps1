@@ -63,9 +63,12 @@ $sectionData = @{
                             elseif ($reportDomainPrefix)                                                        { $reportDomainPrefix }
                             elseif ($tenantData -and @($tenantData).Count -gt 0 -and $tenantData[0].TenantId)   { $tenantData[0].TenantId }
                             else                                                                                  { '' }
+        # C1 #780: also pass the tenant GUID so v2.9.0+ baselines (which use
+        # _<GUID> folder suffix) are picked up alongside legacy _<domain> ones.
+        $tenantGuidForTrend = if ($tenantData -and @($tenantData).Count -gt 0 -and $tenantData[0].TenantId) { $tenantData[0].TenantId } else { '' }
         if (-not $tenantIdForTrend -or -not (Test-Path -Path $baselinesRoot)) { return @() }
         . (Join-Path -Path $PSScriptRoot -ChildPath 'Get-BaselineTrend.ps1')
-        @(Get-BaselineTrend -BaselinesRoot $baselinesRoot -TenantId $tenantIdForTrend)
+        @(Get-BaselineTrend -BaselinesRoot $baselinesRoot -TenantId $tenantIdForTrend -TenantGuid $tenantGuidForTrend)
     }
     'sharepoint-config'= & $loadCsv '20b-SharePoint-Security-Config.csv'
     'ad-hybrid'        = & $loadCsv '23-Hybrid-Sync.csv'

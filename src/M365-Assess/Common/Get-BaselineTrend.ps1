@@ -3,14 +3,24 @@ function Get-BaselineTrend {
     .SYNOPSIS
         Enumerates saved baselines for a tenant and aggregates per-status counts per snapshot.
     .DESCRIPTION
-        Scans the Baselines directory for folders matching *_<SafeTenant>/, reads each
-        manifest.json for timestamp + version metadata, and counts the Status field
-        across every security-config JSON file in the baseline. Returns a chronologically
-        sorted array suitable for trend visualisation in the report.
+        Scans the Baselines directory for folders matching the tenant's identity
+        suffixes, reads each manifest.json for timestamp + version metadata, and
+        counts the Status field across every security-config JSON file in the
+        baseline. Returns a chronologically sorted array suitable for trend
+        visualisation in the report.
+
+        C1 #780: searches BOTH the legacy '_<TenantId>' folder shape AND the new
+        '_<TenantGuid>' shape so a tenant carrying baselines from both pre- and
+        post-v2.9.0 runs sees its full history on the trend chart. Folder names
+        are unique (timestamp-based), so the union doesn't double-count.
     .PARAMETER BaselinesRoot
         Path to the Baselines directory (typically <OutputFolder>/Baselines).
     .PARAMETER TenantId
-        Tenant identifier used to filter baseline folders by suffix.
+        Tenant identifier (typically DefaultDomain). Matches legacy baselines
+        saved as '<Label>_<TenantId>'.
+    .PARAMETER TenantGuid
+        Optional canonical tenant GUID. When supplied, also matches v2.9.0+
+        baselines saved as '<Label>_<TenantGuid>'.
     .PARAMETER MaxSnapshots
         Maximum number of most-recent snapshots to return. Defaults to 10 — enough
         context for a visible trend without cluttering the chart. Older snapshots
@@ -19,7 +29,9 @@ function Get-BaselineTrend {
         [PSCustomObject[]] One entry per baseline, sorted chronologically:
           Label, SavedAt, Version, Pass, Warn, Fail, Review, Info, Skipped, Total
     .EXAMPLE
-        $trend = Get-BaselineTrend -BaselinesRoot '.\M365-Assessment\Baselines' -TenantId 'contoso.com'
+        $trend = Get-BaselineTrend -BaselinesRoot '.\M365-Assessment\Baselines' `
+                                    -TenantId 'contoso.com' `
+                                    -TenantGuid '11111111-2222-3333-4444-555555555555'
     #>
     [CmdletBinding()]
     [OutputType([PSCustomObject[]])]
@@ -33,6 +45,9 @@ function Get-BaselineTrend {
         [string]$TenantId,
 
         [Parameter()]
+        [string]$TenantGuid = '',
+
+        [Parameter()]
         [ValidateRange(1, 100)]
         [int]$MaxSnapshots = 10
     )
@@ -42,8 +57,21 @@ function Get-BaselineTrend {
         return @()
     }
 
+    # C1 #780: union of legacy domain suffix + new GUID suffix. Filter against
+    # both so post-v2.9.0 baselines (GUID-keyed) and pre-v2.9.0 baselines
+    # (TenantId-keyed) both feed the trend chart.
     $safeTenant = $TenantId -replace '[^\w\.\-]', '_'
-    $baselineDirs = Get-ChildItem -Path $BaselinesRoot -Directory -Filter "*_${safeTenant}" -ErrorAction SilentlyContinue
+    $matchedDirs = New-Object -TypeName System.Collections.Generic.Dictionary[string, System.IO.DirectoryInfo]
+    foreach ($d in (Get-ChildItem -Path $BaselinesRoot -Directory -Filter "*_${safeTenant}" -ErrorAction SilentlyContinue)) {
+        if (-not $matchedDirs.ContainsKey($d.FullName)) { $matchedDirs[$d.FullName] = $d }
+    }
+    if ($TenantGuid) {
+        $safeGuid = $TenantGuid -replace '[^\w\-]', ''
+        foreach ($d in (Get-ChildItem -Path $BaselinesRoot -Directory -Filter "*_${safeGuid}" -ErrorAction SilentlyContinue)) {
+            if (-not $matchedDirs.ContainsKey($d.FullName)) { $matchedDirs[$d.FullName] = $d }
+        }
+    }
+    $baselineDirs = @($matchedDirs.Values)
 
     $snapshots = [System.Collections.Generic.List[PSCustomObject]]::new()
 
