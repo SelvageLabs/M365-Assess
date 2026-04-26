@@ -1216,6 +1216,10 @@ $driftReport         = @()
 $driftBaselineLabel  = ''
 $driftBaselineTimestamp = ''
 
+# C1 #780: resolve canonical tenant identity once for all baseline operations.
+# GUID becomes the folder key; the rest enriches the manifest.
+$tenantIdentity = Resolve-TenantIdentity -TenantIdInput $TenantId -Environment $M365Environment
+
 if ($SaveBaseline) {
     Write-AssessmentLog -Level INFO -Message "Saving baseline '$SaveBaseline'..."
     $savedBaselineDir = Export-AssessmentBaseline `
@@ -1223,6 +1227,10 @@ if ($SaveBaseline) {
         -OutputFolder $OutputFolder `
         -Label $SaveBaseline `
         -TenantId $TenantId `
+        -TenantGuid $tenantIdentity.Guid `
+        -DisplayName $tenantIdentity.DisplayName `
+        -PrimaryDomain $tenantIdentity.PrimaryDomain `
+        -Environment $tenantIdentity.Environment `
         -Sections @($sections | ForEach-Object { $_ }) `
         -Version $script:AssessmentVersion `
         -RegistryVersion (Get-RegistryVersion -ProjectRoot $projectRoot)
@@ -1230,9 +1238,11 @@ if ($SaveBaseline) {
 }
 
 if ($CompareBaseline) {
-    $safeLabel  = $CompareBaseline -replace '[^\w\-]', '_'
-    $safeTenant = $TenantId -replace '[^\w\.\-]', '_'
-    $baselineFolder = Join-Path -Path $OutputFolder -ChildPath "Baselines\${safeLabel}_${safeTenant}"
+    $baselineFolder = Resolve-BaselineFolder `
+        -OutputFolder $OutputFolder `
+        -Label $CompareBaseline `
+        -TenantGuid $tenantIdentity.Guid `
+        -TenantId $TenantId
     if (Test-Path -Path $baselineFolder -PathType Container) {
         Write-AssessmentLog -Level INFO -Message "Comparing against baseline '$CompareBaseline'..."
         $driftReport = Compare-AssessmentBaseline `
@@ -1259,22 +1269,31 @@ if ($CompareBaseline) {
 # AutoBaseline — save dated snapshot and compare to previous auto-*
 # ------------------------------------------------------------------
 if ($AutoBaseline) {
-    $autoLabel   = "auto_$(Get-Date -Format 'yyyy-MM-ddTHH-mm-ss')"
-    $safeTenant  = $TenantId -replace '[^\w\.\-]', '_'
-    $sections    = @($Section | ForEach-Object { $_ })
+    $autoLabel = "auto_$(Get-Date -Format 'yyyy-MM-ddTHH-mm-ss')"
+    # C1 #780: prefer GUID-keyed folder names; fall back to legacy
+    # TenantId-based regex for finding pre-v2.9.0 auto baselines.
+    $folderSuffix = if ($tenantIdentity.Guid) { $tenantIdentity.Guid -replace '[^\w\-]', '' } else { $TenantId -replace '[^\w\.\-]', '_' }
+    $legacySuffix = $TenantId -replace '[^\w\.\-]', '_'
+    $sections = @($Section | ForEach-Object { $_ })
     Export-AssessmentBaseline `
         -AssessmentFolder $assessmentFolder `
         -OutputFolder $OutputFolder `
         -TenantId $TenantId `
+        -TenantGuid $tenantIdentity.Guid `
+        -DisplayName $tenantIdentity.DisplayName `
+        -PrimaryDomain $tenantIdentity.PrimaryDomain `
+        -Environment $tenantIdentity.Environment `
         -Label $autoLabel `
         -Sections $sections `
         -Version $script:AssessmentVersion `
         -RegistryVersion (Get-RegistryVersion -ProjectRoot $projectRoot)
     Write-AssessmentLog -Level INFO -Message "AutoBaseline saved: $autoLabel"
 
-    # Compare to most recent previous auto-snapshot for this tenant
+    # Compare to most recent previous auto-snapshot for this tenant. Search
+    # the canonical GUID-keyed names first, then legacy TenantId names.
+    $autoPattern = "^auto_.*_(?:${folderSuffix}|${legacySuffix})$"
     $prevAuto = Get-ChildItem -Path (Join-Path $OutputFolder 'Baselines') -Directory -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -match "^auto_.*_${safeTenant}$" } |
+        Where-Object { $_.Name -match $autoPattern } |
         Sort-Object LastWriteTime -Descending |
         Select-Object -Skip 1 -First 1
     if ($prevAuto) {
@@ -1283,7 +1302,8 @@ if ($AutoBaseline) {
             -AssessmentFolder $assessmentFolder `
             -BaselineFolder $prevAuto.FullName `
             -RegistryVersion (Get-RegistryVersion -ProjectRoot $projectRoot)
-        $driftBaselineLabel = $prevAuto.Name -replace "_${safeTenant}$", ''
+        # Strip either suffix off the label for display
+        $driftBaselineLabel = $prevAuto.Name -replace "_(?:${folderSuffix}|${legacySuffix})$", ''
         try {
             $meta = Get-Content -Path (Join-Path $prevAuto.FullName 'manifest.json') -Raw | ConvertFrom-Json
             $driftBaselineTimestamp = $meta.SavedAt

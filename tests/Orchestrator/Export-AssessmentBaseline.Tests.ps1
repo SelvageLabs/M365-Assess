@@ -91,4 +91,55 @@ Describe 'Export-AssessmentBaseline' {
             $dir | Should -Match 'Baseline_2026_Q1_contoso\.com'
         }
     }
+
+    Context 'GUID-keyed folders + enriched manifest (C1 #780)' {
+        It 'should name the folder with TenantGuid when supplied' {
+            $dir = Export-AssessmentBaseline `
+                -AssessmentFolder $script:tempAssessment `
+                -OutputFolder $script:tempOutput `
+                -Label 'Q2-2026' `
+                -TenantId 'whatever.user.typed.com' `
+                -TenantGuid '11111111-2222-3333-4444-555555555555'
+            $dir | Should -Match 'Q2-2026_11111111-2222-3333-4444-555555555555$'
+        }
+
+        It 'should fall back to TenantId in the folder name when TenantGuid is empty (legacy callers)' {
+            $dir = Export-AssessmentBaseline `
+                -AssessmentFolder $script:tempAssessment `
+                -OutputFolder $script:tempOutput `
+                -Label 'Q3-2026' `
+                -TenantId 'legacy.contoso.com'
+            $dir | Should -Match 'Q3-2026_legacy\.contoso\.com$'
+        }
+
+        It 'should write the new identity fields into the manifest' {
+            $dir = Export-AssessmentBaseline `
+                -AssessmentFolder $script:tempAssessment `
+                -OutputFolder $script:tempOutput `
+                -Label 'Q4-2026' `
+                -TenantId 'contoso.com' `
+                -TenantGuid '99999999-0000-1111-2222-333333333333' `
+                -DisplayName 'Contoso Ltd' `
+                -PrimaryDomain 'contoso.com' `
+                -Environment 'commercial'
+            $meta = Get-Content (Join-Path $dir 'manifest.json') -Raw | ConvertFrom-Json
+            $meta.TenantGuid    | Should -Be '99999999-0000-1111-2222-333333333333'
+            $meta.DisplayName   | Should -Be 'Contoso Ltd'
+            $meta.PrimaryDomain | Should -Be 'contoso.com'
+            $meta.Environment   | Should -Be 'commercial'
+            # Legacy field still preserved for back-compat readers
+            $meta.TenantId      | Should -Be 'contoso.com'
+        }
+
+        It 'should sanitise braces / curly characters out of the GUID folder suffix' {
+            $dir = Export-AssessmentBaseline `
+                -AssessmentFolder $script:tempAssessment `
+                -OutputFolder $script:tempOutput `
+                -Label 'Q5' `
+                -TenantId 'contoso.com' `
+                -TenantGuid '{aaaa1111-2222-3333-4444-555555555555}'
+            $dir | Should -Match '_aaaa1111-2222-3333-4444-555555555555$'
+            $dir | Should -Not -Match '[{}]'
+        }
+    }
 }

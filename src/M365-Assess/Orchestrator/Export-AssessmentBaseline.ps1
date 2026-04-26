@@ -17,7 +17,22 @@ function Export-AssessmentBaseline {
         Human-readable baseline label (e.g. 'Q1-2026'). Used as the folder name
         prefix and referenced with -CompareBaseline on future runs.
     .PARAMETER TenantId
-        Tenant identifier for the baseline folder name suffix.
+        Tenant identifier passed in (GUID, vanity domain, or .onmicrosoft.com).
+        Recorded in the manifest as the user-facing label. Falls back to the
+        folder-key suffix when TenantGuid is not supplied (legacy callers).
+    .PARAMETER TenantGuid
+        Canonical tenant GUID (from Get-MgContext.TenantId via
+        Resolve-TenantIdentity). When supplied, the baseline folder is named
+        '<Label>_<TenantGuid>' so the same tenant referenced multiple ways
+        produces a single folder (C1 #780). Friendly TenantId is preserved
+        in the manifest for display.
+    .PARAMETER DisplayName
+        Tenant display name (Get-MgOrganization.DisplayName). Manifest only.
+    .PARAMETER PrimaryDomain
+        Primary verified domain (Get-MgOrganization.VerifiedDomains.IsDefault).
+        Manifest only.
+    .PARAMETER Environment
+        Cloud environment string (commercial / gcc / gcchigh / dod). Manifest only.
     .PARAMETER Sections
         Array of section names that were assessed (recorded in metadata).
     .PARAMETER Version
@@ -27,7 +42,8 @@ function Export-AssessmentBaseline {
         recorded in metadata to enable version-aware drift comparison.
     .EXAMPLE
         Export-AssessmentBaseline -AssessmentFolder $assessmentFolder `
-            -OutputFolder '.\M365-Assessment' -Label 'Q1-2026' -TenantId 'contoso.com'
+            -OutputFolder '.\M365-Assessment' -Label 'Q1-2026' -TenantId 'contoso.com' `
+            -TenantGuid '00000000-0000-0000-0000-000000000000'
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -49,6 +65,18 @@ function Export-AssessmentBaseline {
         [string]$TenantId,
 
         [Parameter()]
+        [string]$TenantGuid = '',
+
+        [Parameter()]
+        [string]$DisplayName = '',
+
+        [Parameter()]
+        [string]$PrimaryDomain = '',
+
+        [Parameter()]
+        [string]$Environment = '',
+
+        [Parameter()]
         [string[]]$Sections = @(),
 
         [Parameter()]
@@ -59,9 +87,17 @@ function Export-AssessmentBaseline {
     )
 
     # Sanitise label for use as a folder name
-    $safeLabel  = $Label  -replace '[^\w\-]', '_'
-    $safeTenant = $TenantId -replace '[^\w\.\-]', '_'
-    $baselineDir = Join-Path -Path $OutputFolder -ChildPath "Baselines\${safeLabel}_${safeTenant}"
+    $safeLabel = $Label -replace '[^\w\-]', '_'
+
+    # C1 #780: prefer the canonical GUID as the folder-key suffix. When the
+    # caller hasn't resolved one (legacy callers, AD-only runs without Graph),
+    # fall back to the user-supplied TenantId so behavior matches pre-v2.9.0.
+    $folderSuffix = if ($TenantGuid) {
+        $TenantGuid -replace '[^\w\-]', ''
+    } else {
+        $TenantId -replace '[^\w\.\-]', '_'
+    }
+    $baselineDir = Join-Path -Path $OutputFolder -ChildPath "Baselines\${safeLabel}_${folderSuffix}"
 
     if (-not (Test-Path -Path $baselineDir -PathType Container)) {
         $null = New-Item -Path $baselineDir -ItemType Directory -Force
@@ -93,11 +129,18 @@ function Export-AssessmentBaseline {
         }
     }
 
-    # Write manifest after CSV scan (includes accurate CheckCount)
+    # Write manifest after CSV scan (includes accurate CheckCount).
+    # C1 #780: enriched identity fields (TenantGuid + DisplayName + PrimaryDomain
+    # + Environment) live alongside the legacy TenantId. Older readers ignore
+    # the new fields; new readers use TenantGuid as the canonical key.
     $manifest = [PSCustomObject]@{
         Label             = $Label
         SavedAt           = (Get-Date -Format 'o')
         TenantId          = $TenantId
+        TenantGuid        = $TenantGuid
+        DisplayName       = $DisplayName
+        PrimaryDomain     = $PrimaryDomain
+        Environment       = $Environment
         AssessmentVersion = $Version
         RegistryVersion   = $RegistryVersion
         CheckCount        = $checkCount
