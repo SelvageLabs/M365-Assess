@@ -61,7 +61,14 @@ function Get-BaselineTrend {
     # both so post-v2.9.0 baselines (GUID-keyed) and pre-v2.9.0 baselines
     # (TenantId-keyed) both feed the trend chart.
     $safeTenant = $TenantId -replace '[^\w\.\-]', '_'
-    $matchedDirs = New-Object -TypeName System.Collections.Generic.Dictionary[string, System.IO.DirectoryInfo]
+    # NB: must use ::new() not `New-Object -TypeName ...` here -- the comma in
+    # the generic Dictionary type name is parsed as the array operator by
+    # PowerShell when bound to -TypeName, producing 'Cannot convert Object[] to
+    # System.String required by parameter TypeName' at runtime. ::new() parses
+    # the [...] unambiguously as a type literal. Bug surfaced in v2.9.0 when a
+    # real tenant ran with -AutoBaseline; HTML report generation died inside
+    # the catch in Invoke-M365Assessment.ps1 and silently dropped the report.
+    $matchedDirs = [System.Collections.Generic.Dictionary[string, System.IO.DirectoryInfo]]::new()
     foreach ($d in (Get-ChildItem -Path $BaselinesRoot -Directory -Filter "*_${safeTenant}" -ErrorAction SilentlyContinue)) {
         if (-not $matchedDirs.ContainsKey($d.FullName)) { $matchedDirs[$d.FullName] = $d }
     }

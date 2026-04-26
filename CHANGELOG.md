@@ -4,6 +4,15 @@ All notable changes to M365 Assess are documented here. This project uses [Conve
 
 ## [Unreleased]
 
+## [2.9.1] - 2026-04-26
+
+Hotfix to v2.9.0. Caught by live-tenant validation post-tag — the underlying lesson is also addressed by a new `.claude/rules/releases.md` rule requiring live verification before any future tag/publish.
+
+### Fixed
+- **HTML report rendered as a blank black screen** when `window.REPORT_DATA.permissions.sections.<X>.required` came back empty. `ConvertTo-Json` round-trips empty arrays as `null` and single-element arrays as bare scalars; the new `PermissionsPanel` React component (#812 / v2.9.0) called `.join()` on the field directly. Empty `required: []` for sections like `Email` (which uses EXO, not Graph) became `null`, the call threw, and React unmounted the entire app tree. Fixed by routing all three array fields (`required`, `missing`, top-level `missing`) through an `asArray` coercion helper inside the component
+- **HTML report generation silently failed when `-AutoBaseline` was supplied.** PowerShell's parser interpreted `New-Object -TypeName System.Collections.Generic.Dictionary[string, System.IO.DirectoryInfo]` (introduced in C1 #780 / v2.9.0) as an array literal — the comma between the two type parameters became the array operator, producing `Cannot convert 'System.Object[]' to the type 'System.String' required by parameter 'TypeName'` at runtime. Switched to `::new()` which parses the type literal unambiguously. Added the previously-missing `tests/Common/Get-BaselineTrend.Tests.ps1` regression suite — the bug slipped through because the function had zero Pester coverage and the runtime parse only fails inside the `Build-ReportData` -> `Build-SectionHtml` -> `Get-BaselineTrend` call stack
+- **Report-generation failures no longer get swallowed silently.** The `catch` block in `Invoke-M365Assessment.ps1` now also calls `Write-Warning` and points at the log file path, instead of writing only to the assessment log. A consultant running a 5-minute assessment shouldn't have to grep the log to discover the report didn't generate
+
 ## [2.9.0] - 2026-04-26
 
 The **Trust Hardening** release. Surfaced by an external review on 2026-04-25; closed all 30+ child issues + the parent epic (#766) over Sprints 1-9.

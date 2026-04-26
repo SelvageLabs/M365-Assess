@@ -1355,7 +1355,14 @@ if (Test-Path -Path $reportScriptPath) {
         }
     }
     catch {
-        Write-AssessmentLog -Level WARN -Message "HTML report generation failed: $($_.Exception.Message)"
+        # Surface report-generation failures to BOTH the log file AND the console.
+        # This block exists so a partial-data run still leaves the per-collector
+        # CSVs on disk, but a SILENT failure here means consultants run a 5-minute
+        # assessment and never find out the report didn't generate. Show it.
+        $msg = "HTML report generation failed: $($_.Exception.Message)"
+        Write-AssessmentLog -Level WARN -Message $msg
+        Write-Warning $msg
+        Write-Host "    See $script:logFilePath for the full error context." -ForegroundColor Yellow
     }
 }
 

@@ -534,14 +534,18 @@ function ScoringViews() {
 function PermissionsPanel() {
   const p = D.permissions;
   if (!p || !p.sections) return null;
+  // ConvertTo-Json round-trips empty arrays as null and single-element arrays
+  // as bare scalars. Coerce defensively so .join() / .length / .map() always work.
+  const asArray = v => Array.isArray(v) ? v : (v == null ? [] : [v]);
   const sections = Object.entries(p.sections);
   const allOk = sections.every(([, s]) => s.ok);
+  const missingTotal = asArray(p.missing).length;
   return (
     <section className="permissions-panel" id="permissions">
       <div className="section-header">
         <h2>Permissions</h2>
         <div className="section-sub">
-          {p.authMode} auth | {sections.length} section{sections.length===1?'':'s'} checked | {allOk ? 'all granted' : `${(p.missing || []).length} role(s) missing`}
+          {p.authMode} auth | {sections.length} section{sections.length===1?'':'s'} checked | {allOk ? 'all granted' : `${missingTotal} role(s) missing`}
         </div>
       </div>
       <table className="permissions-table">
@@ -549,18 +553,22 @@ function PermissionsPanel() {
           <tr><th>Section</th><th>Required</th><th>Missing</th><th>Status</th></tr>
         </thead>
         <tbody>
-          {sections.map(([name, s]) => (
-            <tr key={name}>
-              <td><strong>{name}</strong></td>
-              <td>{s.required && s.required.length ? s.required.join(', ') : <span className="muted">none</span>}</td>
-              <td>
-                {s.missing && s.missing.length
-                  ? s.missing.map((m, i) => <span key={i} className="status-badge unknown">{m}</span>)
-                  : <span className="muted">&mdash;</span>}
-              </td>
-              <td>{s.ok ? <span className="status-badge pass">OK</span> : <span className="status-badge fail">deficit</span>}</td>
-            </tr>
-          ))}
+          {sections.map(([name, s]) => {
+            const req = asArray(s.required);
+            const miss = asArray(s.missing);
+            return (
+              <tr key={name}>
+                <td><strong>{name}</strong></td>
+                <td>{req.length ? req.join(', ') : <span className="muted">none</span>}</td>
+                <td>
+                  {miss.length
+                    ? miss.map((m, i) => <span key={i} className="status-badge unknown">{m}</span>)
+                    : <span className="muted">&mdash;</span>}
+                </td>
+                <td>{s.ok ? <span className="status-badge pass">OK</span> : <span className="status-badge fail">deficit</span>}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </section>

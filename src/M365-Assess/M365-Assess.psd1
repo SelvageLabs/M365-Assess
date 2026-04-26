@@ -3,7 +3,7 @@
     # Generated: 2026-03-08
 
     RootModule        = 'M365-Assess.psm1'
-    ModuleVersion     = '2.9.0'
+    ModuleVersion     = '2.9.1'
     GUID              = 'f7e3b2a1-4c5d-6e8f-9a0b-1c2d3e4f5a6b'
     Author            = 'Galvnyz'
     CompanyName       = 'Community'
@@ -242,7 +242,7 @@
             IconUri      = 'https://raw.githubusercontent.com/Galvnyz/M365-Assess/main/src/M365-Assess/assets/m365-assess-logo.png'
             LicenseUri   = 'https://github.com/Galvnyz/M365-Assess/blob/main/LICENSE'
             ProjectUri   = 'https://github.com/Galvnyz/M365-Assess'
-            ReleaseNotes = 'v2.9.0 - Trust Hardening release. Adds standardized evidence schema (8 optional fields on Add-SecuritySetting; HTML appendix + XLSX Evidence Details sheet), sanitized evidence package (-EvidencePackage + -Redact with deterministic SHA-256 hash tokens), license-adjusted scoring views (6-tab toggle on executive summary), remediation export formats (Export-M365Remediation: GitHub Issues markdown, executive-summary markdown, Jira CSV, technical backlog), HTML Permissions panel surfacing app-role/scope deficits, deprecation warnings on the 13 legacy Get-M365*SecurityConfig wrappers (removal in v3.0.0), Linux/macOS cross-platform smoke lane, behavioral test suite (29 tests). Previous earlier work in this window: data-handling docs, sovereign cloud support matrix, React provenance + npm audit, baseline storage normalized to tenant GUID, mocked Graph/EXO fixture infrastructure.'
+            ReleaseNotes = 'v2.9.1 - Hotfix. PowerShell parser ambiguity in Get-BaselineTrend caused HTML report generation to fail silently when -AutoBaseline was supplied: New-Object -TypeName System.Collections.Generic.Dictionary[string, System.IO.DirectoryInfo] was parsed as an array literal, yielding "Cannot convert Object[] to System.String required by parameter TypeName" inside Build-ReportData -- and the catch block in Invoke-M365Assessment swallowed the failure to a WARN log line. Switched to ::new() which parses unambiguously, made the report-generation catch block also Write-Warning to console so silent failures stop happening, added regression test coverage for Get-BaselineTrend (no prior tests). v2.9.0: Trust Hardening release with evidence schema, sanitized evidence package, license-adjusted scoring views, remediation export formats, HTML Permissions panel, wrapper deprecation, cross-platform smoke lane, behavioral tests.'
         }
     }
 }
