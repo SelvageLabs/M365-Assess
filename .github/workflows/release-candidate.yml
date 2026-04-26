@@ -1,0 +1,80 @@
+name: Release Candidate
+# #722: pushes to a `release-candidate` branch get auto-tagged as
+# vX.Y.Z-rc.N (where X.Y.Z is the current manifest version and N is
+# the next available RC counter). The tag triggers release.yml's
+# existing `tags: ['v*']` path -- which creates a GitHub pre-release
+# (prerelease=true thanks to the '-' in the tag) and skips PSGallery
+# publish (release.yml line 92 gates on '!contains(github.ref, '-')').
+#
+# Soak window before tagging stable: cut a release-candidate branch,
+# let CI run, optionally promote to a few internal users via GH
+# pre-release artifacts, then tag the stable v2.9.0 from main as
+# usual.
+
+on:
+  push:
+    branches: [release-candidate]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Compute the RC tag without creating it'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  tag-rc:
+    name: Auto-tag release candidate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # need full history for tag listing
+
+      - name: Read manifest version
+        id: version
+        shell: pwsh
+        run: |
+          $v = (Import-PowerShellDataFile -Path ./src/M365-Assess/M365-Assess.psd1).ModuleVersion
+          "version=$v" >> $env:GITHUB_OUTPUT
+          Write-Host "Manifest version: $v"
+
+      - name: Compute next RC number
+        id: rc
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PATTERN="v${VERSION}-rc."
+          # List existing rc tags for this version, sort numerically, pick the next.
+          NEXT=1
+          if git tag -l "${PATTERN}*" | grep -q .; then
+            HIGHEST=$(git tag -l "${PATTERN}*" \
+              | sed "s|^${PATTERN}||" \
+              | sort -n | tail -1)
+            NEXT=$((HIGHEST + 1))
+          fi
+          TAG="v${VERSION}-rc.${NEXT}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Next RC tag: $TAG"
+
+      - name: Create + push tag
+        if: ${{ inputs.dry_run != true }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.rc.outputs.tag }}"
+          # Tag the current commit (the one that just landed on release-candidate)
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release candidate $TAG"
+          git push origin "$TAG"
+          echo "::notice::Tagged $TAG -- release.yml will now build the GH pre-release."
+
+      - name: Dry-run summary
+        if: ${{ inputs.dry_run == true }}
+        run: |
+          echo "DRY RUN -- would create tag: ${{ steps.rc.outputs.tag }}"
+          echo "Skipping git tag/push."
