@@ -251,6 +251,13 @@ param(
     [Parameter()]
     [switch]$IncludeTrend,
 
+    # D4 #788 -- sanitized evidence package mode
+    [Parameter()]
+    [switch]$EvidencePackage,
+
+    [Parameter()]
+    [switch]$Redact,
+
     [Parameter(ParameterSetName = 'ConnectionProfile', Mandatory)]
     [ArgumentCompleter({
         param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
@@ -1349,6 +1356,34 @@ if (Test-Path -Path $reportScriptPath) {
     }
     catch {
         Write-AssessmentLog -Level WARN -Message "HTML report generation failed: $($_.Exception.Message)"
+    }
+}
+
+# ------------------------------------------------------------------
+# D4 #788 -- Sanitized evidence package
+# Runs after HTML/XLSX so we can read the just-written artifacts. Failures
+# here are non-fatal -- the assessment itself is already complete on disk.
+# ------------------------------------------------------------------
+if ($EvidencePackage) {
+    $packageScriptPath = Join-Path -Path $projectRoot -ChildPath 'Common/Export-EvidencePackage.ps1'
+    if (Test-Path -Path $packageScriptPath) {
+        try {
+            . $packageScriptPath
+            $pkgParams = @{
+                AssessmentFolder = $assessmentFolder
+            }
+            if ($script:domainPrefix) { $pkgParams['TenantName'] = $script:domainPrefix }
+            elseif ($TenantId)        { $pkgParams['TenantName'] = $TenantId }
+            if ($Redact) {
+                $pkgParams['Redact'] = $true
+                if ($script:domainPrefix) { $pkgParams['TenantDisplayName'] = $script:domainPrefix }
+            }
+            $packagePath = Export-EvidencePackage @pkgParams
+            Write-AssessmentLog -Level INFO -Message "Evidence package written: $packagePath"
+        }
+        catch {
+            Write-AssessmentLog -Level WARN -Message "Evidence package generation failed: $($_.Exception.Message)"
+        }
     }
 }
 

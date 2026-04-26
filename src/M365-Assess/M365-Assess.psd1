@@ -89,6 +89,8 @@
         'Common\Build-ReportData.ps1'
         'Common\Get-ReportTemplate.ps1'
         'Common\Export-ComplianceMatrix.ps1'
+        'Common\Export-EvidencePackage.ps1'
+        'Common\Get-RedactionRules.ps1'
         'Common\Export-ComplianceOverview.ps1'
         'Common\Export-FrameworkCatalog.ps1'
         'Common\Build-ValueOpportunityHtml.ps1'
