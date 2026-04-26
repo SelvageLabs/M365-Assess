@@ -761,6 +761,154 @@ function Topbar({
   }, /*#__PURE__*/React.createElement(Icon.sliders, null)))));
 }
 
+// ======================== Scoring views (D2 #786) ========================
+// Six named views for the executive summary -- the headline strict-rule Pass%
+// stays in the score card; these views are secondary perspectives consultants
+// toggle between. See docs/SCORING.md for the per-view denominator math.
+//
+// 3 score views (return a number/percentage):
+const computeSecurityRiskScore = arr => {
+  // Same as the headline: Pass / (Pass + Fail + Warning).
+  const denom = scoreDenom(arr);
+  if (denom === 0) return null;
+  const pass = (arr || []).filter(f => f.status === 'Pass').length;
+  return Math.round(pass / denom * 100);
+};
+const computeComplianceReadinessScore = arr => {
+  // Compliance lens: count Review (manual-validation findings) AS Pass-equivalent
+  // since "needs review" usually means "the auditor will accept it with attestation."
+  // Excludes Skipped/Unknown/NotApplicable/NotLicensed -- you can't be ready for
+  // a control you literally cannot assess.
+  const items = (arr || []).filter(f => ['Pass', 'Fail', 'Warning', 'Review'].includes(f.status));
+  if (items.length === 0) return null;
+  const ready = items.filter(f => f.status === 'Pass' || f.status === 'Review').length;
+  return Math.round(ready / items.length * 100);
+};
+const computeLicenseAdjustedScore = arr => {
+  // Strips out NotLicensed entirely from BOTH numerator and denominator. SMBs
+  // without E5 don't get penalised for E5-only controls they cannot enable.
+  const items = (arr || []).filter(f => SCORED_STATUSES.has(f.status) && f.status !== 'NotLicensed');
+  if (items.length === 0) return null;
+  const pass = items.filter(f => f.status === 'Pass').length;
+  return Math.round(pass / items.length * 100);
+};
+// 3 list views (return an array of findings, sorted/filtered for the workflow):
+const getQuickWins = arr => {
+  // Fail status × low effort, sorted by severity (critical > high > medium > low > none).
+  const sevOrder = {
+    critical: 0,
+    high: 1,
+    medium: 2,
+    low: 3,
+    none: 4,
+    info: 5
+  };
+  return (arr || []).filter(f => f.status === 'Fail' && (f.effort === 'small' || f.effort === 'low')).sort((a, b) => (sevOrder[a.severity] ?? 99) - (sevOrder[b.severity] ?? 99));
+};
+const getRequiresLicensing = arr => (arr || []).filter(f => f.status === 'NotLicensed');
+const getManualValidation = arr => (arr || []).filter(f => f.status === 'Review');
+const SCORING_VIEWS = [{
+  id: 'security-risk',
+  label: 'Security Risk',
+  kind: 'score',
+  compute: computeSecurityRiskScore,
+  blurb: 'Strict rule: Pass / (Pass + Fail + Warning). Matches the headline.'
+}, {
+  id: 'compliance',
+  label: 'Compliance Readiness',
+  kind: 'score',
+  compute: computeComplianceReadinessScore,
+  blurb: 'Counts Review-status findings as ready (auditor will accept with attestation).'
+}, {
+  id: 'license-adjusted',
+  label: 'License-Adjusted',
+  kind: 'score',
+  compute: computeLicenseAdjustedScore,
+  blurb: 'Excludes NotLicensed from both numerator and denominator -- fair to SMBs without E5.'
+}, {
+  id: 'quick-wins',
+  label: 'Quick Wins',
+  kind: 'list',
+  collect: getQuickWins,
+  blurb: 'Failing controls with small remediation effort, sorted by severity.'
+}, {
+  id: 'requires-licensing',
+  label: 'Requires Licensing',
+  kind: 'list',
+  collect: getRequiresLicensing,
+  blurb: 'Findings blocked by missing license SKUs -- candidates for upgrade discussion.'
+}, {
+  id: 'manual-validation',
+  label: 'Manual Validation',
+  kind: 'list',
+  collect: getManualValidation,
+  blurb: 'Review-status findings that need human verification (audit log review, evidence collection).'
+}];
+function ScoringViews() {
+  const [active, setActive] = useState('security-risk');
+  const view = SCORING_VIEWS.find(v => v.id === active) || SCORING_VIEWS[0];
+  let body;
+  if (view.kind === 'score') {
+    const value = view.compute(FINDINGS);
+    body = /*#__PURE__*/React.createElement("div", {
+      className: "scoring-view-body"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "scoring-view-num"
+    }, value === null ? '—' : `${value}%`), /*#__PURE__*/React.createElement("div", {
+      className: "scoring-view-blurb"
+    }, view.blurb));
+  } else {
+    const items = view.collect(FINDINGS);
+    body = /*#__PURE__*/React.createElement("div", {
+      className: "scoring-view-body"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "scoring-view-blurb"
+    }, view.blurb), items.length === 0 ? /*#__PURE__*/React.createElement("div", {
+      className: "scoring-view-empty"
+    }, "No findings match this view.") : /*#__PURE__*/React.createElement("ul", {
+      className: "scoring-view-list"
+    }, items.slice(0, 8).map(f => /*#__PURE__*/React.createElement("li", {
+      key: f.checkId
+    }, /*#__PURE__*/React.createElement("span", {
+      className: 'sev-pill sev-' + (f.severity || 'medium')
+    }, f.severity || 'medium'), /*#__PURE__*/React.createElement("a", {
+      href: "#findings-anchor",
+      onClick: e => {
+        e.preventDefault();
+        document.getElementById('findings-anchor')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    }, f.setting), /*#__PURE__*/React.createElement("span", {
+      className: "scoring-view-domain"
+    }, f.domain))), items.length > 8 && /*#__PURE__*/React.createElement("li", {
+      className: "scoring-view-more"
+    }, "+ ", items.length - 8, " more \u2014 see ", /*#__PURE__*/React.createElement("a", {
+      href: "#findings-anchor",
+      onClick: e => {
+        e.preventDefault();
+        document.getElementById('findings-anchor')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    }, "findings table"))));
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: "scoring-views"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "scoring-views-tabs",
+    role: "tablist"
+  }, SCORING_VIEWS.map(v => /*#__PURE__*/React.createElement("button", {
+    key: v.id,
+    role: "tab",
+    "aria-selected": v.id === active,
+    className: 'scoring-views-tab' + (v.id === active ? ' active' : ''),
+    onClick: () => setActive(v.id)
+  }, v.label))), body);
+}
+
 // ======================== Posture hero ========================
 function Posture() {
   const score = parseFloat(SCORE.Percentage);
@@ -889,7 +1037,7 @@ function Posture() {
       width: pct(pass, scoreDenom(FINDINGS)) + '%',
       background: 'var(--success)'
     }
-  })))), /*#__PURE__*/React.createElement(MFABreakdown, null))), /*#__PURE__*/React.createElement(ExecSummaryRow, null), critical > 0 && /*#__PURE__*/React.createElement("div", {
+  })))), /*#__PURE__*/React.createElement(MFABreakdown, null))), /*#__PURE__*/React.createElement(ExecSummaryRow, null), /*#__PURE__*/React.createElement(ScoringViews, null), critical > 0 && /*#__PURE__*/React.createElement("div", {
     className: "banner"
   }, /*#__PURE__*/React.createElement("div", {
     className: "banner-icon"
