@@ -3,7 +3,7 @@
     # Generated: 2026-03-08
 
     RootModule        = 'M365-Assess.psm1'
-    ModuleVersion     = '2.6.0'
+    ModuleVersion     = '2.9.0'
     GUID              = 'f7e3b2a1-4c5d-6e8f-9a0b-1c2d3e4f5a6b'
     Author            = 'Galvnyz'
     CompanyName       = 'Community'
@@ -242,7 +242,7 @@
             IconUri      = 'https://raw.githubusercontent.com/Galvnyz/M365-Assess/main/src/M365-Assess/assets/m365-assess-logo.png'
             LicenseUri   = 'https://github.com/Galvnyz/M365-Assess/blob/main/LICENSE'
             ProjectUri   = 'https://github.com/Galvnyz/M365-Assess'
-            ReleaseNotes = 'v2.6.0 - Combined v2.5.0 + v2.6.0 release. Finding interaction: collapsible sections, framework-CTA filtered count, smart search match cycling, PS/portal remediation split, roadmap card polish, CMMC L2/L3 tooltip. XLSX: new Horizon column + Remediation Roadmap sheet powered by Get-RemediationLane helper. Posture trend now opt-in via -IncludeTrend. Earlier in window: framework chevron affordance, FilterBar level chips for CIS/CMMC, CMMC complete-posture handoff (#594), CheckID v3.0.0 sync.'
+            ReleaseNotes = 'v2.9.0 - Trust Hardening release. Adds standardized evidence schema (8 optional fields on Add-SecuritySetting; HTML appendix + XLSX Evidence Details sheet), sanitized evidence package (-EvidencePackage + -Redact with deterministic SHA-256 hash tokens), license-adjusted scoring views (6-tab toggle on executive summary), remediation export formats (Export-M365Remediation: GitHub Issues markdown, executive-summary markdown, Jira CSV, technical backlog), HTML Permissions panel surfacing app-role/scope deficits, deprecation warnings on the 13 legacy Get-M365*SecurityConfig wrappers (removal in v3.0.0), Linux/macOS cross-platform smoke lane, behavioral test suite (29 tests). Previous earlier work in this window: data-handling docs, sovereign cloud support matrix, React provenance + npm audit, baseline storage normalized to tenant GUID, mocked Graph/EXO fixture infrastructure.'
         }
     }
 }

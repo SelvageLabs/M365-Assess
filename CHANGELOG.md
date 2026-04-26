@@ -4,6 +4,47 @@ All notable changes to M365 Assess are documented here. This project uses [Conve
 
 ## [Unreleased]
 
+## [2.9.0] - 2026-04-26
+
+The **Trust Hardening** release. Surfaced by an external review on 2026-04-25; closed all 30+ child issues + the parent epic (#766) over Sprints 1-9.
+
+### Added
+- **Standardized evidence schema (D1 #785)** -- 8 optional fields on `Add-SecuritySetting` (`ObservedValue`, `ExpectedValue`, `EvidenceSource`, `EvidenceTimestamp`, `CollectionMethod`, `PermissionRequired`, `Confidence`, `Limitations`). Promotes the report appendix from a raw-JSON blob to a structured `EvidenceTable` React component. New "Evidence Details" sheet in the XLSX matrix. 5-collector proof-of-pattern migration. New `docs/EVIDENCE-MODEL.md` field reference + migration cookbook
+- **Sanitized evidence package (D4 #788)** -- new `-EvidencePackage` and `-Redact` switches on `Invoke-M365Assessment`. Bundles HTML + XLSX + structured findings + permissions summary + run metadata + SHA-256 manifest as a ZIP suitable for auditor handoff. Deterministic SHA-256-truncated hash tokens replace UPNs (`<user-a3f81b29>`), IPs, GUIDs, tenant display name -- same input always produces the same token across the package, preserving join keys for cross-finding correlation. New `docs/EVIDENCE-PACKAGE.md`
+- **License-adjusted scoring views (D2 #786)** -- 6-tab toggle on the executive-summary panel. Headline strict-rule Pass% in the score card stays invariant; tabs are exploration tools for different audiences (CISO / audit lead / account exec / MSP technician / sales engineer / auditor). New `docs/SCORING.md` documents per-view denominators
+- **Remediation export formats (D3 #787)** -- new public `Export-M365Remediation` cmdlet writes GitHub Issues markdown (one .md per finding + bulk `create-issues.sh` helper), executive-summary markdown, Jira CSV, and a technical-backlog markdown table. Reads existing assessment artifacts; does NOT re-run the assessment. Sample outputs in `docs/samples/remediation-exports/`
+- **Behavioral test suite (C5 #784)** -- 29 Pester tests in `tests/Behavior/` covering permission-map consistency, status normalization, check-ID uniqueness, report-math denominator, baseline drift, QuickScan filter, cloud env mapping, module compatibility downgrade, evidence schema regression guard, wrapper-deprecation guard
+- **Linux/macOS cross-platform smoke lane (B6 #777)** -- new advisory CI job. Catches platform-shaped bugs (path separators, Linux case-sensitivity, line endings) without paying the heavy install cost of the full Microsoft.Graph SDK on each runner
+- **Mocked Graph/EXO fixture infrastructure (D5 partial #789, #822)** -- `tests/Fixtures/{Graph,Exchange,Intune,Reports}/` with JSON snapshots; per-collector fixture-driven test pattern. Infrastructure-only ship; per-collector migration deferred to future minor releases
+- **HTML Permissions panel (#812 B2 followup)** -- `Test-GraphPermissions` writes `_PermissionDeficits.json`; `Build-ReportData` surfaces it; new React `PermissionsPanel` component renders a per-section deficit table. Also populates the previously-stub `permissions-summary.json` in evidence packages
+- **Release-candidate workflow (#722)** -- pushes to a `release-candidate` branch auto-tag `vX.Y.Z-rc.N` (auto-incrementing). Existing `release.yml` machinery handles them as GH pre-releases (PSGallery publish skipped for `-` tags)
+- **Sovereign cloud support matrix (C2 #781)** -- new `docs/SOVEREIGN-CLOUDS.md`
+- **React provenance + license attribution (C4 #783)** -- new `docs/REPORT-FRONTEND.md`; `npm audit --audit-level=high` advisory CI step; committed `THIRD-PARTY-LICENSES.md`
+- **Data Handling deep dive (A4 #770, F2 #792)** -- new `docs/DATA-HANDLING.md`; pointers from README and `SECURITY.md`
+- **REPORT_DATA schema reference (F5 #794)** -- new `docs/REPORT-SCHEMA.md`
+- **Contributor guides (F6 #795, F7 #796)** -- new `docs/TESTING.md` + new `docs/RELEASE-PROCESS.md`
+- **Baseline storage normalized to tenant GUID (C1 #780)** -- baseline folders keyed by tenant GUID rather than mixed display name / domain prefix. Read-fallback preserves legacy folders during migration
+- **Trust-hardening label set** in the GH issue vocabulary
+
+### Changed
+- **Wrapper API surface (C3 #782)** -- 13 legacy `Get-M365*SecurityConfig` / `*RetentionConfig` wrappers now emit a once-per-session `Write-Warning` deprecation notice naming v3.0.0 as the removal target and pointing to the `Invoke-M365Assessment -Section <name>` replacement. Wrappers stay exported in v2.9.x; full removal ships in v3.0.0
+- **CI quality gates (B5 #776)** trigger on doc edits that gate version consistency (`README.md`, `CHANGELOG.md`, `docs/**`, etc.) via a lighter docs-gates job
+- **Connection profile path (B1 #772)** -- moved out of module root to a per-user app-data path with read-fallback for legacy locations
+- **First-class data-state rendering (B8 #779)** -- `NotApplicable`, `NotLicensed`, `Skipped`, `Unknown` get explicit treatment + counts in HTML report, XLSX matrix, executive summary, framework totals, remediation roadmap, drift comparison
+- **App-only Graph permission validation (B2 #773)** -- queries the running SP's app-role assignments against required roles per selected `-Section`; emits per-section deficits in console + structured `_PermissionDeficits.json`
+- **Status taxonomy (B3 #774)** -- `Add-SecuritySetting` ValidateSet now includes `NotApplicable` and `NotLicensed`
+- **Generated permissions matrix (B7 #778)** -- `docs/PERMISSIONS.md` is now generated from `AssessmentMaps.ps1` + `PermissionDefinitions.ps1`. CI step fails any PR that modifies the source maps without regenerating the doc
+
+### Fixed
+- README "What's New" header was stale (A1 #767)
+- Stale `.m365assess.json` validation note: confirmed already in `.gitignore` (A3 #769; closed-on-arrival)
+
+### Notes
+- **PowerShell `[ValidateRange]` rejects `$null` even on `[Nullable[double]]` params**, so the `Confidence` field's range check is implemented inside the helper body rather than via decorator
+- **Redaction-order subtlety**: email/UPN redaction runs before tenant-name redaction. Reversing the order would partially-redact `admin@contoso.com` to `admin@<tenant>.com` and leave the address undetectable by later regexes
+- **Pester 5 substitutes `<token>` in `It` titles**, so test names use plain ASCII to avoid the implicit data-placeholder syntax
+- **Two-stage wrapper deprecation** (v2.9 warns + still exports, v3.0 removes) chosen over the locked plan's single-stage approach because removing a function and adding a warning to it are mutually exclusive
+
 ## [2.6.0] - 2026-04-25
 
 Combined release covering the v2.5.0 (closed 2026-04-24) and v2.6.0 -- Finding Interaction (closed 2026-04-25) milestones.
