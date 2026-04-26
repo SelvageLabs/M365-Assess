@@ -146,6 +146,51 @@ Publishing to PSGallery is currently manual; the maintainer pushes via `Publish-
 
 ---
 
+## Release candidates (#722)
+
+For changes you want to soak before tagging stable:
+
+```bash
+# Cut an RC branch from main
+git checkout main && git pull --ff-only
+git checkout -b release-candidate
+git push -u origin release-candidate
+```
+
+Pushing to `release-candidate` triggers `.github/workflows/release-candidate.yml`, which:
+
+1. Reads the manifest version (e.g. `2.9.0`)
+2. Counts existing `v2.9.0-rc.*` tags
+3. Creates the next RC tag (e.g. `v2.9.0-rc.1`)
+4. Pushes the tag
+
+Pushing the tag triggers `.github/workflows/release.yml`, which:
+
+- Marks the GitHub release as `prerelease: true` (because the tag contains `-`)
+- **Skips PSGallery publish** (release.yml gates `!contains(github.ref, '-')`)
+
+So RCs land as **GitHub-only pre-releases**, safely visible to early testers without touching PSGallery.
+
+### Iterating on an RC
+
+Subsequent pushes to `release-candidate` produce `v2.9.0-rc.2`, `rc.3`, etc. The workflow auto-increments by listing existing tags, so you don't have to track the counter.
+
+### Promoting an RC to stable
+
+Once an RC has soaked enough:
+
+1. Open a PR from `release-candidate` -> `main`
+2. Merge as usual
+3. Follow the standard release flow above (version bump if needed, tag, GH release, PSGallery publish)
+
+The stable tag (`v2.9.0`) and the RC tags (`v2.9.0-rc.1`, etc.) coexist; they all show in `git tag --list`.
+
+### Dry-run
+
+Use the `workflow_dispatch` trigger with `dry_run: true` to compute what RC number would be assigned without actually creating the tag. Useful when you're unsure whether a previous run already produced an RC.
+
+---
+
 ## Branch protection
 
 `main` requires:
