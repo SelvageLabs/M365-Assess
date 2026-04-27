@@ -129,7 +129,11 @@ function Import-FrameworkDefinitions {
             }
         }
 
-        $frameworks.Add(@{
+        # Issue #751: promote groupBy / groupLabel / groups (with aliases sections,
+        # controls, families, requirements, clauses, functions) to top-level so
+        # Build-ReportData can surface them in REPORT_DATA.frameworks for the
+        # React FrameworkQuilt's native-taxonomy breakdown.
+        $entryHt = @{
             frameworkId   = $fwId
             label         = [string]$def.label
             description   = if ($def.description) { [string]$def.description } else { '' }
@@ -142,7 +146,25 @@ function Import-FrameworkDefinitions {
             filterFamily  = $filterFamily
             scoringData   = $scoringData
             extraData     = $extraData
-        })
+        }
+        if ($def.PSObject.Properties.Name -contains 'groupBy'    -and $def.groupBy)    { $entryHt['groupBy']    = [string]$def.groupBy }
+        if ($def.PSObject.Properties.Name -contains 'groupLabel' -and $def.groupLabel) { $entryHt['groupLabel'] = [string]$def.groupLabel }
+        # 'groups' is the canonical name; legacy field names alias to it. Whichever
+        # appears first wins (frameworks should pick one).
+        foreach ($alias in 'groups', 'sections', 'controls', 'families', 'requirements', 'clauses', 'functions') {
+            if ($def.PSObject.Properties.Name -contains $alias -and $def.$alias) {
+                $val = $def.$alias
+                if ($val -is [System.Management.Automation.PSCustomObject]) {
+                    $ht = [ordered]@{}
+                    foreach ($p in $val.PSObject.Properties) { $ht[$p.Name] = [string]$p.Value }
+                    $entryHt['groups'] = $ht
+                } else {
+                    $entryHt['groups'] = $val
+                }
+                break
+            }
+        }
+        $frameworks.Add($entryHt)
     }
 
     # Sort by displayOrder, then by frameworkId for stable ordering
