@@ -268,7 +268,23 @@ function Build-ReportDataJson {
     $caRows        = & $get 'ca'
     $adminRoleRows = & $get 'admin-roles'
 
-    $frameworkList = @($FrameworkDefs | ForEach-Object { @{ id = $_['frameworkId']; full = $_['label']; desc = $_['description']; url = $_['homepageUrl'] } })
+    # Issue #751: surface the framework's native taxonomy (groupBy + groups map)
+    # so the React FrameworkQuilt can render per-framework section/family rows
+    # instead of falling back to M365-Assess internal domains.
+    $frameworkList = @($FrameworkDefs | ForEach-Object {
+        $entry = @{ id = $_['frameworkId']; full = $_['label']; desc = $_['description']; url = $_['homepageUrl'] }
+        if ($_.ContainsKey('groupBy'))    { $entry['groupBy']    = $_['groupBy'] }
+        if ($_.ContainsKey('groupLabel')) { $entry['groupLabel'] = $_['groupLabel'] }
+        if ($_.ContainsKey('groups'))     { $entry['groups']     = $_['groups'] }
+        # Backward-compat: framework JSONs use various field names for the same
+        # concept -- alias them all to 'groups' so the consumer is uniform.
+        if (-not $entry.ContainsKey('groups')) {
+            foreach ($alias in 'sections', 'controls', 'families', 'requirements', 'clauses', 'functions') {
+                if ($_.ContainsKey($alias)) { $entry['groups'] = $_[$alias]; break }
+            }
+        }
+        $entry
+    })
 
     # ------------------------------------------------------------------
     # Mailbox summary — pivot Metric/Count rows into a single object

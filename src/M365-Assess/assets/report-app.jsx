@@ -1351,62 +1351,40 @@ const matchProfileToken = (profilesArr, token) => {
   return profilesArr.some(p => p.includes(token));
 };
 
-// Issue #751: per-framework family taxonomy used by the framework panel's
-// "Coverage by family" breakdown. v1 covers CIS M365 (sections 1-9) and
-// CMMC (11 standard families). Other frameworks fall back to the prior
-// "Coverage by domain" view. Migration to registry-driven mapping is
-// deferred -- hardcoded here for shipping speed per the issue's recommendation.
-const FRAMEWORK_FAMILIES = {
-  'cis-m365-v6': {
-    label: 'section',
-    // Extract the leading section number from a controlId like '5.2.2.5'
-    extract: (cid) => {
-      const m = String(cid).match(/^(\d+)/);
-      return m ? m[1] : null;
-    },
-    // Sort numerically by section number
-    compare: (a, b) => parseInt(a, 10) - parseInt(b, 10),
-    names: {
-      '1': 'Account / Authentication',
-      '2': 'Application Permissions',
-      '3': 'Data Management',
-      '4': 'Email Security',
-      '5': 'Auditing',
-      '6': 'Storage / OneDrive',
-      '7': 'SharePoint / Mobile',
-      '8': 'Microsoft Teams',
-      '9': 'Microsoft Defender',
-    },
+// Issue #751: extraction strategies that derive a "group key" (section number,
+// family code, function letter, etc.) from a framework's native controlId.
+// Each framework's JSON file declares its `groupBy` strategy + `groups` map
+// (key → display name); the strategies are enumerated here.
+const GROUP_EXTRACTORS = {
+  // CIS M365 v6, CIS Controls v8, PCI DSS v4: leading numeric section (e.g. '5.2.2.5' → '5')
+  'section-prefix': (cid) => {
+    const m = String(cid).match(/^(\d+)/);
+    return m ? m[1] : null;
   },
-  'cmmc': {
-    label: 'family',
-    // Extract the family code from a controlId like 'AC.L2-3.1.1' or 'IA.L1-B.1.V'
-    extract: (cid) => {
-      const m = String(cid).match(/^([A-Z]{2})\./);
-      return m ? m[1] : null;
-    },
-    // Alphabetical sort by family code
-    compare: (a, b) => a.localeCompare(b),
-    names: {
-      'AC': 'Access Control',
-      'AT': 'Awareness & Training',
-      'AU': 'Audit & Accountability',
-      'CA': 'Security Assessment',
-      'CM': 'Configuration Management',
-      'CP': 'Contingency Planning',
-      'IA': 'Identification & Authentication',
-      'IR': 'Incident Response',
-      'MA': 'Maintenance',
-      'MP': 'Media Protection',
-      'PE': 'Physical Protection',
-      'PS': 'Personnel Security',
-      'RA': 'Risk Assessment',
-      'SC': 'System & Communications Protection',
-      'SI': 'System & Information Integrity',
-      'SR': 'Supply Chain Risk Management',
-    },
+  // CMMC, NIST 800-53, FedRAMP: letter family before first non-letter (e.g. 'AC.L2-3.1.1' → 'AC', 'AC-1' → 'AC')
+  'family-letter-prefix': (cid) => {
+    const m = String(cid).match(/^([A-Z]{2,3})/);
+    return m ? m[1] : null;
+  },
+  // NIST CSF: function letters before the first dot (e.g. 'ID.AM-1' → 'ID', 'PR.AC-1' → 'PR')
+  'dot-prefix': (cid) => {
+    const m = String(cid).match(/^([A-Z]+)\./);
+    return m ? m[1] : null;
+  },
+  // ISO 27001:2022: 'A.5.1.1' → 'A.5'; ISO 27001:2013 also uses A.X.Y form
+  'iso-clause-prefix': (cid) => {
+    const m = String(cid).match(/^(A\.\d+)/);
+    return m ? m[1] : null;
   },
 };
+
+// Default: most groups sort alphanumerically; numeric-only keys sort numerically.
+function compareGroupKeys(a, b) {
+  const na = parseFloat(a);
+  const nb = parseFloat(b);
+  if (!isNaN(na) && !isNaN(nb)) return na - nb;
+  return String(a).localeCompare(String(b));
+}
 
 // ======================== Framework quilt ========================
 function FrameworkQuilt({ onSelect, selected, onProfileSelect, activeProfiles }) {
@@ -1478,14 +1456,16 @@ function FrameworkQuilt({ onSelect, selected, onProfileSelect, activeProfiles })
     return out;
   }, [expandedFw, activeProfiles]);
 
-  // Issue #751: family/section breakdown for frameworks with their own native
-  // taxonomy (CIS, CMMC). Each finding is counted ONCE per family it touches
-  // (a CMMC finding mapped to AC + IA + MA increments all three families'
-  // totals, but only once per family even if it has multiple AC.L2-* controlIds).
+  // Issue #751: native-taxonomy breakdown for frameworks that declare a `groupBy`
+  // strategy + `groups` map in their framework JSON (CIS, CMMC, NIST, ISO, ...).
+  // Each finding is counted ONCE per group it touches (a CMMC finding mapped to
+  // AC + IA + MA increments all three groups' totals, but multiple AC.L2-*
+  // controlIds within the same finding still count as one AC entry).
   const fwFamilyBreakdown = useMemo(() => {
     if (!expandedFw) return null;
-    const fam = FRAMEWORK_FAMILIES[expandedFw];
-    if (!fam) return null;
+    if (!expandedMeta || !expandedMeta.groupBy) return null;
+    const extract = GROUP_EXTRACTORS[expandedMeta.groupBy];
+    if (!extract) return null;
     const tokens = activeProfiles || [];
     const out = {};
     FINDINGS.forEach(f => {
@@ -1496,15 +1476,15 @@ function FrameworkQuilt({ onSelect, selected, onProfileSelect, activeProfiles })
       }
       const cidRaw = f.fwMeta?.[expandedFw]?.controlId;
       if (!cidRaw) return;
-      // controlId can be a single value or semi/comma-separated list
+      // controlId can be a single value or a semi/comma-separated list
       const cids = String(cidRaw).split(/[;,]/).map(s => s.trim()).filter(Boolean);
-      const families = new Set();
+      const groups = new Set();
       cids.forEach(cid => {
-        const code = fam.extract(cid);
-        if (code) families.add(code);
+        const code = extract(cid);
+        if (code) groups.add(code);
       });
-      if (families.size === 0) families.add('OTHER');
-      families.forEach(code => {
+      if (groups.size === 0) groups.add('OTHER');
+      groups.forEach(code => {
         if (!out[code]) out[code] = { pass:0, warn:0, fail:0, review:0, info:0, total:0 };
         out[code].total++;
         const k = STATUS_COLORS[f.status];
@@ -1512,7 +1492,7 @@ function FrameworkQuilt({ onSelect, selected, onProfileSelect, activeProfiles })
       });
     });
     return out;
-  }, [expandedFw, activeProfiles]);
+  }, [expandedFw, activeProfiles, expandedMeta]);
 
   const fwProfileStats = useMemo(() => {
     if (!expandedFw) return null;
@@ -1703,19 +1683,21 @@ function FrameworkQuilt({ onSelect, selected, onProfileSelect, activeProfiles })
             {expandedData.info>0   && <div className="fw-seg info"   style={{flex:expandedData.info}}/>}
           </div>
           {(() => {
-            // Issue #751: prefer the framework's own family/section taxonomy when
-            // available (CIS, CMMC); fall back to M365-Assess domain breakdown.
-            const famDef = FRAMEWORK_FAMILIES[expandedFw];
-            const useFamily = famDef && fwFamilyBreakdown && Object.keys(fwFamilyBreakdown).length > 0;
-            const headerLabel = useFamily ? `Coverage by ${famDef.label}` : 'Coverage by domain';
+            // Issue #751: prefer the framework's own native taxonomy when available
+            // (declared via groupBy + groups in the framework JSON); fall back to
+            // M365-Assess domain breakdown for frameworks without that metadata.
+            const useFamily = fwFamilyBreakdown && Object.keys(fwFamilyBreakdown).length > 0;
+            const groupLabel = expandedMeta?.groupLabel || (useFamily ? 'family' : 'domain');
+            const headerLabel = useFamily ? `Coverage by ${groupLabel}` : 'Coverage by domain';
+            const groupNames = expandedMeta?.groups || {};
             const rows = useFamily
-              ? Object.entries(fwFamilyBreakdown).sort((a, b) => famDef.compare(a[0], b[0]))
+              ? Object.entries(fwFamilyBreakdown).sort((a, b) => compareGroupKeys(a[0], b[0]))
               : Object.entries(fwDomainBreakdown).sort((a, b) => b[1].fail - a[1].fail || b[1].total - a[1].total);
             const labelFor = (key) => {
               if (!useFamily) return key;
               if (key === 'OTHER') return 'Other';
-              const name = famDef.names[key];
-              return name ? `${key} · ${name}` : key;
+              const name = groupNames[key];
+              return name ? `${key} · ${name}` : `${key} · (unmapped)`;
             };
             return (
               <>

@@ -65,6 +65,7 @@
     }
   },
   "groupBy": "section-prefix",
+  "groupLabel": "section",
   "sections": {
     "1": "Identity",
     "2": "Defender",
