@@ -180,7 +180,8 @@ Invoke-M365Assessment -Section Tenant,Identity,Licensing,Email,Intune,Security,C
 | `-SkipPurview` | switch | | Skip Purview/DLP collector and connection (saves ~46s) |
 | `-DryRun` | switch | | Preview sections, services, scopes, and check counts without connecting |
 | `-OpenReport` | switch | | Auto-open the HTML report in the default browser after generation |
-| `-SaveBaseline` | string | | Save a policy baseline snapshot with this label for future drift comparison |
+| `-SaveBaseline` | switch | | Save a policy baseline snapshot for future drift comparison. Auto-labels as `manual-<timestamp>`; combine with `-BaselineLabel` for a custom label |
+| `-BaselineLabel` | string | | Optional custom label to use with `-SaveBaseline` (e.g. `'sprint-end'`). Ignored without `-SaveBaseline` |
 | `-CompareBaseline` | string | | Compare the current run against a previously saved baseline and show drift in the XLSX |
 | `-AutoBaseline` | switch | | Automatically save and compare against the most recent baseline for this tenant |
 | `-ListBaselines` | switch | | List all saved baselines for the current tenant and exit |

@@ -122,8 +122,11 @@ Skips the Purview (Security & Compliance) connection, saving approximately 46 se
 ### Baseline and Drift Tracking
 
 ```powershell
-# Save a named baseline after an assessment
-Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -SaveBaseline 'PreChange'
+# Save an auto-labelled baseline after an assessment (label = manual-<timestamp>)
+Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -SaveBaseline
+
+# Save with a custom label
+Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -SaveBaseline -BaselineLabel 'PreChange'
 
 # Compare against a previous baseline (adds Drift sheet to XLSX)
 Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' -CompareBaseline 'PreChange'

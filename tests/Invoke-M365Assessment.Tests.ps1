@@ -88,6 +88,33 @@ Describe 'Invoke-M365Assessment - syntax and structure' {
         $param | Should -Not -BeNullOrEmpty
     }
 
+    # Issue #809: -SaveBaseline is a switch (was [string]). PowerShell parameter
+    # binding does not allow a single non-switch param to accept both `-X` (no value)
+    # and `-X 'foo'` (string value). The two-param shape is the cleanest fix:
+    #   -SaveBaseline                       -> auto label 'manual-<timestamp>'
+    #   -SaveBaseline -BaselineLabel 'foo'  -> custom label 'foo'
+    It '-SaveBaseline is declared as [switch]' {
+        $paramBlock = $script:ast.FindAll(
+            { param($node) $node -is [System.Management.Automation.Language.ParameterAst] },
+            $true
+        )
+        $param = $paramBlock | Where-Object { $_.Name.VariablePath.UserPath -eq 'SaveBaseline' }
+        $param | Should -Not -BeNullOrEmpty
+        $typeAttr = $param.Attributes | Where-Object { $_ -is [System.Management.Automation.Language.TypeConstraintAst] }
+        $typeAttr.TypeName.Name | Should -Be 'switch' -Because '-SaveBaseline must be a switch so it accepts the bare-flag form'
+    }
+
+    It '-BaselineLabel is declared as [string]' {
+        $paramBlock = $script:ast.FindAll(
+            { param($node) $node -is [System.Management.Automation.Language.ParameterAst] },
+            $true
+        )
+        $param = $paramBlock | Where-Object { $_.Name.VariablePath.UserPath -eq 'BaselineLabel' }
+        $param | Should -Not -BeNullOrEmpty -Because 'a separate -BaselineLabel param carries the optional custom label'
+        $typeAttr = $param.Attributes | Where-Object { $_ -is [System.Management.Automation.Language.TypeConstraintAst] }
+        $typeAttr.TypeName.Name | Should -Be 'string'
+    }
+
     It 'requires PowerShell 7.0 or higher' {
         $scriptContent = Get-Content -Path $script:scriptPath -Raw
         $scriptContent | Should -Match '#Requires -Version 7'

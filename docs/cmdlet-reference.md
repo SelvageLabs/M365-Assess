@@ -86,9 +86,10 @@ Orchestrates all M365 assessment collector scripts to produce a folder of CSV re
 | `SkipPurview` | switch | No | Skip the Purview (Security & Compliance) connection and DLP/retention collectors (saves ~46s of latency). |
 | `DryRun` | switch | No | Show a dry-run preview of sections, services, Graph scopes, and check counts without connecting or collecting data. |
 | `OpenReport` | switch | No | Open the HTML report in the default browser after generation. |
-| `SaveBaseline` | string | No | Save a named policy baseline snapshot after the assessment completes (e.g., `PreChange`). Stored under `<OutputFolder>/Baselines/`. |
+| `SaveBaseline` | switch | No | Save a policy baseline snapshot after the assessment completes. Auto-labels as `manual-<timestamp>`; combine with `-BaselineLabel` for a custom label. Stored under `<OutputFolder>/Baselines/`. |
+| `BaselineLabel` | string | No | Optional custom label to use with `-SaveBaseline` (e.g. `PreChange`). Ignored without `-SaveBaseline`. |
 | `CompareBaseline` | string | No | Compare results against a previously saved baseline and add a Drift sheet to the XLSX output. |
-| `AutoBaseline` | switch | No | Automatically save a baseline named `Auto` after every successful run. Enables drift tracking without manual `-SaveBaseline` calls. |
+| `AutoBaseline` | switch | No | Automatically save a baseline named `auto-<timestamp>` after every successful run AND auto-compare to the previous auto baseline. Enables drift tracking without manual `-SaveBaseline` calls. |
 | `ListBaselines` | switch | No | List all saved baselines for the tenant and exit without running an assessment. |
 
 **Output:** Assessment folder containing CSV reports, an HTML report, optional XLSX compliance matrix, and optional PDF.

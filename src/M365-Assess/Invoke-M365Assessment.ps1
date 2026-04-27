@@ -74,9 +74,22 @@
     sets -CompactReport. Override with -CompactReport:$false to keep the
     full report structure.
 .PARAMETER SaveBaseline
-    Label for a new baseline snapshot. Saves the current assessment results
-    to a Baselines subfolder under the output folder. Use with -CompareBaseline
-    on a later run to detect policy drift.
+    Save the current assessment as a baseline snapshot under the output folder's
+    Baselines subfolder. Use with -CompareBaseline on a later run to detect
+    policy drift.
+
+    Switch form:
+      -SaveBaseline                                  Auto-labels as 'manual-yyyyMMdd-HHmmss'.
+      -SaveBaseline -BaselineLabel '<label>'         Saves under the supplied label (e.g. 'sprint-end').
+
+    For unattended/scheduled runs that auto-compare to the previous run, prefer
+    -AutoBaseline (saves under 'auto-<timestamp>' and reads the most-recent auto
+    baseline back automatically).
+.PARAMETER BaselineLabel
+    Optional custom label for the baseline snapshot. Only takes effect when
+    -SaveBaseline is also supplied. Without -SaveBaseline this parameter is ignored.
+    The label is sanitized by Export-AssessmentBaseline; non-word characters
+    become underscores.
 .PARAMETER CompareBaseline
     Label of a previously saved baseline to compare against. Generates a drift
     report highlighting settings that changed since the baseline was captured.
@@ -236,8 +249,16 @@ param(
     [Parameter()]
     [switch]$DryRun,
 
+    # Issue #809: -SaveBaseline is now a switch (was [string]). Pass it bare to
+    # save under an auto-generated 'manual-<timestamp>' label, OR combine with
+    # -BaselineLabel to use a custom label. Breaking change for callers that
+    # previously did `-SaveBaseline 'mylabel'` -- migrate to
+    # `-SaveBaseline -BaselineLabel 'mylabel'`.
     [Parameter()]
-    [string]$SaveBaseline,
+    [switch]$SaveBaseline,
+
+    [Parameter()]
+    [string]$BaselineLabel,
 
     [Parameter()]
     [string]$CompareBaseline,
@@ -1228,11 +1249,18 @@ $driftBaselineTimestamp = ''
 $tenantIdentity = Resolve-TenantIdentity -TenantIdInput $TenantId -Environment $M365Environment
 
 if ($SaveBaseline) {
-    Write-AssessmentLog -Level INFO -Message "Saving baseline '$SaveBaseline'..."
+    # Issue #809: -SaveBaseline is a switch; -BaselineLabel supplies an optional
+    # custom label. Without -BaselineLabel, auto-generate 'manual-<timestamp>'.
+    $resolvedLabel = if ($BaselineLabel) {
+        $BaselineLabel
+    } else {
+        "manual-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+    }
+    Write-AssessmentLog -Level INFO -Message "Saving baseline '$resolvedLabel'..."
     $savedBaselineDir = Export-AssessmentBaseline `
         -AssessmentFolder $assessmentFolder `
         -OutputFolder $OutputFolder `
-        -Label $SaveBaseline `
+        -Label $resolvedLabel `
         -TenantId $TenantId `
         -TenantGuid $tenantIdentity.Guid `
         -DisplayName $tenantIdentity.DisplayName `
