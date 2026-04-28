@@ -3758,6 +3758,13 @@ const ALL_COLS = [{
   width: '120px'
 }];
 const DEFAULT_COLS = ['status', 'finding', 'domain', 'controlId', 'checkId', 'severity'];
+
+// Issue #846: enum orderings for sort. Status uses the "worst first" order
+// that matches the row-color severity ramp; severity uses the standard
+// critical-down ordering.
+const FT_STATUS_ORDER = ['Fail', 'Warning', 'Review', 'Pass', 'Info', 'Skipped', 'Unknown', 'NotApplicable', 'NotLicensed'];
+const FT_SEV_ORDER = ['critical', 'high', 'medium', 'low', 'info'];
+const FT_SORTABLE = new Set(['status', 'finding', 'domain', 'checkId', 'severity']);
 function FindingsTable({
   filters,
   search,
@@ -3778,6 +3785,74 @@ function FindingsTable({
   const [visibleCols, setVisibleCols] = useState(DEFAULT_COLS);
   const [colPickerOpen, setColPickerOpen] = useState(false);
   const colPickerRef = useRef(null);
+
+  // Issue #846: sort + resize. Both persist per-tenant in localStorage so
+  // user preferences survive a refresh.
+  const [sort, setSort] = useState(() => {
+    try {
+      const raw = localStorage.getItem(LS('m365-findings-sort'));
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [colWidths, setColWidths] = useState(() => {
+    try {
+      const raw = localStorage.getItem(LS('m365-col-widths'));
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS('m365-findings-sort'), JSON.stringify(sort));
+    } catch {}
+  }, [sort]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS('m365-col-widths'), JSON.stringify(colWidths));
+    } catch {}
+  }, [colWidths]);
+
+  // Cycle sort: none → asc → desc → none.
+  const cycleSort = key => setSort(s => {
+    if (!s || s.key !== key) return {
+      key,
+      dir: 'asc'
+    };
+    if (s.dir === 'asc') return {
+      key,
+      dir: 'desc'
+    };
+    return null;
+  });
+
+  // Drag handle on the right edge of a header cell. captures the current
+  // rendered offsetWidth of the header at mousedown so 'fr'-based columns
+  // snap to a px width on first drag.
+  const startResize = (colId, ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    const headerCell = ev.currentTarget.parentElement;
+    const startX = ev.clientX;
+    const startWidth = headerCell.offsetWidth;
+    const onMove = e => {
+      const next = Math.max(60, Math.round(startWidth + (e.clientX - startX)));
+      setColWidths(w => ({
+        ...w,
+        [colId]: next
+      }));
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+    };
+    document.body.style.cursor = 'col-resize';
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  };
   useEffect(() => {
     if (!colPickerOpen) return;
     const onKey = e => {
@@ -3806,10 +3881,10 @@ function FindingsTable({
       const n = new Set(o);
       const prev = prevFocusRef.current;
       if (prev && prev !== focusFinding) {
-        const prevIdx = filtered.findIndex(f => f.checkId === prev);
+        const prevIdx = sortedFiltered.findIndex(f => f.checkId === prev);
         if (prevIdx >= 0) n.delete(prevIdx);
       }
-      const idx = filtered.findIndex(f => f.checkId === focusFinding);
+      const idx = sortedFiltered.findIndex(f => f.checkId === focusFinding);
       if (idx >= 0) n.add(idx);
       return n;
     });
@@ -3833,7 +3908,9 @@ function FindingsTable({
   }, [focusFinding]);
   const toggleCol = id => setVisibleCols(v => v.includes(id) ? v.length > 1 ? v.filter(c => c !== id) : v : [...v, id]);
   const cols = ALL_COLS.filter(c => visibleCols.includes(c.id));
-  const gridTpl = cols.map(c => c.width).join(' ') + ' 28px';
+  // Issue #846: per-column custom widths override the default. fr columns
+  // stay fr until the user drags, then they snap to px.
+  const gridTpl = cols.map(c => colWidths[c.id] ? colWidths[c.id] + 'px' : c.width).join(' ') + ' 28px';
 
   // Issue #697: publish the current filtered set up to App so the smart-search
   // counter and Enter-cycling can operate over the same in-view findings.
@@ -3860,12 +3937,48 @@ function FindingsTable({
     });
   }, [filters, search, editMode, hiddenFindings]);
 
+  // Issue #846: sorted view layered on top of the filter pipeline. When sort
+  // is null (default), original order is preserved. Status and severity sort
+  // by enum index so 'Fail' beats 'Pass' regardless of dir; other columns use
+  // locale string compare.
+  const sortedFiltered = useMemo(() => {
+    if (!sort) return filtered;
+    const arr = [...filtered];
+    const cmp = (a, b) => {
+      let av, bv;
+      if (sort.key === 'status') {
+        av = FT_STATUS_ORDER.indexOf(a.status);
+        bv = FT_STATUS_ORDER.indexOf(b.status);
+      } else if (sort.key === 'severity') {
+        av = FT_SEV_ORDER.indexOf(a.severity);
+        bv = FT_SEV_ORDER.indexOf(b.severity);
+      } else if (sort.key === 'finding') {
+        av = (a.setting || '').toLowerCase();
+        bv = (b.setting || '').toLowerCase();
+      } else if (sort.key === 'domain') {
+        av = (a.domain || '').toLowerCase();
+        bv = (b.domain || '').toLowerCase();
+      } else if (sort.key === 'checkId') {
+        av = (a.checkId || '').toLowerCase();
+        bv = (b.checkId || '').toLowerCase();
+      } else {
+        av = 0;
+        bv = 0;
+      }
+      if (av < bv) return sort.dir === 'asc' ? -1 : 1;
+      if (av > bv) return sort.dir === 'asc' ? 1 : -1;
+      return 0;
+    };
+    arr.sort(cmp);
+    return arr;
+  }, [filtered, sort]);
+
   // Issue #697: publish matches up to App. Only emit when there is a query;
   // empty list when search is cleared so the counter hides and cycling no-ops.
   useEffect(() => {
     if (!onMatchesChange) return;
-    onMatchesChange(search ? filtered.map(f => f.checkId) : []);
-  }, [filtered, search, onMatchesChange]);
+    onMatchesChange(search ? sortedFiltered.map(f => f.checkId) : []);
+  }, [sortedFiltered, search, onMatchesChange]);
   const isFiltered = search.length > 0 || filters.status.length > 0 || filters.severity.length > 0 || filters.framework.length > 0 || filters.domain.length > 0 || (filters.profile || []).length > 0;
   const toggle = i => setOpen(o => {
     const n = new Set(o);
@@ -4018,7 +4131,7 @@ function FindingsTable({
       padding: '2px 10px',
       verticalAlign: 'middle'
     }
-  }, "Showing ", filtered.length, " of ", FINDINGS.length) : /*#__PURE__*/React.createElement("span", {
+  }, "Showing ", sortedFiltered.length, " of ", FINDINGS.length) : /*#__PURE__*/React.createElement("span", {
     style: {
       fontWeight: 400,
       color: 'var(--muted)',
@@ -4038,10 +4151,10 @@ function FindingsTable({
     },
     onClick: e => {
       e.stopPropagation();
-      setOpen(open.size === filtered.length && filtered.length > 0 ? new Set() : new Set(filtered.map((_, i) => i)));
+      setOpen(open.size === sortedFiltered.length && sortedFiltered.length > 0 ? new Set() : new Set(sortedFiltered.map((_, i) => i)));
     },
-    title: open.size === filtered.length && filtered.length > 0 ? 'Collapse all findings' : 'Expand all findings'
-  }, open.size === filtered.length && filtered.length > 0 ? '− Collapse all' : '+ Expand all'), /*#__PURE__*/React.createElement("div", {
+    title: open.size === sortedFiltered.length && sortedFiltered.length > 0 ? 'Collapse all findings' : 'Expand all findings'
+  }, open.size === sortedFiltered.length && sortedFiltered.length > 0 ? '− Collapse all' : '+ Expand all'), /*#__PURE__*/React.createElement("div", {
     ref: colPickerRef,
     style: {
       position: 'relative',
@@ -4103,11 +4216,28 @@ function FindingsTable({
     style: {
       gridTemplateColumns: gridTpl
     }
-  }, cols.map(c => /*#__PURE__*/React.createElement("div", {
-    key: c.id
-  }, c.label)), /*#__PURE__*/React.createElement("div", null)), filtered.length === 0 && /*#__PURE__*/React.createElement("div", {
+  }, cols.map(c => {
+    const sortable = FT_SORTABLE.has(c.id);
+    const isActive = sort?.key === c.id;
+    return /*#__PURE__*/React.createElement("div", {
+      key: c.id,
+      className: "findings-col-head"
+    }, sortable ? /*#__PURE__*/React.createElement("button", {
+      type: "button",
+      className: 'findings-col-sort' + (isActive ? ' active' : ''),
+      onClick: () => cycleSort(c.id),
+      title: `Sort by ${c.label}`
+    }, /*#__PURE__*/React.createElement("span", null, c.label), /*#__PURE__*/React.createElement("span", {
+      className: "findings-col-sort-arrow"
+    }, isActive ? sort.dir === 'asc' ? '▲' : '▼' : '')) : /*#__PURE__*/React.createElement("span", null, c.label), /*#__PURE__*/React.createElement("div", {
+      className: "findings-col-resize",
+      onMouseDown: ev => startResize(c.id, ev),
+      onClick: e => e.stopPropagation(),
+      title: "Drag to resize"
+    }));
+  }), /*#__PURE__*/React.createElement("div", null)), sortedFiltered.length === 0 && /*#__PURE__*/React.createElement("div", {
     className: "empty"
-  }, "No findings match your filters."), filtered.map((f, i) => {
+  }, "No findings match your filters."), sortedFiltered.map((f, i) => {
     const isOpen = open.has(i);
     const isHidden = hiddenFindings?.has(f.checkId);
     return /*#__PURE__*/React.createElement(React.Fragment, {

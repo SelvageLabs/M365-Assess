@@ -720,6 +720,55 @@ section.block { margin-bottom: 52px; scroll-margin-top: 20px; }
   font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;
   color: var(--muted); font-weight: 600;
 }
+
+/* Issue #846: per-column header cell hosts the sort button + resize handle. */
+.findings-col-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  user-select: none;
+}
+.findings-col-sort {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.findings-col-sort:hover { color: var(--text); }
+.findings-col-sort.active { color: var(--accent-text); }
+.findings-col-sort > span:first-child {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.findings-col-sort-arrow {
+  font-size: 9px;
+  opacity: 0;
+  transition: opacity .15s;
+  flex-shrink: 0;
+}
+.findings-col-sort:hover .findings-col-sort-arrow { opacity: .5; }
+.findings-col-sort.active .findings-col-sort-arrow { opacity: 1; }
+
+.findings-col-resize {
+  position: absolute;
+  right: -8px; /* extend past the gap so the handle is reachable */
+  top: -4px;
+  bottom: -4px;
+  width: 8px;
+  cursor: col-resize;
+  z-index: 2;
+}
+.findings-col-resize:hover {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+}
 .finding-row {
   border-bottom: 1px solid var(--border);
   cursor: pointer;
