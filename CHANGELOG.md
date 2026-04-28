@@ -4,6 +4,29 @@ All notable changes to M365 Assess are documented here. This project uses [Conve
 
 ## [Unreleased]
 
+## [2.9.3] - 2026-04-28
+
+Big patch release covering the v2.7.0 — Deep UX milestone closeout plus the v2.10.0 — Polish & Audits UX work to date. Despite "patch" in the version label, this release ships a substantial new framework-coverage UX (per a Claude Design handoff) and several new capabilities — but no breaking API changes. The 3 remaining audit-flavored items (CIS mapping integrity, ISO 27001/27002, per-control narrative content) ship in v2.10.0 proper.
+
+### Added
+- **FrameworkQuilt redesign — adaptive single/multi layout (#751, #855)** — One unified component branches on framework count: 0 → empty state, 1 → single-framework focus surface (donut score + family chart + primary CTA), 2+ → sortable comparison table + coverage chart + drill-down. Implements the Direction-Merged design from `docs/design/framework-redesign/`. New components: `ScoreDonut` (animated SVG ring), `FwManageButton` (real form-control dropdown replacing the chip-shaped picker), `CompareTableM` (sortable), `CoverageChart` (sorted bar with position markers), `FamilyChartM` (clickable family rows), `FilterBanner` (action feedback with single Clear-all), `ProfileChipsM` (level chips promoted out of the buried expanded panel), `GapsCTA` (real primary action button)
+- **HideableBlock for any card or section (#712)** — extends edit-mode finding-row hide to ANY card/section. New generic `<HideableBlock hideKey>` wrapper with hover ✕ overlay and ↩ Restore. Persists into REPORT_OVERRIDES on Finalize. v1 wraps 15 elements (Score card, 4 KPIs, 3 roadmap lanes, 7 appendix sub-cards)
+- **Native taxonomy for 4 more frameworks (#845 partial)** — HIPAA (6 safeguards via 164.X), SOC 2 TSC (5 criteria), Essential Eight (8 strategies), CISA SCUBA (6 services). Brings native-taxonomy coverage to 12 of 14 supported frameworks. MITRE ATT&CK + STIG documented as deliberate domain fallback
+- **Findings table columns resizable + sortable (#846)** — drag handle on the right edge of every header (8px hot zone, 60px min-width, fr columns snap to px on first drag). Click sortable headers (Status / Finding / Domain / CheckID / Severity) to cycle none → asc → desc → none. Status sorts by enum order so Fail comes first. Both persist per-tenant in localStorage
+- **`-BaselineLabel` parameter** — already present from v2.9.2, no change here
+- **Design handoff package (#856)** — `docs/design/framework-redesign/` committed as the source of truth for the redesign spec
+- **`docs/LEVELS.md` (#844)** — semantic reference for level/profile chips. Locks down the per-check trust-the-registry model and rejects synthetic inheritance in code
+
+### Changed
+- **FilterBar consolidation (#847)** — collapsed from 5 stacked rows to a single flowing row with vertical dividers between groups (STATUS / SEVERITY / FRAMEWORK / DOMAIN / LEVEL). Groups break as units when the viewport is narrower; chips inside a group never break across a separator. Density-aware compact mode (existing `[data-density="compact"]` selector) halves vertical padding. FilterBar height drops from ~250px to ≤120px on a 1440px viewport
+- **CIS M365 v6 sections complete** — added the missing `4: Microsoft Intune` and `9: Microsoft Fabric` to the framework JSON so the family breakdown no longer shows `(unmapped)` rows for those sections
+- **Topbar text-size control split into A− / A+ (#852)** — replaced the single A/A+/A++ cycling button with two adjacent buttons that step one position each direction and disable at the boundaries. Tooltips show direction + current size. Persistence (`m365-text-scale` localStorage key) unchanged
+
+### Fixed
+- **Appendix Email-authentication card SPF/DKIM predicates (#860)** — the appendix used `r.SPF === 'Pass'` and `r.DKIMStatus === 'Pass'` to count passing domains, but the data fields contain raw SPF records and `OK`/`Not configured` for DKIMStatus. The card always reported `0/N passing` even when the top-of-report DNS panel showed correct counts. Aligned predicates with `DnsAuthPanel`
+- **Finding-detail Current value outline now reflects status (refs #674)** — was always red regardless of status, so a Pass finding's Current value visually read as failing. Now color-coded per tier: Pass green / Fail red / Warning amber / Review accent / Info muted. Recommended outline unchanged (always green — it's the target state)
+- **Level chip text "L2 ⊇ L3" was backwards (#844)** — already removed in #855's framework redesign; audit confirms no remaining text states it. `docs/LEVELS.md` enshrines the corrected semantic
+
 ## [2.9.2] - 2026-04-27
 
 Polish release: HTML report layout cleanup, XLSX matrix readability, and a `-SaveBaseline` UX papercut. One **breaking change** to a parameter type (see Changed).

@@ -3,7 +3,7 @@
     # Generated: 2026-03-08
 
     RootModule        = 'M365-Assess.psm1'
-    ModuleVersion     = '2.9.2'
+    ModuleVersion     = '2.9.3'
     GUID              = 'f7e3b2a1-4c5d-6e8f-9a0b-1c2d3e4f5a6b'
     Author            = 'Galvnyz'
     CompanyName       = 'Community'
@@ -242,7 +242,7 @@
             IconUri      = 'https://raw.githubusercontent.com/Galvnyz/M365-Assess/main/src/M365-Assess/assets/m365-assess-logo.png'
             LicenseUri   = 'https://github.com/Galvnyz/M365-Assess/blob/main/LICENSE'
             ProjectUri   = 'https://github.com/Galvnyz/M365-Assess'
-            ReleaseNotes = 'v2.9.2 - Polish release. HTML report layout cleanup: ScoringViews gained a section header + tier-coloured % number (#835); Permissions panel relocated from top-of-report into Appendix (#834); sidebar Domains demoted from top-level group to a collapsible sub-tree under Findings & Action (#836). XLSX Compliance Matrix: Horizon column renamed to Sequence; Pass rows now show Done with green color-coding (#840). Fixed: FilterBar position:sticky no longer follows the user past the findings section (#838). BREAKING: -SaveBaseline is now a [switch]; combine with new -BaselineLabel parameter for custom labels. Old -SaveBaseline ''mylabel'' form must migrate to -SaveBaseline -BaselineLabel ''mylabel'' (#809). v2.9.1: hotfix for AutoBaseline + PermissionsPanel render bugs. v2.9.0: Trust Hardening release.'
+            ReleaseNotes = 'v2.9.3 - Big patch covering v2.7.0 closeout + v2.10.0 polish to date. ADDED: FrameworkQuilt redesign (#751/#855) -- adaptive single/multi layout with animated donut score, sortable comparison table, coverage chart, family chart, primary CTA. HideableBlock wrapper for cards/sections in edit mode (#712). Native taxonomy for HIPAA / SOC2 / Essential Eight / SCUBA -- 12 of 14 frameworks now covered (#845 partial). Findings-table column resize + sort with localStorage persist (#846). Design handoff package committed at docs/design/framework-redesign/ (#856). docs/LEVELS.md semantic reference (#844). CHANGED: FilterBar consolidated to single flowing row, density-aware compact mode (#847) -- height drops ~250px to <=120px. CIS M365 v6 sections 4 and 9 added (Microsoft Intune, Microsoft Fabric). Topbar text-size split into A- / A+ controls (#852). FIXED: Appendix Email-auth card always reported 0/N passing for SPF/DKIM (#860). Finding-detail Current value outline now reflects status (refs #674). v2.9.2: Sequence column rename + breaking SaveBaseline switch.'
         }
     }
 }
