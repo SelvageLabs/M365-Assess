@@ -1834,6 +1834,30 @@ mark.search-hl {
 .text-scale-btn.scale-large span  { color: var(--accent-text, var(--accent)); }
 .text-scale-btn.scale-xlarge span { color: var(--accent-text, var(--accent)); font-size: 15px !important; }
 
+/* Issue #852: split A−/A+ controls. Buttons sit adjacent in a single rounded
+   pill, with a subtle divider between them. Disabled state for boundary. */
+.text-scale-group {
+  display: inline-flex;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.text-scale-group .icon-btn.text-scale-step {
+  border: none;
+  border-radius: 0;
+  padding: 0 10px;
+  height: 28px;
+  min-width: 32px;
+}
+.text-scale-group .text-scale-step-dec { border-right: 1px solid var(--border); }
+.text-scale-group .icon-btn.text-scale-step.disabled {
+  opacity: .35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+[data-text-scale="large"]  .text-scale-step-inc span,
+[data-text-scale="xlarge"] .text-scale-step-inc span { color: var(--accent-text, var(--accent)); }
+
 /* =========================================================
    DENSITY — base CSS is the neutral midpoint.
    Compact reduces padding; Comfort increases it significantly.

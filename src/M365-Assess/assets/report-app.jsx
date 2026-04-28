@@ -379,10 +379,19 @@ function useCollapsibleSection(defaultOpen = true) {
 
 // ======================== Topbar ========================
 function Topbar({ search, setSearch, searchMatches, matchIdx, onAdvanceMatch, onRetreatMatch, mode, setMode, theme, setTheme, textScale, setTextScale, onPrint, onTweaks, onHamburger, editMode, onEditToggle, onFinalize, onReset, hiddenCount }) {
+  // Issue #852: split the single cycling A/A+/A++ button into separate
+  // A− (decrement) and A+ (increment) controls. Each disables at the
+  // boundary (normal/xlarge) instead of wrapping around.
   const SCALE_CYCLE = ['normal', 'large', 'xlarge'];
-  const cycleScale = () => setTextScale(s => SCALE_CYCLE[(SCALE_CYCLE.indexOf(s) + 1) % SCALE_CYCLE.length] || 'normal');
-  const scaleLabel = { normal: 'A', large: 'A+', xlarge: 'A++' }[textScale] || 'A';
-  const scaleTitle = `Text size: ${textScale} (click to cycle)`;
+  const scaleIdx = SCALE_CYCLE.indexOf(textScale);
+  const safeIdx = scaleIdx === -1 ? 0 : scaleIdx;
+  const canIncrement = safeIdx < SCALE_CYCLE.length - 1;
+  const canDecrement = safeIdx > 0;
+  const incScale = () => { if (canIncrement) setTextScale(SCALE_CYCLE[safeIdx + 1]); };
+  const decScale = () => { if (canDecrement) setTextScale(SCALE_CYCLE[safeIdx - 1]); };
+  const scaleNames = { normal: 'normal', large: 'large', xlarge: 'extra large' };
+  const incTitle = canIncrement ? `Increase text size (currently ${scaleNames[textScale] || textScale})` : 'Already at max text size';
+  const decTitle = canDecrement ? `Decrease text size (currently ${scaleNames[textScale] || textScale})` : 'Already at default text size';
   return (
     <>
       {editMode && (
@@ -430,9 +439,16 @@ function Topbar({ search, setSearch, searchMatches, matchIdx, onAdvanceMatch, on
           <button className={theme==='high-contrast'?'active':''} onClick={()=>setTheme('high-contrast')}>High Contrast</button>
         </div>
         <div className="icon-btn-group">
-          <button className={'icon-btn text-scale-btn scale-' + textScale} title={scaleTitle} onClick={cycleScale}>
-            <span style={{fontWeight:600,fontSize:13,letterSpacing:'-0.02em'}}>{scaleLabel}</span>
-          </button>
+          <div className="text-scale-group" role="group" aria-label="Text size">
+            <button className={'icon-btn text-scale-step text-scale-step-dec' + (!canDecrement ? ' disabled' : '')}
+              title={decTitle} aria-disabled={!canDecrement} onClick={decScale}>
+              <span style={{fontWeight:600,fontSize:13,letterSpacing:'-0.02em'}}>A−</span>
+            </button>
+            <button className={'icon-btn text-scale-step text-scale-step-inc' + (!canIncrement ? ' disabled' : '')}
+              title={incTitle} aria-disabled={!canIncrement} onClick={incScale}>
+              <span style={{fontWeight:600,fontSize:13,letterSpacing:'-0.02em'}}>A+</span>
+            </button>
+          </div>
           <button className="icon-btn" title={mode==='dark'?'Light mode':'Dark mode'} onClick={()=>setMode(mode==='dark'?'light':'dark')}>
             {mode==='dark' ? <Icon.sun/> : <Icon.moon/>}
           </button>
