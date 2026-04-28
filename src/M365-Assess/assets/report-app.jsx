@@ -2118,8 +2118,45 @@ function FilterBar({ filters, setFilters, counts, total, search, setSearch, inFi
     Object.keys(counts.domain).filter(d => !DOM_ORDER.includes(d)).sort()
   );
 
+  // Issue #847: level chip group renders inline alongside other groups (no
+  // longer a dedicated row). Compute it eagerly so JSX stays flat.
+  const levelGroup = (() => {
+    const singleFw = filters.framework.length === 1 ? filters.framework[0] : null;
+    if (!singleFw) return null;
+    const isCmmc = singleFw.startsWith('cmmc');
+    const isCis  = singleFw.startsWith('cis-');
+    if (!isCmmc && !isCis) return null;
+    const c = { L1: 0, L2: 0, L3: 0, E3: 0, E5only: 0 };
+    FINDINGS.forEach(f => {
+      const profs = [].concat(f.fwMeta?.[singleFw]?.profiles || []);
+      if (profs.length === 0) return;
+      if (profs.some(p => p.includes('L1'))) c.L1++;
+      if (profs.some(p => p.includes('L2'))) c.L2++;
+      if (profs.some(p => p.includes('L3'))) c.L3++;
+      const hasE3 = profs.some(p => p.startsWith('E3'));
+      if (hasE3) c.E3++; else c.E5only++;
+    });
+    const tokenList = isCmmc
+      ? ['L1','L2','L3'].filter(t => c[t] > 0)
+      : ['L1','L2','E3','E5only'].filter(t => c[t] > 0);
+    if (!tokenList.length) return null;
+    const lvlCss = { L1: 'level', L2: 'level2', L3: 'level3', E3: 'lic', E5only: 'lic5' };
+    const lvlLabel = { L1: 'L1', L2: 'L2', L3: 'L3', E3: 'E3', E5only: 'E5 only' };
+    return (
+      <div className="filter-group">
+        <span className="filter-group-label">Level</span>
+        {tokenList.map(tok => (
+          <button key={tok} className={'chip ' + (lvlCss[tok]||'level') + ((filters.profile||[]).includes(tok) ? ' selected' : '')} onClick={() => update('profile', tok)}>
+            {lvlLabel[tok]}<span className="ct">{c[tok]||0}</span>
+          </button>
+        ))}
+      </div>
+    );
+  })();
+
   return (
     <div className={'filter-bar' + (isActive ? ' filter-bar-active' : '')}>
+      {/* Issue #847: search row stays as a dedicated full-width row. */}
       <div className="fb-row fb-row-search">
         <div className="fb-search">
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
@@ -2127,117 +2164,78 @@ function FilterBar({ filters, setFilters, counts, total, search, setSearch, inFi
           {search && <button className="fb-clear-x" onClick={()=>setSearch('')} aria-label="Clear">×</button>}
         </div>
       </div>
-      <div className="fb-row fb-row-chips">
-      <div className="filter-group">
-        <span className="filter-group-label">Status</span>
-        {statusChips
-          .filter(([v]) => (counts.status[v] || 0) > 0 || filters.status.includes(v))
-          .map(([v,cls,label])=>(
-            <button key={v} className={'chip '+cls+(filters.status.includes(v)?' selected':'')} onClick={()=>update('status',v)}>
-              <span className="dot"/>{label || v}<span className="ct">{counts.status[v]||0}</span>
+      {/* Issue #847: single flowing row for STATUS / SEVERITY / FRAMEWORK / DOMAIN /
+          LEVEL groups separated by vertical dividers. Groups break as units when
+          the viewport is narrower than the combined width; chips within a group
+          still wrap internally as a fallback. Clear-all sits inline at the end
+          when filters are active (was a dedicated trailing row). */}
+      <div className="fb-row fb-row-flow">
+        <div className="filter-group">
+          <span className="filter-group-label">Status</span>
+          {statusChips
+            .filter(([v]) => (counts.status[v] || 0) > 0 || filters.status.includes(v))
+            .map(([v,cls,label])=>(
+              <button key={v} className={'chip '+cls+(filters.status.includes(v)?' selected':'')} onClick={()=>update('status',v)}>
+                <span className="dot"/>{label || v}<span className="ct">{counts.status[v]||0}</span>
+              </button>
+            ))}
+        </div>
+        <div className="filter-divider"/>
+        <div className="filter-group">
+          <span className="filter-group-label">Severity</span>
+          {sevChips.map(([v,cls,label])=>(
+            <button key={v} className={'chip '+cls+(filters.severity.includes(v)?' selected':'')} onClick={()=>update('severity',v)}>
+              <span className="dot"/>{label}<span className="ct">{counts.severity[v]||0}</span>
             </button>
           ))}
-      </div>
-      <div className="filter-divider"/>
-      <div className="filter-group">
-        <span className="filter-group-label">Severity</span>
-        {sevChips.map(([v,cls,label])=>(
-          <button key={v} className={'chip '+cls+(filters.severity.includes(v)?' selected':'')} onClick={()=>update('severity',v)}>
-            <span className="dot"/>{label}<span className="ct">{counts.severity[v]||0}</span>
+        </div>
+        <div className="filter-divider"/>
+        <div className="filter-group" ref={fwRef}>
+          <span className="filter-group-label">Framework</span>
+          <button className={'chip chip-more'+(filters.framework.length?' selected':'')} onClick={()=>setFwOpen(o=>!o)}>
+            {filters.framework.length ? `${filters.framework.length} selected` : 'All frameworks'}
+            <svg width="10" height="10" viewBox="0 0 10 10" style={{marginLeft:4,opacity:.6}}><path d="M2 3l3 3 3-3" stroke="currentColor" strokeWidth="1.4" fill="none"/></svg>
           </button>
-        ))}
-      </div>
-      </div>
-      <div className="fb-row fb-row-dropdowns">
-      <div className="filter-group" ref={fwRef}>
-        <span className="filter-group-label">Framework</span>
-        <button className={'chip chip-more'+(filters.framework.length?' selected':'')} onClick={()=>setFwOpen(o=>!o)}>
-          {filters.framework.length ? `${filters.framework.length} selected` : 'All frameworks'}
-          <svg width="10" height="10" viewBox="0 0 10 10" style={{marginLeft:4,opacity:.6}}><path d="M2 3l3 3 3-3" stroke="currentColor" strokeWidth="1.4" fill="none"/></svg>
-        </button>
-        {fwOpen && (
-          <div className="domain-menu">
-            {FRAMEWORKS.map(f=>(
-              <label key={f.id} className={'domain-opt'+(filters.framework.includes(f.id)?' sel':'')}>
-                <input type="checkbox" checked={filters.framework.includes(f.id)} onChange={()=>update('framework',f.id)}/>
-                <span style={{fontFamily:'var(--font-mono)',fontSize:12}}>{f.id}</span>
-                <span className="ct">{counts.framework[f.id]||0}</span>
-              </label>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="filter-divider"/>
-      <div className="filter-group" ref={domainRef}>
-        <span className="filter-group-label">Domain</span>
-        <button className={'chip chip-more'+(filters.domain.length?' selected':'')} onClick={()=>setDomainOpen(o=>!o)}>
-          {filters.domain.length ? `${filters.domain.length} selected` : 'All domains'}
-          <svg width="10" height="10" viewBox="0 0 10 10" style={{marginLeft:4,opacity:.6}}><path d="M2 3l3 3 3-3" stroke="currentColor" strokeWidth="1.4" fill="none"/></svg>
-        </button>
-        {domainOpen && (
-          <div className="domain-menu">
-            {domainList.map(d => (
-              <label key={d} className={'domain-opt'+(filters.domain.includes(d)?' sel':'')}>
-                <input type="checkbox" checked={filters.domain.includes(d)} onChange={()=>update('domain',d)}/>
-                <span>{d}</span>
-                <span className="ct">{counts.domain[d]||0}</span>
-              </label>
-            ))}
-          </div>
-        )}
-      </div>
-      </div>
-      {(() => {
-        // Level / license filter row (#740). Appears when exactly one framework is active
-        // and that framework has profile-bearing findings. CMMC shows L1/L2/L3; CIS shows
-        // L1/L2/E3/E5 only. Single source of truth (filters.profile); chips here mirror
-        // the Framework Quilt panel chips and both write to the same state.
-        const singleFw = filters.framework.length === 1 ? filters.framework[0] : null;
-        if (!singleFw) return null;
-        const isCmmc = singleFw.startsWith('cmmc');
-        const isCis  = singleFw.startsWith('cis-');
-        if (!isCmmc && !isCis) return null;
-
-        // Token counts match the semantics in FrameworkQuilt's fwProfileStats.
-        const c = { L1: 0, L2: 0, L3: 0, E3: 0, E5only: 0 };
-        FINDINGS.forEach(f => {
-          const profs = [].concat(f.fwMeta?.[singleFw]?.profiles || []);
-          if (profs.length === 0) return;
-          if (profs.some(p => p.includes('L1'))) c.L1++;
-          if (profs.some(p => p.includes('L2'))) c.L2++;
-          if (profs.some(p => p.includes('L3'))) c.L3++;
-          const hasE3 = profs.some(p => p.startsWith('E3'));
-          if (hasE3) c.E3++;
-          else       c.E5only++;
-        });
-
-        const tokenList = isCmmc
-          ? ['L1','L2','L3'].filter(t => c[t] > 0)
-          : ['L1','L2','E3','E5only'].filter(t => c[t] > 0);
-        if (!tokenList.length) return null;
-
-        const lvlCss = { L1: 'level', L2: 'level2', L3: 'level3', E3: 'lic', E5only: 'lic5' };
-        const lvlLabel = { L1: 'L1', L2: 'L2', L3: 'L3', E3: 'E3', E5only: 'E5 only' };
-        return (
-          <div className="fb-row fb-row-level">
-            <div className="filter-group">
-              <span className="filter-group-label">Level</span>
-              {tokenList.map(tok => (
-                <button key={tok} className={'chip ' + (lvlCss[tok]||'level') + ((filters.profile||[]).includes(tok) ? ' selected' : '')} onClick={() => update('profile', tok)}>
-                  {lvlLabel[tok]}<span className="ct">{c[tok]||0}</span>
-                </button>
+          {fwOpen && (
+            <div className="domain-menu">
+              {FRAMEWORKS.map(f=>(
+                <label key={f.id} className={'domain-opt'+(filters.framework.includes(f.id)?' sel':'')}>
+                  <input type="checkbox" checked={filters.framework.includes(f.id)} onChange={()=>update('framework',f.id)}/>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:12}}>{f.id}</span>
+                  <span className="ct">{counts.framework[f.id]||0}</span>
+                </label>
               ))}
             </div>
-          </div>
-        );
-      })()}
-      {active > 0 && (
-        <div className="fb-row fb-row-clear">
-          <button className="filter-clear" onClick={()=>setFilters({status:[],severity:[],framework:[],domain:[],profile:[]})}>
+          )}
+        </div>
+        <div className="filter-divider"/>
+        <div className="filter-group" ref={domainRef}>
+          <span className="filter-group-label">Domain</span>
+          <button className={'chip chip-more'+(filters.domain.length?' selected':'')} onClick={()=>setDomainOpen(o=>!o)}>
+            {filters.domain.length ? `${filters.domain.length} selected` : 'All domains'}
+            <svg width="10" height="10" viewBox="0 0 10 10" style={{marginLeft:4,opacity:.6}}><path d="M2 3l3 3 3-3" stroke="currentColor" strokeWidth="1.4" fill="none"/></svg>
+          </button>
+          {domainOpen && (
+            <div className="domain-menu">
+              {domainList.map(d => (
+                <label key={d} className={'domain-opt'+(filters.domain.includes(d)?' sel':'')}>
+                  <input type="checkbox" checked={filters.domain.includes(d)} onChange={()=>update('domain',d)}/>
+                  <span>{d}</span>
+                  <span className="ct">{counts.domain[d]||0}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+        {levelGroup && <div className="filter-divider"/>}
+        {levelGroup}
+        {active > 0 && (
+          <button className="filter-clear filter-clear-inline"
+            onClick={()=>setFilters({status:[],severity:[],framework:[],domain:[],profile:[]})}>
             Clear {active} filter{active===1?'':'s'}
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

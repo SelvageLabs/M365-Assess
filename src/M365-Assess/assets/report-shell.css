@@ -595,12 +595,21 @@ section.block { margin-bottom: 52px; scroll-margin-top: 20px; }
   align-items: center;
 }
 .fb-row-search .fb-search { flex: 1 1 100%; max-width: none; }
-.fb-row-chips { justify-content: flex-start; }
-.fb-row-chips .filter-group { flex: 1 1 auto; min-width: 0; }
-/* Dropdown groups (FRAMEWORK / DOMAIN) size to content and cluster at the start
-   of the row rather than spanning it (#741). Two single-button groups with
-   flex-grow left large dead space between them; 0 0 auto keeps them tight. */
-.fb-row-dropdowns .filter-group { flex: 0 0 auto; min-width: 0; }
+
+/* Issue #847: single flowing row replacing the prior fb-row-chips +
+   fb-row-dropdowns + fb-row-level + fb-row-clear layout. Groups sit
+   side-by-side; flex-wrap lets entire groups break to the next line on
+   narrower viewports (groups are flex: 0 0 auto so they break as units,
+   not mid-group). */
+.fb-row-flow {
+  column-gap: 12px;
+  row-gap: 6px;
+}
+.fb-row-flow .filter-group { flex: 0 0 auto; min-width: 0; }
+/* Hide leading dividers on a wrapped row so a group that breaks to a new
+   line doesn't start with an orphan divider. */
+.fb-row-flow .filter-divider:first-child { display: none; }
+
 .filter-bar-active {
   position: sticky; top: 0;
   z-index: 50;
@@ -610,9 +619,37 @@ section.block { margin-bottom: 52px; scroll-margin-top: 20px; }
 }
 .filter-group { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .filter-group-label {
-  font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;
-  color: var(--muted); font-weight: 600; margin-right: 4px;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--muted); font-weight: 600; margin-right: 2px;
 }
+
+/* Issue #847: inline Clear button (replaces dedicated trailing row).
+   Sits at the end of the flow row when filters are active. */
+.filter-clear-inline {
+  margin-left: auto;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.filter-clear-inline:hover {
+  border-color: var(--danger);
+  color: var(--danger-text);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+}
+
+/* Issue #847: density-aware compact mode. Halves the FilterBar's vertical
+   padding and tightens chip/label sizes when the user picks Compact density. */
+[data-density="compact"] .filter-bar { padding: 6px 10px; gap: 6px; }
+[data-density="compact"] .fb-row-flow { column-gap: 10px; row-gap: 4px; }
+[data-density="compact"] .filter-group-label { font-size: 10px; letter-spacing: .08em; margin-right: 1px; }
+[data-density="compact"] .filter-bar .chip { padding: 3px 8px; font-size: 11px; }
+[data-density="compact"] .filter-bar .filter-group { gap: 4px; }
 .chip {
   padding: 4px 10px;
   font-size: 12px; font-weight: 500;

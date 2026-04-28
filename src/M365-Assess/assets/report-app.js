@@ -3490,6 +3490,59 @@ function FilterBar({
   const sevChips = [['critical', 'crit', 'Critical'], ['high', 'high', 'High'], ['medium', 'med', 'Medium'], ['low', 'low', 'Low']];
   const DOM_ORDER = ['Entra ID', 'Conditional Access', 'Enterprise Apps', 'Exchange Online', 'Intune', 'Defender', 'Purview / Compliance', 'SharePoint & OneDrive', 'Teams', 'Forms', 'Power BI', 'Active Directory', 'SOC 2', 'Value Opportunity'];
   const domainList = DOM_ORDER.filter(d => counts.domain[d]).concat(Object.keys(counts.domain).filter(d => !DOM_ORDER.includes(d)).sort());
+
+  // Issue #847: level chip group renders inline alongside other groups (no
+  // longer a dedicated row). Compute it eagerly so JSX stays flat.
+  const levelGroup = (() => {
+    const singleFw = filters.framework.length === 1 ? filters.framework[0] : null;
+    if (!singleFw) return null;
+    const isCmmc = singleFw.startsWith('cmmc');
+    const isCis = singleFw.startsWith('cis-');
+    if (!isCmmc && !isCis) return null;
+    const c = {
+      L1: 0,
+      L2: 0,
+      L3: 0,
+      E3: 0,
+      E5only: 0
+    };
+    FINDINGS.forEach(f => {
+      const profs = [].concat(f.fwMeta?.[singleFw]?.profiles || []);
+      if (profs.length === 0) return;
+      if (profs.some(p => p.includes('L1'))) c.L1++;
+      if (profs.some(p => p.includes('L2'))) c.L2++;
+      if (profs.some(p => p.includes('L3'))) c.L3++;
+      const hasE3 = profs.some(p => p.startsWith('E3'));
+      if (hasE3) c.E3++;else c.E5only++;
+    });
+    const tokenList = isCmmc ? ['L1', 'L2', 'L3'].filter(t => c[t] > 0) : ['L1', 'L2', 'E3', 'E5only'].filter(t => c[t] > 0);
+    if (!tokenList.length) return null;
+    const lvlCss = {
+      L1: 'level',
+      L2: 'level2',
+      L3: 'level3',
+      E3: 'lic',
+      E5only: 'lic5'
+    };
+    const lvlLabel = {
+      L1: 'L1',
+      L2: 'L2',
+      L3: 'L3',
+      E3: 'E3',
+      E5only: 'E5 only'
+    };
+    return /*#__PURE__*/React.createElement("div", {
+      className: "filter-group"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "filter-group-label"
+    }, "Level"), tokenList.map(tok => /*#__PURE__*/React.createElement("button", {
+      key: tok,
+      className: 'chip ' + (lvlCss[tok] || 'level') + ((filters.profile || []).includes(tok) ? ' selected' : ''),
+      onClick: () => update('profile', tok)
+    }, lvlLabel[tok], /*#__PURE__*/React.createElement("span", {
+      className: "ct"
+    }, c[tok] || 0))));
+  })();
   return /*#__PURE__*/React.createElement("div", {
     className: 'filter-bar' + (isActive ? ' filter-bar-active' : '')
   }, /*#__PURE__*/React.createElement("div", {
@@ -3518,7 +3571,7 @@ function FilterBar({
     onClick: () => setSearch(''),
     "aria-label": "Clear"
   }, "\xD7"))), /*#__PURE__*/React.createElement("div", {
-    className: "fb-row fb-row-chips"
+    className: "fb-row fb-row-flow"
   }, /*#__PURE__*/React.createElement("div", {
     className: "filter-group"
   }, /*#__PURE__*/React.createElement("span", {
@@ -3545,9 +3598,9 @@ function FilterBar({
     className: "dot"
   }), label, /*#__PURE__*/React.createElement("span", {
     className: "ct"
-  }, counts.severity[v] || 0))))), /*#__PURE__*/React.createElement("div", {
-    className: "fb-row fb-row-dropdowns"
-  }, /*#__PURE__*/React.createElement("div", {
+  }, counts.severity[v] || 0)))), /*#__PURE__*/React.createElement("div", {
+    className: "filter-divider"
+  }), /*#__PURE__*/React.createElement("div", {
     className: "filter-group",
     ref: fwRef
   }, /*#__PURE__*/React.createElement("span", {
@@ -3618,67 +3671,10 @@ function FilterBar({
     onChange: () => update('domain', d)
   }), /*#__PURE__*/React.createElement("span", null, d), /*#__PURE__*/React.createElement("span", {
     className: "ct"
-  }, counts.domain[d] || 0)))))), (() => {
-    // Level / license filter row (#740). Appears when exactly one framework is active
-    // and that framework has profile-bearing findings. CMMC shows L1/L2/L3; CIS shows
-    // L1/L2/E3/E5 only. Single source of truth (filters.profile); chips here mirror
-    // the Framework Quilt panel chips and both write to the same state.
-    const singleFw = filters.framework.length === 1 ? filters.framework[0] : null;
-    if (!singleFw) return null;
-    const isCmmc = singleFw.startsWith('cmmc');
-    const isCis = singleFw.startsWith('cis-');
-    if (!isCmmc && !isCis) return null;
-
-    // Token counts match the semantics in FrameworkQuilt's fwProfileStats.
-    const c = {
-      L1: 0,
-      L2: 0,
-      L3: 0,
-      E3: 0,
-      E5only: 0
-    };
-    FINDINGS.forEach(f => {
-      const profs = [].concat(f.fwMeta?.[singleFw]?.profiles || []);
-      if (profs.length === 0) return;
-      if (profs.some(p => p.includes('L1'))) c.L1++;
-      if (profs.some(p => p.includes('L2'))) c.L2++;
-      if (profs.some(p => p.includes('L3'))) c.L3++;
-      const hasE3 = profs.some(p => p.startsWith('E3'));
-      if (hasE3) c.E3++;else c.E5only++;
-    });
-    const tokenList = isCmmc ? ['L1', 'L2', 'L3'].filter(t => c[t] > 0) : ['L1', 'L2', 'E3', 'E5only'].filter(t => c[t] > 0);
-    if (!tokenList.length) return null;
-    const lvlCss = {
-      L1: 'level',
-      L2: 'level2',
-      L3: 'level3',
-      E3: 'lic',
-      E5only: 'lic5'
-    };
-    const lvlLabel = {
-      L1: 'L1',
-      L2: 'L2',
-      L3: 'L3',
-      E3: 'E3',
-      E5only: 'E5 only'
-    };
-    return /*#__PURE__*/React.createElement("div", {
-      className: "fb-row fb-row-level"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "filter-group"
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "filter-group-label"
-    }, "Level"), tokenList.map(tok => /*#__PURE__*/React.createElement("button", {
-      key: tok,
-      className: 'chip ' + (lvlCss[tok] || 'level') + ((filters.profile || []).includes(tok) ? ' selected' : ''),
-      onClick: () => update('profile', tok)
-    }, lvlLabel[tok], /*#__PURE__*/React.createElement("span", {
-      className: "ct"
-    }, c[tok] || 0)))));
-  })(), active > 0 && /*#__PURE__*/React.createElement("div", {
-    className: "fb-row fb-row-clear"
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "filter-clear",
+  }, counts.domain[d] || 0))))), levelGroup && /*#__PURE__*/React.createElement("div", {
+    className: "filter-divider"
+  }), levelGroup, active > 0 && /*#__PURE__*/React.createElement("button", {
+    className: "filter-clear filter-clear-inline",
     onClick: () => setFilters({
       status: [],
       severity: [],
