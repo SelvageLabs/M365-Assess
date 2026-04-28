@@ -708,14 +708,27 @@ function Topbar({
   onReset,
   hiddenCount
 }) {
+  // Issue #852: split the single cycling A/A+/A++ button into separate
+  // A− (decrement) and A+ (increment) controls. Each disables at the
+  // boundary (normal/xlarge) instead of wrapping around.
   const SCALE_CYCLE = ['normal', 'large', 'xlarge'];
-  const cycleScale = () => setTextScale(s => SCALE_CYCLE[(SCALE_CYCLE.indexOf(s) + 1) % SCALE_CYCLE.length] || 'normal');
-  const scaleLabel = {
-    normal: 'A',
-    large: 'A+',
-    xlarge: 'A++'
-  }[textScale] || 'A';
-  const scaleTitle = `Text size: ${textScale} (click to cycle)`;
+  const scaleIdx = SCALE_CYCLE.indexOf(textScale);
+  const safeIdx = scaleIdx === -1 ? 0 : scaleIdx;
+  const canIncrement = safeIdx < SCALE_CYCLE.length - 1;
+  const canDecrement = safeIdx > 0;
+  const incScale = () => {
+    if (canIncrement) setTextScale(SCALE_CYCLE[safeIdx + 1]);
+  };
+  const decScale = () => {
+    if (canDecrement) setTextScale(SCALE_CYCLE[safeIdx - 1]);
+  };
+  const scaleNames = {
+    normal: 'normal',
+    large: 'large',
+    xlarge: 'extra large'
+  };
+  const incTitle = canIncrement ? `Increase text size (currently ${scaleNames[textScale] || textScale})` : 'Already at max text size';
+  const decTitle = canDecrement ? `Decrease text size (currently ${scaleNames[textScale] || textScale})` : 'Already at default text size';
   return /*#__PURE__*/React.createElement(React.Fragment, null, editMode && /*#__PURE__*/React.createElement("div", {
     className: "edit-toolbar"
   }, /*#__PURE__*/React.createElement("span", {
@@ -775,17 +788,33 @@ function Topbar({
     onClick: () => setTheme('high-contrast')
   }, "High Contrast")), /*#__PURE__*/React.createElement("div", {
     className: "icon-btn-group"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-scale-group",
+    role: "group",
+    "aria-label": "Text size"
   }, /*#__PURE__*/React.createElement("button", {
-    className: 'icon-btn text-scale-btn scale-' + textScale,
-    title: scaleTitle,
-    onClick: cycleScale
+    className: 'icon-btn text-scale-step text-scale-step-dec' + (!canDecrement ? ' disabled' : ''),
+    title: decTitle,
+    "aria-disabled": !canDecrement,
+    onClick: decScale
   }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontWeight: 600,
       fontSize: 13,
       letterSpacing: '-0.02em'
     }
-  }, scaleLabel)), /*#__PURE__*/React.createElement("button", {
+  }, "A\u2212")), /*#__PURE__*/React.createElement("button", {
+    className: 'icon-btn text-scale-step text-scale-step-inc' + (!canIncrement ? ' disabled' : ''),
+    title: incTitle,
+    "aria-disabled": !canIncrement,
+    onClick: incScale
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 600,
+      fontSize: 13,
+      letterSpacing: '-0.02em'
+    }
+  }, "A+"))), /*#__PURE__*/React.createElement("button", {
     className: "icon-btn",
     title: mode === 'dark' ? 'Light mode' : 'Dark mode',
     onClick: () => setMode(mode === 'dark' ? 'light' : 'dark')
@@ -4794,8 +4823,11 @@ function Appendix() {
   const licenses = D.licenses || [];
   const dns = D.dns || [];
   const dnsTotal = dns.length;
-  const spfPass = dns.filter(r => r.SPF === 'Pass').length;
-  const dkimPass = dns.filter(r => r.DKIMStatus === 'Pass' || r.DKIM === 'Pass').length;
+  // Issue #860: predicates aligned with DnsAuthPanel (line 986). The previous
+  // === 'Pass' checks always counted 0 because the data fields contain raw
+  // SPF records and 'OK' for DKIMStatus, never the literal 'Pass'.
+  const spfPass = dns.filter(r => r.SPF && !r.SPF.includes('Not')).length;
+  const dkimPass = dns.filter(r => r.DKIMStatus === 'OK').length;
   const dmarcEnf = dns.filter(r => r.DMARCPolicy === 'reject' || r.DMARCPolicy === 'quarantine').length;
   const allRoles = D['admin-roles'] || [];
   const roleCounts = allRoles.reduce((acc, r) => {
