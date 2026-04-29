@@ -202,7 +202,7 @@ Describe 'Export-FrameworkCatalog - Scoring Engine' {
             $html | Should -Match 'CheckId|Check ID'
         }
 
-        It 'Inline HTML for all 14 frameworks is valid' {
+        It 'Inline HTML for all frameworks is valid' {
             foreach ($fw in $allFrameworks) {
                 $html = Export-FrameworkCatalog -Findings $inlineFindings -Framework $fw -ControlRegistry $registry -Mode Inline -WarningAction SilentlyContinue
                 $html | Should -BeOfType [string] -Because "$($fw.frameworkId) should return HTML"
@@ -261,7 +261,7 @@ Describe 'Export-FrameworkCatalog - Scoring Engine' {
             $content | Should -Match 'dark-theme|theme-toggle'
         }
 
-        It 'Standalone works for all 14 frameworks' {
+        It 'Standalone works for all frameworks' {
             foreach ($fw in $allFrameworks) {
                 $safeName = $fw.frameworkId -replace '[^a-zA-Z0-9]', '-'
                 $outPath = Join-Path -Path $standaloneDir -ChildPath "$safeName-all.html"
@@ -274,7 +274,7 @@ Describe 'Export-FrameworkCatalog - Scoring Engine' {
         }
     }
 
-    Context 'Integration - all 14 frameworks' {
+    Context 'Integration - all frameworks' {
         It 'Produces valid GroupedResult for every framework' {
             $checkIds = @(
                 'ENTRA-CLOUDADMIN-001', 'CA-MFA-ADMIN-001', 'CA-LEGACYAUTH-001',
