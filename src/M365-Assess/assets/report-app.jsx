@@ -728,6 +728,9 @@ function Posture() {
           <MFABreakdown />
         </div>
       </div>
+      <HideableBlock hideKey="how-you-compare" label="How you compare card">
+        <HowYouCompareCard/>
+      </HideableBlock>
       <ExecSummaryRow/>
       {critical > 0 && (
         <div className="banner">
@@ -742,6 +745,88 @@ function Posture() {
           </div>
         </div>
       )}
+    </section>
+  );
+}
+
+// ======================== How you compare (#719) ========================
+// Reference-profile baseline fallback for the cohort-comparison card. Reads
+// D.referenceBaseline (built by Build-ReportData from controls/reference-
+// profiles.json) and renders a matched-profile callout with range bars for
+// fails + warnings. Hidden when no baseline data is available (e.g., early
+// reports generated before the JSON was bundled).
+function HowYouCompareCard() {
+  const rb = D.referenceBaseline;
+  if (!rb || !rb.matchedProfile) return null;
+
+  const mp = rb.matchedProfile;
+  const cur = rb.current || {};
+  const det = rb.detected || {};
+
+  // Row visual: range bar with current-value marker.
+  const RangeBar = ({ label, value, range, klass }) => {
+    const min = range?.min ?? 0;
+    const max = range?.max ?? Math.max(value || 0, 50);
+    // Pad the bar 25% on each side beyond the typical range so out-of-range
+    // values still render with the marker visible.
+    const padded = (max - min) * 0.25 || 5;
+    const barMin = Math.max(0, min - padded);
+    const barMax = max + padded;
+    const pct = v => Math.max(0, Math.min(100, ((v - barMin) / (barMax - barMin)) * 100));
+    const rangeStartPct = pct(min);
+    const rangeEndPct = pct(max);
+    const markerPct = pct(value);
+    const klassMap = { in_range: 'good', below_typical: 'good', above_typical: 'bad' };
+    const tone = klassMap[klass] || 'neutral';
+    const verdict = klass === 'in_range' ? 'in typical range' :
+                    klass === 'above_typical' ? `above typical (${min}–${max})` :
+                    klass === 'below_typical' ? `below typical (${min}–${max}) — better than average` :
+                    'no comparison available';
+    return (
+      <div className="compare-row">
+        <div className="compare-row-head">
+          <span className="compare-row-label">{label}</span>
+          <span className={'compare-row-verdict compare-' + tone}>
+            <strong>{value}</strong> · {verdict}
+          </span>
+        </div>
+        <div className="compare-bar">
+          <div className="compare-bar-typical" style={{ left: rangeStartPct + '%', width: (rangeEndPct - rangeStartPct) + '%' }}/>
+          <div className={'compare-bar-marker compare-marker-' + tone} style={{ left: markerPct + '%' }} title={`Your tenant: ${value}`}/>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <section className="how-you-compare-card">
+      <header className="hyc-head">
+        <div>
+          <div className="hyc-eyebrow">01b · Cohort comparison</div>
+          <h3 className="hyc-title">How you compare</h3>
+          <p className="hyc-subtitle">
+            Matched profile: <strong>{mp.label}</strong>
+            {det.skuTier !== 'Unknown' && <span className="hyc-detected"> · detected {det.skuTier}{det.userCount > 0 ? ' / ' + det.userCount + ' users' : ''}</span>}
+          </p>
+        </div>
+        <div className="hyc-calibration" title={`Reference profiles last calibrated ${rb.lastCalibrated} (${rb.calibrationStatus})`}>
+          <span className="hyc-calibration-dot"/> reference baseline
+        </div>
+      </header>
+      <p className="hyc-description">{mp.description}</p>
+      <div className="compare-bars">
+        <RangeBar label="Fails"    value={cur.fails    || 0} range={mp.typicalFails}    klass={cur.failsClass}/>
+        <RangeBar label="Warnings" value={cur.warnings || 0} range={mp.typicalWarnings} klass={cur.warningsClass}/>
+      </div>
+      <details className="hyc-anchors">
+        <summary>Profile anchor traits</summary>
+        <ul>
+          {(mp.anchorTraits || []).map((t, i) => <li key={i}>{t}</li>)}
+        </ul>
+      </details>
+      <footer className="hyc-footer">
+        Hand-curated reference baseline (#719). Live cross-tenant cohort percentiles ship with opt-in telemetry (#717) when available.
+      </footer>
     </section>
   );
 }

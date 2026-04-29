@@ -1,0 +1,123 @@
+{
+  "$schema": "internal — see docs/research/baseline-findings-distribution.md § 5.3 + issue #719",
+  "version": "1.0.0",
+  "lastCalibrated": "2026-04-29",
+  "calibrationStatus": "preliminary",
+  "calibrationNote": "v1 baseline ranges informed by anonymised real-tenant assessments + curator judgement. Update each release as the check registry evolves and new tenants inform the curve. Live cohort telemetry (#717) supersedes when available.",
+  "profiles": [
+    {
+      "id": "smb-default",
+      "label": "SMB default",
+      "description": "Small business with Business Premium, minimal hardening beyond defaults. The most common starting state for tenants under 50 seats — Security Defaults on, basic Conditional Access, no Intune compliance policies.",
+      "matchCriteria": {
+        "skuTier": "BusinessPremium",
+        "userCount": { "min": 1, "max": 50 },
+        "scope": "M365 only"
+      },
+      "typicalFails":    { "min": 60, "max": 90, "median": 75 },
+      "typicalWarnings": { "min": 25, "max": 40, "median": 32 },
+      "anchorTraits": [
+        "Security Defaults enabled (no full Conditional Access)",
+        "Mailbox audit defaults",
+        "External SharePoint sharing 'Anyone' or 'New & Existing Guests'",
+        "No Intune compliance policies",
+        "DKIM disabled, DMARC missing or p=none"
+      ]
+    },
+    {
+      "id": "e3-standard",
+      "label": "E3 standard",
+      "description": "Mid-market E3 tenant with default-ish posture. Moved off Security Defaults to Conditional Access but most policies are permissive defaults.",
+      "matchCriteria": {
+        "skuTier": "E3",
+        "userCount": { "min": 50, "max": 500 },
+        "scope": "M365 only"
+      },
+      "typicalFails":    { "min": 40, "max": 70, "median": 55 },
+      "typicalWarnings": { "min": 20, "max": 35, "median": 27 },
+      "anchorTraits": [
+        "Conditional Access enabled but limited coverage",
+        "Some MFA gaps (typically 5-15% of users)",
+        "Legacy auth not yet blocked org-wide",
+        "External SharePoint sharing scoped to specific domains",
+        "Defender for Office Plan 1 baseline anti-phish/anti-malware"
+      ]
+    },
+    {
+      "id": "e3-hardened",
+      "label": "E3 hardened",
+      "description": "E3 tenant with a security-engineering pass: phishing-resistant MFA enforced for admins, legacy auth blocked, Defender for Office tuned, mailbox audit on.",
+      "matchCriteria": {
+        "skuTier": "E3",
+        "userCount": { "min": 50, "max": 500 },
+        "scope": "M365 only"
+      },
+      "typicalFails":    { "min": 20, "max": 35, "median": 27 },
+      "typicalWarnings": { "min": 10, "max": 20, "median": 15 },
+      "anchorTraits": [
+        "Phishing-resistant MFA for admins",
+        "Legacy auth blocked org-wide",
+        "Defender for Office preset policies (Strict / Standard)",
+        "External SharePoint sharing 'Existing Guests' or stricter",
+        "Auto-forwarding to external blocked"
+      ]
+    },
+    {
+      "id": "e5-standard",
+      "label": "E5 standard",
+      "description": "Enterprise E5 tenant using the licence's defaults. PIM and Identity Protection licensed but not always fully configured.",
+      "matchCriteria": {
+        "skuTier": "E5",
+        "userCount": { "min": 250, "max": 2000 },
+        "scope": "M365 only"
+      },
+      "typicalFails":    { "min": 35, "max": 65, "median": 50 },
+      "typicalWarnings": { "min": 15, "max": 30, "median": 22 },
+      "anchorTraits": [
+        "Conditional Access in place",
+        "PIM licensed but not all roles eligible",
+        "Defender for Office 365 Plan 2 deployed but Safe Links/Safe Attach may be permissive",
+        "Sensitivity labels available but adoption partial"
+      ]
+    },
+    {
+      "id": "e5-hardened",
+      "label": "E5 hardened",
+      "description": "E5 tenant with the security-engineering pass plus endpoint scope. PIM eligible-only for Global Admin, Identity Protection risk policies on, Intune compliance gating.",
+      "matchCriteria": {
+        "skuTier": "E5",
+        "userCount": { "min": 250, "max": 2000 },
+        "scope": "M365 + endpoint"
+      },
+      "typicalFails":    { "min": 20, "max": 40, "median": 30 },
+      "typicalWarnings": { "min": 10, "max": 20, "median": 15 },
+      "anchorTraits": [
+        "PIM with eligible-only privileged roles",
+        "Identity Protection sign-in + user-risk policies",
+        "Intune compliance policies enforce Conditional Access",
+        "Defender for Office Strict preset across user groups",
+        "Sensitivity labels with auto-application + DLP policies enforced"
+      ]
+    },
+    {
+      "id": "regulated",
+      "label": "Regulated (financial / healthcare)",
+      "description": "Compliance-driven E5 tenant with full security/compliance feature stack lit up. Often runs Microsoft Purview, eDiscovery, retention policies, communication compliance — driven by regulator examination, not by security strategy.",
+      "matchCriteria": {
+        "skuTier": "E5",
+        "userCount": { "min": 1000, "max": 100000 },
+        "scope": "Full"
+      },
+      "typicalFails":    { "min": 15, "max": 25, "median": 20, "target": 25 },
+      "typicalWarnings": { "min": 8,  "max": 15, "median": 12, "target": 15 },
+      "anchorTraits": [
+        "PIM with approval workflow + access reviews",
+        "Communication compliance + insider risk policies",
+        "Retention labels covering regulatory record types",
+        "Information barriers between business units",
+        "Customer Lockbox enabled",
+        "Privileged Access Management for tier-0 changes"
+      ]
+    }
+  ]
+}

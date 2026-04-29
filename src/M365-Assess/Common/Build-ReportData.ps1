@@ -392,6 +392,89 @@ function Build-ReportDataJson {
         }
     }
 
+    # ------------------------------------------------------------------
+    # Reference-profile cohort comparison (#719) — fallback for #717
+    # opt-in cohort telemetry. Match the tenant against hand-curated
+    # profiles in controls/reference-profiles.json based on dominant SKU
+    # tier + user count, then compare current Fail/Warning counts against
+    # the matched profile's typical ranges.
+    # ------------------------------------------------------------------
+    $referenceBaseline = $null
+    try {
+        $refPath = Join-Path -Path $PSScriptRoot -ChildPath '..\controls\reference-profiles.json'
+        if (Test-Path -Path $refPath) {
+            $refData = Get-Content -Raw -Path $refPath | ConvertFrom-Json
+
+            # Detect dominant SKU tier from license rows. Order matters:
+            # E5 trumps E3 trumps Business Premium (higher-tier wins on ties).
+            $skuTier = 'Unknown'
+            $licenseLabels = @($licenseRows | ForEach-Object { "$($_.License)" })
+            $licJoined = ($licenseLabels -join ' | ').ToLower()
+            if     ($licJoined -match '\be5\b|enterprise mobility \+ security e5|m365 e5|microsoft 365 e5|office 365 e5')                        { $skuTier = 'E5' }
+            elseif ($licJoined -match '\be3\b|enterprise mobility \+ security e3|m365 e3|microsoft 365 e3|office 365 e3')                        { $skuTier = 'E3' }
+            elseif ($licJoined -match 'business premium|business standard|business basic')                                                       { $skuTier = 'BusinessPremium' }
+
+            # User-count bucket from licensed users (preferred) or total users.
+            $userCountForMatch = 0
+            if ($usersRows.Count -gt 0) {
+                $u = $usersRows[0]
+                $userCountForMatch = if ($u.Licensed -and [int]$u.Licensed -gt 0) { [int]$u.Licensed } else { [int]$u.TotalUsers }
+            }
+
+            # Best-fit match: prefer profile whose SKU tier matches AND user count is in range.
+            # Tie-break: hardened over standard if both match (tenant gets credit for being on
+            # the better side of the curve when ambiguous).
+            $matched = $null
+            foreach ($p in $refData.profiles) {
+                $skuOk  = ($skuTier -eq 'Unknown') -or ($p.matchCriteria.skuTier -eq $skuTier)
+                $userOk = ($userCountForMatch -ge $p.matchCriteria.userCount.min -and $userCountForMatch -le $p.matchCriteria.userCount.max) -or $userCountForMatch -eq 0
+                if ($skuOk -and $userOk) {
+                    if ($null -eq $matched -or $p.label -match 'hardened|regulated') { $matched = $p }
+                }
+            }
+            # Fallback: if no SKU/size match, pick the median-sized profile (E3 standard) so the
+            # card still renders something rather than disappearing entirely.
+            if ($null -eq $matched) {
+                $matched = $refData.profiles | Where-Object { $_.id -eq 'e3-standard' } | Select-Object -First 1
+            }
+
+            # Current tenant Fail / Warning counts from findings.
+            $currentFails    = @($findings | Where-Object { $_.status -eq 'Fail'    }).Count
+            $currentWarnings = @($findings | Where-Object { $_.status -eq 'Warning' }).Count
+
+            # In-range vs above/below typical for both axes.
+            $classifyAxis = {
+                param($value, $rng)
+                if ($value -lt $rng.min) { 'below_typical' }
+                elseif ($value -gt $rng.max) { 'above_typical' }
+                else { 'in_range' }
+            }
+            $failClass = & $classifyAxis $currentFails    $matched.typicalFails
+            $warnClass = & $classifyAxis $currentWarnings $matched.typicalWarnings
+
+            $referenceBaseline = [ordered]@{
+                version         = $refData.version
+                lastCalibrated  = $refData.lastCalibrated
+                calibrationStatus = $refData.calibrationStatus
+                matchedProfile  = $matched
+                detected        = [ordered]@{
+                    skuTier   = $skuTier
+                    userCount = $userCountForMatch
+                }
+                current         = [ordered]@{
+                    fails           = $currentFails
+                    warnings        = $currentWarnings
+                    failsClass      = $failClass
+                    warningsClass   = $warnClass
+                }
+                allProfiles     = $refData.profiles
+            }
+        }
+    }
+    catch {
+        Write-Verbose "Reference-profile baseline matching skipped: $($_.Exception.Message)"
+    }
+
     # SharePoint config — extract sharing level from the security-config collector CSV
     $spoRows = & $get 'sharepoint-config'
     $spoConfig = [ordered]@{}
@@ -446,6 +529,7 @@ function Build-ReportDataJson {
         cmmcHandoff    = $CmmcHandoff
         cmmcCoverage   = $cmmcCoverage
         permissions    = $PermissionDeficits
+        referenceBaseline = $referenceBaseline
     }
 
     # ------------------------------------------------------------------
