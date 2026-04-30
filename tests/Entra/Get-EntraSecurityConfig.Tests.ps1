@@ -184,12 +184,10 @@ Describe 'Get-EntraSecurityConfig' {
         $adminCheck.Status | Should -Be 'Pass'
     }
 
-    It 'Emergency access accounts are detected' {
-        $bgCheck = $settings | Where-Object {
-            $_.CheckId -like 'ENTRA-ADMIN-003*' -and $_.Setting -eq 'Emergency Access Accounts'
-        }
-        $bgCheck | Should -Not -BeNullOrEmpty
-    }
+    # ENTRA-ADMIN-003 (Emergency Access Accounts) was removed in #888 — duplicate
+    # of ENTRA-BREAKGLASS-001 (Get-StrykerIncidentReadiness.ps1). Coverage of
+    # break-glass detection moved to the Stryker collector. A Stryker-side test
+    # is filed as follow-up work.
 
     It 'Produces settings across multiple categories' {
         $categories = $settings | Select-Object -ExpandProperty Category -Unique

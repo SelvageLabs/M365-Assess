@@ -282,8 +282,20 @@ catch {
 }
 
 # ------------------------------------------------------------------
-# 7c. SSPR Enabled for All Users (CIS 5.2.4.1)
+# 7c. MFA Registration Campaign Targets All Users
 # ------------------------------------------------------------------
+# #878: this check WAS labeled as the SSPR enablement check (CIS 5.2.4.1),
+# but the Graph property it reads — registrationEnforcement.authentication
+# MethodsRegistrationCampaign — is the MFA / Microsoft Authenticator
+# nudge feature, NOT SSPR enablement. Microsoft historically nested this
+# under the SSPR policy object in Graph for legacy reasons, but
+# functionally it's an MFA enrollment-acceleration control.
+#
+# Relabeled to match what's actually measured. The original CIS 5.2.4.1
+# coverage (Self-Service Password Reset enabled for All Users) is no
+# longer claimed by this check — that's a separate registry concern
+# tracked upstream. CheckId kept stable to avoid orphaning the registry
+# mapping; the upstream fix will rename the CheckId if/when it lands.
 try {
     if ($sspr) {
         $campaign = $sspr['registrationEnforcement']['authenticationMethodsRegistrationCampaign']
@@ -294,19 +306,19 @@ try {
             $targetsAll = $includeTargets | Where-Object { $_['id'] -eq 'all_users' -or $_['targetType'] -eq 'group' }
         }
         $settingParams = @{
-            Category         = 'Password Management'
-            Setting          = 'SSPR Registration Campaign Targets All Users'
+            Category         = 'Authentication Methods'
+            Setting          = 'MFA Registration Campaign Targets All Users'
             CurrentValue     = $(if ($campaignState -eq 'enabled' -and $targetsAll) { 'Enabled for all users' } elseif ($campaignState -eq 'enabled') { 'Enabled (limited scope)' } else { 'Disabled' })
-            RecommendedValue = 'Enabled for all users'
+            RecommendedValue = 'Enabled for all users — drives Microsoft Authenticator enrollment'
             Status           = $(if ($campaignState -eq 'enabled' -and $targetsAll) { 'Pass' } elseif ($campaignState -eq 'enabled') { 'Warning' } else { 'Fail' })
             CheckId          = 'ENTRA-SSPR-001'
-            Remediation      = 'Entra admin center > Protection > Authentication methods > Registration campaign > Enable and target All Users.'
+            Remediation      = 'See Microsoft Learn: How to run a registration campaign to set up Microsoft Authenticator (https://learn.microsoft.com/en-us/entra/identity/authentication/how-to-mfa-registration-campaign). Enable the campaign and target All Users to nudge them at sign-in to install Microsoft Authenticator for MFA.'
         }
         Add-Setting @settingParams
     }
 }
 catch {
-    Write-Warning "Could not check SSPR targeting: $_"
+    Write-Warning "Could not check MFA Registration Campaign targeting: $_"
 }
 
 # ------------------------------------------------------------------
