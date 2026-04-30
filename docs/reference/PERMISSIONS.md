@@ -292,5 +292,5 @@ See `docs/CHECK-STATUS-MODEL.md` for the full status taxonomy and decision tree.
 pwsh -NoProfile -File ./scripts/Build-PermissionsMatrix.ps1
 ```
 
-Run this whenever you change the section-to-scope map (`AssessmentMaps.ps1`) or the permission definitions (`PermissionDefinitions.ps1`). Commit the regenerated `docs/PERMISSIONS.md` alongside the source change. CI runs the script with `-Check` and fails the PR if the doc is out of sync.
+Run this whenever you change the section-to-scope map (`AssessmentMaps.ps1`) or the permission definitions (`PermissionDefinitions.ps1`). Commit the regenerated `docs/reference/PERMISSIONS.md` alongside the source change. CI runs the script with `-Check` and fails the PR if the doc is out of sync.
 
