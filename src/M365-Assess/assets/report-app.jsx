@@ -2523,8 +2523,13 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, onMatchesC
                    : profiles.some(p => p.startsWith('E5')) ? 'E5'
                    : profiles.some(p => p.startsWith('E3')) ? 'E3' : '';
         return (
-          <div key="controlId" style={{display:'flex', flexDirection:'column', gap:2}}>
-            <span className="check-id" style={cid ? undefined : {color:'var(--muted)', fontStyle:'italic'}}>{cid || '—'}</span>
+          <div key="controlId" style={{display:'flex', flexDirection:'column', gap:2, minWidth:0}}>
+            {/* #900: long controlId strings (MITRE T-codes are 200+ chars
+                semicolon-joined) blow out the row. Truncate via CSS, full
+                value visible via native title tooltip. */}
+            <span className="check-id check-id-truncate"
+                  style={cid ? undefined : {color:'var(--muted)', fontStyle:'italic'}}
+                  title={cid || ''}>{cid || '—'}</span>
             {(lvl || lic) && (
               <span style={{display:'inline-flex', gap:3}}>
                 {lvl && <span className={'fw-profile-chip ' + lvlCls}>{lvl}</span>}

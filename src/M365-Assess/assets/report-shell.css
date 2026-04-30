@@ -913,6 +913,15 @@ mark.search-hl {
   color: var(--muted);
   letter-spacing: -0.02em;
 }
+/* #900: truncate long controlId strings (MITRE T-codes can be 200+ chars).
+   Hover shows full value via the native title tooltip on the span. */
+.check-id-truncate {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .finding-title {
   min-width: 0;
