@@ -4259,31 +4259,33 @@ function FindingsTable({
     }, isHidden ? '↩' : '✕') : /*#__PURE__*/React.createElement("div", {
       className: "caret"
     }, /*#__PURE__*/React.createElement(Icon.chevron, null))), isOpen && /*#__PURE__*/React.createElement("div", {
-      className: "finding-detail"
+      className: "finding-detail fdd"
     }, f.intentDesign && /*#__PURE__*/React.createElement("div", {
       className: "intent-callout"
-    }, /*#__PURE__*/React.createElement("strong", null, "Intentional by design."), f.intentRationale && /*#__PURE__*/React.createElement("span", null, " ", f.intentRationale)), /*#__PURE__*/React.createElement("div", {
-      className: "why"
+    }, /*#__PURE__*/React.createElement("strong", null, "Intentional by design."), f.intentRationale && /*#__PURE__*/React.createElement("span", null, " ", f.intentRationale)), /*#__PURE__*/React.createElement(FindingStateStrip, {
+      f: f
+    }), /*#__PURE__*/React.createElement(FindingRiskNarrative, {
+      f: f
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "fdd-legacy-block"
     }, /*#__PURE__*/React.createElement("div", {
-      className: "why-label"
-    }, "Why it matters"), /*#__PURE__*/React.createElement("div", {
-      className: "why-text"
-    }, whyItMatters(f))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
       className: "block-title"
     }, "Current value"), /*#__PURE__*/React.createElement("div", {
       className: 'value-box current finding-current-' + statusTier(f.status)
-    }, f.current || '—')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    }, f.current || '—')), /*#__PURE__*/React.createElement("div", {
+      className: "fdd-legacy-block"
+    }, /*#__PURE__*/React.createElement("div", {
       className: "block-title"
     }, "Recommended value"), /*#__PURE__*/React.createElement("div", {
       className: "value-box recommended"
     }, f.recommended || '—')), f.remediation && /*#__PURE__*/React.createElement("div", {
-      className: "finding-remediation"
+      className: "finding-remediation fdd-legacy-block"
     }, /*#__PURE__*/React.createElement("div", {
       className: "block-title"
     }, "Remediation"), /*#__PURE__*/React.createElement("div", {
       className: "remediation-text"
     }, f.remediation)), f.references && f.references.length > 0 && /*#__PURE__*/React.createElement("div", {
-      className: "finding-learn-more"
+      className: "finding-learn-more fdd-legacy-block"
     }, /*#__PURE__*/React.createElement("div", {
       className: "block-title"
     }, "Learn more"), f.references.map((r, i) => /*#__PURE__*/React.createElement("a", {
@@ -4291,7 +4293,7 @@ function FindingsTable({
       href: r.url,
       target: "_blank",
       rel: "noreferrer noopener"
-    }, "\uD83D\uDCD6 ", r.title, " \u2197"))), f.evidence && /*#__PURE__*/React.createElement(EvidenceBlock, {
+    }, "\uD83D\uDCD6 ", r.title, " \u2197"))), /*#__PURE__*/React.createElement(FindingProvenanceFooter, {
       evidence: f.evidence
     })));
   })));
@@ -4402,6 +4404,177 @@ function statusTier(status) {
   if (status === 'Review') return 'review';
   if (status === 'Info') return 'info';
   return 'neutral';
+}
+
+// =====================================================================
+// Issue #863 Phase 2 — Finding-detail Direction D shell components
+// =====================================================================
+// State strip (Row 1), Risk narrative (Row 2), Provenance footer.
+// Phase 2 ships the structural shell; later phases add typed observed/
+// expected (Phase 3), side rail (Phase 4), owner/ticket assignment
+// (Phase 5). Empty / null-data fields render as muted placeholders so
+// the shell degrades gracefully — see docs/design/finding-detail/.
+
+const LANE_LABELS = {
+  now: 'Do Now',
+  soon: 'Do Next',
+  later: 'Later'
+};
+const LANE_CSS = {
+  now: 'now',
+  soon: 'next',
+  later: ''
+};
+function FindingStateStrip({
+  f
+}) {
+  const laneLabel = LANE_LABELS[f.lane] || '—';
+  const laneClass = LANE_CSS[f.lane] !== undefined ? LANE_CSS[f.lane] : 'empty';
+  const effort = f.effort ? f.effort[0].toUpperCase() + f.effort.slice(1) : '—';
+
+  // Phase 2 affected count: derive from evidence.observedValue if it has a
+  // numeric prefix (e.g. "3 admins without MFA"), otherwise fall back to a
+  // muted dash. Real per-collector affectedObjects field arrives in Phase 3.
+  let affectedText = null;
+  let affectedClass = '';
+  const observed = f.evidence?.observedValue || f.current || '';
+  const numMatch = String(observed).match(/^(\d+)\s+([a-z][\w\s\-]*?)(?:[.,;]|$)/i);
+  if (numMatch) {
+    affectedText = numMatch[1] + ' ' + numMatch[2].trim();
+    affectedClass = f.severity === 'critical' ? 'danger' : f.severity === 'high' ? 'warn' : '';
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: "fdd-strip"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "fdd-strip-cell"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "label"
+  }, "Horizon"), /*#__PURE__*/React.createElement("span", {
+    className: 'fdc-pill ' + laneClass
+  }, laneLabel)), /*#__PURE__*/React.createElement("div", {
+    className: "fdd-strip-cell"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "label"
+  }, "Effort"), /*#__PURE__*/React.createElement("span", {
+    className: 'val' + (f.effort ? '' : ' muted')
+  }, effort)), /*#__PURE__*/React.createElement("div", {
+    className: "fdd-strip-cell"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "label"
+  }, "Affected"), affectedText ? /*#__PURE__*/React.createElement("span", {
+    className: 'val ' + affectedClass
+  }, affectedText) : /*#__PURE__*/React.createElement("span", {
+    className: "val muted"
+  }, "\u2014")), /*#__PURE__*/React.createElement("div", {
+    className: "fdd-strip-cell"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "label"
+  }, "Owner"), /*#__PURE__*/React.createElement("span", {
+    className: "val muted"
+  }, "Unassigned")), /*#__PURE__*/React.createElement("div", {
+    className: "fdd-strip-cell"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "label"
+  }, "Ticket"), /*#__PURE__*/React.createElement("span", {
+    className: "val muted"
+  }, "\u2014")));
+}
+function FindingRiskNarrative({
+  f
+}) {
+  // Phase 2: use existing whyItMatters() output as the Risk paragraph.
+  // The "Why it matters" subsection is intentionally empty until per-check
+  // narrative authoring lands (Option C from the v2.11.0 plan).
+  const risk = whyItMatters(f);
+  const mitre = Array.isArray(f.mitre) ? f.mitre : [];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "fdd-risk"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "fdd-risk-icon",
+    "aria-hidden": "true"
+  }, "!"), /*#__PURE__*/React.createElement("div", {
+    className: "fdd-risk-body"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "fdd-risk-section"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "fdd-risk-head danger"
+  }, "Risk"), /*#__PURE__*/React.createElement("p", null, risk))), mitre.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "fdd-risk-meta"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "fdd-risk-meta-label"
+  }, "MITRE ATT&CK"), /*#__PURE__*/React.createElement("div", {
+    className: "fdd-mitre"
+  }, mitre.map(m => /*#__PURE__*/React.createElement("code", {
+    key: m,
+    title: m
+  }, String(m).split(' — ')[0])))));
+}
+
+// Direction D collapsible provenance footer. Reuses the evidence schema
+// from D1 #785; visually re-frames the existing EvidenceBlock as a footer
+// at the bottom of the expanded row with an inline summary of the most
+// useful provenance keys.
+function FindingProvenanceFooter({
+  evidence
+}) {
+  if (!evidence) return null;
+  let ev = evidence;
+  if (typeof ev === 'string') {
+    try {
+      ev = {
+        raw: ev
+      };
+    } catch {
+      return null;
+    }
+  }
+  const fields = [['evidenceSource', 'Source'], ['evidenceTimestamp', 'Collected'], ['collectionMethod', 'Method'], ['permissionRequired', 'Permission'], ['confidence', 'Confidence'], ['observedValue', 'Observed'], ['expectedValue', 'Expected'], ['limitations', 'Limitations']];
+  const present = fields.filter(([k]) => ev[k] !== undefined && ev[k] !== null && ev[k] !== '');
+  let rawPretty = null;
+  if (ev.raw) {
+    try {
+      rawPretty = JSON.stringify(JSON.parse(ev.raw), null, 2);
+    } catch {
+      rawPretty = String(ev.raw);
+    }
+  }
+  if (present.length === 0 && !rawPretty) return null;
+
+  // Inline summary pulls 2-3 most-useful keys (source + collected + confidence).
+  const summaryKeys = ['evidenceSource', 'evidenceTimestamp', 'confidence'];
+  const summaryEntries = summaryKeys.map(k => [k, ev[k]]).filter(([, v]) => v !== undefined && v !== null && v !== '');
+  return /*#__PURE__*/React.createElement("details", {
+    className: "fdd-prov"
+  }, /*#__PURE__*/React.createElement("summary", null, /*#__PURE__*/React.createElement("span", {
+    className: "prov-summary"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "prov-key"
+  }, "Provenance"), summaryEntries.length === 0 && /*#__PURE__*/React.createElement("span", {
+    className: "prov-sep"
+  }, "\xB7"), summaryEntries.map(([k, v], i) => /*#__PURE__*/React.createElement(React.Fragment, {
+    key: k
+  }, i > 0 && /*#__PURE__*/React.createElement("span", {
+    className: "prov-sep"
+  }, "\xB7"), /*#__PURE__*/React.createElement("code", null, k === 'confidence' ? `${Math.round(v * 100)}%` : String(v))))), /*#__PURE__*/React.createElement("span", {
+    className: "prov-toggle"
+  }, "View details")), /*#__PURE__*/React.createElement("div", {
+    className: "fdd-prov-body"
+  }, ev.limitations && /*#__PURE__*/React.createElement("p", {
+    className: "fdd-limit"
+  }, /*#__PURE__*/React.createElement("b", null, "Limitations:"), " ", ev.limitations), present.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "fdd-prov-meta"
+  }, present.filter(([k]) => k !== 'limitations').map(([k, label]) => /*#__PURE__*/React.createElement("div", {
+    key: k
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "k"
+  }, label), /*#__PURE__*/React.createElement("span", {
+    className: "v"
+  }, k === 'confidence' ? `${Math.round(ev[k] * 100)}%` : String(ev[k]))))), rawPretty && /*#__PURE__*/React.createElement("details", {
+    className: "finding-evidence-raw",
+    style: {
+      marginTop: 10
+    }
+  }, /*#__PURE__*/React.createElement("summary", null, "Raw evidence"), /*#__PURE__*/React.createElement("pre", null, rawPretty))));
 }
 
 // Issue #854: per-prefix narrative content for the finding-detail "Why It Matters"
