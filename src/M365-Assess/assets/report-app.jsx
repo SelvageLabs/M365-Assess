@@ -2697,6 +2697,9 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, onMatchesC
               </div>
               {isOpen && (
                 <div className="finding-detail fdd">
+                  {/* #901: Copy-to-clipboard button — top-right floating
+                      action that emits a markdown summary of the finding. */}
+                  <FindingCopyButton f={f}/>
                   {f.intentDesign && (
                     <div className="intent-callout">
                       <strong>Intentional by design.</strong>
@@ -3017,6 +3020,58 @@ function FindingProvenanceFooter({ evidence }) {
         )}
       </div>
     </details>
+  );
+}
+
+// Issue #901: per-finding Copy button. Emits a markdown summary that's
+// paste-friendly into ticketing systems / Slack / email when triaging.
+// Visual feedback: button text flips to "Copied ✓" for 2 seconds after
+// successful clipboard write.
+function FindingCopyButton({ f }) {
+  const [copied, setCopied] = React.useState(false);
+  const onClick = (e) => {
+    e.stopPropagation();
+    const sev = f.severity ? f.severity[0].toUpperCase() + f.severity.slice(1) : '—';
+    const seq = f.lane ? (LANE_LABELS[f.lane] || f.lane)
+              : (f.status === 'Pass' ? 'Done' : '—');
+    const fwLines = (f.frameworks || []).map(fw => {
+      const meta = f.fwMeta?.[fw];
+      const cid = meta?.controlId ? ` ${meta.controlId}` : '';
+      return `${fw}${cid}`;
+    }).join(' · ');
+    const refUrl = f.references?.[0]?.url ? `\nReference: ${f.references[0].url}` : '';
+    const md = [
+      `**[${f.status}]** ${f.setting} (${f.checkId})`,
+      `${f.domain || '—'} · ${sev} · ${seq}`,
+      fwLines ? `Frameworks: ${fwLines}` : null,
+      '',
+      `Risk: ${whyItMatters(f)}`,
+      '',
+      `Current: ${f.current || '—'}`,
+      `Recommended: ${f.recommended || '—'}`,
+      '',
+      `Remediation: ${f.remediation || '—'}` + refUrl,
+    ].filter(x => x !== null).join('\n');
+    const writeFn = navigator.clipboard?.writeText
+      ? navigator.clipboard.writeText.bind(navigator.clipboard)
+      : (text) => {
+          // Fallback for older browsers: temporary textarea + execCommand
+          const ta = document.createElement('textarea');
+          ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+          document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); } finally { document.body.removeChild(ta); }
+          return Promise.resolve();
+        };
+    writeFn(md).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button className="fdd-copy-btn" onClick={onClick}
+            title={copied ? 'Copied to clipboard' : 'Copy finding as markdown'}>
+      {copied ? '✓ Copied' : '⧉ Copy'}
+    </button>
   );
 }
 

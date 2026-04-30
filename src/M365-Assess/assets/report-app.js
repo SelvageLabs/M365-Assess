@@ -4328,7 +4328,9 @@ function FindingsTable({
       className: "caret"
     }, /*#__PURE__*/React.createElement(Icon.chevron, null))), isOpen && /*#__PURE__*/React.createElement("div", {
       className: "finding-detail fdd"
-    }, f.intentDesign && /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement(FindingCopyButton, {
+      f: f
+    }), f.intentDesign && /*#__PURE__*/React.createElement("div", {
       className: "intent-callout"
     }, /*#__PURE__*/React.createElement("strong", null, "Intentional by design."), f.intentRationale && /*#__PURE__*/React.createElement("span", null, " ", f.intentRationale)), /*#__PURE__*/React.createElement(FindingStateStrip, {
       f: f
@@ -4663,6 +4665,52 @@ function FindingProvenanceFooter({
       marginTop: 10
     }
   }, /*#__PURE__*/React.createElement("summary", null, "Raw evidence"), /*#__PURE__*/React.createElement("pre", null, rawPretty))));
+}
+
+// Issue #901: per-finding Copy button. Emits a markdown summary that's
+// paste-friendly into ticketing systems / Slack / email when triaging.
+// Visual feedback: button text flips to "Copied ✓" for 2 seconds after
+// successful clipboard write.
+function FindingCopyButton({
+  f
+}) {
+  const [copied, setCopied] = React.useState(false);
+  const onClick = e => {
+    e.stopPropagation();
+    const sev = f.severity ? f.severity[0].toUpperCase() + f.severity.slice(1) : '—';
+    const seq = f.lane ? LANE_LABELS[f.lane] || f.lane : f.status === 'Pass' ? 'Done' : '—';
+    const fwLines = (f.frameworks || []).map(fw => {
+      const meta = f.fwMeta?.[fw];
+      const cid = meta?.controlId ? ` ${meta.controlId}` : '';
+      return `${fw}${cid}`;
+    }).join(' · ');
+    const refUrl = f.references?.[0]?.url ? `\nReference: ${f.references[0].url}` : '';
+    const md = [`**[${f.status}]** ${f.setting} (${f.checkId})`, `${f.domain || '—'} · ${sev} · ${seq}`, fwLines ? `Frameworks: ${fwLines}` : null, '', `Risk: ${whyItMatters(f)}`, '', `Current: ${f.current || '—'}`, `Recommended: ${f.recommended || '—'}`, '', `Remediation: ${f.remediation || '—'}` + refUrl].filter(x => x !== null).join('\n');
+    const writeFn = navigator.clipboard?.writeText ? navigator.clipboard.writeText.bind(navigator.clipboard) : text => {
+      // Fallback for older browsers: temporary textarea + execCommand
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+      } finally {
+        document.body.removeChild(ta);
+      }
+      return Promise.resolve();
+    };
+    writeFn(md).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return /*#__PURE__*/React.createElement("button", {
+    className: "fdd-copy-btn",
+    onClick: onClick,
+    title: copied ? 'Copied to clipboard' : 'Copy finding as markdown'
+  }, copied ? '✓ Copied' : '⧉ Copy');
 }
 
 // Issue #854: per-prefix narrative content for the finding-detail "Why It Matters"
