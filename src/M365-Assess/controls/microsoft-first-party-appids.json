@@ -1,0 +1,114 @@
+{
+  "$schema": "internal — see docs/research/microsoft-first-party-allowlist.md + issue #887",
+  "version": "1.0.0",
+  "lastUpdated": "2026-04-30",
+  "purpose": "Allowlist of known Microsoft first-party application IDs (AppIds) and owner-tenant GUIDs. Consumed by ENTRA-ENTAPP-020 (Foreign Apps Impersonating Microsoft Names) to avoid false-positives on legitimate Microsoft-published service principals. Covers the case where Microsoft adds new owner tenants — the AppId-based allowlist is more stable than tenant-GUID matching alone.",
+  "ownerTenantIds": [
+    {
+      "id": "f8cdef31-a31e-4b4a-93e4-5f571e91255a",
+      "name": "Microsoft Services",
+      "purpose": "Most M365 / Office service principals are published from this tenant. The historically-canonical Microsoft owner tenant.",
+      "knownExamples": ["Microsoft Teams", "Microsoft SharePoint", "Microsoft Exchange Online"]
+    },
+    {
+      "id": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+      "name": "Microsoft Corp",
+      "purpose": "Microsoft's primary corporate tenant. Some developer tools and MSAL test apps publish from here.",
+      "knownExamples": ["MSAL test apps", "various dev/test SPs"]
+    },
+    {
+      "id": "ea8a4392-515e-481f-879e-6571ff2a8a36",
+      "name": "Microsoft (Defender / security narrower)",
+      "purpose": "Some Defender-flavored and security-product service principals appear under this owner tenant.",
+      "knownExamples": ["specific Defender SPs"]
+    },
+    {
+      "id": "cdc5aeea-15c5-4db6-b079-fcadd2505dc2",
+      "name": "Microsoft Graph Command Line Tools",
+      "purpose": "Dedicated tenant for the Microsoft Graph PowerShell SDK / Graph CLI tooling. The Connect-MgGraph SP appears here.",
+      "knownExamples": ["Microsoft Graph Command Line Tools (14d82eec-204b-4c2f-b7e8-296a70dab67e)"]
+    }
+  ],
+  "appIds": [
+    {
+      "appId": "14d82eec-204b-4c2f-b7e8-296a70dab67e",
+      "name": "Microsoft Graph Command Line Tools",
+      "purpose": "The service principal automatically registered when a tenant runs Connect-MgGraph (PowerShell) for the first time. Most common false-positive in tenants using the Graph PowerShell SDK.",
+      "ownerTenantHint": "cdc5aeea-15c5-4db6-b079-fcadd2505dc2"
+    },
+    {
+      "appId": "00000003-0000-0000-c000-000000000000",
+      "name": "Microsoft Graph",
+      "purpose": "The Microsoft Graph API resource itself. Always present in any Entra-using tenant.",
+      "ownerTenantHint": "f8cdef31-a31e-4b4a-93e4-5f571e91255a"
+    },
+    {
+      "appId": "00000002-0000-0000-c000-000000000000",
+      "name": "Azure Active Directory Graph (legacy)",
+      "purpose": "Legacy Azure AD Graph API resource. Deprecated but still present in older tenants.",
+      "ownerTenantHint": "f8cdef31-a31e-4b4a-93e4-5f571e91255a"
+    },
+    {
+      "appId": "d3590ed6-52b3-4102-aeff-aad2292ab01c",
+      "name": "Microsoft Office",
+      "purpose": "The Office client suite SP. Present in any tenant using Office desktop / web clients.",
+      "ownerTenantHint": "f8cdef31-a31e-4b4a-93e4-5f571e91255a"
+    },
+    {
+      "appId": "00000005-0000-0ff1-ce00-000000000000",
+      "name": "Office 365 SharePoint Online",
+      "purpose": "SharePoint Online resource. Present in any SharePoint-using tenant.",
+      "ownerTenantHint": "f8cdef31-a31e-4b4a-93e4-5f571e91255a"
+    },
+    {
+      "appId": "00000007-0000-0ff1-ce00-000000000000",
+      "name": "Office 365 Exchange Online",
+      "purpose": "Exchange Online resource. Present in any Exchange-using tenant.",
+      "ownerTenantHint": "f8cdef31-a31e-4b4a-93e4-5f571e91255a"
+    },
+    {
+      "appId": "1fec8e78-bce4-4aaf-ab1b-5451cc387264",
+      "name": "Microsoft Teams",
+      "purpose": "Teams client SP.",
+      "ownerTenantHint": "f8cdef31-a31e-4b4a-93e4-5f571e91255a"
+    },
+    {
+      "appId": "cc15fd57-2c6c-4117-a88c-83b1d56b4bbe",
+      "name": "Microsoft Teams Services",
+      "purpose": "Teams services SP.",
+      "ownerTenantHint": "f8cdef31-a31e-4b4a-93e4-5f571e91255a"
+    },
+    {
+      "appId": "00000003-0000-0ff1-ce00-000000000000",
+      "name": "Office 365 SharePoint Online (alt)",
+      "purpose": "Alternate SharePoint resource (some product variants).",
+      "ownerTenantHint": "f8cdef31-a31e-4b4a-93e4-5f571e91255a"
+    },
+    {
+      "appId": "fb78d390-0c51-40cd-8e17-fdbfab77341b",
+      "name": "Microsoft Exchange REST API Based Powershell",
+      "purpose": "Modern EXO PowerShell module — Connect-ExchangeOnline registers this.",
+      "ownerTenantHint": "f8cdef31-a31e-4b4a-93e4-5f571e91255a"
+    },
+    {
+      "appId": "1950a258-227b-4e31-a9cf-717495945fc2",
+      "name": "Microsoft Azure PowerShell",
+      "purpose": "Az PowerShell module SP. Present in tenants using Az or AzureRM.",
+      "ownerTenantHint": "f8cdef31-a31e-4b4a-93e4-5f571e91255a"
+    },
+    {
+      "appId": "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
+      "name": "Microsoft Azure CLI",
+      "purpose": "az CLI client SP. Present in tenants using Azure CLI.",
+      "ownerTenantHint": "f8cdef31-a31e-4b4a-93e4-5f571e91255a"
+    },
+    {
+      "appId": "ad22df09-8a08-4be1-9f17-7d5d57e0d2de",
+      "name": "Microsoft Graph PowerShell (alt)",
+      "purpose": "Older Graph PowerShell tooling appId.",
+      "ownerTenantHint": "f8cdef31-a31e-4b4a-93e4-5f571e91255a"
+    }
+  ],
+  "calibrationStatus": "preliminary",
+  "calibrationNote": "v1 list compiled from empirical observation (M365-Assess lab tenants) + community-documented Microsoft well-known AppIds. Microsoft maintains many more first-party apps than this; expand the list as new false-positives surface in customer reports. AppId is more stable than ownerTenantId because Microsoft can move an app to a new tenant — the AppId stays the same."
+}
