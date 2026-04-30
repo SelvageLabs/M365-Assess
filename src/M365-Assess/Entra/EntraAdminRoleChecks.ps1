@@ -508,10 +508,17 @@ try {
     # #882: list matched accounts + enabled state in BOTH Pass and Review
     # branches so the user can see WHICH accounts the heuristic matched, not
     # just how many. Previous code only listed names in the Pass branch.
+    # Fallback to displayName when userPrincipalName is null/empty (the
+    # heuristic matches on displayName too, so we may catch accounts whose
+    # UPN field comes back empty in the Graph response — guests in some
+    # states, service-account-shaped users, etc.).
     $bgDetail = if ($bgCount -gt 0) {
         ($breakGlassAccounts | ForEach-Object {
+            $identifier = if ($_['userPrincipalName']) { $_['userPrincipalName'] }
+                          elseif ($_['displayName'])    { $_['displayName'] }
+                          else                          { '<unnamed>' }
             $enabledTag = if ($_['accountEnabled'] -eq $true) { '' } else { ' [DISABLED]' }
-            "$($_['userPrincipalName'])$enabledTag"
+            "$identifier$enabledTag"
         }) -join ', '
     } else { 'none' }
 
