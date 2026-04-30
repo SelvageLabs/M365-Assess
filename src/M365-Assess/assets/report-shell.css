@@ -991,6 +991,163 @@ mark.search-hl {
   font-size: 12.5px; line-height: 1.6;
   color: var(--text);
 }
+
+/* ===================================================================
+   Issue #863 Phase 2 — Direction D shell (state strip + risk + provenance)
+   The .fdd modifier on .finding-detail switches the layout from the
+   legacy 2-column grid to single-column rows so the new sections render
+   full-width. Phase-3-pending content rows (Current/Recommended/Remed/
+   Learn-more) are wrapped in .fdd-legacy-block and remain 2-column.
+   See docs/design/finding-detail/styles.css for the original spec.
+=================================================================== */
+.finding-detail.fdd {
+  display: block;
+  padding: 0;
+}
+.finding-detail.fdd .intent-callout { margin: 16px 16px 0 16px; }
+.finding-detail.fdd .fdd-legacy-block { padding: 0 16px; margin-top: 14px; }
+.finding-detail.fdd .fdd-legacy-block:first-of-type { margin-top: 16px; }
+
+.fdd-strip {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.fdd-strip-cell {
+  padding: 10px 14px; border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.fdd-strip-cell:last-child { border-right: 0; }
+.fdd-strip-cell .label {
+  font-size: 10px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted);
+}
+.fdd-strip-cell .val {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.fdd-strip-cell .val.warn   { color: var(--warn-text); }
+.fdd-strip-cell .val.danger { color: var(--danger-text); }
+.fdd-strip-cell .val.muted  { color: var(--muted); font-weight: 500; }
+.fdc-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 700;
+  padding: 2px 8px; border-radius: 999px;
+  background: var(--chip); color: var(--text-soft);
+  border: 1px solid var(--border);
+}
+.fdc-pill.now   { background: color-mix(in oklab, var(--danger)  18%, transparent); color: var(--danger-text);  border-color: var(--danger); }
+.fdc-pill.next  { background: color-mix(in oklab, var(--warn)    18%, transparent); color: var(--warn-text);    border-color: var(--warn); }
+.fdc-pill.later { background: color-mix(in oklab, var(--accent)  14%, transparent); color: var(--accent-text);  border-color: var(--accent-border); }
+.fdc-pill.done  { background: color-mix(in oklab, var(--success) 18%, transparent); color: var(--success-text); border-color: var(--success); }
+.fdc-pill.empty { color: var(--muted); }
+
+.fdd-risk {
+  display: grid; grid-template-columns: 36px 1fr auto;
+  gap: 12px; padding: 12px 16px;
+  background: color-mix(in oklab, var(--danger) 7%, transparent);
+  border-bottom: 1px solid var(--border);
+  border-left: 3px solid var(--danger);
+}
+.fdd-risk-icon {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: color-mix(in oklab, var(--danger) 22%, transparent);
+  color: var(--danger-text); font-weight: 700;
+  display: grid; place-items: center; align-self: start;
+}
+.fdd-risk-head {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 4px;
+}
+.fdd-risk-head.danger { color: var(--danger-text); }
+.fdd-risk-section + .fdd-risk-section {
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px dashed color-mix(in oklab, var(--danger) 25%, var(--border));
+}
+.fdd-risk-body p {
+  margin: 0; font-size: 13px; line-height: 1.55; color: var(--text);
+}
+.fdd-risk-meta {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  min-width: 130px; max-width: 200px;
+  padding-left: 12px;
+  border-left: 1px solid color-mix(in oklab, var(--danger) 25%, var(--border));
+  align-self: stretch;
+  justify-content: flex-start;
+}
+.fdd-risk-meta-label {
+  font-size: 9.5px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted);
+}
+.fdd-mitre {
+  display: inline-flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end;
+}
+.fdd-mitre code {
+  font-family: var(--font-mono); font-size: 10.5px;
+  padding: 2px 6px; border-radius: 4px;
+  background: var(--surface); color: var(--text-soft);
+  border: 1px solid var(--border);
+}
+
+.fdd-prov {
+  border-top: 1px solid var(--border);
+  background: var(--subtle);
+  font-size: 11.5px; color: var(--text-soft);
+  margin-top: 16px;
+}
+.fdd-prov summary {
+  cursor: pointer; padding: 9px 16px;
+  display: flex; justify-content: space-between; align-items: center; gap: 14px;
+  user-select: none; list-style: none;
+}
+.fdd-prov summary::-webkit-details-marker { display: none; }
+.fdd-prov .prov-summary {
+  display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  flex: 1; min-width: 0;
+}
+.fdd-prov .prov-key {
+  font-size: 10px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted);
+}
+.fdd-prov .prov-sep { color: var(--border); }
+.fdd-prov code {
+  font-family: var(--font-mono); font-size: 10.5px;
+  background: var(--chip); padding: 1px 5px; border-radius: 3px; color: var(--text);
+}
+.fdd-prov .prov-toggle {
+  font-size: 11px; font-weight: 600; color: var(--accent-text);
+  white-space: nowrap; flex-shrink: 0;
+}
+.fdd-prov-body { padding: 0 16px 14px; }
+.fdd-limit {
+  margin: 0 0 8px 0; padding: 8px 10px; font-size: 12px;
+  background: color-mix(in oklab, var(--warn) 10%, transparent);
+  border-left: 3px solid var(--warn); border-radius: 0 6px 6px 0;
+  color: var(--text);
+}
+.fdd-limit b { color: var(--warn-text); }
+.fdd-prov-meta {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.fdd-prov-meta > div {
+  display: flex; flex-direction: column; gap: 3px; min-width: 0;
+}
+.fdd-prov-meta .k {
+  font-size: 9.5px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted);
+}
+.fdd-prov-meta .v {
+  font-size: 11.5px; color: var(--text); font-weight: 500;
+  word-break: break-word;
+}
+.fdd-prov-body pre {
+  margin: 0; padding: 10px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--text);
+  white-space: pre-wrap; word-break: break-word;
+  max-height: 200px; overflow: auto;
+}
 .finding-remediation {
   grid-column: 1 / -1;
   padding-top: 4px;

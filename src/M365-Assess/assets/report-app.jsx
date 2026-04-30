@@ -2638,40 +2638,42 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, onMatchesC
                 }
               </div>
               {isOpen && (
-                <div className="finding-detail">
+                <div className="finding-detail fdd">
                   {f.intentDesign && (
                     <div className="intent-callout">
                       <strong>Intentional by design.</strong>
                       {f.intentRationale && <span> {f.intentRationale}</span>}
                     </div>
                   )}
-                  <div className="why">
-                    <div className="why-label">Why it matters</div>
-                    <div className="why-text">{whyItMatters(f)}</div>
-                  </div>
-                  <div>
+                  {/* #863 Phase 2 — Direction D state strip + risk narrative */}
+                  <FindingStateStrip f={f}/>
+                  <FindingRiskNarrative f={f}/>
+                  {/* Existing Phase-3-pending content rows. Will be replaced
+                      by typed observed/expected + tabbed actions in Phase 3. */}
+                  <div className="fdd-legacy-block">
                     <div className="block-title">Current value</div>
                     <div className={'value-box current finding-current-' + statusTier(f.status)}>{f.current || '—'}</div>
                   </div>
-                  <div>
+                  <div className="fdd-legacy-block">
                     <div className="block-title">Recommended value</div>
                     <div className="value-box recommended">{f.recommended || '—'}</div>
                   </div>
                   {f.remediation && (
-                    <div className="finding-remediation">
+                    <div className="finding-remediation fdd-legacy-block">
                       <div className="block-title">Remediation</div>
                       <div className="remediation-text">{f.remediation}</div>
                     </div>
                   )}
                   {f.references && f.references.length > 0 && (
-                    <div className="finding-learn-more">
+                    <div className="finding-learn-more fdd-legacy-block">
                       <div className="block-title">Learn more</div>
                       {f.references.map((r, i) => (
                         <a key={i} href={r.url} target="_blank" rel="noreferrer noopener">📖 {r.title} ↗</a>
                       ))}
                     </div>
                   )}
-                  {f.evidence && <EvidenceBlock evidence={f.evidence} />}
+                  {/* #863 Phase 2 — collapsible provenance footer */}
+                  <FindingProvenanceFooter evidence={f.evidence}/>
                 </div>
               )}
             </React.Fragment>
@@ -2784,6 +2786,180 @@ function statusTier(status) {
   if (status === 'Review') return 'review';
   if (status === 'Info') return 'info';
   return 'neutral';
+}
+
+// =====================================================================
+// Issue #863 Phase 2 — Finding-detail Direction D shell components
+// =====================================================================
+// State strip (Row 1), Risk narrative (Row 2), Provenance footer.
+// Phase 2 ships the structural shell; later phases add typed observed/
+// expected (Phase 3), side rail (Phase 4), owner/ticket assignment
+// (Phase 5). Empty / null-data fields render as muted placeholders so
+// the shell degrades gracefully — see docs/design/finding-detail/.
+
+// Phase 2 sequence column: matches the XLSX matrix's "Sequence" terminology
+// from #840. Pass-status findings show "Done" (consistent with the matrix's
+// green Done cell). Findings without a lane AND not Pass render as muted
+// plain text — no pill — since the chip-style rendering reads as
+// "actionable item with a state" which is wrong for non-remediable rows.
+const LANE_LABELS = { now: 'Do Now', soon: 'Do Next', later: 'Later' };
+const LANE_CSS    = { now: 'now', soon: 'next', later: 'later' };
+
+function FindingStateStrip({ f }) {
+  const isPass = f.status === 'Pass';
+  // Sequence cell content + chip-vs-text decision:
+  //  - lane present (now/soon/later) → coloured pill
+  //  - status === Pass               → "Done" success pill
+  //  - everything else               → muted plain text (no pill)
+  let sequenceNode;
+  if (f.lane && LANE_LABELS[f.lane]) {
+    sequenceNode = <span className={'fdc-pill ' + LANE_CSS[f.lane]}>{LANE_LABELS[f.lane]}</span>;
+  } else if (isPass) {
+    sequenceNode = <span className="fdc-pill done">Done</span>;
+  } else {
+    sequenceNode = <span className="val muted">—</span>;
+  }
+  const effort = f.effort ? f.effort[0].toUpperCase() + f.effort.slice(1) : '—';
+
+  // Phase 2 affected count: derive from evidence.observedValue if it has a
+  // numeric prefix (e.g. "3 admins without MFA"), otherwise fall back to a
+  // muted dash. Real per-collector affectedObjects field arrives in Phase 3.
+  let affectedText = null;
+  let affectedClass = '';
+  const observed = f.evidence?.observedValue || f.current || '';
+  const numMatch = String(observed).match(/^(\d+)\s+([a-z][\w\s\-]*?)(?:[.,;]|$)/i);
+  if (numMatch) {
+    affectedText = numMatch[1] + ' ' + numMatch[2].trim();
+    affectedClass = f.severity === 'critical' ? 'danger' : (f.severity === 'high' ? 'warn' : '');
+  }
+
+  return (
+    <div className="fdd-strip">
+      <div className="fdd-strip-cell">
+        <span className="label">Sequence</span>
+        {sequenceNode}
+      </div>
+      <div className="fdd-strip-cell">
+        <span className="label">Effort</span>
+        <span className={'val' + (f.effort ? '' : ' muted')}>{effort}</span>
+      </div>
+      <div className="fdd-strip-cell">
+        <span className="label">Affected</span>
+        {affectedText
+          ? <span className={'val ' + affectedClass}>{affectedText}</span>
+          : <span className="val muted">—</span>}
+      </div>
+      <div className="fdd-strip-cell">
+        <span className="label">Owner</span>
+        <span className="val muted">Unassigned</span>
+      </div>
+      <div className="fdd-strip-cell">
+        <span className="label">Ticket</span>
+        <span className="val muted">—</span>
+      </div>
+    </div>
+  );
+}
+
+function FindingRiskNarrative({ f }) {
+  // Phase 2: use existing whyItMatters() output as the Risk paragraph.
+  // The "Why it matters" subsection is intentionally empty until per-check
+  // narrative authoring lands (Option C from the v2.11.0 plan).
+  const risk = whyItMatters(f);
+  const mitre = Array.isArray(f.mitre) ? f.mitre : [];
+  return (
+    <div className="fdd-risk">
+      <div className="fdd-risk-icon" aria-hidden="true">!</div>
+      <div className="fdd-risk-body">
+        <div className="fdd-risk-section">
+          <div className="fdd-risk-head danger">Risk</div>
+          <p>{risk}</p>
+        </div>
+      </div>
+      {mitre.length > 0 && (
+        <div className="fdd-risk-meta">
+          <span className="fdd-risk-meta-label">MITRE ATT&amp;CK</span>
+          <div className="fdd-mitre">
+            {mitre.map(m => <code key={m} title={m}>{String(m).split(' — ')[0]}</code>)}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Direction D collapsible provenance footer. Reuses the evidence schema
+// from D1 #785; visually re-frames the existing EvidenceBlock as a footer
+// at the bottom of the expanded row with an inline summary of the most
+// useful provenance keys.
+function FindingProvenanceFooter({ evidence }) {
+  if (!evidence) return null;
+  let ev = evidence;
+  if (typeof ev === 'string') {
+    try { ev = { raw: ev }; } catch { return null; }
+  }
+  const fields = [
+    ['evidenceSource',     'Source'],
+    ['evidenceTimestamp',  'Collected'],
+    ['collectionMethod',   'Method'],
+    ['permissionRequired', 'Permission'],
+    ['confidence',         'Confidence'],
+    ['observedValue',      'Observed'],
+    ['expectedValue',      'Expected'],
+    ['limitations',        'Limitations'],
+  ];
+  const present = fields.filter(([k]) => ev[k] !== undefined && ev[k] !== null && ev[k] !== '');
+  let rawPretty = null;
+  if (ev.raw) {
+    try { rawPretty = JSON.stringify(JSON.parse(ev.raw), null, 2); }
+    catch { rawPretty = String(ev.raw); }
+  }
+  if (present.length === 0 && !rawPretty) return null;
+
+  // Inline summary pulls 2-3 most-useful keys (source + collected + confidence).
+  const summaryKeys = ['evidenceSource', 'evidenceTimestamp', 'confidence'];
+  const summaryEntries = summaryKeys
+    .map(k => [k, ev[k]])
+    .filter(([, v]) => v !== undefined && v !== null && v !== '');
+
+  return (
+    <details className="fdd-prov">
+      <summary>
+        <span className="prov-summary">
+          <span className="prov-key">Provenance</span>
+          {summaryEntries.length === 0 && <span className="prov-sep">·</span>}
+          {summaryEntries.map(([k, v], i) => (
+            <React.Fragment key={k}>
+              {i > 0 && <span className="prov-sep">·</span>}
+              <code>{k === 'confidence' ? `${Math.round(v * 100)}%` : String(v)}</code>
+            </React.Fragment>
+          ))}
+        </span>
+        <span className="prov-toggle">View details</span>
+      </summary>
+      <div className="fdd-prov-body">
+        {ev.limitations && (
+          <p className="fdd-limit"><b>Limitations:</b> {ev.limitations}</p>
+        )}
+        {present.length > 0 && (
+          <div className="fdd-prov-meta">
+            {present.filter(([k]) => k !== 'limitations').map(([k, label]) => (
+              <div key={k}>
+                <span className="k">{label}</span>
+                <span className="v">{k === 'confidence' ? `${Math.round(ev[k] * 100)}%` : String(ev[k])}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {rawPretty && (
+          <details className="finding-evidence-raw" style={{marginTop: 10}}>
+            <summary>Raw evidence</summary>
+            <pre>{rawPretty}</pre>
+          </details>
+        )}
+      </div>
+    </details>
+  );
 }
 
 // Issue #854: per-prefix narrative content for the finding-detail "Why It Matters"
