@@ -2797,12 +2797,28 @@ function statusTier(status) {
 // (Phase 5). Empty / null-data fields render as muted placeholders so
 // the shell degrades gracefully — see docs/design/finding-detail/.
 
+// Phase 2 sequence column: matches the XLSX matrix's "Sequence" terminology
+// from #840. Pass-status findings show "Done" (consistent with the matrix's
+// green Done cell). Findings without a lane AND not Pass render as muted
+// plain text — no pill — since the chip-style rendering reads as
+// "actionable item with a state" which is wrong for non-remediable rows.
 const LANE_LABELS = { now: 'Do Now', soon: 'Do Next', later: 'Later' };
-const LANE_CSS    = { now: 'now', soon: 'next', later: '' };
+const LANE_CSS    = { now: 'now', soon: 'next', later: 'later' };
 
 function FindingStateStrip({ f }) {
-  const laneLabel = LANE_LABELS[f.lane] || '—';
-  const laneClass = LANE_CSS[f.lane] !== undefined ? LANE_CSS[f.lane] : 'empty';
+  const isPass = f.status === 'Pass';
+  // Sequence cell content + chip-vs-text decision:
+  //  - lane present (now/soon/later) → coloured pill
+  //  - status === Pass               → "Done" success pill
+  //  - everything else               → muted plain text (no pill)
+  let sequenceNode;
+  if (f.lane && LANE_LABELS[f.lane]) {
+    sequenceNode = <span className={'fdc-pill ' + LANE_CSS[f.lane]}>{LANE_LABELS[f.lane]}</span>;
+  } else if (isPass) {
+    sequenceNode = <span className="fdc-pill done">Done</span>;
+  } else {
+    sequenceNode = <span className="val muted">—</span>;
+  }
   const effort = f.effort ? f.effort[0].toUpperCase() + f.effort.slice(1) : '—';
 
   // Phase 2 affected count: derive from evidence.observedValue if it has a
@@ -2820,8 +2836,8 @@ function FindingStateStrip({ f }) {
   return (
     <div className="fdd-strip">
       <div className="fdd-strip-cell">
-        <span className="label">Horizon</span>
-        <span className={'fdc-pill ' + laneClass}>{laneLabel}</span>
+        <span className="label">Sequence</span>
+        {sequenceNode}
       </div>
       <div className="fdd-strip-cell">
         <span className="label">Effort</span>

@@ -1035,8 +1035,10 @@ mark.search-hl {
   background: var(--chip); color: var(--text-soft);
   border: 1px solid var(--border);
 }
-.fdc-pill.now   { background: color-mix(in oklab, var(--danger) 18%, transparent); color: var(--danger-text); border-color: var(--danger); }
-.fdc-pill.next  { background: color-mix(in oklab, var(--warn)   18%, transparent); color: var(--warn-text);   border-color: var(--warn); }
+.fdc-pill.now   { background: color-mix(in oklab, var(--danger)  18%, transparent); color: var(--danger-text);  border-color: var(--danger); }
+.fdc-pill.next  { background: color-mix(in oklab, var(--warn)    18%, transparent); color: var(--warn-text);    border-color: var(--warn); }
+.fdc-pill.later { background: color-mix(in oklab, var(--accent)  14%, transparent); color: var(--accent-text);  border-color: var(--accent-border); }
+.fdc-pill.done  { background: color-mix(in oklab, var(--success) 18%, transparent); color: var(--success-text); border-color: var(--success); }
 .fdc-pill.empty { color: var(--muted); }
 
 .fdd-risk {
