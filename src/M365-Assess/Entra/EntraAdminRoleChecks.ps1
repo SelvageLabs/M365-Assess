@@ -538,68 +538,12 @@ catch {
     Write-Warning "Could not check Entra admin center restriction: $_"
 }
 
-# ------------------------------------------------------------------
-# 32. Emergency Access Accounts (CIS 1.1.2)
-# ------------------------------------------------------------------
-try {
-    Write-Verbose "Checking for emergency access (break-glass) accounts..."
-    $graphParams = @{
-        Method      = 'GET'
-        Uri         = "/v1.0/users?`$select=displayName,userPrincipalName,accountEnabled&`$top=999"
-        ErrorAction = 'Stop'
-    }
-    $allUsers = Invoke-MgGraphRequest @graphParams
-
-    $allUserList = if ($allUsers -and $allUsers['value']) { @($allUsers['value']) } else { @() }
-    $breakGlassAccounts = Get-BreakGlassAccounts -Users $allUserList
-    $bgCount = $breakGlassAccounts.Count
-    $enabledBg = @($breakGlassAccounts | Where-Object { $_['accountEnabled'] -eq $true })
-
-    # #882: list matched accounts + enabled state in BOTH Pass and Review
-    # branches so the user can see WHICH accounts the heuristic matched, not
-    # just how many. Previous code only listed names in the Pass branch.
-    # Fallback to displayName when userPrincipalName is null/empty (the
-    # heuristic matches on displayName too, so we may catch accounts whose
-    # UPN field comes back empty in the Graph response — guests in some
-    # states, service-account-shaped users, etc.).
-    $bgDetail = if ($bgCount -gt 0) {
-        ($breakGlassAccounts | ForEach-Object {
-            $identifier = if ($_['userPrincipalName']) { $_['userPrincipalName'] }
-                          elseif ($_['displayName'])    { $_['displayName'] }
-                          else                          { '<unnamed>' }
-            $enabledTag = if ($_['accountEnabled'] -eq $true) { '' } else { ' [DISABLED]' }
-            "$identifier$enabledTag"
-        }) -join ', '
-    } else { 'none' }
-
-    if ($bgCount -ge 2 -and $enabledBg.Count -ge 2) {
-        $settingParams = @{
-            Category         = 'Admin Accounts'
-            Setting          = 'Emergency Access Accounts'
-            CurrentValue     = "$bgCount found: $bgDetail"
-            RecommendedValue = '2+ enabled break-glass accounts'
-            Status           = 'Pass'
-            CheckId          = 'ENTRA-ADMIN-003'
-            Remediation      = 'Maintain at least two cloud-only emergency access accounts excluded from all Conditional Access policies.'
-        }
-        Add-Setting @settingParams
-    }
-    else {
-        $settingParams = @{
-            Category         = 'Admin Accounts'
-            Setting          = 'Emergency Access Accounts'
-            CurrentValue     = "$bgCount detected (heuristic: name contains break glass/emergency): $bgDetail"
-            RecommendedValue = '2+ enabled break-glass accounts'
-            Status           = 'Review'
-            CheckId          = 'ENTRA-ADMIN-003'
-            Remediation      = 'Create 2+ cloud-only emergency access accounts with Global Administrator role, excluded from all Conditional Access policies. Use naming convention including "BreakGlass" or "EmergencyAccess" for detection.'
-        }
-        Add-Setting @settingParams
-    }
-}
-catch {
-    Write-Warning "Could not check emergency access accounts: $_"
-}
+# ENTRA-ADMIN-003 (Emergency Access Accounts) removed in #888 — was a
+# duplicate of ENTRA-BREAKGLASS-001 (Get-StrykerIncidentReadiness.ps1)
+# with weaker detection (broader user-base search produced false positives;
+# 003 reported "3 detected" on a tenant where only 1 user actually matched
+# the heuristic). Single source of truth is now ENTRA-BREAKGLASS-001 with
+# the canonical Microsoft + CIS threshold of 2 enabled break-glass accounts.
 
 # ------------------------------------------------------------------
 # 33. Admin MFA Method Strength (phishing-resistant required)

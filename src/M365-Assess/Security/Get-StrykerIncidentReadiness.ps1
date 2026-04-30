@@ -604,20 +604,37 @@ try {
             }
         }
 
-        if ($detectedAccounts.Count -gt 0) {
+        # #888: threshold is 2 per Microsoft + CIS, not 1. Single-account state
+        # is partial-compliance (Warning), not Pass. Microsoft's reasoning is
+        # single-point-of-failure on the credential — if the one break-glass is
+        # lost / compromised / its owner leaves, the tenant has no recovery
+        # path. Industry baseline is 2 with separate storage + ownership.
+        if ($detectedAccounts.Count -ge 2) {
             $status = if ($confidenceLevel -eq 'High') { 'Pass' } else { 'Warning' }
+            $remediation = if ($status -eq 'Pass') {
+                'No action needed. Ensure break-glass accounts are excluded from all CA policies, monitored for sign-in activity, and tested quarterly.'
+            } else {
+                'Verify detected accounts are intentional break-glass accounts. Confidence is medium because detection used CA-exclusion pattern rather than name match — consider renaming to include "BreakGlass" or "EmergencyAccess" for higher-confidence detection.'
+            }
             Add-Setting -Category 'Emergency Access' -Setting 'Break-glass emergency access account' `
                 -CurrentValue "$($detectedAccounts.Count) account(s) detected (confidence: $confidenceLevel): $($detectedAccounts -join '; ')" `
-                -RecommendedValue 'At least 1 break-glass account with Global Admin role' `
+                -RecommendedValue 'At least 2 enabled break-glass accounts with Global Admin role' `
                 -Status $status -CheckId 'ENTRA-BREAKGLASS-001' `
-                -Remediation $(if ($status -eq 'Pass') { 'No action needed. Ensure break-glass accounts are excluded from all CA policies, monitored for sign-in activity, and tested quarterly.' } else { 'Verify detected account(s) are intentional break-glass accounts. Consider renaming to clearly identify them.' })
+                -Remediation $remediation
+        }
+        elseif ($detectedAccounts.Count -eq 1) {
+            Add-Setting -Category 'Emergency Access' -Setting 'Break-glass emergency access account' `
+                -CurrentValue "1 account detected (confidence: $confidenceLevel): $($detectedAccounts -join '; '). Single break-glass account is a single point of failure." `
+                -RecommendedValue 'At least 2 enabled break-glass accounts with Global Admin role' `
+                -Status 'Warning' -CheckId 'ENTRA-BREAKGLASS-001' `
+                -Remediation 'Create a second cloud-only break-glass account (e.g., BreakGlass-Admin-02@<tenant>.onmicrosoft.com) with Global Admin role, FIDO2 security key, excluded from all CA policies. Store credentials in a separate location from the first (different physical safe / password vault) so a single incident cannot lose both.'
         }
         else {
             Add-Setting -Category 'Emergency Access' -Setting 'Break-glass emergency access account' `
                 -CurrentValue 'No break-glass account detected among Global Admins' `
-                -RecommendedValue 'At least 1 break-glass account with Global Admin role' `
+                -RecommendedValue 'At least 2 enabled break-glass accounts with Global Admin role' `
                 -Status 'Fail' -CheckId 'ENTRA-BREAKGLASS-001' `
-                -Remediation 'Create 2 cloud-only break-glass accounts (e.g., BreakGlass-Admin-01@contoso.onmicrosoft.com) with Global Admin role, FIDO2 security keys, excluded from all CA policies, and monitored for sign-in activity.'
+                -Remediation 'Create 2 cloud-only break-glass accounts (e.g., BreakGlass-Admin-01@<tenant>.onmicrosoft.com and BreakGlass-Admin-02@<tenant>.onmicrosoft.com) with Global Admin role, FIDO2 security keys, excluded from all CA policies, monitored for sign-in activity, tested quarterly.'
         }
     }
 }
