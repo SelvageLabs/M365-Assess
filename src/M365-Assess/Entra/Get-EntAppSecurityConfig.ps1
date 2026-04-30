@@ -1069,25 +1069,39 @@ try {
     $msNames = @('Microsoft Teams', 'Microsoft Graph', 'Microsoft Office', 'Microsoft Azure', 'Microsoft Intune', 'Microsoft Exchange', 'Microsoft SharePoint', 'Microsoft Outlook', 'Microsoft OneDrive', 'Microsoft Defender')
     $impersonators = @()
 
-    # Exclude legitimate Microsoft first-party SPs by appOwnerOrganizationId.
-    # Microsoft publishes first-party apps from multiple tenant GUIDs (#880).
-    # Empirically observed in the wild:
-    #   f8cdef31-a31e-4b4a-93e4-5f571e91255a — Microsoft Services (most M365/Office SPs)
-    #   72f988bf-86f1-41af-91ab-2d7cd011db47 — Microsoft Corp (some dev tools)
-    #   ea8a4392-515e-481f-879e-6571ff2a8a36 — Microsoft (narrower, some Defender/security SPs)
-    #   cdc5aeea-15c5-4db6-b079-fcadd2505dc2 — Microsoft Graph Command Line Tools tenant
-    #     (Graph PowerShell SDK appId 14d82eec-204b-4c2f-b7e8-296a70dab67e — present in
-    #      every tenant that has run Connect-MgGraph)
-    # Owner-tenant allowlist is fragile by nature — Microsoft adds new publisher tenants
-    # for new product lines. Long-term hardening tracked in #880's "belt-and-suspenders"
-    # follow-up (AppId-based allowlist of known first-party constants).
-    $msTenantIds = @(
-        'f8cdef31-a31e-4b4a-93e4-5f571e91255a',
-        '72f988bf-86f1-41af-91ab-2d7cd011db47',
-        'ea8a4392-515e-481f-879e-6571ff2a8a36',
-        'cdc5aeea-15c5-4db6-b079-fcadd2505dc2'
-    )
-    $nonMsForeignApps = @($foreignApps | Where-Object { $_['appOwnerOrganizationId'] -notin $msTenantIds })
+    # #887: belt-and-suspenders Microsoft first-party allowlist. AppId match is
+    # the primary signal (most stable — Microsoft can move an app to a new
+    # owner tenant, but the AppId stays). Owner-tenant match is the secondary
+    # signal (catches first-party SPs whose AppId we haven't catalogued yet).
+    # Allowlist data lives in controls/microsoft-first-party-appids.json so
+    # adding new known first-party AppIds doesn't require a code change.
+    $allowlistPath = Join-Path -Path $PSScriptRoot -ChildPath '..\controls\microsoft-first-party-appids.json'
+    $msAppIds = @()
+    $msTenantIds = @()
+    if (Test-Path -Path $allowlistPath) {
+        try {
+            $allowlist = Get-Content -Raw -Path $allowlistPath | ConvertFrom-Json
+            $msAppIds    = @($allowlist.appIds         | ForEach-Object { $_.appId })
+            $msTenantIds = @($allowlist.ownerTenantIds | ForEach-Object { $_.id })
+        }
+        catch {
+            Write-Warning "Could not parse microsoft-first-party-appids.json: $($_.Exception.Message). Falling back to inline tenant-ID allowlist."
+        }
+    }
+    # Fallback if the JSON file is missing (e.g., partial install): keep the
+    # historical 4-tenant allowlist so the check still does the right thing.
+    if ($msTenantIds.Count -eq 0) {
+        $msTenantIds = @(
+            'f8cdef31-a31e-4b4a-93e4-5f571e91255a',
+            '72f988bf-86f1-41af-91ab-2d7cd011db47',
+            'ea8a4392-515e-481f-879e-6571ff2a8a36',
+            'cdc5aeea-15c5-4db6-b079-fcadd2505dc2'
+        )
+    }
+
+    $nonMsForeignApps = @($foreignApps | Where-Object {
+        ($_['appId'] -notin $msAppIds) -and ($_['appOwnerOrganizationId'] -notin $msTenantIds)
+    })
 
     foreach ($sp in $nonMsForeignApps) {
         $name = $sp['displayName']
