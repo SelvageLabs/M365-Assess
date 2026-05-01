@@ -1113,7 +1113,9 @@ function Posture() {
     className: "score-split-label"
   }, "Customer-earned"), /*#__PURE__*/React.createElement("div", {
     className: "score-split-value"
-  }, fmt(SCORE.CustomerScore), " pts"))))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, fmt(SCORE.CustomerScore), " pts"))), /*#__PURE__*/React.createElement("div", {
+    className: "score-disclaimer"
+  }, "Microsoft refreshes Secure Score on a delay \u2014 recent configuration changes can take up to 24 hours to reflect. The score above reflects Microsoft's last published value at assessment time, not the live tenant state."))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "kpi-strip",
     style: {
       marginBottom: 10
