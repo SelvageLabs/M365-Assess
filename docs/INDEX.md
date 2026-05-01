@@ -18,6 +18,7 @@ For consultants running assessments and consuming the report.
 | [`user/AUTHENTICATION.md`](user/AUTHENTICATION.md) | Interactive, certificate, device code, managed identity, and pre-existing connection methods |
 | [`user/REPORT-USER-GUIDE.md`](user/REPORT-USER-GUIDE.md) | Interactive features in the HTML report — edit mode, finalize, themes, sortable/resizable columns |
 | [`user/UNDERSTANDING-RESULTS.md`](user/UNDERSTANDING-RESULTS.md) | What each status (Pass / Fail / Review / Warning / Skipped / etc.) means and what to do |
+| [`user/FIRST-REMEDIATION.md`](user/FIRST-REMEDIATION.md) | Worked example: take one Fail finding from initial state through remediation through re-verification |
 | [`user/SCORING.md`](user/SCORING.md) | How the headline score is computed; the 6 scoring views; per-audience rationale |
 | [`user/COMPLIANCE.md`](user/COMPLIANCE.md) | 15 frameworks, XLSX export, CheckId system, control registry |
 | [`user/EVIDENCE-PACKAGE.md`](user/EVIDENCE-PACKAGE.md) | Sanitized evidence bundle for auditor handoff (`-EvidencePackage` switch) |
