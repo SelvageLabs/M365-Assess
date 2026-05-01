@@ -174,6 +174,8 @@ Filter state persists per-tenant; reset via the FilterBar's Clear-all action.
 
 - [`QUICKSTART.md`](QUICKSTART.md) — running the assessment
 - [`RUN.md`](RUN.md) — orchestration details
+- [`FIRST-REMEDIATION.md`](FIRST-REMEDIATION.md) — worked example: take one Fail finding from initial state through fix through re-verification
+- [`UNDERSTANDING-RESULTS.md`](UNDERSTANDING-RESULTS.md) — what each status means and what to do
 - [`REPORT-SCHEMA.md`](../dev/REPORT-INTERNALS.md) — the data shape behind the report
 - [`REPORT-FRONTEND.md`](../dev/REPORT-INTERNALS.md) — front-end internals (React, build, components)
 - [`SCORING.md`](SCORING.md) — how the headline score is computed and why
