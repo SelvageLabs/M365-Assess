@@ -224,7 +224,7 @@ Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.us' -M365Environment gcchig
 | Managed identity | `-TenantId -ManagedIdentity` | Azure VMs, Functions, Automation |
 | Pre-existing | `-SkipConnection` | Manual connection management |
 
-See [AUTHENTICATION.md](../AUTHENTICATION.md) for App Registration setup and detailed auth examples.
+See [AUTHENTICATION.md](AUTHENTICATION.md) for App Registration setup and detailed auth examples.
 
 ## Report Customization Flags
 
@@ -257,7 +257,7 @@ Get-ChildItem -Path .\M365-Assess\src -Recurse -Filter *.ps1 | Unblock-File
 ## See Also
 
 - [QUICKSTART.md](QUICKSTART.md) -- First assessment on a fresh machine
-- [AUTHENTICATION.md](../AUTHENTICATION.md) -- Auth methods and App Registration setup
-- [REPORT.md](../REPORT.md) -- Report features and customization
-- [COMPLIANCE.md](../COMPLIANCE.md) -- Framework mappings and XLSX export
+- [AUTHENTICATION.md](AUTHENTICATION.md) -- Auth methods and App Registration setup
+- [REPORT.md](../../REPORT.md) -- Report features and customization
+- [COMPLIANCE.md](COMPLIANCE.md) -- Framework mappings and XLSX export
 - [COMPATIBILITY.md](../reference/COMPATIBILITY.md) -- Module versions and known incompatibilities

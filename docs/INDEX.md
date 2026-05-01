@@ -14,7 +14,9 @@ For consultants running assessments and consuming the report.
 |---|---|
 | [`user/QUICKSTART.md`](user/QUICKSTART.md) | Step-by-step setup on a fresh Windows machine — install module, prereqs, first run |
 | [`user/RUN.md`](user/RUN.md) | Orchestration details — section selection, auth methods, output folders |
+| [`user/AUTHENTICATION.md`](user/AUTHENTICATION.md) | Interactive, certificate, device code, managed identity, and pre-existing connection methods |
 | [`user/REPORT-USER-GUIDE.md`](user/REPORT-USER-GUIDE.md) | Interactive features in the HTML report — edit mode, finalize, themes, sortable/resizable columns |
+| [`user/COMPLIANCE.md`](user/COMPLIANCE.md) | 15 frameworks, XLSX export, CheckId system, control registry |
 | [`user/SCORING.md`](user/SCORING.md) | How the headline score is computed; the 6 scoring views; per-audience rationale |
 | [`user/EVIDENCE-PACKAGE.md`](user/EVIDENCE-PACKAGE.md) | Sanitized evidence bundle for auditor handoff (`-EvidencePackage` switch) |
 | [`user/TROUBLESHOOTING.md`](user/TROUBLESHOOTING.md) | Common errors and resolutions |

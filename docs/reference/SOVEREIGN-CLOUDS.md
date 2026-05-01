@@ -120,6 +120,6 @@ If a new sovereign cloud is added (e.g., a future regional GCC variant):
 
 - `Common/Connect-Service.ps1` — `$envConfig` hashtable (per-cloud endpoints)
 - `Invoke-M365Assessment.ps1` — `-M365Environment` parameter validation
-- [`AUTHENTICATION.md`](../AUTHENTICATION.md) — auth methods per cloud
+- [`AUTHENTICATION.md`](../user/AUTHENTICATION.md) — auth methods per cloud
 - [`PERMISSIONS.md`](PERMISSIONS.md) — section-to-permissions matrix (cloud-agnostic)
 - [`CHECK-STATUS-MODEL.md`](CHECK-STATUS-MODEL.md) — `NotLicensed` semantics for cloud-specific feature gaps

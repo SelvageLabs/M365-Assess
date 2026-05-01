@@ -45,7 +45,7 @@ This opens an interactive consent prompt for all scopes the assessment requires.
 **Option B -- Grant permissions manually in the Entra admin center:**
 
 1. Go to **Entra admin center** > **App registrations** > your app > **API permissions**
-2. Add all Microsoft Graph application permissions listed in [AUTHENTICATION.md](../AUTHENTICATION.md)
+2. Add all Microsoft Graph application permissions listed in [AUTHENTICATION.md](AUTHENTICATION.md)
 3. Click **Grant admin consent for \<tenant\>**
 4. Wait 1--2 minutes for propagation, then retry the assessment
 

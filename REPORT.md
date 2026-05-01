@@ -12,7 +12,7 @@ The v2 report is a React 18 single-file HTML application — no server, no asset
 - **Microsoft Secure Score** — stat card, progress bar with peer-average comparison, and a real Secure Score history sparkline (up to 180 days from Graph, dynamically labeled)
 - **Domain donut charts** — Pass/Fail/Warning/Review/Info breakdown for each domain (Entra, EXO, Defender, SharePoint, Teams)
 - **Findings table** — sortable, searchable, filterable by status, severity, domain, and framework; severity and framework badges inline
-- **Compliance Overview** — interactive framework selector, coverage cards, CIS E3/E5 sub-filters, and cross-reference matrix (see [COMPLIANCE.md](COMPLIANCE.md))
+- **Compliance Overview** — interactive framework selector, coverage cards, CIS E3/E5 sub-filters, and cross-reference matrix (see [COMPLIANCE.md](docs/user/COMPLIANCE.md))
 - **Remediation Action Plan** — prioritized list of actionable fixes with effort estimates and impact metadata
 - **Appendix** — full section-by-section data tables with sortable headers, status/severity chip filters, column picker, and CSV export
 - **Color-coded status badges** (Pass/Fail/Warning/Review/Info) with row-level tinting on security config tables
