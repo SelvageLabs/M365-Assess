@@ -3747,42 +3747,48 @@ function Highlight({
 }
 
 // ======================== Findings table ========================
+// #917: Column widths use minmax(min, preferred) so the table can shrink
+// gracefully on narrow viewports instead of overflowing horizontally. The
+// 'finding' column carries the 1fr term so leftover space flows there on
+// wide displays. User-resized widths (colWidths[id]) snap to a px value
+// and override the minmax form for that column.
 const ALL_COLS = [{
   id: 'status',
   label: 'Status',
-  width: '80px'
-}, {
-  id: 'sequence',
-  label: 'Sequence',
-  width: '90px'
+  width: 'minmax(60px, 80px)'
 }, {
   id: 'finding',
   label: 'Finding',
-  width: '1.5fr'
+  width: 'minmax(180px, 1.5fr)'
 }, {
   id: 'domain',
   label: 'Domain',
-  width: '140px'
+  width: 'minmax(90px, 140px)'
 }, {
   id: 'controlId',
   label: 'Control #',
-  width: '100px'
+  width: 'minmax(70px, 100px)'
 }, {
   id: 'checkId',
   label: 'CheckID',
-  width: '160px'
+  width: 'minmax(100px, 160px)'
+}, {
+  id: 'sequence',
+  label: 'Sequence',
+  width: 'minmax(70px, 90px)'
 }, {
   id: 'severity',
   label: 'Severity',
-  width: '100px'
+  width: 'minmax(70px, 100px)'
 }, {
   id: 'frameworks',
   label: 'Frameworks',
-  width: '120px'
+  width: 'minmax(80px, 120px)'
 }];
-// #898: include sequence in default visible columns; matches the state
-// strip terminology shipped in PR #896 (#863 Phase 2).
-const DEFAULT_COLS = ['status', 'sequence', 'finding', 'domain', 'controlId', 'checkId', 'severity'];
+// #898 + #917: include sequence in default visible columns. Sequence sits
+// immediately to the left of severity per #917 so the workflow signal
+// (Now/Next/Later) reads adjacent to the priority signal (Severity).
+const DEFAULT_COLS = ['status', 'finding', 'domain', 'controlId', 'checkId', 'sequence', 'severity'];
 
 // Issue #846: enum orderings for sort. Status uses the "worst first" order
 // that matches the row-color severity ramp; severity uses the standard
@@ -3832,6 +3838,26 @@ function FindingsTable({
       return {};
     }
   });
+  // #917: per-user column order. Initialised from DEFAULT_COLS with any
+  // missing IDs (e.g. ones added in a later release) appended in their
+  // ALL_COLS order, and any stale IDs (removed columns) dropped.
+  const [colOrder, setColOrder] = useState(() => {
+    try {
+      const raw = localStorage.getItem(LS('m365-col-order'));
+      const stored = raw ? JSON.parse(raw) : null;
+      if (Array.isArray(stored) && stored.length) {
+        const known = new Set(ALL_COLS.map(c => c.id));
+        const filtered = stored.filter(id => known.has(id));
+        const missing = ALL_COLS.map(c => c.id).filter(id => !filtered.includes(id));
+        return [...filtered, ...missing];
+      }
+    } catch {}
+    return ALL_COLS.map(c => c.id);
+  });
+  // #917: drag-and-drop reorder state. dragColId is the column currently
+  // being dragged; dropTargetId is the column the cursor is over.
+  const [dragColId, setDragColId] = useState(null);
+  const [dropTargetId, setDropTargetId] = useState(null);
   useEffect(() => {
     try {
       localStorage.setItem(LS('m365-findings-sort'), JSON.stringify(sort));
@@ -3842,6 +3868,44 @@ function FindingsTable({
       localStorage.setItem(LS('m365-col-widths'), JSON.stringify(colWidths));
     } catch {}
   }, [colWidths]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS('m365-col-order'), JSON.stringify(colOrder));
+    } catch {}
+  }, [colOrder]);
+  const onColDragStart = (colId, ev) => {
+    setDragColId(colId);
+    try {
+      ev.dataTransfer.effectAllowed = 'move';
+      ev.dataTransfer.setData('text/plain', colId);
+    } catch {}
+  };
+  const onColDragOver = (colId, ev) => {
+    if (!dragColId || dragColId === colId) return;
+    ev.preventDefault();
+    if (dropTargetId !== colId) setDropTargetId(colId);
+  };
+  const onColDrop = (colId, ev) => {
+    ev.preventDefault();
+    if (!dragColId || dragColId === colId) {
+      setDragColId(null);
+      setDropTargetId(null);
+      return;
+    }
+    setColOrder(o => {
+      const next = o.filter(id => id !== dragColId);
+      const idx = next.indexOf(colId);
+      if (idx < 0) return o;
+      next.splice(idx, 0, dragColId);
+      return next;
+    });
+    setDragColId(null);
+    setDropTargetId(null);
+  };
+  const onColDragEnd = () => {
+    setDragColId(null);
+    setDropTargetId(null);
+  };
 
   // Cycle sort: none → asc → desc → none.
   const cycleSort = key => setSort(s => {
@@ -3935,7 +3999,10 @@ function FindingsTable({
     return () => clearTimeout(timer);
   }, [focusFinding]);
   const toggleCol = id => setVisibleCols(v => v.includes(id) ? v.length > 1 ? v.filter(c => c !== id) : v : [...v, id]);
-  const cols = ALL_COLS.filter(c => visibleCols.includes(c.id));
+
+  // #917: render columns in user-specified colOrder (filtered by visible).
+  const colMap = new Map(ALL_COLS.map(c => [c.id, c]));
+  const cols = colOrder.filter(id => visibleCols.includes(id)).map(id => colMap.get(id)).filter(Boolean);
   // Issue #846: per-column custom widths override the default. fr columns
   // stay fr until the user drags, then they snap to px.
   const gridTpl = cols.map(c => colWidths[c.id] ? colWidths[c.id] + 'px' : c.width).join(' ') + ' 28px';
@@ -4289,10 +4356,21 @@ function FindingsTable({
   }, cols.map(c => {
     const sortable = FT_SORTABLE.has(c.id);
     const isActive = sort?.key === c.id;
+    const isDragging = dragColId === c.id;
+    const isDropTarget = dropTargetId === c.id && dragColId && dragColId !== c.id;
     return /*#__PURE__*/React.createElement("div", {
       key: c.id,
-      className: "findings-col-head"
-    }, sortable ? /*#__PURE__*/React.createElement("button", {
+      className: 'findings-col-head' + (isDragging ? ' col-dragging' : '') + (isDropTarget ? ' col-drop-target' : ''),
+      onDragOver: ev => onColDragOver(c.id, ev),
+      onDrop: ev => onColDrop(c.id, ev)
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "findings-col-drag",
+      draggable: true,
+      onDragStart: ev => onColDragStart(c.id, ev),
+      onDragEnd: onColDragEnd,
+      title: "Drag to reorder column",
+      "aria-label": `Reorder ${c.label} column`
+    }, "\u22EE\u22EE"), sortable ? /*#__PURE__*/React.createElement("button", {
       type: "button",
       className: 'findings-col-sort' + (isActive ? ' active' : ''),
       onClick: () => cycleSort(c.id),
