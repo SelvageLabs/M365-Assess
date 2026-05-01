@@ -12,14 +12,17 @@ For consultants running assessments and consuming the report.
 
 | Doc | What's in it |
 |---|---|
+| [`user/SCOPE.md`](user/SCOPE.md) | One-page answer to "what does this tool actually do?" — in scope, opt-in, out of scope |
 | [`user/QUICKSTART.md`](user/QUICKSTART.md) | Step-by-step setup on a fresh Windows machine — install module, prereqs, first run |
 | [`user/RUN.md`](user/RUN.md) | Orchestration details — section selection, auth methods, output folders |
 | [`user/AUTHENTICATION.md`](user/AUTHENTICATION.md) | Interactive, certificate, device code, managed identity, and pre-existing connection methods |
 | [`user/REPORT-USER-GUIDE.md`](user/REPORT-USER-GUIDE.md) | Interactive features in the HTML report — edit mode, finalize, themes, sortable/resizable columns |
-| [`user/COMPLIANCE.md`](user/COMPLIANCE.md) | 15 frameworks, XLSX export, CheckId system, control registry |
+| [`user/UNDERSTANDING-RESULTS.md`](user/UNDERSTANDING-RESULTS.md) | What each status (Pass / Fail / Review / Warning / Skipped / etc.) means and what to do |
 | [`user/SCORING.md`](user/SCORING.md) | How the headline score is computed; the 6 scoring views; per-audience rationale |
+| [`user/COMPLIANCE.md`](user/COMPLIANCE.md) | 15 frameworks, XLSX export, CheckId system, control registry |
 | [`user/EVIDENCE-PACKAGE.md`](user/EVIDENCE-PACKAGE.md) | Sanitized evidence bundle for auditor handoff (`-EvidencePackage` switch) |
 | [`user/TROUBLESHOOTING.md`](user/TROUBLESHOOTING.md) | Common errors and resolutions |
+| [`user/GLOSSARY.md`](user/GLOSSARY.md) | Glossary — Lane / Sequence / Section / Collector / Check / Control / Framework / Profile / Level / Status |
 
 ## Implementer / developer audience
 
