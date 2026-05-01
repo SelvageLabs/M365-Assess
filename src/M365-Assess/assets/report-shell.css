@@ -778,6 +778,26 @@ section.block { margin-bottom: 52px; scroll-margin-top: 20px; }
 .findings-col-resize:hover {
   background: color-mix(in srgb, var(--accent) 30%, transparent);
 }
+/* #917: column drag-grip handle. Lives at the left of each header cell. */
+.findings-col-drag {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 2px;
+  font-size: 10px;
+  letter-spacing: -1px;
+  color: var(--muted);
+  opacity: 0.4;
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+  transition: opacity .15s, color .15s;
+}
+.findings-col-drag:hover { opacity: 1; color: var(--text); }
+.findings-col-drag:active { cursor: grabbing; }
+.findings-col-head.col-dragging { opacity: 0.4; }
+.findings-col-head.col-drop-target {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
 .finding-row {
   border-bottom: 1px solid var(--border);
   cursor: pointer;
