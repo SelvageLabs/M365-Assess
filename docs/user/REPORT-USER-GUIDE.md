@@ -13,9 +13,9 @@ The report is a single self-contained HTML file. It looks static, but it's a rea
 | Surface | Interaction |
 |---|---|
 | Section headers | Click to collapse / expand |
-| FilterBar (top of findings table) | Multi-select chips: Status / Severity / Framework / Domain / Level |
-| Findings table columns | Click headers to sort; drag right edges to resize |
-| Findings table rows | Click any row to expand into the detail panel |
+| FilterBar (top of findings table) | Multi-select chips: Status / Sequence / Severity / Framework / Domain / Level |
+| Findings table columns | Click headers to sort; drag right edges to resize; drag the ⋮⋮ grip on any header to reorder |
+| Findings table rows | Click any row to expand into the [detail panel](#the-finding-detail-panel) |
 | Roadmap section | Drag tasks between Now / Next / Later lanes (or use the menu on each card) |
 | Topbar | Theme toggle (4 themes) · density toggle · text-size A− / A+ · Edit mode toggle · Finalize |
 
@@ -133,10 +133,16 @@ Two adjacent buttons step the base font size one position each direction. Disabl
 
 | Action | How |
 |---|---|
-| Sort | Click a header (Status / Finding / Domain / CheckID / Severity) to cycle: none → ascending → descending → none |
+| Sort | Click any sortable header (Status / Finding / Domain / CheckID / Sequence / Severity) to cycle: none → ascending → descending → none |
 | Resize | Drag the right edge of any header (8px hot zone). Min width 60px |
+| Reorder | Drag the ⋮⋮ grip at the left of any header onto another column to reposition |
+| Show / hide columns | Click the **Columns** button above the table; toggle individual columns on / off |
 
-Sort + resize persist per-tenant in localStorage.
+Sort, resize, order, and column visibility all persist per-tenant in localStorage.
+
+**Adaptive widths.** Columns shrink on narrow viewports (the table uses CSS Grid `minmax()` so it doesn't overflow horizontally on smaller screens). The Finding column absorbs leftover space on wide displays.
+
+**Default order:** Status · Finding · Domain · Control # · CheckID · Sequence · Severity. The Sequence column shows the workflow lane (Now / Next / Later / Done) as a colour-coded pill.
 
 ### FilterBar
 
@@ -145,6 +151,7 @@ Multi-select chips above the findings table. Filters apply across the table, KPI
 | Group | Chips |
 |---|---|
 | **Status** | Pass · Fail · Warning · Review · Info · Skipped |
+| **Sequence** | Now · Next · Later · Done — slices to one workflow lane |
 | **Severity** | Critical · High · Medium · Low |
 | **Framework** | Per-framework chips (CIS · NIST · ISO · CMMC · ...) |
 | **Domain** | Per-domain chips (Identity · Defender · Exchange · ...) |
@@ -153,6 +160,74 @@ Multi-select chips above the findings table. Filters apply across the table, KPI
 Click a chip to add it to the filter; click again to remove. Multiple chips in the same group are OR-combined; chips across groups are AND-combined.
 
 Filter state persists per-tenant; reset via the FilterBar's Clear-all action.
+
+---
+
+## The finding detail panel
+
+Click any row in the findings table to expand it. The panel is structured top-to-bottom as:
+
+### 1. Copy button (top-right floating)
+
+A `Copy` button at the top-right corner of the panel. Click it to put a markdown summary of the finding (title · status · current value · recommended value · remediation) on your clipboard. Designed for fast paste into a ticket, change record, or stakeholder email.
+
+### 2. Intent-by-design callout (when applicable)
+
+If the finding's `IntentDesign` flag is set, the panel opens with a blue-tinted "Intentional by design" callout explaining why the otherwise-Fail-shaped configuration is deliberate. Most findings don't have this; it appears for known-trade-off cases (e.g., admin accounts deliberately excluded from a CA policy with a documented rationale).
+
+### 3. State strip — five workflow cells
+
+The state strip is the headline summary of the finding's workflow state:
+
+| Cell | What it shows |
+|---|---|
+| **Sequence** | Coloured pill: `Now` (red) / `Next` (amber) / `Later` (blue) for actionable Fail findings, `Done` (green) for Pass findings, `—` for Info / Skipped / Unknown |
+| **Effort** | Estimated remediation effort: `<15 min` / `1 hour` / `1 day` / `multi-day`. Drives the lane computation. |
+| **Affected** | Best-effort count derived from the observed value (e.g., `3 admins`). Shown in red if Severity is Critical, amber if High. `—` when not derivable. |
+| **Owner** | Currently `Unassigned` placeholder. Editable in Phase 5 of the redesign — see [#863](https://github.com/Galvnyz/M365-Assess/issues/863). |
+| **Ticket** | Currently `—` placeholder. Same Phase 5 dependency. |
+
+The Sequence cell uses the same pill colours as the Sequence column in the table itself, so a finding's lane reads identically in both places.
+
+### 4. Risk callout
+
+A red-tinted block with a `!` icon. Replaces the legacy "Why it matters" muted strip. Contains:
+
+- The risk narrative — explains *why* this finding matters (account compromise paths, data exfiltration risk, audit failure, etc.). Sourced from per-prefix narrative content (see issue #854).
+- **MITRE ATT&CK meta column** — when the finding maps to ATT&CK techniques, the technique IDs render as inline `code` chips on the right side of the callout.
+
+The visual prominence of this block is intentional — it's the "so what?" answer for stakeholders who don't speak the technical detail.
+
+### 5. Legacy content rows (transitional)
+
+Below the risk callout, the panel still renders the pre-redesign content blocks:
+
+- **Current value** — the observed tenant configuration. Coloured by status tier (red border for Fail, green for Pass, etc.).
+- **Recommended value** — what good looks like.
+- **Remediation** — the breadcrumb path or PowerShell snippet (caveat: admin-center paths rot when Microsoft reorgs the UI; see #879).
+- **Learn more** — links to canonical Microsoft Learn documentation, sourced from the registry's `references` field.
+
+These blocks will be replaced in Phases 3–5 of the [#863 finding-detail redesign](https://github.com/Galvnyz/M365-Assess/issues/863) (typed observed / expected fields, tabbed remediation actions, inline edit affordances). Until those phases ship, both the new state strip / risk callout AND these legacy blocks render together.
+
+### 6. Provenance footer (collapsible)
+
+A summary line at the bottom of the panel showing condensed provenance keys (Source · Collected · Method). Click to expand a full grid covering:
+
+- **Source** — which Graph endpoint / cmdlet produced this data
+- **Collected** — UTC timestamp of the API call
+- **Method** — `graph-api` / `exo-cmdlet` / `manual-validation` / etc.
+- **Permission** — the Graph scope or RBAC role used
+- **Confidence** — 0–100% (when the collector reports a confidence score)
+- **Observed value** — the raw observed value, useful when the higher-level "Current value" was summarised
+- **Limitations** — known caveats about the data (e.g., "only counts active sign-ins from the last 30 days")
+
+When `evidence.raw` is present, an additional collapsible block exposes the raw API response. Useful for incident-response evidence packs.
+
+The provenance footer replaces the previously-buried `<details>` block — every finding now has a one-click expand to show its data lineage.
+
+### Truncated check-ID (hover for full)
+
+Long `controlId` values (CIS / CMMC / NIST framework references) ellipsis-truncate within their row to keep the table tight. Hover a truncated value for the browser title-attribute tooltip showing the full ID.
 
 ---
 
