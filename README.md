@@ -404,14 +404,14 @@ M365-Assess/
 
 | Guide | Description |
 |-------|-------------|
-| [Quickstart](docs/QUICKSTART.md) | Step-by-step setup on a fresh Windows machine |
+| [Quickstart](docs/user/QUICKSTART.md) | Step-by-step setup on a fresh Windows machine |
 | [Authentication](AUTHENTICATION.md) | Interactive, certificate, device code, managed identity, and pre-existing connection methods |
-| [Permissions](docs/PERMISSIONS.md) | Generated per-section matrix: delegated Graph scopes, app permissions, EXO RBAC groups, Purview directory roles |
+| [Permissions](docs/reference/PERMISSIONS.md) | Generated per-section matrix: delegated Graph scopes, app permissions, EXO RBAC groups, Purview directory roles |
 | [HTML Report](REPORT.md) | Report features, custom branding, `-NoBranding`, standalone generation |
 | [Compliance](COMPLIANCE.md) | 15 frameworks, XLSX export, CheckId system, control registry |
-| [Compatibility](docs/COMPATIBILITY.md) | Module versions, dependency matrix, known incompatibilities |
-| [Troubleshooting](docs/TROUBLESHOOTING.md) | Common errors, module conflicts, permission issues |
-| [CheckId Guide](docs/CheckId-Guide.md) | CheckId naming convention and mapping reference |
+| [Compatibility](docs/reference/COMPATIBILITY.md) | Module versions, dependency matrix, known incompatibilities |
+| [Troubleshooting](docs/user/TROUBLESHOOTING.md) | Common errors, module conflicts, permission issues |
+| [CheckId Guide](docs/dev/CheckId-Guide.md) | CheckId naming convention and mapping reference |
 | [Changelog](CHANGELOG.md) | Release history and version notes |
 | [Security](SECURITY.md) | Vulnerability reporting and security policy |
 
