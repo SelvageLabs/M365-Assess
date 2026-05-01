@@ -2116,7 +2116,7 @@ function FilterBar({ filters, setFilters, counts, total, search, setSearch, inFi
       return { ...f, [k]: [...cur] };
     });
   };
-  const active = filters.status.length + filters.severity.length + filters.framework.length + filters.domain.length + (filters.profile||[]).length;
+  const active = filters.status.length + (filters.sequence||[]).length + filters.severity.length + filters.framework.length + filters.domain.length + (filters.profile||[]).length;
   const hasActiveFilters = search.length > 0 || active > 0;
   const isActive = hasActiveFilters && inFindings;
 
@@ -2128,6 +2128,15 @@ function FilterBar({ filters, setFilters, counts, total, search, setSearch, inFi
     ['NotLicensed','notlicensed','Not Licensed'],
   ];
   const sevChips = [ ['critical','crit','Critical'],['high','high','High'],['medium','med','Medium'],['low','low','Low'] ];
+  // #898: sequence chips. Multi-select; matches the table column + state-strip
+  // pill semantics. Lane (now/soon/later) for active remediation; "done" for
+  // Pass status; the "—" / no-sequence case is filtered via "none".
+  const seqChips = [
+    ['now','now','Now'],
+    ['soon','next','Next'],
+    ['later','later','Later'],
+    ['done','done','Done'],
+  ];
 
   const DOM_ORDER = ['Entra ID','Conditional Access','Enterprise Apps','Exchange Online','Intune','Defender','Purview / Compliance','SharePoint & OneDrive','Teams','Forms','Power BI','Active Directory','SOC 2','Value Opportunity'];
   const domainList = DOM_ORDER.filter(d => counts.domain[d]).concat(
@@ -2199,6 +2208,19 @@ function FilterBar({ filters, setFilters, counts, total, search, setSearch, inFi
             ))}
         </div>
         <div className="filter-divider"/>
+        {/* #898: SEQUENCE filter group. Same semantic as the table column +
+            state strip pill. Multi-select. */}
+        <div className="filter-group">
+          <span className="filter-group-label">Sequence</span>
+          {seqChips
+            .filter(([v]) => (counts.sequence?.[v] || 0) > 0 || (filters.sequence||[]).includes(v))
+            .map(([v,cls,label]) => (
+              <button key={v} className={'chip ' + cls + ((filters.sequence||[]).includes(v) ? ' selected' : '')} onClick={() => update('sequence', v)}>
+                {label}<span className="ct">{counts.sequence?.[v]||0}</span>
+              </button>
+            ))}
+        </div>
+        <div className="filter-divider"/>
         <div className="filter-group">
           <span className="filter-group-label">Severity</span>
           {sevChips.map(([v,cls,label])=>(
@@ -2249,7 +2271,7 @@ function FilterBar({ filters, setFilters, counts, total, search, setSearch, inFi
         {levelGroup}
         {active > 0 && (
           <button className="filter-clear filter-clear-inline"
-            onClick={()=>setFilters({status:[],severity:[],framework:[],domain:[],profile:[]})}>
+            onClick={()=>setFilters({status:[],sequence:[],severity:[],framework:[],domain:[],profile:[]})}>
             Clear {active} filter{active===1?'':'s'}
           </button>
         )}
@@ -2278,6 +2300,7 @@ function Highlight({ text, query }) {
 // ======================== Findings table ========================
 const ALL_COLS = [
   { id: 'status',    label: 'Status',    width: '80px'  },
+  { id: 'sequence',  label: 'Sequence',  width: '90px'  },
   { id: 'finding',   label: 'Finding',   width: '1.5fr' },
   { id: 'domain',    label: 'Domain',    width: '140px' },
   { id: 'controlId', label: 'Control #', width: '100px' },
@@ -2285,14 +2308,19 @@ const ALL_COLS = [
   { id: 'severity',  label: 'Severity',  width: '100px' },
   { id: 'frameworks',label: 'Frameworks',width: '120px' },
 ];
-const DEFAULT_COLS = ['status', 'finding', 'domain', 'controlId', 'checkId', 'severity'];
+// #898: include sequence in default visible columns; matches the state
+// strip terminology shipped in PR #896 (#863 Phase 2).
+const DEFAULT_COLS = ['status', 'sequence', 'finding', 'domain', 'controlId', 'checkId', 'severity'];
 
 // Issue #846: enum orderings for sort. Status uses the "worst first" order
 // that matches the row-color severity ramp; severity uses the standard
 // critical-down ordering.
 const FT_STATUS_ORDER = ['Fail','Warning','Review','Pass','Info','Skipped','Unknown','NotApplicable','NotLicensed'];
 const FT_SEV_ORDER = ['critical','high','medium','low','info'];
-const FT_SORTABLE = new Set(['status','finding','domain','checkId','severity']);
+// #898: sequence sort = workflow priority order. Now/Next/Later for active
+// remediation, then Done (Pass), then "—" (everything else).
+const FT_SEQ_ORDER = ['now','soon','later','done','none'];
+const FT_SORTABLE = new Set(['status','sequence','finding','domain','checkId','severity']);
 
 function FindingsTable({ filters, search, focusFinding, onFocusClear, onMatchesChange, editMode, hiddenFindings, onHide, onHideBulk, onRestoreAll }) {
   const { open: sectionOpen, headProps } = useCollapsibleSection();
@@ -2415,6 +2443,13 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, onMatchesC
     return FINDINGS.filter(f => {
       if (!editMode && hiddenFindings?.has(f.checkId)) return false;
       if (filters.status.length && !filters.status.includes(f.status)) return false;
+      if ((filters.sequence||[]).length) {
+        // #898: sequence filter — match the same logic as the column pill
+        const seq = (f.lane && LANE_LABELS[f.lane]) ? f.lane
+                  : (f.status === 'Pass') ? 'done'
+                  : null;
+        if (!seq || !filters.sequence.includes(seq)) return false;
+      }
       if (filters.severity.length && !filters.severity.includes(f.severity)) return false;
       if (filters.framework.length && !f.frameworks.some(fw => filters.framework.includes(fw))) return false;
       if (filters.domain.length && !filters.domain.includes(f.domain)) return false;
@@ -2440,7 +2475,13 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, onMatchesC
     const arr = [...filtered];
     const cmp = (a, b) => {
       let av, bv;
+      const seqRank = (f) => {
+        if (f.lane && FT_SEQ_ORDER.includes(f.lane)) return FT_SEQ_ORDER.indexOf(f.lane);
+        if (f.status === 'Pass') return FT_SEQ_ORDER.indexOf('done');
+        return FT_SEQ_ORDER.indexOf('none');
+      };
       if (sort.key === 'status') { av = FT_STATUS_ORDER.indexOf(a.status); bv = FT_STATUS_ORDER.indexOf(b.status); }
+      else if (sort.key === 'sequence') { av = seqRank(a); bv = seqRank(b); }
       else if (sort.key === 'severity') { av = FT_SEV_ORDER.indexOf(a.severity); bv = FT_SEV_ORDER.indexOf(b.severity); }
       else if (sort.key === 'finding') { av = (a.setting || '').toLowerCase(); bv = (b.setting || '').toLowerCase(); }
       else if (sort.key === 'domain') { av = (a.domain || '').toLowerCase(); bv = (b.domain || '').toLowerCase(); }
@@ -2495,6 +2536,18 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, onMatchesC
           {f.intentDesign && <span className="badge-intent">By Design</span>}
         </div>
       );
+      case 'sequence': {
+        // #898: same pill UX as the state strip in #896. Pass→Done, lane→
+        // coloured pill, otherwise muted dash.
+        const isPass = f.status === 'Pass';
+        if (f.lane && LANE_LABELS[f.lane]) {
+          return <div key="sequence"><span className={'fdc-pill ' + LANE_CSS[f.lane]}>{LANE_LABELS[f.lane]}</span></div>;
+        }
+        if (isPass) {
+          return <div key="sequence"><span className="fdc-pill done">Done</span></div>;
+        }
+        return <div key="sequence"><span style={{color:'var(--muted)'}}>—</span></div>;
+      }
       case 'finding': return (
         <div key="finding" className="finding-title">
           <div className="t"><Highlight text={f.setting} query={search}/></div>
@@ -2523,8 +2576,13 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, onMatchesC
                    : profiles.some(p => p.startsWith('E5')) ? 'E5'
                    : profiles.some(p => p.startsWith('E3')) ? 'E3' : '';
         return (
-          <div key="controlId" style={{display:'flex', flexDirection:'column', gap:2}}>
-            <span className="check-id" style={cid ? undefined : {color:'var(--muted)', fontStyle:'italic'}}>{cid || '—'}</span>
+          <div key="controlId" style={{display:'flex', flexDirection:'column', gap:2, minWidth:0}}>
+            {/* #900: long controlId strings (MITRE T-codes are 200+ chars
+                semicolon-joined) blow out the row. Truncate via CSS, full
+                value visible via native title tooltip. */}
+            <span className="check-id check-id-truncate"
+                  style={cid ? undefined : {color:'var(--muted)', fontStyle:'italic'}}
+                  title={cid || ''}>{cid || '—'}</span>
             {(lvl || lic) && (
               <span style={{display:'inline-flex', gap:3}}>
                 {lvl && <span className={'fw-profile-chip ' + lvlCls}>{lvl}</span>}
@@ -2639,6 +2697,9 @@ function FindingsTable({ filters, search, focusFinding, onFocusClear, onMatchesC
               </div>
               {isOpen && (
                 <div className="finding-detail fdd">
+                  {/* #901: Copy-to-clipboard button — top-right floating
+                      action that emits a markdown summary of the finding. */}
+                  <FindingCopyButton f={f}/>
                   {f.intentDesign && (
                     <div className="intent-callout">
                       <strong>Intentional by design.</strong>
@@ -2959,6 +3020,58 @@ function FindingProvenanceFooter({ evidence }) {
         )}
       </div>
     </details>
+  );
+}
+
+// Issue #901: per-finding Copy button. Emits a markdown summary that's
+// paste-friendly into ticketing systems / Slack / email when triaging.
+// Visual feedback: button text flips to "Copied ✓" for 2 seconds after
+// successful clipboard write.
+function FindingCopyButton({ f }) {
+  const [copied, setCopied] = React.useState(false);
+  const onClick = (e) => {
+    e.stopPropagation();
+    const sev = f.severity ? f.severity[0].toUpperCase() + f.severity.slice(1) : '—';
+    const seq = f.lane ? (LANE_LABELS[f.lane] || f.lane)
+              : (f.status === 'Pass' ? 'Done' : '—');
+    const fwLines = (f.frameworks || []).map(fw => {
+      const meta = f.fwMeta?.[fw];
+      const cid = meta?.controlId ? ` ${meta.controlId}` : '';
+      return `${fw}${cid}`;
+    }).join(' · ');
+    const refUrl = f.references?.[0]?.url ? `\nReference: ${f.references[0].url}` : '';
+    const md = [
+      `**[${f.status}]** ${f.setting} (${f.checkId})`,
+      `${f.domain || '—'} · ${sev} · ${seq}`,
+      fwLines ? `Frameworks: ${fwLines}` : null,
+      '',
+      `Risk: ${whyItMatters(f)}`,
+      '',
+      `Current: ${f.current || '—'}`,
+      `Recommended: ${f.recommended || '—'}`,
+      '',
+      `Remediation: ${f.remediation || '—'}` + refUrl,
+    ].filter(x => x !== null).join('\n');
+    const writeFn = navigator.clipboard?.writeText
+      ? navigator.clipboard.writeText.bind(navigator.clipboard)
+      : (text) => {
+          // Fallback for older browsers: temporary textarea + execCommand
+          const ta = document.createElement('textarea');
+          ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+          document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); } finally { document.body.removeChild(ta); }
+          return Promise.resolve();
+        };
+    writeFn(md).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button className="fdd-copy-btn" onClick={onClick}
+            title={copied ? 'Copied to clipboard' : 'Copy finding as markdown'}>
+      {copied ? '✓ Copied' : '⧉ Copy'}
+    </button>
   );
 }
 
@@ -3662,6 +3775,7 @@ function App() {
       if (saved && typeof saved === 'object') {
         return {
           status:    Array.isArray(saved.status)    ? saved.status    : [],
+          sequence:  Array.isArray(saved.sequence)  ? saved.sequence  : [],
           severity:  Array.isArray(saved.severity)  ? saved.severity  : [],
           framework: Array.isArray(saved.framework) ? saved.framework : [],
           domain:    Array.isArray(saved.domain)    ? saved.domain    : [],
@@ -3669,7 +3783,7 @@ function App() {
         };
       }
     } catch {}
-    return { status:[], severity:[], framework:[], domain:[], profile:[] };
+    return { status:[], sequence:[], severity:[], framework:[], domain:[], profile:[] };
   });
   const [active, setActive] = useState('overview');
   const [activeSubsection, setActiveSubsection] = useState(null);
@@ -3778,12 +3892,16 @@ function App() {
 
   // Counts for filter bar
   const counts = useMemo(() => {
-    const c = { status:{}, severity:{}, framework:{}, domain:{} };
+    const c = { status:{}, sequence:{}, severity:{}, framework:{}, domain:{} };
     FINDINGS.forEach(f => {
       c.status[f.status] = (c.status[f.status]||0) + 1;
       c.severity[f.severity] = (c.severity[f.severity]||0) + 1;
       c.domain[f.domain] = (c.domain[f.domain]||0) + 1;
       f.frameworks.forEach(fw => c.framework[fw] = (c.framework[fw]||0) + 1);
+      // #898: sequence count for the FilterBar group. Same logic as the
+      // column pill: lane → now/soon/later, Pass → done, otherwise no bucket.
+      const seq = f.lane || (f.status === 'Pass' ? 'done' : null);
+      if (seq) c.sequence[seq] = (c.sequence[seq]||0) + 1;
     });
     return c;
   }, []);
@@ -3827,7 +3945,7 @@ function App() {
     onDomainJump(null);
   };
   const onViewFinding = useCallback((checkId) => {
-    setFilters({ status:[], severity:[], framework:[], domain:[], profile:[] });
+    setFilters({ status:[], sequence:[], severity:[], framework:[], domain:[], profile:[] });
     setSearch('');
     setFocusFinding(checkId);
     document.getElementById('findings-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });

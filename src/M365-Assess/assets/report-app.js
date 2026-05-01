@@ -3497,13 +3497,17 @@ function FilterBar({
       };
     });
   };
-  const active = filters.status.length + filters.severity.length + filters.framework.length + filters.domain.length + (filters.profile || []).length;
+  const active = filters.status.length + (filters.sequence || []).length + filters.severity.length + filters.framework.length + filters.domain.length + (filters.profile || []).length;
   const hasActiveFilters = search.length > 0 || active > 0;
   const isActive = hasActiveFilters && inFindings;
 
   // [data-value, css-class, optional-display-label]
   const statusChips = [['Fail', 'fail'], ['Warning', 'warn'], ['Review', 'review'], ['Pass', 'pass'], ['Info', 'info'], ['Skipped', 'skipped'], ['Unknown', 'unknown'], ['NotApplicable', 'notapplicable', 'Not Applicable'], ['NotLicensed', 'notlicensed', 'Not Licensed']];
   const sevChips = [['critical', 'crit', 'Critical'], ['high', 'high', 'High'], ['medium', 'med', 'Medium'], ['low', 'low', 'Low']];
+  // #898: sequence chips. Multi-select; matches the table column + state-strip
+  // pill semantics. Lane (now/soon/later) for active remediation; "done" for
+  // Pass status; the "—" / no-sequence case is filtered via "none".
+  const seqChips = [['now', 'now', 'Now'], ['soon', 'next', 'Next'], ['later', 'later', 'Later'], ['done', 'done', 'Done']];
   const DOM_ORDER = ['Entra ID', 'Conditional Access', 'Enterprise Apps', 'Exchange Online', 'Intune', 'Defender', 'Purview / Compliance', 'SharePoint & OneDrive', 'Teams', 'Forms', 'Power BI', 'Active Directory', 'SOC 2', 'Value Opportunity'];
   const domainList = DOM_ORDER.filter(d => counts.domain[d]).concat(Object.keys(counts.domain).filter(d => !DOM_ORDER.includes(d)).sort());
 
@@ -3608,6 +3612,18 @@ function FilterBar({
     className: "filter-group"
   }, /*#__PURE__*/React.createElement("span", {
     className: "filter-group-label"
+  }, "Sequence"), seqChips.filter(([v]) => (counts.sequence?.[v] || 0) > 0 || (filters.sequence || []).includes(v)).map(([v, cls, label]) => /*#__PURE__*/React.createElement("button", {
+    key: v,
+    className: 'chip ' + cls + ((filters.sequence || []).includes(v) ? ' selected' : ''),
+    onClick: () => update('sequence', v)
+  }, label, /*#__PURE__*/React.createElement("span", {
+    className: "ct"
+  }, counts.sequence?.[v] || 0)))), /*#__PURE__*/React.createElement("div", {
+    className: "filter-divider"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "filter-group"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "filter-group-label"
   }, "Severity"), sevChips.map(([v, cls, label]) => /*#__PURE__*/React.createElement("button", {
     key: v,
     className: 'chip ' + cls + (filters.severity.includes(v) ? ' selected' : ''),
@@ -3695,6 +3711,7 @@ function FilterBar({
     className: "filter-clear filter-clear-inline",
     onClick: () => setFilters({
       status: [],
+      sequence: [],
       severity: [],
       framework: [],
       domain: [],
@@ -3733,6 +3750,10 @@ const ALL_COLS = [{
   label: 'Status',
   width: '80px'
 }, {
+  id: 'sequence',
+  label: 'Sequence',
+  width: '90px'
+}, {
   id: 'finding',
   label: 'Finding',
   width: '1.5fr'
@@ -3757,14 +3778,19 @@ const ALL_COLS = [{
   label: 'Frameworks',
   width: '120px'
 }];
-const DEFAULT_COLS = ['status', 'finding', 'domain', 'controlId', 'checkId', 'severity'];
+// #898: include sequence in default visible columns; matches the state
+// strip terminology shipped in PR #896 (#863 Phase 2).
+const DEFAULT_COLS = ['status', 'sequence', 'finding', 'domain', 'controlId', 'checkId', 'severity'];
 
 // Issue #846: enum orderings for sort. Status uses the "worst first" order
 // that matches the row-color severity ramp; severity uses the standard
 // critical-down ordering.
 const FT_STATUS_ORDER = ['Fail', 'Warning', 'Review', 'Pass', 'Info', 'Skipped', 'Unknown', 'NotApplicable', 'NotLicensed'];
 const FT_SEV_ORDER = ['critical', 'high', 'medium', 'low', 'info'];
-const FT_SORTABLE = new Set(['status', 'finding', 'domain', 'checkId', 'severity']);
+// #898: sequence sort = workflow priority order. Now/Next/Later for active
+// remediation, then Done (Pass), then "—" (everything else).
+const FT_SEQ_ORDER = ['now', 'soon', 'later', 'done', 'none'];
+const FT_SORTABLE = new Set(['status', 'sequence', 'finding', 'domain', 'checkId', 'severity']);
 function FindingsTable({
   filters,
   search,
@@ -3921,6 +3947,11 @@ function FindingsTable({
     return FINDINGS.filter(f => {
       if (!editMode && hiddenFindings?.has(f.checkId)) return false;
       if (filters.status.length && !filters.status.includes(f.status)) return false;
+      if ((filters.sequence || []).length) {
+        // #898: sequence filter — match the same logic as the column pill
+        const seq = f.lane && LANE_LABELS[f.lane] ? f.lane : f.status === 'Pass' ? 'done' : null;
+        if (!seq || !filters.sequence.includes(seq)) return false;
+      }
       if (filters.severity.length && !filters.severity.includes(f.severity)) return false;
       if (filters.framework.length && !f.frameworks.some(fw => filters.framework.includes(fw))) return false;
       if (filters.domain.length && !filters.domain.includes(f.domain)) return false;
@@ -3946,9 +3977,17 @@ function FindingsTable({
     const arr = [...filtered];
     const cmp = (a, b) => {
       let av, bv;
+      const seqRank = f => {
+        if (f.lane && FT_SEQ_ORDER.includes(f.lane)) return FT_SEQ_ORDER.indexOf(f.lane);
+        if (f.status === 'Pass') return FT_SEQ_ORDER.indexOf('done');
+        return FT_SEQ_ORDER.indexOf('none');
+      };
       if (sort.key === 'status') {
         av = FT_STATUS_ORDER.indexOf(a.status);
         bv = FT_STATUS_ORDER.indexOf(b.status);
+      } else if (sort.key === 'sequence') {
+        av = seqRank(a);
+        bv = seqRank(b);
       } else if (sort.key === 'severity') {
         av = FT_SEV_ORDER.indexOf(a.severity);
         bv = FT_SEV_ORDER.indexOf(b.severity);
@@ -4015,6 +4054,33 @@ function FindingsTable({
         }), statusLabel(f.status)), f.intentDesign && /*#__PURE__*/React.createElement("span", {
           className: "badge-intent"
         }, "By Design"));
+      case 'sequence':
+        {
+          // #898: same pill UX as the state strip in #896. Pass→Done, lane→
+          // coloured pill, otherwise muted dash.
+          const isPass = f.status === 'Pass';
+          if (f.lane && LANE_LABELS[f.lane]) {
+            return /*#__PURE__*/React.createElement("div", {
+              key: "sequence"
+            }, /*#__PURE__*/React.createElement("span", {
+              className: 'fdc-pill ' + LANE_CSS[f.lane]
+            }, LANE_LABELS[f.lane]));
+          }
+          if (isPass) {
+            return /*#__PURE__*/React.createElement("div", {
+              key: "sequence"
+            }, /*#__PURE__*/React.createElement("span", {
+              className: "fdc-pill done"
+            }, "Done"));
+          }
+          return /*#__PURE__*/React.createElement("div", {
+            key: "sequence"
+          }, /*#__PURE__*/React.createElement("span", {
+            style: {
+              color: 'var(--muted)'
+            }
+          }, "\u2014"));
+        }
       case 'finding':
         return /*#__PURE__*/React.createElement("div", {
           key: "finding",
@@ -4067,14 +4133,16 @@ function FindingsTable({
             style: {
               display: 'flex',
               flexDirection: 'column',
-              gap: 2
+              gap: 2,
+              minWidth: 0
             }
           }, /*#__PURE__*/React.createElement("span", {
-            className: "check-id",
+            className: "check-id check-id-truncate",
             style: cid ? undefined : {
               color: 'var(--muted)',
               fontStyle: 'italic'
-            }
+            },
+            title: cid || ''
           }, cid || '—'), (lvl || lic) && /*#__PURE__*/React.createElement("span", {
             style: {
               display: 'inline-flex',
@@ -4260,7 +4328,9 @@ function FindingsTable({
       className: "caret"
     }, /*#__PURE__*/React.createElement(Icon.chevron, null))), isOpen && /*#__PURE__*/React.createElement("div", {
       className: "finding-detail fdd"
-    }, f.intentDesign && /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement(FindingCopyButton, {
+      f: f
+    }), f.intentDesign && /*#__PURE__*/React.createElement("div", {
       className: "intent-callout"
     }, /*#__PURE__*/React.createElement("strong", null, "Intentional by design."), f.intentRationale && /*#__PURE__*/React.createElement("span", null, " ", f.intentRationale)), /*#__PURE__*/React.createElement(FindingStateStrip, {
       f: f
@@ -4595,6 +4665,52 @@ function FindingProvenanceFooter({
       marginTop: 10
     }
   }, /*#__PURE__*/React.createElement("summary", null, "Raw evidence"), /*#__PURE__*/React.createElement("pre", null, rawPretty))));
+}
+
+// Issue #901: per-finding Copy button. Emits a markdown summary that's
+// paste-friendly into ticketing systems / Slack / email when triaging.
+// Visual feedback: button text flips to "Copied ✓" for 2 seconds after
+// successful clipboard write.
+function FindingCopyButton({
+  f
+}) {
+  const [copied, setCopied] = React.useState(false);
+  const onClick = e => {
+    e.stopPropagation();
+    const sev = f.severity ? f.severity[0].toUpperCase() + f.severity.slice(1) : '—';
+    const seq = f.lane ? LANE_LABELS[f.lane] || f.lane : f.status === 'Pass' ? 'Done' : '—';
+    const fwLines = (f.frameworks || []).map(fw => {
+      const meta = f.fwMeta?.[fw];
+      const cid = meta?.controlId ? ` ${meta.controlId}` : '';
+      return `${fw}${cid}`;
+    }).join(' · ');
+    const refUrl = f.references?.[0]?.url ? `\nReference: ${f.references[0].url}` : '';
+    const md = [`**[${f.status}]** ${f.setting} (${f.checkId})`, `${f.domain || '—'} · ${sev} · ${seq}`, fwLines ? `Frameworks: ${fwLines}` : null, '', `Risk: ${whyItMatters(f)}`, '', `Current: ${f.current || '—'}`, `Recommended: ${f.recommended || '—'}`, '', `Remediation: ${f.remediation || '—'}` + refUrl].filter(x => x !== null).join('\n');
+    const writeFn = navigator.clipboard?.writeText ? navigator.clipboard.writeText.bind(navigator.clipboard) : text => {
+      // Fallback for older browsers: temporary textarea + execCommand
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+      } finally {
+        document.body.removeChild(ta);
+      }
+      return Promise.resolve();
+    };
+    writeFn(md).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return /*#__PURE__*/React.createElement("button", {
+    className: "fdd-copy-btn",
+    onClick: onClick,
+    title: copied ? 'Copied to clipboard' : 'Copy finding as markdown'
+  }, copied ? '✓ Copied' : '⧉ Copy');
 }
 
 // Issue #854: per-prefix narrative content for the finding-detail "Why It Matters"
@@ -5745,6 +5861,7 @@ function App() {
       if (saved && typeof saved === 'object') {
         return {
           status: Array.isArray(saved.status) ? saved.status : [],
+          sequence: Array.isArray(saved.sequence) ? saved.sequence : [],
           severity: Array.isArray(saved.severity) ? saved.severity : [],
           framework: Array.isArray(saved.framework) ? saved.framework : [],
           domain: Array.isArray(saved.domain) ? saved.domain : [],
@@ -5754,6 +5871,7 @@ function App() {
     } catch {}
     return {
       status: [],
+      sequence: [],
       severity: [],
       framework: [],
       domain: [],
@@ -5880,6 +5998,7 @@ function App() {
   const counts = useMemo(() => {
     const c = {
       status: {},
+      sequence: {},
       severity: {},
       framework: {},
       domain: {}
@@ -5889,6 +6008,10 @@ function App() {
       c.severity[f.severity] = (c.severity[f.severity] || 0) + 1;
       c.domain[f.domain] = (c.domain[f.domain] || 0) + 1;
       f.frameworks.forEach(fw => c.framework[fw] = (c.framework[fw] || 0) + 1);
+      // #898: sequence count for the FilterBar group. Same logic as the
+      // column pill: lane → now/soon/later, Pass → done, otherwise no bucket.
+      const seq = f.lane || (f.status === 'Pass' ? 'done' : null);
+      if (seq) c.sequence[seq] = (c.sequence[seq] || 0) + 1;
     });
     return c;
   }, []);
@@ -5950,6 +6073,7 @@ function App() {
   const onViewFinding = useCallback(checkId => {
     setFilters({
       status: [],
+      sequence: [],
       severity: [],
       framework: [],
       domain: [],
