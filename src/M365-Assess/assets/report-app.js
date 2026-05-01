@@ -2029,7 +2029,7 @@ function AdHybridPanel() {
       marginTop: 6,
       lineHeight: 1.3
     }
-  }, fmtDate(ad.lastSyncTime))), /*#__PURE__*/React.createElement("div", {
+  }, fmtDate(ad.lastSyncTime))), syncOk ? /*#__PURE__*/React.createElement("div", {
     className: 'spo-stat-card' + (phsOk === false ? ' spo-stat-bad' : '')
   }, /*#__PURE__*/React.createElement("div", {
     className: "kpi-label"
@@ -2050,7 +2050,20 @@ function AdHybridPanel() {
     style: {
       color: 'var(--warn-text)'
     }
-  }, "No PHS timestamp - verify in Microsoft Entra Connect or Entra Cloud Sync")), ad.syncErrorCount > 0 && /*#__PURE__*/React.createElement("div", {
+  }, "No PHS timestamp - verify in Microsoft Entra Connect or Entra Cloud Sync")) : /*#__PURE__*/React.createElement("div", {
+    className: "spo-stat-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "kpi-label"
+  }, "Password hash sync"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 700,
+      color: 'var(--muted)',
+      marginTop: 6
+    }
+  }, "N/A"), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-hint"
+  }, "Cloud-only tenant \u2014 no on-prem hashes to sync")), ad.syncErrorCount > 0 && /*#__PURE__*/React.createElement("div", {
     className: "spo-stat-card spo-stat-bad"
   }, /*#__PURE__*/React.createElement("div", {
     className: "kpi-label"
