@@ -78,7 +78,7 @@ Invoke-M365Assessment -TenantId 'contoso.onmicrosoft.com' `
 
 ### Required API Permissions
 
-> The full per-section permissions matrix lives at [`docs/PERMISSIONS.md`](docs/PERMISSIONS.md). It is generated from `AssessmentMaps.ps1` + `PermissionDefinitions.ps1` and CI fails any PR that modifies those sources without regenerating the doc.
+> The full per-section permissions matrix lives at [`PERMISSIONS.md`](../reference/PERMISSIONS.md). It is generated from `AssessmentMaps.ps1` + `PermissionDefinitions.ps1` and CI fails any PR that modifies those sources without regenerating the doc.
 
 
 The App Registration needs these Microsoft Graph **application** permissions:
@@ -163,7 +163,7 @@ This is useful when:
 
 ## Cloud Environments
 
-> Per-section support varies by sovereign cloud (mostly affecting Defender + Intune in DoD). See [`docs/SOVEREIGN-CLOUDS.md`](docs/SOVEREIGN-CLOUDS.md) for the full Tested/Expected/Partial/Unsupported matrix.
+> Per-section support varies by sovereign cloud (mostly affecting Defender + Intune in DoD). See [`SOVEREIGN-CLOUDS.md`](../reference/SOVEREIGN-CLOUDS.md) for the full Tested/Expected/Partial/Unsupported matrix.
 
 
 Use `-M365Environment` for government or sovereign cloud tenants:

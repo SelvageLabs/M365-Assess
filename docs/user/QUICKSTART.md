@@ -150,6 +150,6 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 ## Next Steps
 
-- See [AUTHENTICATION.md](../AUTHENTICATION.md) for certificate-based and service principal auth
+- See [AUTHENTICATION.md](AUTHENTICATION.md) for certificate-based and service principal auth
 - See [REPORT.md](../REPORT.md) for report customization options
 - See [COMPATIBILITY.md](../reference/COMPATIBILITY.md) for platform support details
