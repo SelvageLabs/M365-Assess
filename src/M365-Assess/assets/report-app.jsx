@@ -687,6 +687,9 @@ function Posture() {
               </div>
             </div>
           )}
+          <div className="score-disclaimer">
+            Microsoft refreshes Secure Score on a delay — recent configuration changes can take up to 24 hours to reflect. The score above reflects Microsoft's last published value at assessment time, not the live tenant state.
+          </div>
         </div>
         </HideableBlock>
 

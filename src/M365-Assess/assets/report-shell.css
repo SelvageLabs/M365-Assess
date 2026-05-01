@@ -433,6 +433,15 @@ section.block { margin-bottom: 52px; scroll-margin-top: 20px; }
   font-family: var(--font-display);
   letter-spacing: -0.02em;
 }
+.score-disclaimer {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--muted);
+  font-style: italic;
+}
 
 /* KPI strip */
 .kpi-strip {
