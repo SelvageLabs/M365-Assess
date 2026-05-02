@@ -1267,12 +1267,24 @@ function AdHybridPanel() {
           <div className="kpi-label">Last sync</div>
           <div style={{fontSize:12, fontWeight:600, color:'var(--text-soft)', marginTop:6, lineHeight:1.3}}>{fmtDate(ad.lastSyncTime)}</div>
         </div>
-        <div className={'spo-stat-card' + (phsOk === false ? ' spo-stat-bad' : '')}>
-          <div className="kpi-label">Password hash sync</div>
-          <div style={{fontSize:13, fontWeight:700, color: phsColor, marginTop:6}}>{phsOk ? 'Enabled' : phsUnknown ? 'Verify' : 'Disabled'}</div>
-          {phsOk === false && <div className="kpi-hint" style={{color:'var(--danger-text)'}}>Leaked credential detection and fallback auth may be impacted</div>}
-          {phsUnknown && <div className="kpi-hint" style={{color:'var(--warn-text)'}}>No PHS timestamp - verify in Microsoft Entra Connect or Entra Cloud Sync</div>}
-        </div>
+        {/* #930: PHS only matters on tenants with hybrid Directory sync.
+            On a cloud-only tenant (syncOk === false), render an N/A card
+            with a muted hint instead of a red Disabled warning — there's
+            no on-prem AD to sync hashes from. */}
+        {syncOk ? (
+          <div className={'spo-stat-card' + (phsOk === false ? ' spo-stat-bad' : '')}>
+            <div className="kpi-label">Password hash sync</div>
+            <div style={{fontSize:13, fontWeight:700, color: phsColor, marginTop:6}}>{phsOk ? 'Enabled' : phsUnknown ? 'Verify' : 'Disabled'}</div>
+            {phsOk === false && <div className="kpi-hint" style={{color:'var(--danger-text)'}}>Leaked credential detection and fallback auth may be impacted</div>}
+            {phsUnknown && <div className="kpi-hint" style={{color:'var(--warn-text)'}}>No PHS timestamp - verify in Microsoft Entra Connect or Entra Cloud Sync</div>}
+          </div>
+        ) : (
+          <div className="spo-stat-card">
+            <div className="kpi-label">Password hash sync</div>
+            <div style={{fontSize:13, fontWeight:700, color:'var(--muted)', marginTop:6}}>N/A</div>
+            <div className="kpi-hint">Cloud-only tenant — no on-prem hashes to sync</div>
+          </div>
+        )}
         {ad.syncErrorCount > 0 && (
           <div className="spo-stat-card spo-stat-bad">
             <div className="kpi-label">Sync errors</div>
