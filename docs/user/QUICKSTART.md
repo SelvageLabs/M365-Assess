@@ -152,5 +152,5 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 - **You have a Fail finding — what now?** See [FIRST-REMEDIATION.md](FIRST-REMEDIATION.md) — a worked-example walkthrough from initial Fail through remediation through re-verification.
 - See [AUTHENTICATION.md](AUTHENTICATION.md) for certificate-based and service principal auth
-- See [REPORT.md](../REPORT.md) for report customization options
+- See [REPORT-USER-GUIDE.md](REPORT-USER-GUIDE.md) for report features, interactive walkthrough, and customization options
 - See [COMPATIBILITY.md](../reference/COMPATIBILITY.md) for platform support details

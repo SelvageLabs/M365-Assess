@@ -258,6 +258,6 @@ Get-ChildItem -Path .\M365-Assess\src -Recurse -Filter *.ps1 | Unblock-File
 
 - [QUICKSTART.md](QUICKSTART.md) -- First assessment on a fresh machine
 - [AUTHENTICATION.md](AUTHENTICATION.md) -- Auth methods and App Registration setup
-- [REPORT.md](../../REPORT.md) -- Report features and customization
+- [REPORT-USER-GUIDE.md](REPORT-USER-GUIDE.md) -- Report features, interactive walkthrough, and customization
 - [COMPLIANCE.md](COMPLIANCE.md) -- Framework mappings and XLSX export
 - [COMPATIBILITY.md](../reference/COMPATIBILITY.md) -- Module versions and known incompatibilities

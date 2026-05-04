@@ -407,7 +407,7 @@ M365-Assess/
 | [Quickstart](docs/user/QUICKSTART.md) | Step-by-step setup on a fresh Windows machine |
 | [Authentication](docs/user/AUTHENTICATION.md) | Interactive, certificate, device code, managed identity, and pre-existing connection methods |
 | [Permissions](docs/reference/PERMISSIONS.md) | Generated per-section matrix: delegated Graph scopes, app permissions, EXO RBAC groups, Purview directory roles |
-| [HTML Report](REPORT.md) | Report features, custom branding, `-NoBranding`, standalone generation |
+| [HTML Report](docs/user/REPORT-USER-GUIDE.md) | Report features, interactive walkthrough, standalone generation, white-label |
 | [Compliance](docs/user/COMPLIANCE.md) | 15 frameworks, XLSX export, CheckId system, control registry |
 | [Compatibility](docs/reference/COMPATIBILITY.md) | Module versions, dependency matrix, known incompatibilities |
 | [Troubleshooting](docs/user/TROUBLESHOOTING.md) | Common errors, module conflicts, permission issues |
