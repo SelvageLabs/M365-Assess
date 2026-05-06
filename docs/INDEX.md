@@ -55,6 +55,7 @@ Authoritative references for specific topics. Read these when you need to know t
 
 | Path | Purpose |
 |---|---|
+| [`adr/`](adr/) | Architecture Decision Records — short notes on load-bearing decisions and the tradeoffs we accepted |
 | [`research/`](research/) | Decision artifacts from research spikes (audit findings, framework taxonomy investigations, etc.) |
 | [`design/`](design/) | Frozen design handoff packages from claude.ai/design (framework redesign, finding-detail redesign) |
 | [`architecture/`](architecture/) | High-level architecture diagrams (placeholder; mostly empty) |
