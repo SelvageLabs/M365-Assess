@@ -36,6 +36,9 @@ When a later ADR overrides an earlier one, set the old one's status to `Supersed
 | [0005](0005-nine-status-taxonomy.md) | 9-value status taxonomy instead of binary Pass/Fail | Accepted | 2026-05-06 |
 | [0006](0006-optional-structured-evidence-fields.md) | Extend the finding contract with optional structured evidence fields | Accepted | 2026-05-06 |
 | [0007](0007-skip-collector-on-unavailable-service.md) | Skip individual collectors when their services are unavailable; never abort the run | Accepted | 2026-05-06 |
+| [0008](0008-self-contained-html-report.md) | HTML report is a single self-contained file with no external runtime dependencies | Accepted | 2026-05-06 |
+| [0009](0009-live-tenant-verification-hard-gate.md) | Live tenant verification is a hard precondition for every release | Accepted | 2026-05-06 |
+| [0010](0010-baseline-diff-key-strategy.md) | Baseline diff keys on the sub-numbered CheckId; cross-version uses intersect-only mode | Accepted | 2026-05-06 |
 
 ---
 
