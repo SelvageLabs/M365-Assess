@@ -30,6 +30,9 @@ When a later ADR overrides an earlier one, set the old one's status to `Supersed
 | # | Title | Status | Date |
 |---|---|---|---|
 | [0001](0001-checkid-sync-vs-fork.md) | Consume CheckID via tagged-release sync, not a fork | Accepted | 2026-05-06 |
+| [0002](0002-sub-numbered-check-ids.md) | Auto sub-number CheckIds at the setting level | Accepted | 2026-05-06 |
+| [0003](0003-dns-section-runs-last-with-prefetch.md) | DNS section runs last, fed by a connect-time prefetch | Accepted | 2026-05-06 |
+| [0004](0004-licensing-overlay-separate-from-registry.md) | Keep the licensing overlay separate from the upstream registry | Accepted | 2026-05-06 |
 
 ---
 
