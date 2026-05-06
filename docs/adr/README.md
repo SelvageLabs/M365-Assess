@@ -33,6 +33,9 @@ When a later ADR overrides an earlier one, set the old one's status to `Supersed
 | [0002](0002-sub-numbered-check-ids.md) | Auto sub-number CheckIds at the setting level | Accepted | 2026-05-06 |
 | [0003](0003-dns-section-runs-last-with-prefetch.md) | DNS section runs last, fed by a connect-time prefetch | Accepted | 2026-05-06 |
 | [0004](0004-licensing-overlay-separate-from-registry.md) | Keep the licensing overlay separate from the upstream registry | Accepted | 2026-05-06 |
+| [0005](0005-nine-status-taxonomy.md) | 9-value status taxonomy instead of binary Pass/Fail | Accepted | 2026-05-06 |
+| [0006](0006-optional-structured-evidence-fields.md) | Extend the finding contract with optional structured evidence fields | Accepted | 2026-05-06 |
+| [0007](0007-skip-collector-on-unavailable-service.md) | Skip individual collectors when their services are unavailable; never abort the run | Accepted | 2026-05-06 |
 
 ---
 
