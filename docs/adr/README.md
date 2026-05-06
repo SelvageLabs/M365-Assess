@@ -39,6 +39,9 @@ When a later ADR overrides an earlier one, set the old one's status to `Supersed
 | [0008](0008-self-contained-html-report.md) | HTML report is a single self-contained file with no external runtime dependencies | Accepted | 2026-05-06 |
 | [0009](0009-live-tenant-verification-hard-gate.md) | Live tenant verification is a hard precondition for every release | Accepted | 2026-05-06 |
 | [0010](0010-baseline-diff-key-strategy.md) | Baseline diff keys on the sub-numbered CheckId; cross-version uses intersect-only mode | Accepted | 2026-05-06 |
+| [0011](0011-framework-definitions-auto-discovered.md) | Framework definitions are auto-discovered per-framework JSON files | Accepted | 2026-05-06 |
+| [0012](0012-tenant-identifier-dual-shape.md) | Tenant identity uses GUID for new artifacts but reads both legacy and GUID folder shapes | Accepted | 2026-05-06 |
+| [0013](0013-unified-cmdlet-with-auth-parameter-sets.md) | One cmdlet, five auth modes, dispatched via PowerShell parameter sets | Accepted | 2026-05-06 |
 
 ---
 
